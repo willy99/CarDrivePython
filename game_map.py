@@ -194,17 +194,16 @@ class GameMap:
                     phase = (phase + TrafficLight.TOTAL // 7) % TrafficLight.TOTAL
 
     def _add_h_light(self, cx: int, cy: int, phase: int):
-        """Traffic light for an H-corridor starting at tile (cx, cy)."""
-        # Visual position: middle of corridor
-        wx = (cx + ROAD / 2) * TILE
-        wy = (cy + CELL / 2) * TILE
+        """Traffic light for an H-corridor whose tiles span x=[cx,cx+ROAD), y=[cy,cy+CELL)."""
+        wx = (cx + ROAD / 2) * TILE          # x-centre of corridor
+        wy = (cy + CELL / 2) * TILE          # y-centre of corridor (light pole pos)
         light = TrafficLight(wx, wy, phase)
 
-        # Crosswalk: pedestrian walks north→south through the corridor width
-        light.walk_start = (wx, float(cy * TILE))
-        light.walk_end   = (wx, float((cy + CELL) * TILE))
+        # Crosswalk: pedestrian walks N→S.
+        # Use tile *centres* so both endpoints are guaranteed road tiles.
+        light.walk_start = (wx, float(cy * TILE + TILE // 2))
+        light.walk_end   = (wx, float((cy + CELL - 1) * TILE + TILE // 2))
 
-        # Register all corridor tiles
         for dy in range(CELL):
             for dx in range(ROAD):
                 self.tile_to_light[(cx + dx, cy + dy)] = light
@@ -212,14 +211,15 @@ class GameMap:
         self.traffic_lights.append(light)
 
     def _add_v_light(self, cx: int, cy: int, phase: int):
-        """Traffic light for a V-corridor starting at tile (cx, cy)."""
-        wx = (cx + CELL / 2) * TILE
-        wy = (cy + ROAD / 2) * TILE
+        """Traffic light for a V-corridor whose tiles span x=[cx,cx+CELL), y=[cy,cy+ROAD)."""
+        wx = (cx + CELL / 2) * TILE          # x-centre of corridor (light pole pos)
+        wy = (cy + ROAD / 2) * TILE          # y-centre of corridor
         light = TrafficLight(wx, wy, phase)
 
-        # Crosswalk: pedestrian walks west→east through the corridor width
-        light.walk_start = (float(cx * TILE),           wy)
-        light.walk_end   = (float((cx + CELL) * TILE),  wy)
+        # Crosswalk: pedestrian walks W→E.
+        # Use tile *centres* so both endpoints are guaranteed road tiles.
+        light.walk_start = (float(cx * TILE + TILE // 2),             wy)
+        light.walk_end   = (float((cx + CELL - 1) * TILE + TILE // 2), wy)
 
         for dy in range(ROAD):
             for dx in range(CELL):

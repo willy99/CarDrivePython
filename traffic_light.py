@@ -7,17 +7,26 @@ class TrafficLight:
     """
     Timed traffic signal placed at a corridor entrance.
 
-    Phase cycle:  RED (3 s) → YELLOW (1 s) → GREEN (3 s) → RED …
-    `is_red` is True during RED and YELLOW (car must stop).
+    Cycle (all durations in frames at 60 FPS):
 
-    The light also carries crosswalk geometry so GameMap can
-    draw the striped crosswalk and Game can spawn Pedestrians.
+        RED  →  GREEN  →  BLINK_GREEN  →  YELLOW  →  RED  →  …
+        3 s       2 s         1 s            1 s
+
+    `is_red` is True **only** during RED.
+    During BLINK_GREEN the green lamp flickers — a visual warning that cars
+    should slow down and pedestrians should clear the road.
     """
 
-    DUR_RED    = 180   # frames at 60 FPS
-    DUR_YELLOW =  60
-    DUR_GREEN  = 180
-    TOTAL      = DUR_RED + DUR_YELLOW + DUR_GREEN
+    DUR_RED         = 180   # 3 s
+    DUR_GREEN       = 120   # 2 s
+    DUR_BLINK_GREEN =  60   # 1 s  (green lamp blinks ~3 Hz)
+    DUR_YELLOW      =  60   # 1 s
+    TOTAL           = DUR_RED + DUR_GREEN + DUR_BLINK_GREEN + DUR_YELLOW  # 420
+
+    # Phase boundaries (cumulative)
+    _T_GREEN       = DUR_RED                                         # 180
+    _T_BLINK_GREEN = DUR_RED + DUR_GREEN                             # 300
+    _T_YELLOW      = DUR_RED + DUR_GREEN + DUR_BLINK_GREEN           # 360
 
     _C_HOUSING = (20,  20,  20)
     _C_OFF     = (45,  45,  45)
@@ -30,12 +39,12 @@ class TrafficLight:
         self.y = wy
         self._phase = phase_offset % self.TOTAL
 
-        # Crosswalk endpoints (set by GameMap after construction)
+        # Crosswalk endpoints — set by GameMap after construction
         self.walk_start: tuple[float, float] = (wx, wy)
         self.walk_end:   tuple[float, float] = (wx, wy)
 
     # ------------------------------------------------------------------
-    # State
+    # State machine
     # ------------------------------------------------------------------
 
     def update(self):
@@ -43,15 +52,30 @@ class TrafficLight:
 
     @property
     def state(self) -> str:
-        if self._phase < self.DUR_RED:
+        p = self._phase
+        if p < self._T_GREEN:
             return 'RED'
-        if self._phase < self.DUR_RED + self.DUR_YELLOW:
-            return 'YELLOW'
-        return 'GREEN'
+        if p < self._T_BLINK_GREEN:
+            return 'GREEN'
+        if p < self._T_YELLOW:
+            return 'BLINK_GREEN'
+        return 'YELLOW'
 
     @property
     def is_red(self) -> bool:
-        return self.state != 'GREEN'
+        """True only when the light is fully RED (not yellow, not blinking)."""
+        return self.state == 'RED'
+
+    @property
+    def _green_lamp_on(self) -> bool:
+        """Steady during GREEN; flickering during BLINK_GREEN."""
+        s = self.state
+        if s == 'GREEN':
+            return True
+        if s == 'BLINK_GREEN':
+            # ~3 Hz blink: on for 10 frames, off for 10 frames
+            return (self._phase // 10) % 2 == 0
+        return False
 
     # ------------------------------------------------------------------
     # Draw
@@ -73,19 +97,23 @@ class TrafficLight:
         # Housing
         pygame.draw.rect(surf, self._C_HOUSING, (bx, by, bw, bh), border_radius=3)
 
-        # Three lamps: top=red, mid=yellow, bot=green
-        for i, (name, col) in enumerate(
-            [('RED', self._C_RED), ('YELLOW', self._C_YELLOW), ('GREEN', self._C_GREEN)]
-        ):
+        # Lamps: top = red, mid = yellow, bottom = green
+        lamps = [
+            ('RED',    self._C_RED,    self.state == 'RED'),
+            ('YELLOW', self._C_YELLOW, self.state == 'YELLOW'),
+            ('GREEN',  self._C_GREEN,  self._green_lamp_on),
+        ]
+        for i, (_, col, active) in enumerate(lamps):
             cy2 = by + 5 + i * 9
-            active = name == self.state
             pygame.draw.circle(surf, col if active else self._C_OFF, (ix, cy2), 3)
 
     def draw_crosswalk(self, surf, cam_x: float, cam_y: float):
         """Draw zebra stripes between walk_start and walk_end."""
         import math
-        sx0, sy0 = self.walk_start[0] - cam_x, self.walk_start[1] - cam_y
-        sx1, sy1 = self.walk_end[0]   - cam_x, self.walk_end[1]   - cam_y
+        sx0 = self.walk_start[0] - cam_x
+        sy0 = self.walk_start[1] - cam_y
+        sx1 = self.walk_end[0]   - cam_x
+        sy1 = self.walk_end[1]   - cam_y
 
         dx = sx1 - sx0
         dy = sy1 - sy0
@@ -93,20 +121,20 @@ class TrafficLight:
         if total < 1:
             return
 
-        # Perpendicular unit vector (for stripe width)
+        # Perpendicular unit vector (for stripe half-width)
         px, py = -dy / total, dx / total
-        half_w = 6   # half stripe width in pixels
+        half_w = 6
 
         stripes = 5
         for i in range(stripes):
-            t0 = i       / stripes
+            t0 = i         / stripes
             t1 = (i + 0.6) / stripes
             ax = sx0 + dx * t0;  ay = sy0 + dy * t0
-            bx = sx0 + dx * t1;  by2 = sy0 + dy * t1
+            bx2 = sx0 + dx * t1; by2 = sy0 + dy * t1
             pts = [
-                (ax + px * half_w, ay + py * half_w),
-                (ax - px * half_w, ay - py * half_w),
-                (bx - px * half_w, by2 - py * half_w),
-                (bx + px * half_w, by2 + py * half_w),
+                (ax  + px * half_w, ay  + py * half_w),
+                (ax  - px * half_w, ay  - py * half_w),
+                (bx2 - px * half_w, by2 - py * half_w),
+                (bx2 + px * half_w, by2 + py * half_w),
             ]
             pygame.draw.polygon(surf, (230, 230, 230), pts)

@@ -61,6 +61,14 @@ SCORE_LEVEL_BASE       = 1000   # base points for completing a level
 SCORE_TIME_PENALTY_MS  =   10   # points lost per 100 ms (= 100 pts/s)
 SCORE_VIOLATION        =  100   # penalty per red-light crossing
 SCORE_TIME_SURPLUS     =    2   # bonus points per second remaining (countdown levels)
+SCORE_CLEAN_BONUS      =  200   # extra bonus for zero violations on a level
+
+# ---------------------------------------------------------------------------
+# Skid marks
+# ---------------------------------------------------------------------------
+SKID_MIN_SPEED = 2.5   # minimum car speed to leave marks
+SKID_MAX_AGE   = 300   # frames before a mark fades completely (~5 s at 60 fps)
+SKID_INTERVAL  =   3   # generate a mark every N frames while braking
 
 # ---------------------------------------------------------------------------
 # Race / game states
