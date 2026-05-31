@@ -1,13 +1,10 @@
-"""
-Stateless geometry helpers and formatting utilities.
-No pygame state is touched here.
-"""
+"""Stateless geometry helpers and formatting utilities."""
 
 import math
 
 
 def polygon_corners(cx, cy, w, h, angle_deg):
-    """Return the four corners of a rotated rectangle as (x, y) tuples."""
+    """Return four corners of a rotated rectangle as (x, y) tuples."""
     rad = math.radians(angle_deg)
     cos_a, sin_a = math.cos(rad), math.sin(rad)
     hw, hh = w / 2, h / 2
@@ -17,8 +14,8 @@ def polygon_corners(cx, cy, w, h, angle_deg):
     ]
 
 
-def sat_overlap(poly_a, poly_b):
-    """Separating Axis Theorem – True when the two convex polygons overlap."""
+def sat_overlap(poly_a, poly_b) -> bool:
+    """Separating Axis Theorem – True when two convex polygons overlap."""
     def axes(poly):
         n = len(poly)
         result = []
@@ -47,8 +44,8 @@ def rect_poly(r):
     return [(r.x, r.y), (r.right, r.y), (r.right, r.bottom), (r.x, r.bottom)]
 
 
-def fmt_time(ms):
-    """Format milliseconds as M:SS.mm"""
+def fmt_time(ms: int) -> str:
+    """Format milliseconds as  M:SS.mm"""
     s = ms / 1000.0
     m = int(s) // 60
     return f"{m}:{s % 60:05.2f}"

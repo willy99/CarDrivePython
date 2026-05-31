@@ -32,10 +32,8 @@ class Car:
         if self.crashed:
             self._update_crashed()
             return
-
         self._steer(keys)
         self._throttle(keys)
-
         rad = math.radians(self.angle)
         self.x += self.speed * math.cos(rad)
         self.y += self.speed * math.sin(rad)
@@ -63,10 +61,8 @@ class Car:
 
     def _throttle(self, keys):
         if keys[pygame.K_UP]:
-            if self.speed < 0:
-                self.speed += BRAKE
-            else:
-                self.speed = min(self.speed + ACCEL, MAX_SPEED)
+            self.speed = (self.speed + BRAKE if self.speed < 0
+                          else min(self.speed + ACCEL, MAX_SPEED))
         elif keys[pygame.K_DOWN]:
             if self.speed > 0:
                 self.speed = max(self.speed - BRAKE, 0.0)
@@ -100,7 +96,6 @@ class Car:
             self.speed *= 0.25
 
     def off_road_count(self, game_map) -> int:
-        """Number of car corners that are on non-road tiles."""
         return sum(1 for cx, cy in self.corners() if not game_map.is_road(cx, cy))
 
     # ------------------------------------------------------------------

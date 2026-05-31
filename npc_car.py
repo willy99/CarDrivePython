@@ -4,8 +4,7 @@ import random
 import pygame
 
 from constants import (
-    TILE, MAP_W, MAP_H,
-    NPC_W, NPC_H,
+    TILE, NPC_W, NPC_H,
     SCREEN_W, SCREEN_H,
     C_CAR_WINDOW, C_HEADLIGHT, C_BLACK,
 )
@@ -13,12 +12,12 @@ from utils import polygon_corners
 
 
 NPC_COLORS = [
-    (220,  80,  30),   # orange
-    (170,  30, 170),   # purple
-    (30,  160, 160),   # teal
-    (190, 170,  10),   # gold
-    (60,  180,  60),   # green
-    (200,  60, 100),   # pink-red
+    (220,  80,  30),
+    (170,  30, 170),
+    (30,  160, 160),
+    (190, 170,  10),
+    (60,  180,  60),
+    (200,  60, 100),
 ]
 
 _DIRS = [(1, 0, 0.0), (-1, 0, 180.0), (0, 1, 90.0), (0, -1, 270.0)]
@@ -54,19 +53,18 @@ class NPCCar:
         return float(tx * TILE + TILE // 2), float(ty * TILE + TILE // 2)
 
     def _advance(self, tx: int, ty: int, first: bool = False):
-        """Pick the next target tile and update heading."""
+        mw = self._map.map_w_tiles
+        mh = self._map.map_h_tiles
         cands = [
             (ddx, ddy, ang) for ddx, ddy, ang in _DIRS
             if (first or not (ddx == -self.dx and ddy == -self.dy))
-            and 0 <= tx + ddx < MAP_W
-            and 0 <= ty + ddy < MAP_H
+            and 0 <= tx + ddx < mw and 0 <= ty + ddy < mh
             and self._map.grid[ty + ddy][tx + ddx] == 0
         ]
-        if not cands:   # dead-end: allow U-turn
+        if not cands:
             cands = [
                 (ddx, ddy, ang) for ddx, ddy, ang in _DIRS
-                if 0 <= tx + ddx < MAP_W
-                and 0 <= ty + ddy < MAP_H
+                if 0 <= tx + ddx < mw and 0 <= ty + ddy < mh
                 and self._map.grid[ty + ddy][tx + ddx] == 0
             ]
         if cands:
@@ -85,7 +83,6 @@ class NPCCar:
         tdx = self._target_x - self.x
         tdy = self._target_y - self.y
         dist = math.hypot(tdx, tdy)
-
         if dist <= self.speed:
             self.x, self.y = self._target_x, self._target_y
             tx = round(self.x - TILE // 2) // TILE
@@ -117,7 +114,6 @@ class NPCCar:
         sy = self.y - cam_y
         if not (-60 < sx < SCREEN_W + 60 and -60 < sy < SCREEN_H + 60):
             return
-
         rad = math.radians(self.angle)
         cos_a, sin_a = math.cos(rad), math.sin(rad)
 
@@ -129,11 +125,9 @@ class NPCCar:
         body = [l2s(-hw, -hh), l2s(hw, -hh), l2s(hw, hh), l2s(-hw, hh)]
         pygame.draw.polygon(surf, self.color, body)
         pygame.draw.polygon(surf, C_BLACK, body, 1)
-
         win = [l2s(2, -hh + 2), l2s(hw - 2, -hh + 2),
                l2s(hw - 2, hh - 2), l2s(2, hh - 2)]
         pygame.draw.polygon(surf, C_CAR_WINDOW, win)
-
         for side in (-1, 1):
             hpx, hpy = l2s(hw - 1, side * (hh - 3))
             pygame.draw.circle(surf, C_HEADLIGHT, (int(hpx), int(hpy)), 2)

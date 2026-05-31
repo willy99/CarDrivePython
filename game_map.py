@@ -4,7 +4,7 @@ import random
 import pygame
 
 from constants import (
-    TILE, MAP_W, MAP_H, MX, MY, CELL, ROAD, STEP, OX, OY,
+    TILE, CELL, ROAD, STEP, OX, OY,
     CAR_W,
     SCREEN_W, SCREEN_H,
     C_ASPHALT, C_GRASS, C_GRASS_DARK,
@@ -12,25 +12,38 @@ from constants import (
     C_PAVEMENT, C_BLACK,
     C_MARKER_A, C_MARKER_B,
 )
+from level_config import LevelConfig
+from traffic_light import TrafficLight
 
 
 class GameMap:
     """
-    Procedurally generated labyrinth map.
+    Procedurally generated labyrinth map sized according to the given LevelConfig.
 
-    Generation pipeline:
-      1. DFS spanning tree  – guarantees every room is reachable
-      2. ~30 % extra corridors – adds loops so it doesn't feel like a pure maze
-      3. Flood-fill blocks  – places houses in non-road areas, validated not to
-                              cover road tiles
+    Public attributes consumed by other modules:
+        grid          – 2-D list, 0 = road, 1 = block
+        houses        – list[pygame.Rect]
+        traffic_lights – list[TrafficLight]
+        tile_to_light – dict[(tx,ty) -> TrafficLight]  (corridor tiles only)
+        start_pos, end_pos – (world_px, world_py) for A and B
+        map_w, map_h  – pixel-level map dimensions
+        pw, ph        – same, as properties
     """
 
-    def __init__(self):
-        self.grid = [[1] * MAP_W for _ in range(MAP_H)]   # 1=block, 0=road
+    def __init__(self, cfg: LevelConfig):
+        self.mx = cfg.mx
+        self.my = cfg.my
+        self.map_w_tiles = OX + self.mx * STEP + 1   # tile columns
+        self.map_h_tiles = OY + self.my * STEP + 1   # tile rows
+
+        self.grid = [[1] * self.map_w_tiles for _ in range(self.map_h_tiles)]
         self.houses: list[pygame.Rect] = []
+        self.traffic_lights: list[TrafficLight] = []
+        self.tile_to_light: dict[tuple[int, int], TrafficLight] = {}
         self.start_pos = (TILE, TILE)
         self.end_pos   = (TILE * 2, TILE * 2)
-        self._generate()
+
+        self._generate(cfg)
         self._pick_start_end()
 
     # ------------------------------------------------------------------
@@ -44,7 +57,6 @@ class GameMap:
                 self.grid[ry + dy][rx + dx] = 0
 
     def _h_corridor(self, mx: int, my: int):
-        """Open the 2-tile gap east of room (mx, my)."""
         cx = OX + mx * STEP + CELL
         cy = OY + my * STEP
         for dy in range(CELL):
@@ -52,7 +64,6 @@ class GameMap:
                 self.grid[cy + dy][cx + dx] = 0
 
     def _v_corridor(self, mx: int, my: int):
-        """Open the 2-tile gap south of room (mx, my)."""
         cx = OX + mx * STEP
         cy = OY + my * STEP + CELL
         for dy in range(ROAD):
@@ -60,12 +71,12 @@ class GameMap:
                 self.grid[cy + dy][cx + dx] = 0
 
     # ------------------------------------------------------------------
-    # Generation
+    # Generation pipeline
     # ------------------------------------------------------------------
 
-    def _generate(self):
+    def _generate(self, cfg: LevelConfig):
         rng = random.Random()
-        visited = [[False] * MX for _ in range(MY)]
+        visited = [[False] * self.mx for _ in range(self.my)]
 
         def dfs(mx, my):
             visited[my][mx] = True
@@ -74,38 +85,45 @@ class GameMap:
             rng.shuffle(dirs)
             for ddx, ddy in dirs:
                 nx, ny = mx + ddx, my + ddy
-                if 0 <= nx < MX and 0 <= ny < MY and not visited[ny][nx]:
+                if 0 <= nx < self.mx and 0 <= ny < self.my and not visited[ny][nx]:
                     if   ddx ==  1: self._h_corridor(mx, my)
                     elif ddx == -1: self._h_corridor(nx, my)
                     elif ddy ==  1: self._v_corridor(mx, my)
                     elif ddy == -1: self._v_corridor(mx, ny)
                     dfs(nx, ny)
 
-        dfs(rng.randint(0, MX - 1), rng.randint(0, MY - 1))
+        dfs(rng.randint(0, self.mx - 1), rng.randint(0, self.my - 1))
 
-        # Extra connections to break the pure-maze feeling
-        for mx in range(MX - 1):
-            for my in range(MY):
-                if rng.random() < 0.30:
+        # Extra connections (loops to reduce pure-maze frustration)
+        for mx in range(self.mx - 1):
+            for my in range(self.my):
+                if rng.random() < cfg.loop_prob:
                     self._h_corridor(mx, my)
-        for mx in range(MX):
-            for my in range(MY - 1):
-                if rng.random() < 0.30:
+        for mx in range(self.mx):
+            for my in range(self.my - 1):
+                if rng.random() < cfg.loop_prob:
                     self._v_corridor(mx, my)
 
-        # Place houses in non-road blocks
-        seen = [[False] * MAP_W for _ in range(MAP_H)]
-        for sy in range(MAP_H):
-            for sx in range(MAP_W):
+        # Houses in non-road blocks
+        seen = [[False] * self.map_w_tiles for _ in range(self.map_h_tiles)]
+        for sy in range(self.map_h_tiles):
+            for sx in range(self.map_w_tiles):
                 if self.grid[sy][sx] == 1 and not seen[sy][sx]:
                     cells = self._flood(sx, sy, seen)
                     self._place_houses(cells, rng)
+
+        # Traffic lights on a fraction of carved corridors
+        self._place_traffic_lights(rng, cfg.light_prob)
+
+    # ------------------------------------------------------------------
+    # Flood fill + house placement
+    # ------------------------------------------------------------------
 
     def _flood(self, sx: int, sy: int, seen: list) -> list:
         cells, stack = [], [(sx, sy)]
         while stack:
             x, y = stack.pop()
-            if not (0 <= x < MAP_W and 0 <= y < MAP_H):
+            if not (0 <= x < self.map_w_tiles and 0 <= y < self.map_h_tiles):
                 continue
             if seen[y][x] or self.grid[y][x] != 1:
                 continue
@@ -115,15 +133,11 @@ class GameMap:
         return cells
 
     def _near_road(self, rect: pygame.Rect) -> bool:
-        """
-        True if *rect* (expanded by one car-width) covers any road tile.
-        Rejects houses that would block or be too close to a driveable path.
-        """
         check = rect.inflate(CAR_W * 2, CAR_W * 2)
         tx0 = max(0, check.left   // TILE)
         ty0 = max(0, check.top    // TILE)
-        tx1 = min(MAP_W - 1, check.right  // TILE)
-        ty1 = min(MAP_H - 1, check.bottom // TILE)
+        tx1 = min(self.map_w_tiles - 1, check.right  // TILE)
+        ty1 = min(self.map_h_tiles - 1, check.bottom // TILE)
         for ty in range(ty0, ty1 + 1):
             for tx in range(tx0, tx1 + 1):
                 if self.grid[ty][tx] == 0:
@@ -154,15 +168,77 @@ class GameMap:
                 placed.append(rect)
                 self.houses.append(rect)
 
+    # ------------------------------------------------------------------
+    # Traffic light placement
+    # ------------------------------------------------------------------
+
+    def _place_traffic_lights(self, rng: random.Random, light_prob: float):
+        phase = 0   # stagger phases so lights don't all sync
+
+        # Horizontal corridors
+        for mx in range(self.mx - 1):
+            for my in range(self.my):
+                cx = OX + mx * STEP + CELL
+                cy = OY + my * STEP
+                if self.grid[cy][cx] == 0 and rng.random() < light_prob:
+                    self._add_h_light(cx, cy, phase)
+                    phase = (phase + TrafficLight.TOTAL // 7) % TrafficLight.TOTAL
+
+        # Vertical corridors
+        for mx in range(self.mx):
+            for my in range(self.my - 1):
+                cx = OX + mx * STEP
+                cy = OY + my * STEP + CELL
+                if self.grid[cy][cx] == 0 and rng.random() < light_prob:
+                    self._add_v_light(cx, cy, phase)
+                    phase = (phase + TrafficLight.TOTAL // 7) % TrafficLight.TOTAL
+
+    def _add_h_light(self, cx: int, cy: int, phase: int):
+        """Traffic light for an H-corridor starting at tile (cx, cy)."""
+        # Visual position: middle of corridor
+        wx = (cx + ROAD / 2) * TILE
+        wy = (cy + CELL / 2) * TILE
+        light = TrafficLight(wx, wy, phase)
+
+        # Crosswalk: pedestrian walks north→south through the corridor width
+        light.walk_start = (wx, float(cy * TILE))
+        light.walk_end   = (wx, float((cy + CELL) * TILE))
+
+        # Register all corridor tiles
+        for dy in range(CELL):
+            for dx in range(ROAD):
+                self.tile_to_light[(cx + dx, cy + dy)] = light
+
+        self.traffic_lights.append(light)
+
+    def _add_v_light(self, cx: int, cy: int, phase: int):
+        """Traffic light for a V-corridor starting at tile (cx, cy)."""
+        wx = (cx + CELL / 2) * TILE
+        wy = (cy + ROAD / 2) * TILE
+        light = TrafficLight(wx, wy, phase)
+
+        # Crosswalk: pedestrian walks west→east through the corridor width
+        light.walk_start = (float(cx * TILE),           wy)
+        light.walk_end   = (float((cx + CELL) * TILE),  wy)
+
+        for dy in range(ROAD):
+            for dx in range(CELL):
+                self.tile_to_light[(cx + dx, cy + dy)] = light
+
+        self.traffic_lights.append(light)
+
+    # ------------------------------------------------------------------
+    # Start / end positions
+    # ------------------------------------------------------------------
+
     def _pick_start_end(self):
-        """Start = A, end = B: the two room centres farthest apart."""
         rooms = [
             (
                 (OX + mx * STEP + CELL // 2) * TILE + TILE // 2,
                 (OY + my * STEP + CELL // 2) * TILE + TILE // 2,
             )
-            for my in range(MY)
-            for mx in range(MX)
+            for my in range(self.my)
+            for mx in range(self.mx)
         ]
         best_d, a, b = 0.0, rooms[0], rooms[-1]
         for i in range(len(rooms)):
@@ -179,25 +255,25 @@ class GameMap:
 
     def is_road(self, wx: float, wy: float) -> bool:
         tx, ty = int(wx) // TILE, int(wy) // TILE
-        if 0 <= tx < MAP_W and 0 <= ty < MAP_H:
+        if 0 <= tx < self.map_w_tiles and 0 <= ty < self.map_h_tiles:
             return self.grid[ty][tx] == 0
         return False
 
     def road_tiles(self) -> list[tuple[int, int]]:
         return [
             (x, y)
-            for y in range(MAP_H)
-            for x in range(MAP_W)
+            for y in range(self.map_h_tiles)
+            for x in range(self.map_w_tiles)
             if self.grid[y][x] == 0
         ]
 
     @property
     def pw(self) -> int:
-        return MAP_W * TILE
+        return self.map_w_tiles * TILE
 
     @property
     def ph(self) -> int:
-        return MAP_H * TILE
+        return self.map_h_tiles * TILE
 
     # ------------------------------------------------------------------
     # Draw
@@ -206,8 +282,8 @@ class GameMap:
     def draw(self, surf, cam_x: float, cam_y: float, font, tick: int):
         tx0 = max(0, int(cam_x) // TILE)
         ty0 = max(0, int(cam_y) // TILE)
-        tx1 = min(MAP_W, tx0 + SCREEN_W // TILE + 2)
-        ty1 = min(MAP_H, ty0 + SCREEN_H // TILE + 2)
+        tx1 = min(self.map_w_tiles, tx0 + SCREEN_W // TILE + 2)
+        ty1 = min(self.map_h_tiles, ty0 + SCREEN_H // TILE + 2)
 
         for ty in range(ty0, ty1):
             for tx in range(tx0, tx1):
@@ -230,14 +306,22 @@ class GameMap:
                                  (hx + ri, hy + ri, h.width - ri * 2, h.height - ri * 2))
                 pygame.draw.rect(surf, C_HOUSE_BORDER, (hx, hy, h.width, h.height), 2)
 
+        # Crosswalks (drawn under traffic lights)
+        for light in self.traffic_lights:
+            light.draw_crosswalk(surf, cam_x, cam_y)
+
+        # Traffic lights
+        for light in self.traffic_lights:
+            light.draw(surf, cam_x, cam_y)
+
         self._draw_marker(surf, cam_x, cam_y, self.start_pos, C_MARKER_A, "A", font, tick, False)
         self._draw_marker(surf, cam_x, cam_y, self.end_pos,   C_MARKER_B, "B", font, tick, True)
 
     def _draw_pavement_edge(self, surf, tx: int, ty: int, px: int, py: int):
-        """Draw a kerb strip on road tiles that border a non-road tile."""
         for ddx, ddy in ((1, 0), (-1, 0), (0, 1), (0, -1)):
             nx, ny = tx + ddx, ty + ddy
-            if 0 <= nx < MAP_W and 0 <= ny < MAP_H and self.grid[ny][nx] == 1:
+            if 0 <= nx < self.map_w_tiles and 0 <= ny < self.map_h_tiles \
+                    and self.grid[ny][nx] == 1:
                 if   ddx ==  1: brd = (px + TILE - 6, py, 6, TILE)
                 elif ddx == -1: brd = (px, py, 6, TILE)
                 elif ddy ==  1: brd = (px, py + TILE - 6, TILE, 6)
