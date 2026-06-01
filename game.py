@@ -18,6 +18,7 @@ from npc_car import NPCCar
 from game_map import GameMap
 from pedestrian import Pedestrian
 from hud import HUD
+from mini_map import MiniMap
 from utils import sat_overlap, rect_poly
 
 # SkidMark: (world_x, world_y, angle_deg, age_frames)
@@ -74,6 +75,7 @@ class Game:
         self._frame     = 0
 
         self.skid_marks: list[_SkidMark] = []
+        self.mini_map = MiniMap(self.game_map)
 
         self._notifications.clear()
         self._gameover_reason = ""
@@ -426,6 +428,8 @@ class Game:
         for ped in self.pedestrians:
             ped.draw(self.screen, self.cam_x, self.cam_y)
         self.car.draw(self.screen, self.cam_x, self.cam_y)
+        self.mini_map.draw(self.screen, self.car, self.game_map,
+                           self.npcs, self.cam_x, self.cam_y)
 
         cfg = LEVELS[self.level_idx]
         self.hud.draw(
