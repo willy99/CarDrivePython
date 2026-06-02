@@ -9,8 +9,9 @@ from constants import (
     SCREEN_W, SCREEN_H,
     C_ASPHALT, C_GRASS, C_GRASS_DARK,
     C_HOUSE_WALL, C_HOUSE_ROOF, C_HOUSE_BORDER,
-    C_PAVEMENT, C_BLACK,
-    C_MARKER_A, C_MARKER_B,
+    C_PAVEMENT, C_BLACK, C_WHITE,
+    C_MARKER_A, C_MARKER_B, C_MARKER_P, C_GAS,
+    MODE_TAXI,
 )
 from level_config import LevelConfig
 from traffic_light import TrafficLight
@@ -42,9 +43,14 @@ class GameMap:
         self.tile_to_light: dict[tuple[int, int], TrafficLight] = {}
         self.start_pos = (TILE, TILE)
         self.end_pos   = (TILE * 2, TILE * 2)
+        self.pickup_pos: tuple | None = None
+        # objectives: ordered list of (pos, label, color) the player must reach
+        self.objectives: list[tuple[tuple, str, tuple]] = []
+        self.gas_stations: list[tuple[float, float]] = []
 
         self._generate(cfg)
-        self._pick_start_end()
+        self._pick_objectives(cfg)
+        self._place_gas_stations(cfg)
 
     # ------------------------------------------------------------------
     # Carving primitives
@@ -231,8 +237,8 @@ class GameMap:
     # Start / end positions
     # ------------------------------------------------------------------
 
-    def _pick_start_end(self):
-        rooms = [
+    def _room_centers(self) -> list[tuple[float, float]]:
+        return [
             (
                 (OX + mx * STEP + CELL // 2) * TILE + TILE // 2,
                 (OY + my * STEP + CELL // 2) * TILE + TILE // 2,
@@ -240,6 +246,9 @@ class GameMap:
             for my in range(self.my)
             for mx in range(self.mx)
         ]
+
+    @staticmethod
+    def _two_farthest(rooms):
         best_d, a, b = 0.0, rooms[0], rooms[-1]
         for i in range(len(rooms)):
             for j in range(i + 1, len(rooms)):
@@ -247,7 +256,44 @@ class GameMap:
                                rooms[i][1] - rooms[j][1])
                 if d > best_d:
                     best_d, a, b = d, rooms[i], rooms[j]
-        self.start_pos, self.end_pos = a, b
+        return a, b
+
+    def _pick_objectives(self, cfg: LevelConfig):
+        rooms = self._room_centers()
+
+        if cfg.mode == MODE_TAXI and len(rooms) >= 3:
+            # Start at one extreme; pickup and dropoff chosen to spread the
+            # journey across the map (greedy farthest-point selection).
+            a, b = self._two_farthest(rooms)
+            # pickup = room maximising min-distance to both a and b
+            pickup = max(
+                rooms,
+                key=lambda r: min(math.hypot(r[0]-a[0], r[1]-a[1]),
+                                  math.hypot(r[0]-b[0], r[1]-b[1])),
+            )
+            self.start_pos  = a
+            self.pickup_pos = pickup
+            self.end_pos    = b
+            self.objectives = [
+                (pickup, "P", C_MARKER_P),
+                (b,      "B", C_MARKER_B),
+            ]
+        else:
+            a, b = self._two_farthest(rooms)
+            self.start_pos = a
+            self.end_pos   = b
+            self.objectives = [(b, "B", C_MARKER_B)]
+
+    def _place_gas_stations(self, cfg: LevelConfig):
+        if cfg.gas_count <= 0:
+            return
+        rooms = self._room_centers()
+        # Exclude rooms occupied by start / objectives
+        taken = {self.start_pos} | {o[0] for o in self.objectives}
+        candidates = [r for r in rooms if r not in taken]
+        rng = random.Random()
+        rng.shuffle(candidates)
+        self.gas_stations = candidates[: cfg.gas_count]
 
     # ------------------------------------------------------------------
     # Queries
@@ -314,8 +360,25 @@ class GameMap:
         for light in self.traffic_lights:
             light.draw(surf, cam_x, cam_y)
 
+        # Gas stations
+        for gx, gy in self.gas_stations:
+            self._draw_gas_station(surf, cam_x, cam_y, gx, gy, font)
+
+        # Start marker + objective markers (pickup / dropoff)
         self._draw_marker(surf, cam_x, cam_y, self.start_pos, C_MARKER_A, "A", font, tick, False)
-        self._draw_marker(surf, cam_x, cam_y, self.end_pos,   C_MARKER_B, "B", font, tick, True)
+        for pos, label, color in self.objectives:
+            self._draw_marker(surf, cam_x, cam_y, pos, color, label, font, tick, True)
+
+    def _draw_gas_station(self, surf, cam_x, cam_y, gx, gy, font):
+        sx = gx - cam_x
+        sy = gy - cam_y
+        if not (-40 < sx < SCREEN_W + 40 and -40 < sy < SCREEN_H + 40):
+            return
+        ix, iy = int(sx), int(sy)
+        pygame.draw.rect(surf, C_BLACK, (ix - 16, iy - 16, 32, 32), border_radius=5)
+        pygame.draw.rect(surf, C_GAS,   (ix - 14, iy - 14, 28, 28), border_radius=4)
+        g = font.render("FUEL", True, C_BLACK)
+        surf.blit(g, g.get_rect(center=(ix, iy)))
 
     def _draw_pavement_edge(self, surf, tx: int, ty: int, px: int, py: int):
         for ddx, ddy in ((1, 0), (-1, 0), (0, 1), (0, -1)):

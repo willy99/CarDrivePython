@@ -6,10 +6,14 @@ import pygame
 from constants import (
     SCREEN_W, SCREEN_H, FPS, TILE,
     CRASH_THRESH, GOAL_RADIUS,
-    C_GRASS, C_ASPHALT,
+    C_GRASS, C_ASPHALT, C_BLACK, C_PASSENGER,
     SCORE_LEVEL_BASE, SCORE_TIME_PENALTY_MS,
     SCORE_VIOLATION, SCORE_TIME_SURPLUS, SCORE_CLEAN_BONUS,
+    SCORE_FARE_BASE, SCORE_SMOOTH_BONUS,
     SKID_MIN_SPEED, SKID_MAX_AGE, SKID_INTERVAL,
+    MODE_TAXI,
+    FUEL_DRAIN, FUEL_IDLE_DRAIN, FUEL_REFILL_RATE, GAS_RADIUS,
+    RAIN_STEER_MULT, RAIN_FRICTION_MULT, RAIN_ACCEL_MULT,
     S_WAITING, S_RACING, S_FINISHED, S_GAME_OVER,
 )
 from level_config import LEVELS
@@ -19,6 +23,7 @@ from game_map import GameMap
 from pedestrian import Pedestrian
 from hud import HUD
 from mini_map import MiniMap
+from effects import NightOverlay, Rain
 from utils import sat_overlap, rect_poly
 
 # SkidMark: (world_x, world_y, angle_deg, age_frames)
@@ -72,7 +77,24 @@ class Game:
         self.race_start = 0
         self.race_ms    = 0
         self.violations = 0
+        self.level_crashes = 0
         self._frame     = 0
+
+        # --- objective tracking (race = 1 goal, taxi = pickup then dropoff) ---
+        self.mode          = cfg.mode
+        self.objectives    = self.game_map.objectives
+        self.obj_idx       = 0
+        self.has_passenger = False
+
+        # --- fuel ---
+        self.fuel     = cfg.fuel
+        self.max_fuel = cfg.fuel
+
+        # --- weather / time-of-day effects ---
+        self.night = NightOverlay() if cfg.night else None
+        self.rain  = Rain()         if cfg.rain  else None
+        if cfg.rain:
+            self.car.set_wet(RAIN_STEER_MULT, RAIN_FRICTION_MULT, RAIN_ACCEL_MULT)
 
         self.skid_marks: list[_SkidMark] = []
         self.mini_map = MiniMap(self.game_map)
@@ -82,6 +104,13 @@ class Game:
 
         self.cam_x = float(self.car.x - SCREEN_W // 2)
         self.cam_y = float(self.car.y - SCREEN_H // 2)
+
+    @property
+    def target_pos(self):
+        """World position of the current objective, or None when done."""
+        if 0 <= self.obj_idx < len(self.objectives):
+            return self.objectives[self.obj_idx][0]
+        return None
 
     def _spawn_all_pedestrians(self, peds_per_light: int) -> list[Pedestrian]:
         peds = []
@@ -121,20 +150,31 @@ class Game:
 
     def _next_level(self):
         cfg = LEVELS[self.level_idx]
+        tick = pygame.time.get_ticks()
+
         # ---- score calculation ----
-        time_pen  = self.race_ms // SCORE_TIME_PENALTY_MS
-        viol_pen  = self.violations * SCORE_VIOLATION
-        surplus   = 0
+        time_pen = self.race_ms // SCORE_TIME_PENALTY_MS
+        viol_pen = self.violations * SCORE_VIOLATION
+        surplus  = 0
         if cfg.countdown_s is not None:
             remaining_ms = max(0, cfg.countdown_s * 1000 - self.race_ms)
             surplus = (remaining_ms // 1000) * SCORE_TIME_SURPLUS
-        level_score = max(0, SCORE_LEVEL_BASE - time_pen - viol_pen + surplus)
+
+        base = SCORE_FARE_BASE if self.mode == MODE_TAXI else SCORE_LEVEL_BASE
+        level_score = max(0, base - time_pen - viol_pen + surplus)
+
         if self.violations == 0:
             level_score += SCORE_CLEAN_BONUS
-            tick = pygame.time.get_ticks()
             self._notifications.append(
                 (f"Clean run!  +{SCORE_CLEAN_BONUS} pts", (80, 220, 80), tick + 3000)
             )
+        # Taxi: extra bonus for a crash-free (comfortable) delivery
+        if self.mode == MODE_TAXI and self.level_crashes == 0:
+            level_score += SCORE_SMOOTH_BONUS
+            self._notifications.append(
+                (f"Smooth ride!  +{SCORE_SMOOTH_BONUS} pts", (250, 220, 90), tick + 3000)
+            )
+
         self.total_score += level_score
 
         if self.best_ms is None or self.race_ms < self.best_ms:
@@ -193,6 +233,10 @@ class Game:
             self._trigger_game_over("Time's up!")
             return
 
+        # Weather animation
+        if self.rain:
+            self.rain.update()
+
         # Traffic lights + pedestrians
         for light in self.game_map.traffic_lights:
             light.update()
@@ -213,6 +257,7 @@ class Game:
 
         self._check_pedestrian_collision()
         self._check_goal()
+        self._update_fuel()
         self._clamp_car()
         self._update_camera()
 
@@ -273,6 +318,8 @@ class Game:
 
     def _apply_collision(self, car, ox, oy, bounce: float):
         if abs(car.speed) >= CRASH_THRESH:
+            if not car.crashed:
+                self.level_crashes += 1
             car.crash()
         else:
             car.x, car.y = ox, oy
@@ -333,12 +380,42 @@ class Game:
     def _check_goal(self):
         if self.state != S_RACING:
             return
-        dist = math.hypot(
-            self.car.x - self.game_map.end_pos[0],
-            self.car.y - self.game_map.end_pos[1],
-        )
-        if dist < GOAL_RADIUS:
-            self.state = S_FINISHED
+        tp = self.target_pos
+        if tp is None:
+            return
+        if math.hypot(self.car.x - tp[0], self.car.y - tp[1]) < GOAL_RADIUS:
+            label = self.objectives[self.obj_idx][1]
+            self.obj_idx += 1
+            tick = pygame.time.get_ticks()
+
+            # Taxi pickup reached
+            if self.mode == MODE_TAXI and label == "P":
+                self.has_passenger = True
+                self._notifications.append(
+                    ("Passenger picked up!", (80, 220, 80), tick + 2500)
+                )
+
+            # All objectives done → level finished
+            if self.obj_idx >= len(self.objectives):
+                self.state = S_FINISHED
+
+    # ------------------------------------------------------------------
+    # Fuel
+    # ------------------------------------------------------------------
+
+    def _update_fuel(self):
+        if self.fuel is None or self.state != S_RACING:
+            return
+        # Drain proportional to speed, plus a small idle draw
+        self.fuel -= FUEL_DRAIN * abs(self.car.speed) + FUEL_IDLE_DRAIN
+        # Refuel when parked on a gas station
+        for gx, gy in self.game_map.gas_stations:
+            if math.hypot(self.car.x - gx, self.car.y - gy) < GAS_RADIUS:
+                self.fuel = min(self.max_fuel, self.fuel + FUEL_REFILL_RATE)
+                break
+        if self.fuel <= 0:
+            self.fuel = 0
+            self._trigger_game_over("Out of fuel!")
 
     # ------------------------------------------------------------------
     # Skid marks
@@ -433,6 +510,17 @@ class Game:
         for ped in self.pedestrians:
             ped.draw(self.screen, self.cam_x, self.cam_y)
         self.car.draw(self.screen, self.cam_x, self.cam_y)
+        if self.has_passenger:
+            self._draw_passenger()
+
+        # Weather + darkness over the world (under HUD / mini-map)
+        if self.rain:
+            self.rain.draw(self.screen)
+        if self.night:
+            self.night.draw(self.screen,
+                            self.car.x - self.cam_x,
+                            self.car.y - self.cam_y)
+
         self.mini_map.draw(self.screen, self.car, self.game_map,
                            self.npcs, self.cam_x, self.cam_y)
 
@@ -440,8 +528,18 @@ class Game:
         self.hud.draw(
             self.screen, self.car, self.state,
             self.race_ms, self.best_ms,
-            self.game_map.end_pos, tick,
+            self.target_pos, tick,
             cfg.level_num, self.total_score, self.violations,
             cfg.countdown_s, self._notifications,
+            mode=self.mode, has_passenger=self.has_passenger,
+            fuel=self.fuel, max_fuel=self.max_fuel,
+            level_title=cfg.title,
         )
         pygame.display.flip()
+
+    def _draw_passenger(self):
+        """Small passenger figure riding in the car."""
+        sx = int(self.car.x - self.cam_x)
+        sy = int(self.car.y - self.cam_y)
+        pygame.draw.circle(self.screen, C_PASSENGER, (sx, sy), 5)
+        pygame.draw.circle(self.screen, C_BLACK,     (sx, sy), 5, 1)

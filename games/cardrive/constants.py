@@ -41,7 +41,10 @@ C_HEADLIGHT    = (255,245, 180)
 C_WHITE        = (255,255, 255)
 C_BLACK        = (0,   0,   0)
 C_MARKER_A     = (50, 210,  80)   # green  – start
-C_MARKER_B     = (240,200,   0)   # gold   – finish
+C_MARKER_B     = (240,200,   0)   # gold   – finish / dropoff
+C_MARKER_P     = (255,140,   0)   # orange – taxi pickup
+C_GAS          = (40, 210, 235)   # cyan   – gas station
+C_PASSENGER    = (250,225,  95)   # passenger figure
 
 # ---------------------------------------------------------------------------
 # Car physics
@@ -71,9 +74,43 @@ SKID_MAX_AGE   = 300   # frames before a mark fades completely (~5 s at 60 fps)
 SKID_INTERVAL  =   3   # generate a mark every N frames while braking
 
 # ---------------------------------------------------------------------------
+# Game modes
+# ---------------------------------------------------------------------------
+MODE_RACE = 'race'   # drive A → B
+MODE_TAXI = 'taxi'   # drive A → pickup → dropoff
+
+# ---------------------------------------------------------------------------
+# Taxi scoring
+# ---------------------------------------------------------------------------
+SCORE_FARE_BASE    = 600   # base fare for completing a delivery
+SCORE_SMOOTH_BONUS = 300   # bonus for delivering with zero crashes
+
+# ---------------------------------------------------------------------------
+# Fuel (only levels whose cfg.fuel is not None)
+# ---------------------------------------------------------------------------
+FUEL_MAX         = 100.0   # full tank
+FUEL_DRAIN       = 0.018   # consumed per unit-speed per frame
+FUEL_IDLE_DRAIN  = 0.003   # consumed per frame while engine on but still
+FUEL_REFILL_RATE = 1.4     # refilled per frame while parked on a gas station
+GAS_RADIUS       = TILE * 0.85   # how close to a pump counts as refuelling
+
+# ---------------------------------------------------------------------------
+# Night mode
+# ---------------------------------------------------------------------------
+NIGHT_DARKNESS   = 222     # alpha of the darkness layer (0-255)
+HEADLIGHT_RADIUS = 210     # radius of the lit area around the car (px)
+
+# ---------------------------------------------------------------------------
+# Rain (reduced grip)
+# ---------------------------------------------------------------------------
+RAIN_STEER_MULT    = 0.60  # steering authority in the wet
+RAIN_FRICTION_MULT = 0.45  # less friction → longer slides / braking
+RAIN_ACCEL_MULT    = 0.85  # slight traction loss on acceleration
+
+# ---------------------------------------------------------------------------
 # Race / game states
 # ---------------------------------------------------------------------------
 S_WAITING   = 0   # before first throttle press
 S_RACING    = 1   # timer running
-S_FINISHED  = 2   # reached goal B
-S_GAME_OVER = 3   # hit pedestrian or countdown expired
+S_FINISHED  = 2   # reached final goal
+S_GAME_OVER = 3   # hit pedestrian, ran out of time, or out of fuel

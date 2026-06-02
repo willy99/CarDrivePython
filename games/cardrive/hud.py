@@ -5,7 +5,8 @@ import pygame
 from constants import (
     SCREEN_W, SCREEN_H, TILE, FPS,
     MAX_SPEED,
-    C_CAR_CRASH, C_WHITE, C_BLACK, C_MARKER_B,
+    C_CAR_CRASH, C_WHITE, C_BLACK, C_MARKER_B, C_GAS,
+    MODE_TAXI,
     S_WAITING, S_RACING, S_FINISHED, S_GAME_OVER,
 )
 from utils import fmt_time
@@ -23,21 +24,27 @@ class HUD:
     # ------------------------------------------------------------------
 
     def draw(self, surf, car, state: int, race_ms: int,
-             best_ms: int | None, goal_pos: tuple, tick: int,
+             best_ms: int | None, target_pos: tuple | None, tick: int,
              level_num: int, total_score: int, violations: int,
-             countdown_s: int | None, notifications: list):
+             countdown_s: int | None, notifications: list,
+             *, mode: str = "race", has_passenger: bool = False,
+             fuel: float | None = None, max_fuel: float | None = None,
+             level_title: str = ""):
 
         self._draw_speed_bar(surf, car)
-        self._draw_level_score(surf, level_num, total_score, violations)
+        if fuel is not None and max_fuel:
+            self._draw_fuel_gauge(surf, fuel, max_fuel)
+        self._draw_level_score(surf, level_num, total_score, violations, level_title)
         self._draw_timer(surf, state, race_ms, countdown_s)
         self._draw_best_time(surf, best_ms)
 
-        if state in (S_WAITING, S_RACING):
-            self._draw_compass(surf, car, goal_pos)
+        if state in (S_WAITING, S_RACING) and target_pos is not None:
+            self._draw_compass(surf, car, target_pos)
 
         self._draw_controls_hint(surf)
         self._draw_notifications(surf, notifications, tick)
-        self._draw_messages(surf, car, state, race_ms, countdown_s)
+        self._draw_messages(surf, car, state, race_ms, countdown_s,
+                            mode, has_passenger)
 
     # ------------------------------------------------------------------
     # Elements
@@ -61,18 +68,28 @@ class HUD:
             (bx + 4, by + 1),
         )
 
+    def _draw_fuel_gauge(self, surf, fuel: float, max_fuel: float):
+        bx, by, bw, bh = 14, 36, 160, 14
+        pygame.draw.rect(surf, (30, 30, 30),
+                         (bx - 2, by - 2, bw + 4, bh + 4), border_radius=4)
+        frac = max(0.0, min(1.0, fuel / max_fuel))
+        fill = int(bw * frac)
+        col = (220, 40, 40) if frac < 0.2 else (220, 160, 20) if frac < 0.45 else C_GAS
+        if fill > 0:
+            pygame.draw.rect(surf, col, (bx, by, fill, bh), border_radius=3)
+        surf.blit(self.font.render(f"Fuel {int(frac*100)}%", True, C_BLACK),
+                  (bx + 6, by - 2))
+
     def _draw_level_score(self, surf, level_num: int, total_score: int,
-                          violations: int):
-        txt = self.font.render(
-            f"Level {level_num}   Score: {total_score}",
-            True, C_WHITE,
-        )
-        surf.blit(txt, (14, 38))
+                          violations: int, level_title: str = ""):
+        # Shift down when a fuel gauge occupies the usual row
+        y = 38 if not level_title else 38
+        name = f"Level {level_num}" + (f": {level_title}" if level_title else "")
+        txt = self.font.render(f"{name}   Score: {total_score}", True, C_WHITE)
+        surf.blit(txt, (14, 56))
         if violations:
-            v = self.font.render(
-                f"Violations: {violations}", True, (255, 120, 50)
-            )
-            surf.blit(v, (14, 56))
+            v = self.font.render(f"Violations: {violations}", True, (255, 120, 50))
+            surf.blit(v, (14, 74))
 
     def _draw_timer(self, surf, state: int, race_ms: int,
                     countdown_s: int | None):
@@ -137,7 +154,8 @@ class HUD:
             y += 26
 
     def _draw_messages(self, surf, car, state: int, race_ms: int,
-                       countdown_s: int | None):
+                       countdown_s: int | None,
+                       mode: str = "race", has_passenger: bool = False):
         if car.crashed and state not in (S_FINISHED, S_GAME_OVER):
             self._center_msg(surf, "CRASHED!  Press R to respawn", C_CAR_CRASH)
 
@@ -154,10 +172,20 @@ class HUD:
             surf.blit(sub, sub.get_rect(center=(SCREEN_W // 2, SCREEN_H // 2 + 52)))
 
         if state == S_WAITING:
-            msg = self.font.render(
-                "Drive from  A  to  B  as fast as possible!", True, C_WHITE
-            )
+            if mode == MODE_TAXI:
+                txt = "Pick up the passenger at  P,  then deliver to  B !"
+            else:
+                txt = "Drive from  A  to  B  as fast as possible!"
+            msg = self.font.render(txt, True, C_WHITE)
             surf.blit(msg, msg.get_rect(center=(SCREEN_W // 2, SCREEN_H - 56)))
+
+        # Persistent objective banner while racing a taxi fare
+        if state == S_RACING and mode == MODE_TAXI:
+            banner = ("Passenger aboard → deliver to  B" if has_passenger
+                      else "Head to  P  to pick up your passenger")
+            col = C_MARKER_B if has_passenger else (255, 160, 60)
+            b = self.font.render(banner, True, col)
+            surf.blit(b, b.get_rect(center=(SCREEN_W // 2, SCREEN_H - 30)))
 
     def _center_msg(self, surf, text: str, color: tuple):
         shadow = self.big_font.render(text, True, C_BLACK)

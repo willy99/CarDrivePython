@@ -23,6 +23,16 @@ class Car:
         self.speed = 0.0
         self.crashed = False
         self.crash_timer = 0
+        # Grip multipliers (1.0 = dry; rain lowers them — set via set_wet)
+        self.steer_mult    = 1.0
+        self.friction_mult = 1.0
+        self.accel_mult    = 1.0
+
+    def set_wet(self, rain_steer: float, rain_friction: float, rain_accel: float):
+        """Apply wet-weather grip loss."""
+        self.steer_mult    = rain_steer
+        self.friction_mult = rain_friction
+        self.accel_mult    = rain_accel
 
     # ------------------------------------------------------------------
     # Update
@@ -52,7 +62,7 @@ class Car:
         if abs(self.speed) <= 0.05:
             return
         eff = min(abs(self.speed) / MAX_SPEED, 1.0)
-        steer = STEER_BASE * (0.3 + 0.7 * eff)
+        steer = STEER_BASE * (0.3 + 0.7 * eff) * self.steer_mult
         sign = 1 if self.speed > 0 else -1
         if keys[pygame.K_LEFT]:
             self.angle -= steer * sign
@@ -60,21 +70,22 @@ class Car:
             self.angle += steer * sign
 
     def _throttle(self, keys):
+        friction = FRICTION * self.friction_mult
         if keys[pygame.K_UP]:
             self.speed = (self.speed + BRAKE if self.speed < 0
-                          else min(self.speed + ACCEL, MAX_SPEED))
+                          else min(self.speed + ACCEL * self.accel_mult, MAX_SPEED))
         elif keys[pygame.K_DOWN]:
             if self.speed > 0:
                 self.speed = max(self.speed - BRAKE, 0.0)
             else:
                 self.speed = max(self.speed - ACCEL * 0.6, -REVERSE_MAX)
         else:
-            if abs(self.speed) < FRICTION:
+            if abs(self.speed) < friction:
                 self.speed = 0.0
             elif self.speed > 0:
-                self.speed -= FRICTION
+                self.speed -= friction
             else:
-                self.speed += FRICTION
+                self.speed += friction
 
     # ------------------------------------------------------------------
     # Collision helpers
