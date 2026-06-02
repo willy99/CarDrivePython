@@ -1,0 +1,14 @@
+# Cloudflare Workers static-assets deployment.
+# `npx wrangler deploy` serves the built React app from ./dist as a static site
+# (no Worker script needed — assets-only deployment).
+
+name = "cardrivepython"
+compatibility_date = "2025-01-01"
+
+[assets]
+directory = "./dist"
+# Serve index.html for any unmatched path so React Router routes
+# (e.g. /play/cardrive) work on direct load / refresh.
+# Real files like /games/cardrive/index.html exist, so they are served as-is
+# and never hit this fallback.
+not_found_handling = "single-page-application"
