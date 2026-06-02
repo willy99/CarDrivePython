@@ -156,14 +156,19 @@ class Game:
     # Main loop
     # ------------------------------------------------------------------
 
+    def tick(self):
+        """Advance one frame.  Called by both run() and the async web loop."""
+        t = pygame.time.get_ticks()
+        self._handle_events(t)
+        keys = pygame.key.get_pressed()
+        self._update(keys, t)
+        self._draw(t)
+        self.clock.tick(FPS)
+
     def run(self):
+        """Blocking desktop loop."""
         while True:
-            tick = pygame.time.get_ticks()
-            self._handle_events(tick)
-            keys = pygame.key.get_pressed()
-            self._update(keys, tick)
-            self._draw(tick)
-            self.clock.tick(FPS)
+            self.tick()
 
     # ------------------------------------------------------------------
     # Per-frame update
