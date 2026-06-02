@@ -162,13 +162,13 @@ class HUD:
         if state == S_FINISHED:
             self._center_msg(surf, f"LEVEL COMPLETE!  {fmt_time(race_ms)}", C_MARKER_B)
             sub = self.font.render(
-                "Press SPACE for next level  |  R to retry", True, C_WHITE
+                "SPACE: next level     R: replay     H: home", True, C_WHITE
             )
             surf.blit(sub, sub.get_rect(center=(SCREEN_W // 2, SCREEN_H // 2 + 52)))
 
         if state == S_GAME_OVER:
             self._center_msg(surf, "GAME OVER", C_CAR_CRASH)
-            sub = self.font.render("Press R to restart from Level 1", True, C_WHITE)
+            sub = self.font.render("R: retry level     H: home", True, C_WHITE)
             surf.blit(sub, sub.get_rect(center=(SCREEN_W // 2, SCREEN_H // 2 + 52)))
 
         if state == S_WAITING:

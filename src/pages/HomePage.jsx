@@ -6,7 +6,7 @@ const GAMES = [
   {
     id:          'cardrive',
     title:       'CarDrive',
-    description: '10 levels: racing, taxi fares, night, rain & fuel',
+    description: '11 levels: racing, taxi fares, night, rain & fuel',
     emoji:       '🏎️',
     color:       'bg-blue-700',
     available:   true,

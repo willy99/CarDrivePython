@@ -4,7 +4,7 @@ import random
 import pygame
 
 from constants import (
-    TILE, CELL, ROAD, STEP, OX, OY,
+    TILE, OX, OY,
     CAR_W,
     SCREEN_W, SCREEN_H,
     C_ASPHALT, C_GRASS, C_GRASS_DARK,
@@ -34,8 +34,11 @@ class GameMap:
     def __init__(self, cfg: LevelConfig):
         self.mx = cfg.mx
         self.my = cfg.my
-        self.map_w_tiles = OX + self.mx * STEP + 1   # tile columns
-        self.map_h_tiles = OY + self.my * STEP + 1   # tile rows
+        self.cell = cfg.cell                 # room size (tiles)
+        self.road = cfg.road                 # street width (tiles)
+        self.step = self.cell + self.road    # tiles per macro-cell
+        self.map_w_tiles = OX + self.mx * self.step + 1
+        self.map_h_tiles = OY + self.my * self.step + 1
 
         self.grid = [[1] * self.map_w_tiles for _ in range(self.map_h_tiles)]
         self.houses: list[pygame.Rect] = []
@@ -57,23 +60,23 @@ class GameMap:
     # ------------------------------------------------------------------
 
     def _room(self, mx: int, my: int):
-        rx, ry = OX + mx * STEP, OY + my * STEP
-        for dy in range(CELL):
-            for dx in range(CELL):
+        rx, ry = OX + mx * self.step, OY + my * self.step
+        for dy in range(self.cell):
+            for dx in range(self.cell):
                 self.grid[ry + dy][rx + dx] = 0
 
     def _h_corridor(self, mx: int, my: int):
-        cx = OX + mx * STEP + CELL
-        cy = OY + my * STEP
-        for dy in range(CELL):
-            for dx in range(ROAD):
+        cx = OX + mx * self.step + self.cell
+        cy = OY + my * self.step
+        for dy in range(self.cell):
+            for dx in range(self.road):
                 self.grid[cy + dy][cx + dx] = 0
 
     def _v_corridor(self, mx: int, my: int):
-        cx = OX + mx * STEP
-        cy = OY + my * STEP + CELL
-        for dy in range(ROAD):
-            for dx in range(CELL):
+        cx = OX + mx * self.step
+        cy = OY + my * self.step + self.cell
+        for dy in range(self.road):
+            for dx in range(self.cell):
                 self.grid[cy + dy][cx + dx] = 0
 
     # ------------------------------------------------------------------
@@ -184,8 +187,8 @@ class GameMap:
         # Horizontal corridors
         for mx in range(self.mx - 1):
             for my in range(self.my):
-                cx = OX + mx * STEP + CELL
-                cy = OY + my * STEP
+                cx = OX + mx * self.step + self.cell
+                cy = OY + my * self.step
                 if self.grid[cy][cx] == 0 and rng.random() < light_prob:
                     self._add_h_light(cx, cy, phase)
                     phase = (phase + TrafficLight.TOTAL // 7) % TrafficLight.TOTAL
@@ -193,42 +196,40 @@ class GameMap:
         # Vertical corridors
         for mx in range(self.mx):
             for my in range(self.my - 1):
-                cx = OX + mx * STEP
-                cy = OY + my * STEP + CELL
+                cx = OX + mx * self.step
+                cy = OY + my * self.step + self.cell
                 if self.grid[cy][cx] == 0 and rng.random() < light_prob:
                     self._add_v_light(cx, cy, phase)
                     phase = (phase + TrafficLight.TOTAL // 7) % TrafficLight.TOTAL
 
     def _add_h_light(self, cx: int, cy: int, phase: int):
-        """Traffic light for an H-corridor whose tiles span x=[cx,cx+ROAD), y=[cy,cy+CELL)."""
-        wx = (cx + ROAD / 2) * TILE          # x-centre of corridor
-        wy = (cy + CELL / 2) * TILE          # y-centre of corridor (light pole pos)
+        """Traffic light for an H-corridor (tiles x=[cx,cx+road), y=[cy,cy+cell))."""
+        wx = (cx + self.road / 2) * TILE     # x-centre of corridor
+        wy = (cy + self.cell / 2) * TILE     # y-centre of corridor (light pole pos)
         light = TrafficLight(wx, wy, phase)
 
-        # Crosswalk: pedestrian walks N→S.
-        # Use tile *centres* so both endpoints are guaranteed road tiles.
+        # Crosswalk: pedestrian walks N→S, between tile centres (always road).
         light.walk_start = (wx, float(cy * TILE + TILE // 2))
-        light.walk_end   = (wx, float((cy + CELL - 1) * TILE + TILE // 2))
+        light.walk_end   = (wx, float((cy + self.cell - 1) * TILE + TILE // 2))
 
-        for dy in range(CELL):
-            for dx in range(ROAD):
+        for dy in range(self.cell):
+            for dx in range(self.road):
                 self.tile_to_light[(cx + dx, cy + dy)] = light
 
         self.traffic_lights.append(light)
 
     def _add_v_light(self, cx: int, cy: int, phase: int):
-        """Traffic light for a V-corridor whose tiles span x=[cx,cx+CELL), y=[cy,cy+ROAD)."""
-        wx = (cx + CELL / 2) * TILE          # x-centre of corridor (light pole pos)
-        wy = (cy + ROAD / 2) * TILE          # y-centre of corridor
+        """Traffic light for a V-corridor (tiles x=[cx,cx+cell), y=[cy,cy+road))."""
+        wx = (cx + self.cell / 2) * TILE     # x-centre of corridor (light pole pos)
+        wy = (cy + self.road / 2) * TILE     # y-centre of corridor
         light = TrafficLight(wx, wy, phase)
 
-        # Crosswalk: pedestrian walks W→E.
-        # Use tile *centres* so both endpoints are guaranteed road tiles.
-        light.walk_start = (float(cx * TILE + TILE // 2),             wy)
-        light.walk_end   = (float((cx + CELL - 1) * TILE + TILE // 2), wy)
+        # Crosswalk: pedestrian walks W→E, between tile centres (always road).
+        light.walk_start = (float(cx * TILE + TILE // 2),                  wy)
+        light.walk_end   = (float((cx + self.cell - 1) * TILE + TILE // 2), wy)
 
-        for dy in range(ROAD):
-            for dx in range(CELL):
+        for dy in range(self.road):
+            for dx in range(self.cell):
                 self.tile_to_light[(cx + dx, cy + dy)] = light
 
         self.traffic_lights.append(light)
@@ -240,55 +241,76 @@ class GameMap:
     def _room_centers(self) -> list[tuple[float, float]]:
         return [
             (
-                (OX + mx * STEP + CELL // 2) * TILE + TILE // 2,
-                (OY + my * STEP + CELL // 2) * TILE + TILE // 2,
+                (OX + mx * self.step + self.cell // 2) * TILE + TILE // 2,
+                (OY + my * self.step + self.cell // 2) * TILE + TILE // 2,
             )
             for my in range(self.my)
             for mx in range(self.mx)
         ]
 
     @staticmethod
-    def _two_farthest(rooms):
-        best_d, a, b = 0.0, rooms[0], rooms[-1]
+    def _dist(a, b):
+        return math.hypot(a[0] - b[0], a[1] - b[1])
+
+    def _max_room_dist(self, rooms) -> float:
+        d = 0.0
         for i in range(len(rooms)):
             for j in range(i + 1, len(rooms)):
-                d = math.hypot(rooms[i][0] - rooms[j][0],
-                               rooms[i][1] - rooms[j][1])
-                if d > best_d:
-                    best_d, a, b = d, rooms[i], rooms[j]
-        return a, b
+                d = max(d, self._dist(rooms[i], rooms[j]))
+        return d or 1.0
 
     def _pick_objectives(self, cfg: LevelConfig):
+        """
+        Choose start / (pickup) / dropoff at RANDOM positions that are still
+        a decent distance apart — so the route varies every play rather than
+        always running corner-to-corner.
+        """
+        rng = random.Random()
         rooms = self._room_centers()
+        max_d = self._max_room_dist(rooms)
 
         if cfg.mode == MODE_TAXI and len(rooms) >= 3:
-            # Start at one extreme; pickup and dropoff chosen to spread the
-            # journey across the map (greedy farthest-point selection).
-            a, b = self._two_farthest(rooms)
-            # pickup = room maximising min-distance to both a and b
-            pickup = max(
-                rooms,
-                key=lambda r: min(math.hypot(r[0]-a[0], r[1]-a[1]),
-                                  math.hypot(r[0]-b[0], r[1]-b[1])),
-            )
+            # Need 3 distinct rooms, each pair reasonably far apart.
+            need = 3
+            min_sep = max_d * 0.45
+        else:
+            need = 2
+            min_sep = max_d * 0.55
+
+        chosen = self._pick_spread_rooms(rng, rooms, need, min_sep)
+
+        if cfg.mode == MODE_TAXI and len(chosen) >= 3:
+            a, pickup, b = chosen[0], chosen[1], chosen[2]
             self.start_pos  = a
             self.pickup_pos = pickup
             self.end_pos    = b
-            self.objectives = [
-                (pickup, "P", C_MARKER_P),
-                (b,      "B", C_MARKER_B),
-            ]
+            self.objectives = [(pickup, "P", C_MARKER_P), (b, "B", C_MARKER_B)]
         else:
-            a, b = self._two_farthest(rooms)
+            a, b = chosen[0], chosen[1]
             self.start_pos = a
             self.end_pos   = b
             self.objectives = [(b, "B", C_MARKER_B)]
+
+    @staticmethod
+    def _pick_spread_rooms(rng, rooms, need, min_sep):
+        """Randomly pick `need` rooms that are mutually >= min_sep apart."""
+        for _ in range(200):
+            sample = rng.sample(rooms, need)
+            ok = all(
+                math.hypot(sample[i][0] - sample[j][0],
+                           sample[i][1] - sample[j][1]) >= min_sep
+                for i in range(need) for j in range(i + 1, need)
+            )
+            if ok:
+                rng.shuffle(sample)
+                return sample
+        # Fallback: relax the constraint
+        return rng.sample(rooms, need)
 
     def _place_gas_stations(self, cfg: LevelConfig):
         if cfg.gas_count <= 0:
             return
         rooms = self._room_centers()
-        # Exclude rooms occupied by start / objectives
         taken = {self.start_pos} | {o[0] for o in self.objectives}
         candidates = [r for r in rooms if r not in taken]
         rng = random.Random()

@@ -16,7 +16,8 @@ from constants import (
     RAIN_STEER_MULT, RAIN_FRICTION_MULT, RAIN_ACCEL_MULT,
     S_WAITING, S_RACING, S_FINISHED, S_GAME_OVER,
 )
-from level_config import LEVELS
+from level_config import LEVELS, level_by_passcode
+from screens import ScreenRenderer
 from car import Car
 from npc_car import NPCCar
 from game_map import GameMap
@@ -49,9 +50,11 @@ class Game:
         pygame.display.set_caption("CarDrive")
         self.clock = pygame.time.Clock()
 
-        font     = pygame.font.Font(None, 22)
-        big_font = pygame.font.Font(None, 54)
-        self.hud = HUD(font, big_font)
+        font       = pygame.font.Font(None, 22)
+        big_font   = pygame.font.Font(None, 54)
+        title_font = pygame.font.Font(None, 90)
+        self.hud     = HUD(font, big_font)
+        self.screens = ScreenRenderer(font, big_font, title_font)
 
         self.level_idx   = 0
         self.total_score = 0
@@ -60,7 +63,10 @@ class Game:
         self._notifications: list[tuple[str, tuple, int]] = []
         self._gameover_reason = ""
 
-        self._init_level()
+        # Front-end flow: 'home' -> 'intro' -> 'play'
+        self.screen_mode = "home"
+        self.code_input  = ""
+        self.code_msg    = ""
 
     # ------------------------------------------------------------------
     # Level management
@@ -180,17 +186,32 @@ class Game:
         if self.best_ms is None or self.race_ms < self.best_ms:
             self.best_ms = self.race_ms
 
-        self.level_idx = min(self.level_idx + 1, len(LEVELS) - 1)
+        nxt = min(self.level_idx + 1, len(LEVELS) - 1)
+        self._goto_intro(nxt)
+
+    def _goto_intro(self, idx: int):
+        """Build level `idx` and show its intro screen."""
+        self.level_idx = idx
         self._init_level()
+        self.screen_mode = "intro"
+
+    def _start_play(self):
+        self.screen_mode = "play"
 
     def _restart_from_level1(self):
-        self.level_idx   = 0
         self.total_score = 0
         self.best_ms     = None
-        self._init_level()
+        self._goto_intro(0)
 
     def _retry_level(self):
+        # Quick retry: straight back into play, no intro screen
         self._init_level()
+        self.screen_mode = "play"
+
+    def _go_home(self):
+        self.screen_mode = "home"
+        self.code_input  = ""
+        self.code_msg    = ""
 
     # ------------------------------------------------------------------
     # Main loop
@@ -199,16 +220,73 @@ class Game:
     def tick(self):
         """Advance one frame.  Called by both run() and the async web loop."""
         t = pygame.time.get_ticks()
-        self._handle_events(t)
-        keys = pygame.key.get_pressed()
-        self._update(keys, t)
-        self._draw(t)
+        if self.screen_mode == "home":
+            self._tick_home(t)
+        elif self.screen_mode == "intro":
+            self._tick_intro(t)
+        else:
+            self._handle_events(t)
+            keys = pygame.key.get_pressed()
+            self._update(keys, t)
+            self._draw(t)
         self.clock.tick(FPS)
 
     def run(self):
         """Blocking desktop loop."""
         while True:
             self.tick()
+
+    # ------------------------------------------------------------------
+    # Home & intro screens
+    # ------------------------------------------------------------------
+
+    def _tick_home(self, t: int):
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit(); sys.exit()
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_ESCAPE:
+                    pygame.quit(); sys.exit()
+                elif event.key in (pygame.K_RETURN, pygame.K_KP_ENTER):
+                    self._submit_code()
+                elif event.key == pygame.K_BACKSPACE:
+                    self.code_input = self.code_input[:-1]
+                    self.code_msg = ""
+                elif event.unicode and event.unicode.isalnum() and len(self.code_input) < 6:
+                    self.code_input += event.unicode.upper()
+                    self.code_msg = ""
+        self.screens.draw_home(self.screen, t, self.code_input, self.code_msg)
+        pygame.display.flip()
+
+    def _submit_code(self):
+        if not self.code_input:
+            # Empty → start a fresh game at level 1
+            self.total_score = 0
+            self.best_ms = None
+            self._goto_intro(0)
+            return
+        idx = level_by_passcode(self.code_input)
+        if idx is None:
+            self.code_msg = f'"{self.code_input}" is not a valid code'
+        else:
+            self.total_score = 0
+            self.best_ms = None
+            self._goto_intro(idx)
+
+    def _tick_intro(self, t: int):
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit(); sys.exit()
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_ESCAPE:
+                    pygame.quit(); sys.exit()
+                elif event.key == pygame.K_h:
+                    self._go_home()
+                elif event.key in (pygame.K_SPACE, pygame.K_RETURN,
+                                   pygame.K_KP_ENTER, pygame.K_UP):
+                    self._start_play()
+        self.screens.draw_intro(self.screen, LEVELS[self.level_idx], t)
+        pygame.display.flip()
 
     # ------------------------------------------------------------------
     # Per-frame update
@@ -275,12 +353,12 @@ class Game:
                 if event.key == pygame.K_ESCAPE:
                     pygame.quit(); sys.exit()
                 if event.key == pygame.K_r:
-                    if self.state == S_GAME_OVER:
-                        self._restart_from_level1()
-                    else:
-                        self._retry_level()
+                    self._retry_level()          # quick retry of current level
                 if event.key == pygame.K_SPACE and self.state == S_FINISHED:
-                    self._next_level()
+                    self._next_level()           # → next level's intro
+                # Return to home (with passcode entry) from an end screen
+                if event.key == pygame.K_h and self.state in (S_FINISHED, S_GAME_OVER):
+                    self._go_home()
 
     # ------------------------------------------------------------------
     # Collision resolution
