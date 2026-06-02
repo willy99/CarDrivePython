@@ -168,7 +168,8 @@ class HUD:
 
         if state == S_GAME_OVER:
             self._center_msg(surf, "GAME OVER", C_CAR_CRASH)
-            sub = self.font.render("R: retry level     H: home", True, C_WHITE)
+            sub = self.font.render("Press R or H for the menu  (resume with a level code)",
+                                   True, C_WHITE)
             surf.blit(sub, sub.get_rect(center=(SCREEN_W // 2, SCREEN_H // 2 + 52)))
 
         if state == S_WAITING:

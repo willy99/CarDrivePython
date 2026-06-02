@@ -3,7 +3,64 @@ import random
 
 import pygame
 
-from constants import SCREEN_W, SCREEN_H
+from constants import SCREEN_W, SCREEN_H, C_PASSENGER, C_BLACK
+
+
+class TaxiPassenger:
+    """
+    The fare waiting at the pickup point.
+
+    States:
+      waiting  – stands on the pavement, waving
+      boarding – walks toward the (stopped) taxi
+      aboard   – has entered the car (no longer drawn here)
+    """
+
+    RADIUS    = 8
+    WALK_SPEED = 2.2
+
+    def __init__(self, x: float, y: float):
+        self.x = float(x)
+        self.y = float(y)
+        self.state = "waiting"
+        self.anim = 0
+
+    def start_boarding(self):
+        if self.state == "waiting":
+            self.state = "boarding"
+
+    def update(self, car) -> bool:
+        """Advance; return True on the frame boarding completes."""
+        self.anim += 1
+        if self.state != "boarding":
+            return False
+        dx, dy = car.x - self.x, car.y - self.y
+        d = math.hypot(dx, dy)
+        if d > self.WALK_SPEED:
+            self.x += dx / d * self.WALK_SPEED
+            self.y += dy / d * self.WALK_SPEED
+            return False
+        self.state = "aboard"
+        return True
+
+    def draw(self, surf, cam_x: float, cam_y: float):
+        if self.state == "aboard":
+            return
+        sx = int(self.x - cam_x)
+        sy = int(self.y - cam_y)
+        if not (-30 < sx < SCREEN_W + 30 and -30 < sy < SCREEN_H + 30):
+            return
+        r = self.RADIUS
+        # body + head
+        pygame.draw.circle(surf, C_PASSENGER, (sx, sy), r)
+        pygame.draw.circle(surf, C_BLACK,     (sx, sy), r, 1)
+        pygame.draw.circle(surf, (235, 205, 150), (sx, sy - r - 4), 4)
+        pygame.draw.circle(surf, C_BLACK,         (sx, sy - r - 4), 4, 1)
+        # waving arm while waiting
+        if self.state == "waiting":
+            wave = math.sin(self.anim * 0.18) * 6
+            pygame.draw.line(surf, C_BLACK, (sx + r - 1, sy - 2),
+                             (sx + r + 6, sy - 8 - int(wave)), 2)
 
 
 class Pedestrian:

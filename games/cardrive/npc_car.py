@@ -6,6 +6,8 @@ import pygame
 from constants import (
     TILE, NPC_W, NPC_H,
     SCREEN_W, SCREEN_H,
+    NPC_CRUISE_MIN, NPC_CRUISE_MAX, NPC_ACCEL, NPC_BRAKE,
+    NPC_TURN_EASE, NPC_LANE_FRAC, NPC_REACT, NPC_GAP,
     C_CAR_WINDOW, C_HEADLIGHT, C_BLACK,
 )
 from utils import polygon_corners
@@ -20,11 +22,24 @@ NPC_COLORS = [
     (200,  60, 100),
 ]
 
-_DIRS = [(1, 0, 0.0), (-1, 0, 180.0), (0, 1, 90.0), (0, -1, 270.0)]
+_DIRS = [(1, 0), (-1, 0), (0, 1), (0, -1)]
+
+
+def _ang_delta(cur: float, target: float) -> float:
+    """Shortest signed angular difference (degrees) from cur to target."""
+    return (target - cur + 180) % 360 - 180
 
 
 class NPCCar:
-    """Autonomously navigating traffic car that follows road tiles."""
+    """
+    Traffic car with rule-following behaviour:
+
+    * follows tile-to-tile paths, keeping to the right-hand side of the street
+    * accelerates / brakes smoothly toward a cruise speed
+    * stops at red lights (and queues behind the car in front)
+    * yields to pedestrians crossing ahead
+    * prefers to drive straight, turning at junctions only some of the time
+    """
 
     W = NPC_W
     H = NPC_H
@@ -32,65 +47,112 @@ class NPCCar:
     def __init__(self, game_map):
         self._map = game_map
         self.color = random.choice(NPC_COLORS)
-        self.speed = random.uniform(1.4, 2.8)
-        self.dx, self.dy = 1, 0
-        self.angle = 0.0
+        self.cruise = random.uniform(NPC_CRUISE_MIN, NPC_CRUISE_MAX)
+        self.speed = self.cruise
 
-        tiles = game_map.road_tiles()
-        tx, ty = random.choice(tiles)
+        tx, ty = random.choice(game_map.road_tiles())
+        self.tx, self.ty = tx, ty
         self.x = float(tx * TILE + TILE // 2)
         self.y = float(ty * TILE + TILE // 2)
-        self._target_x = self.x
-        self._target_y = self.y
-        self._advance(tx, ty, first=True)
+        self.dx, self.dy = 0, 0
+        self._pick_dir(first=True)
+        self.angle = math.degrees(math.atan2(self.dy, self.dx))
 
     # ------------------------------------------------------------------
-    # Navigation
+    # Navigation helpers
     # ------------------------------------------------------------------
 
-    @staticmethod
-    def _tile_center(tx, ty):
-        return float(tx * TILE + TILE // 2), float(ty * TILE + TILE // 2)
+    def _valid(self, tx, ty) -> bool:
+        return (0 <= tx < self._map.map_w_tiles
+                and 0 <= ty < self._map.map_h_tiles
+                and self._map.grid[ty][tx] == 0)
 
-    def _advance(self, tx: int, ty: int, first: bool = False):
-        mw = self._map.map_w_tiles
-        mh = self._map.map_h_tiles
-        cands = [
-            (ddx, ddy, ang) for ddx, ddy, ang in _DIRS
-            if (first or not (ddx == -self.dx and ddy == -self.dy))
-            and 0 <= tx + ddx < mw and 0 <= ty + ddy < mh
-            and self._map.grid[ty + ddy][tx + ddx] == 0
-        ]
-        if not cands:
-            cands = [
-                (ddx, ddy, ang) for ddx, ddy, ang in _DIRS
-                if 0 <= tx + ddx < mw and 0 <= ty + ddy < mh
-                and self._map.grid[ty + ddy][tx + ddx] == 0
-            ]
-        if cands:
-            self.dx, self.dy, self.angle = random.choice(cands)
-            self._target_x, self._target_y = self._tile_center(
-                tx + self.dx, ty + self.dy
-            )
-        else:
-            self._target_x, self._target_y = self.x, self.y
+    def _pick_dir(self, first: bool = False):
+        """Choose the next grid direction (no U-turn; prefer going straight)."""
+        opts = []
+        for ddx, ddy in _DIRS:
+            if not first and (ddx, ddy) == (-self.dx, -self.dy):
+                continue
+            if self._valid(self.tx + ddx, self.ty + ddy):
+                weight = 3 if (ddx, ddy) == (self.dx, self.dy) else 1
+                opts += [(ddx, ddy)] * weight
+        if not opts:  # dead-end → allow U-turn
+            opts = [(ddx, ddy) for ddx, ddy in _DIRS
+                    if self._valid(self.tx + ddx, self.ty + ddy)]
+        if opts:
+            self.dx, self.dy = random.choice(opts)
+
+    def _target_point(self):
+        """World position of the next tile centre, shifted to the right lane."""
+        nx, ny = self.tx + self.dx, self.ty + self.dy
+        cx = nx * TILE + TILE // 2
+        cy = ny * TILE + TILE // 2
+        lane = NPC_LANE_FRAC * TILE * max(0, self._map.road - 1)
+        rx, ry = -self.dy, self.dx          # right-hand of travel direction
+        return cx + rx * lane, cy + ry * lane
+
+    # ------------------------------------------------------------------
+    # Decision: should the car hold position?
+    # ------------------------------------------------------------------
+
+    def _must_stop(self, peds, others) -> bool:
+        nx, ny = self.tx + self.dx, self.ty + self.dy
+
+        # Red light: stop before entering a red-controlled tile from outside.
+        light = self._map.tile_to_light.get((nx, ny))
+        if light is not None and light.is_red:
+            here = self._map.tile_to_light.get((self.tx, self.ty))
+            if here is not light:          # not already clearing the crossing
+                return True
+
+        # Pedestrian crossing just ahead
+        for ped in peds:
+            dx, dy = ped.x - self.x, ped.y - self.y
+            if (dx * self.dx + dy * self.dy) > 0 and math.hypot(dx, dy) < NPC_REACT:
+                return True
+
+        # Car ahead in the same lane → queue
+        for o in others:
+            if o is self:
+                continue
+            dx, dy = o.x - self.x, o.y - self.y
+            fwd = dx * self.dx + dy * self.dy           # forward distance
+            lat = abs(dx * -self.dy + dy * self.dx)     # lateral offset
+            if 0 < fwd < NPC_GAP and lat < TILE * 0.5:
+                return True
+
+        return False
 
     # ------------------------------------------------------------------
     # Update
     # ------------------------------------------------------------------
 
-    def update(self):
-        tdx = self._target_x - self.x
-        tdy = self._target_y - self.y
-        dist = math.hypot(tdx, tdy)
-        if dist <= self.speed:
-            self.x, self.y = self._target_x, self._target_y
-            tx = round(self.x - TILE // 2) // TILE
-            ty = round(self.y - TILE // 2) // TILE
-            self._advance(tx, ty)
+    def update(self, peds=(), others=()):
+        target_speed = 0.0 if self._must_stop(peds, others) else self.cruise
+
+        # Smooth speed ramp
+        if self.speed < target_speed:
+            self.speed = min(target_speed, self.speed + NPC_ACCEL)
         else:
-            self.x += tdx / dist * self.speed
-            self.y += tdy / dist * self.speed
+            self.speed = max(target_speed, self.speed - NPC_BRAKE)
+
+        tx_w, ty_w = self._target_point()
+        vx, vy = tx_w - self.x, ty_w - self.y
+        dist = math.hypot(vx, vy)
+
+        # Smoothly ease heading toward the direction of travel
+        if dist > 1e-3:
+            desired = math.degrees(math.atan2(vy, vx))
+            self.angle += _ang_delta(self.angle, desired) * NPC_TURN_EASE
+            step = min(self.speed, dist)
+            self.x += vx / dist * step
+            self.y += vy / dist * step
+
+        # Reached the waypoint → advance to the next tile
+        if dist <= self.speed + 0.6:
+            self.tx += self.dx
+            self.ty += self.dy
+            self._pick_dir()
 
     # ------------------------------------------------------------------
     # Collision helpers

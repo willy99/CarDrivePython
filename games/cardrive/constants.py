@@ -74,6 +74,18 @@ SKID_MAX_AGE   = 300   # frames before a mark fades completely (~5 s at 60 fps)
 SKID_INTERVAL  =   3   # generate a mark every N frames while braking
 
 # ---------------------------------------------------------------------------
+# NPC traffic AI
+# ---------------------------------------------------------------------------
+NPC_CRUISE_MIN = 1.5     # slowest preferred speed
+NPC_CRUISE_MAX = 2.6     # fastest preferred speed
+NPC_ACCEL      = 0.07    # speed ramp-up per frame
+NPC_BRAKE      = 0.22    # speed ramp-down per frame
+NPC_TURN_EASE  = 0.22    # heading easing factor (smooth cornering)
+NPC_LANE_FRAC  = 0.20    # lane offset (fraction of TILE) per extra road tile
+NPC_REACT      = 52      # px: pedestrian look-ahead distance
+NPC_GAP        = 48      # px: car-following gap (queue spacing)
+
+# ---------------------------------------------------------------------------
 # Game modes
 # ---------------------------------------------------------------------------
 MODE_RACE = 'race'   # drive A → B
@@ -84,6 +96,10 @@ MODE_TAXI = 'taxi'   # drive A → pickup → dropoff
 # ---------------------------------------------------------------------------
 SCORE_FARE_BASE    = 600   # base fare for completing a delivery
 SCORE_SMOOTH_BONUS = 300   # bonus for delivering with zero crashes
+
+# Taxi pickup: must come to a near-full stop close to the waiting passenger
+PICKUP_RADIUS     = TILE * 1.5
+PICKUP_STOP_SPEED = 0.5    # |speed| below this counts as "stopped"
 
 # ---------------------------------------------------------------------------
 # Fuel (only levels whose cfg.fuel is not None)

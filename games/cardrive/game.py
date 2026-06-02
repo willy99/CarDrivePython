@@ -10,6 +10,7 @@ from constants import (
     SCORE_LEVEL_BASE, SCORE_TIME_PENALTY_MS,
     SCORE_VIOLATION, SCORE_TIME_SURPLUS, SCORE_CLEAN_BONUS,
     SCORE_FARE_BASE, SCORE_SMOOTH_BONUS,
+    PICKUP_RADIUS, PICKUP_STOP_SPEED,
     SKID_MIN_SPEED, SKID_MAX_AGE, SKID_INTERVAL,
     MODE_TAXI,
     FUEL_DRAIN, FUEL_IDLE_DRAIN, FUEL_REFILL_RATE, GAS_RADIUS,
@@ -21,10 +22,10 @@ from screens import ScreenRenderer
 from car import Car
 from npc_car import NPCCar
 from game_map import GameMap
-from pedestrian import Pedestrian
+from pedestrian import Pedestrian, TaxiPassenger
 from hud import HUD
 from mini_map import MiniMap
-from effects import NightOverlay, Rain
+from effects import NightOverlay, Rain, ImpactBurst
 from utils import sat_overlap, rect_poly
 
 # SkidMark: (world_x, world_y, angle_deg, age_frames)
@@ -92,6 +93,12 @@ class Game:
         self.obj_idx       = 0
         self.has_passenger = False
 
+        # Taxi fare waiting on the pavement at the pickup point
+        self.passenger = None
+        if self.mode == MODE_TAXI and self.game_map.pickup_pos is not None:
+            sx, sy = self._pickup_stand_spot(self.game_map.pickup_pos)
+            self.passenger = TaxiPassenger(sx, sy)
+
         # --- fuel ---
         self.fuel     = cfg.fuel
         self.max_fuel = cfg.fuel
@@ -103,6 +110,7 @@ class Game:
             self.car.set_wet(RAIN_STEER_MULT, RAIN_FRICTION_MULT, RAIN_ACCEL_MULT)
 
         self.skid_marks: list[_SkidMark] = []
+        self.impact = None          # ImpactBurst when a pedestrian is hit
         self.mini_map = MiniMap(self.game_map)
 
         self._notifications.clear()
@@ -117,6 +125,31 @@ class Game:
         if 0 <= self.obj_idx < len(self.objectives):
             return self.objectives[self.obj_idx][0]
         return None
+
+    def _pickup_stand_spot(self, pos):
+        """A kerb-side spot near the pickup room where the fare waits."""
+        gm = self.game_map
+        cx, cy = int(pos[0]) // TILE, int(pos[1]) // TILE
+
+        def is_road(tx, ty):
+            return (0 <= tx < gm.map_w_tiles and 0 <= ty < gm.map_h_tiles
+                    and gm.grid[ty][tx] == 0)
+
+        best = None
+        for ty in range(cy - 2, cy + 3):
+            for tx in range(cx - 2, cx + 3):
+                if not is_road(tx, ty):
+                    continue
+                for ddx, ddy in ((0, 1), (1, 0), (0, -1), (-1, 0)):
+                    if not is_road(tx + ddx, ty + ddy):     # block neighbour = kerb
+                        wx = tx * TILE + TILE // 2 + ddx * (TILE * 0.30)
+                        wy = ty * TILE + TILE // 2 + ddy * (TILE * 0.30)
+                        d = abs(tx - cx) + abs(ty - cy)
+                        if best is None or d < best[0]:
+                            best = (d, wx, wy)
+        if best:
+            return best[1], best[2]
+        return pos[0], pos[1] + TILE * 0.30
 
     def _spawn_all_pedestrians(self, peds_per_light: int) -> list[Pedestrian]:
         peds = []
@@ -296,6 +329,10 @@ class Game:
         cfg = LEVELS[self.level_idx]
         self._frame += 1
 
+        # Impact animation keeps playing even after game over
+        if self.impact:
+            self.impact.update()
+
         # Start timer
         if self.state == S_WAITING and keys[pygame.K_UP]:
             self.state      = S_RACING
@@ -322,7 +359,7 @@ class Game:
             ped.update()
 
         for npc in self.npcs:
-            npc.update()
+            npc.update(self.pedestrians, self.npcs)
 
         old_x, old_y = self.car.x, self.car.y
         if self.state not in (S_FINISHED, S_GAME_OVER):
@@ -335,6 +372,10 @@ class Game:
 
         self._check_pedestrian_collision()
         self._check_goal()
+        # Taxi boarding animation
+        if self.passenger is not None and self.passenger.state != "aboard":
+            if self.passenger.update(self.car):
+                self._advance_after_boarding()
         self._update_fuel()
         self._clamp_car()
         self._update_camera()
@@ -353,7 +394,10 @@ class Game:
                 if event.key == pygame.K_ESCAPE:
                     pygame.quit(); sys.exit()
                 if event.key == pygame.K_r:
-                    self._retry_level()          # quick retry of current level
+                    if self.state == S_GAME_OVER:
+                        self._go_home()         # game over is final → back to menu
+                    else:
+                        self._retry_level()     # quick restart of the attempt
                 if event.key == pygame.K_SPACE and self.state == S_FINISHED:
                     self._next_level()           # → next level's intro
                 # Return to home (with passcode entry) from an end screen
@@ -437,11 +481,22 @@ class Game:
     def _check_pedestrian_collision(self):
         if self.state in (S_FINISHED, S_GAME_OVER):
             return
-        for cx, cy in self.car.corners():
-            for ped in self.pedestrians:
-                if math.hypot(cx - ped.x, cy - ped.y) < Pedestrian.RADIUS + 4:
-                    self._trigger_game_over("Pedestrian hit!")
-                    return
+        # Oriented-box vs point (with the pedestrian's radius as padding):
+        # transform each pedestrian into the car's local frame.
+        rad = math.radians(self.car.angle)
+        cos_a, sin_a = math.cos(rad), math.sin(rad)
+        hw = self.car.W / 2 + Pedestrian.RADIUS
+        hh = self.car.H / 2 + Pedestrian.RADIUS
+        for ped in self.pedestrians:
+            dx = ped.x - self.car.x
+            dy = ped.y - self.car.y
+            lx = dx * cos_a + dy * sin_a
+            ly = -dx * sin_a + dy * cos_a
+            if abs(lx) <= hw and abs(ly) <= hh:
+                self.impact = ImpactBurst(ped.x, ped.y)
+                self.car.speed = 0.0
+                self._trigger_game_over("Pedestrian hit!")
+                return
 
     def _trigger_game_over(self, reason: str):
         self.state = S_GAME_OVER
@@ -461,21 +516,34 @@ class Game:
         tp = self.target_pos
         if tp is None:
             return
+        label = self.objectives[self.obj_idx][1]
+
+        # Taxi pickup: must STOP next to the waiting passenger; boarding then
+        # plays out in _update and advances the objective when complete.
+        if self.mode == MODE_TAXI and label == "P" and self.passenger is not None:
+            p = self.passenger
+            if p.state == "waiting":
+                near = math.hypot(self.car.x - p.x, self.car.y - p.y) < PICKUP_RADIUS
+                if near and abs(self.car.speed) < PICKUP_STOP_SPEED:
+                    p.start_boarding()
+                    self._notifications.append(
+                        ("Passenger boarding…", (250, 220, 90),
+                         pygame.time.get_ticks() + 1500))
+            return
+
+        # Race goal / taxi dropoff: reach the marker
         if math.hypot(self.car.x - tp[0], self.car.y - tp[1]) < GOAL_RADIUS:
-            label = self.objectives[self.obj_idx][1]
             self.obj_idx += 1
-            tick = pygame.time.get_ticks()
-
-            # Taxi pickup reached
-            if self.mode == MODE_TAXI and label == "P":
-                self.has_passenger = True
-                self._notifications.append(
-                    ("Passenger picked up!", (80, 220, 80), tick + 2500)
-                )
-
-            # All objectives done → level finished
             if self.obj_idx >= len(self.objectives):
                 self.state = S_FINISHED
+
+    def _advance_after_boarding(self):
+        """Called when the fare finishes getting in: gain passenger, retarget B."""
+        self.has_passenger = True
+        self.obj_idx += 1
+        self._notifications.append(
+            ("Passenger aboard — go!", (80, 220, 80),
+             pygame.time.get_ticks() + 2500))
 
     # ------------------------------------------------------------------
     # Fuel
@@ -587,6 +655,8 @@ class Game:
             npc.draw(self.screen, self.cam_x, self.cam_y)
         for ped in self.pedestrians:
             ped.draw(self.screen, self.cam_x, self.cam_y)
+        if self.passenger is not None:
+            self.passenger.draw(self.screen, self.cam_x, self.cam_y)
         self.car.draw(self.screen, self.cam_x, self.cam_y)
         if self.has_passenger:
             self._draw_passenger()
@@ -599,8 +669,13 @@ class Game:
                             self.car.x - self.cam_x,
                             self.car.y - self.cam_y)
 
+        # Pedestrian-hit animation (over the world, under HUD)
+        if self.impact:
+            self.impact.draw(self.screen, self.cam_x, self.cam_y)
+
         self.mini_map.draw(self.screen, self.car, self.game_map,
-                           self.npcs, self.cam_x, self.cam_y)
+                           self.npcs, self.cam_x, self.cam_y,
+                           tick=tick, target_pos=self.target_pos)
 
         cfg = LEVELS[self.level_idx]
         self.hud.draw(

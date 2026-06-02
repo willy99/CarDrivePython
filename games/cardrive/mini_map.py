@@ -84,7 +84,8 @@ class MiniMap:
     # Per-frame draw
     # ------------------------------------------------------------------
 
-    def draw(self, surf, car, game_map, npcs, cam_x: float, cam_y: float):
+    def draw(self, surf, car, game_map, npcs, cam_x: float, cam_y: float,
+             tick: int = 0, target_pos=None):
         ox = SCREEN_W - self.w - MARGIN
         oy = SCREEN_H - self.h - MARGIN
 
@@ -104,13 +105,18 @@ class MiniMap:
         vh = max(2, round(SCREEN_H * self.sy))
         pygame.draw.rect(surf, _C_VIEW, (ox + vx, oy + vy, vw, vh), 1)
 
-        # A and B markers
+        # Start marker (steady)
         self._dot(surf, ox, oy, *game_map.start_pos, C_MARKER_A, r=3)
-        self._dot(surf, ox, oy, *game_map.end_pos,   C_MARKER_B, r=3)
 
         # NPC cars
         for npc in npcs:
             self._dot(surf, ox, oy, npc.x, npc.y, _C_NPC, r=2)
+
+        # Objective markers (P / B) — blink like a lighthouse; the CURRENT
+        # target blinks strongest so you always know where to navigate.
+        for pos, _label, col in game_map.objectives:
+            is_target = (target_pos is not None and pos == target_pos)
+            self._blink_marker(surf, ox, oy, pos[0], pos[1], col, tick, is_target)
 
         # Player car — filled circle + direction tick
         px, py = self._m(car.x, car.y)
@@ -123,6 +129,24 @@ class MiniMap:
         # Border
         pygame.draw.rect(surf, _C_BORDER,
                          (ox - 1, oy - 1, self.w + 2, self.h + 2), 1)
+
+    def _blink_marker(self, surf, ox, oy, wx, wy, col, tick, strong):
+        """Pulsing concentric rings — a lighthouse beacon on the minimap."""
+        mx, my = self._m(wx, wy)
+        cx, cy = ox + mx, oy + my
+        speed = 0.010 if strong else 0.005
+        glow = 0.5 + 0.5 * math.sin(tick * speed)   # 0..1
+
+        # Expanding outer ring (the "beam")
+        max_r = 11 if strong else 7
+        ring_r = int(3 + glow * (max_r - 3))
+        pygame.draw.circle(surf, col, (cx, cy), ring_r, 1)
+        if strong and glow > 0.6:
+            pygame.draw.circle(surf, col, (cx, cy), ring_r + 3, 1)
+
+        # Solid core (brighter for the active target)
+        core = tuple(min(255, int(c + (60 if strong else 0))) for c in col)
+        pygame.draw.circle(surf, core, (cx, cy), 4 if strong else 3)
 
     # ------------------------------------------------------------------
     # Helpers
