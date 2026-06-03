@@ -84,6 +84,10 @@ NPC_TURN_EASE  = 0.22    # heading easing factor (smooth cornering)
 NPC_LANE_FRAC  = 0.20    # lane offset (fraction of TILE) per extra road tile
 NPC_REACT      = 52      # px: pedestrian look-ahead distance
 NPC_GAP        = 48      # px: car-following gap (queue spacing)
+NPC_TURN_PROB  = 0.30    # chance to turn (vs. go straight) at a junction
+NPC_STUCK_LIMIT   = 70   # frames blocked (oncoming/ped) before rerouting
+NPC_REVERSE_FRAMES = 12  # frames spent backing up during a reroute
+NPC_REVERSE_SPEED  = 0.9 # px/frame while backing up
 
 # ---------------------------------------------------------------------------
 # Game modes
