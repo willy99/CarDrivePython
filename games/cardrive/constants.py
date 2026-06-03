@@ -135,5 +135,6 @@ RAIN_ACCEL_MULT    = 0.85  # slight traction loss on acceleration
 # ---------------------------------------------------------------------------
 S_WAITING   = 0   # before first throttle press
 S_RACING    = 1   # timer running
-S_FINISHED  = 2   # reached final goal
+S_FINISHED  = 2   # reached final goal of a (non-last) level
 S_GAME_OVER = 3   # hit pedestrian, ran out of time, or out of fuel
+S_GAME_WON  = 4   # completed the final level — celebration!

@@ -5,9 +5,9 @@ import pygame
 from constants import (
     SCREEN_W, SCREEN_H, TILE, FPS,
     MAX_SPEED,
-    C_CAR_CRASH, C_WHITE, C_BLACK, C_MARKER_B, C_GAS,
+    C_CAR_CRASH, C_WHITE, C_BLACK, C_MARKER_B, C_MARKER_A, C_GAS,
     MODE_TAXI,
-    S_WAITING, S_RACING, S_FINISHED, S_GAME_OVER,
+    S_WAITING, S_RACING, S_FINISHED, S_GAME_OVER, S_GAME_WON,
 )
 from utils import fmt_time
 
@@ -46,7 +46,7 @@ class HUD:
         self._draw_controls_hint(surf)
         self._draw_notifications(surf, notifications, tick)
         self._draw_messages(surf, car, state, race_ms, countdown_s,
-                            mode, has_passenger)
+                            mode, has_passenger, total_score, tick)
 
     # ------------------------------------------------------------------
     # Elements
@@ -142,7 +142,7 @@ class HUD:
 
     def _draw_controls_hint(self, surf):
         hint = self.font.render(
-            "Arrows: drive   ESC: quit   R: restart",
+            "Arrows: drive   ESC: menu   R: restart",
             True, (180, 180, 180),
         )
         surf.blit(hint, (10, SCREEN_H - 28))
@@ -162,7 +162,12 @@ class HUD:
 
     def _draw_messages(self, surf, car, state: int, race_ms: int,
                        countdown_s: int | None,
-                       mode: str = "race", has_passenger: bool = False):
+                       mode: str = "race", has_passenger: bool = False,
+                       total_score: int = 0, tick: int = 0):
+        if state == S_GAME_WON:
+            self._draw_victory(surf, total_score, tick)
+            return
+
         if car.crashed and state not in (S_FINISHED, S_GAME_OVER):
             self._center_msg(surf, "CRASHED!  Press R to respawn", C_CAR_CRASH)
 
@@ -194,6 +199,25 @@ class HUD:
             col = C_MARKER_B if has_passenger else (255, 160, 60)
             b = self.font.render(banner, True, col)
             surf.blit(b, b.get_rect(center=(SCREEN_W // 2, SCREEN_H - 30)))
+
+    def _draw_victory(self, surf, total_score: int, tick: int):
+        cx = SCREEN_W // 2
+        # pulsing rainbow-ish title
+        hue = (tick // 6) % 3
+        col = [C_MARKER_B, C_MARKER_A, (90, 180, 255)][hue]
+        title = self.big_font.render("CONGRATULATIONS!", True, col)
+        shadow = self.big_font.render("CONGRATULATIONS!", True, C_BLACK)
+        surf.blit(shadow, shadow.get_rect(center=(cx + 2, SCREEN_H // 2 - 58)))
+        surf.blit(title,  title.get_rect(center=(cx, SCREEN_H // 2 - 60)))
+
+        l1 = self.font.render("You completed all 15 levels of CarDrive!",
+                              True, C_WHITE)
+        l2 = self.font.render(f"Final score:  {total_score}", True, C_MARKER_B)
+        l3 = self.font.render("Press SPACE for the menu", True, C_WHITE)
+        surf.blit(l1, l1.get_rect(center=(cx, SCREEN_H // 2 + 4)))
+        surf.blit(l2, l2.get_rect(center=(cx, SCREEN_H // 2 + 36)))
+        if (tick // 500) % 2 == 0:
+            surf.blit(l3, l3.get_rect(center=(cx, SCREEN_H // 2 + 80)))
 
     def _center_msg(self, surf, text: str, color: tuple):
         shadow = self.big_font.render(text, True, C_BLACK)

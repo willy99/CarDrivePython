@@ -14,6 +14,48 @@ from constants import (
 )
 
 
+class Fireworks:
+    """Celebratory fireworks for the victory screen."""
+
+    _COLORS = [(255, 80, 80), (80, 180, 255), (255, 220, 80),
+               (120, 255, 120), (255, 140, 255), (255, 170, 60)]
+
+    def __init__(self):
+        self.bursts = []     # each: [particles, color, age]
+        self.t = 0
+
+    def _spawn(self):
+        cx = random.uniform(SCREEN_W * 0.15, SCREEN_W * 0.85)
+        cy = random.uniform(SCREEN_H * 0.12, SCREEN_H * 0.55)
+        col = random.choice(self._COLORS)
+        ps = []
+        for _ in range(30):
+            a = random.uniform(0, math.tau)
+            sp = random.uniform(1.5, 4.8)
+            ps.append([cx, cy, math.cos(a) * sp, math.sin(a) * sp])
+        self.bursts.append([ps, col, 0])
+
+    def update(self):
+        self.t += 1
+        if self.t % 20 == 0:
+            self._spawn()
+        for b in self.bursts:
+            for p in b[0]:
+                p[0] += p[2]; p[1] += p[3]
+                p[3] += 0.06          # gravity
+                p[2] *= 0.99
+            b[2] += 1
+        self.bursts = [b for b in self.bursts if b[2] < 75]
+
+    def draw(self, surf):
+        for ps, col, age in self.bursts:
+            fade = max(0.0, 1.0 - age / 75)
+            c = (int(col[0] * fade), int(col[1] * fade), int(col[2] * fade))
+            for px, py, _vx, _vy in ps:
+                if 0 <= px < SCREEN_W and 0 <= py < SCREEN_H:
+                    pygame.draw.circle(surf, c, (int(px), int(py)), 2)
+
+
 class ImpactBurst:
     """
     Short collision animation played when the car hits a pedestrian:

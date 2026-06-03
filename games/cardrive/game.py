@@ -15,7 +15,7 @@ from constants import (
     MODE_TAXI,
     FUEL_DRAIN, FUEL_IDLE_DRAIN, FUEL_REFILL_RATE, GAS_RADIUS,
     RAIN_STEER_MULT, RAIN_FRICTION_MULT, RAIN_ACCEL_MULT,
-    S_WAITING, S_RACING, S_FINISHED, S_GAME_OVER,
+    S_WAITING, S_RACING, S_FINISHED, S_GAME_OVER, S_GAME_WON,
 )
 from level_config import LEVELS, level_by_passcode
 from screens import ScreenRenderer
@@ -25,7 +25,7 @@ from game_map import GameMap
 from pedestrian import Pedestrian, TaxiPassenger
 from hud import HUD
 from mini_map import MiniMap
-from effects import NightOverlay, Rain, ImpactBurst
+from effects import NightOverlay, Rain, ImpactBurst, Fireworks
 from sounds import SoundFX
 from traffic_ai import BRAIN, bucket
 from utils import sat_overlap, rect_poly
@@ -118,6 +118,7 @@ class Game:
 
         self.skid_marks: list[_SkidMark] = []
         self.impact = None          # ImpactBurst when a pedestrian is hit
+        self.fireworks = None       # Fireworks on the victory screen
         self.mini_map = MiniMap(self.game_map)
         self._ptile = None
         self._pdir  = (0, 0)
@@ -196,11 +197,11 @@ class Game:
             for off in offsets
         ]
 
-    def _next_level(self):
+    def _award_level_score(self):
+        """Tally the score for the level just completed (called once)."""
         cfg = LEVELS[self.level_idx]
         tick = pygame.time.get_ticks()
 
-        # ---- score calculation ----
         time_pen = self.race_ms // SCORE_TIME_PENALTY_MS
         viol_pen = self.violations * SCORE_VIOLATION
         surplus  = 0
@@ -214,20 +215,18 @@ class Game:
         if self.violations == 0:
             level_score += SCORE_CLEAN_BONUS
             self._notifications.append(
-                (f"Clean run!  +{SCORE_CLEAN_BONUS} pts", (80, 220, 80), tick + 3000)
-            )
-        # Taxi: extra bonus for a crash-free (comfortable) delivery
+                (f"Clean run!  +{SCORE_CLEAN_BONUS} pts", (80, 220, 80), tick + 3000))
         if self.mode == MODE_TAXI and self.level_crashes == 0:
             level_score += SCORE_SMOOTH_BONUS
             self._notifications.append(
-                (f"Smooth ride!  +{SCORE_SMOOTH_BONUS} pts", (250, 220, 90), tick + 3000)
-            )
+                (f"Smooth ride!  +{SCORE_SMOOTH_BONUS} pts", (250, 220, 90), tick + 3000))
 
         self.total_score += level_score
-
         if self.best_ms is None or self.race_ms < self.best_ms:
             self.best_ms = self.race_ms
 
+    def _next_level(self):
+        self._award_level_score()
         nxt = min(self.level_idx + 1, len(LEVELS) - 1)
         self._goto_intro(nxt)
 
@@ -288,7 +287,8 @@ class Game:
                 pygame.quit(); sys.exit()
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_ESCAPE:
-                    pygame.quit(); sys.exit()
+                    self.code_input = ""          # clear the code box
+                    self.code_msg = ""
                 elif event.key in (pygame.K_RETURN, pygame.K_KP_ENTER):
                     self._submit_code()
                 elif event.key == pygame.K_BACKSPACE:
@@ -320,9 +320,7 @@ class Game:
             if event.type == pygame.QUIT:
                 pygame.quit(); sys.exit()
             if event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_ESCAPE:
-                    pygame.quit(); sys.exit()
-                elif event.key == pygame.K_h:
+                if event.key in (pygame.K_ESCAPE, pygame.K_h):
                     self._go_home()
                 elif event.key in (pygame.K_SPACE, pygame.K_RETURN,
                                    pygame.K_KP_ENTER, pygame.K_UP):
@@ -342,8 +340,9 @@ class Game:
         if self.impact:
             self.impact.update()
 
-        # Start timer
-        if self.state == S_WAITING and keys[pygame.K_UP]:
+        # Start the clock on ANY drive input (forward OR reverse) so the
+        # timer and fuel can't be dodged by reversing.
+        if self.state == S_WAITING and (keys[pygame.K_UP] or keys[pygame.K_DOWN]):
             self.state      = S_RACING
             self.race_start = tick
 
@@ -375,8 +374,11 @@ class Game:
                                              npc.y - self.car.y) > SCREEN_W:
                 npc.respawn()
 
+        if self.fireworks is not None:
+            self.fireworks.update()
+
         old_x, old_y = self.car.x, self.car.y
-        if self.state not in (S_FINISHED, S_GAME_OVER):
+        if self.state not in (S_FINISHED, S_GAME_OVER, S_GAME_WON):
             self.car.update(keys)
 
         self._resolve_collisions(old_x, old_y)
@@ -405,19 +407,30 @@ class Game:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 pygame.quit(); sys.exit()
-            if event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_ESCAPE:
-                    pygame.quit(); sys.exit()
-                if event.key == pygame.K_r:
-                    if self.state == S_GAME_OVER:
-                        self._go_home()         # game over is final → back to menu
-                    else:
-                        self._retry_level()     # quick restart of the attempt
-                if event.key == pygame.K_SPACE and self.state == S_FINISHED:
-                    self._next_level()           # → next level's intro
-                # Return to home (with passcode entry) from an end screen
-                if event.key == pygame.K_h and self.state in (S_FINISHED, S_GAME_OVER):
+            if event.type != pygame.KEYDOWN:
+                continue
+            key = event.key
+
+            # ESC → menu (NOT quit: sys.exit() hangs the browser canvas)
+            if key == pygame.K_ESCAPE:
+                self._go_home()
+                continue
+
+            # Victory screen: any of these → menu
+            if self.state == S_GAME_WON:
+                if key in (pygame.K_SPACE, pygame.K_RETURN, pygame.K_r, pygame.K_h):
                     self._go_home()
+                continue
+
+            if key == pygame.K_r:
+                if self.state == S_GAME_OVER:
+                    self._go_home()          # game over is final → back to menu
+                else:
+                    self._retry_level()      # quick restart of the attempt
+            if key == pygame.K_SPACE and self.state == S_FINISHED:
+                self._next_level()           # → next level's intro
+            if key == pygame.K_h and self.state in (S_FINISHED, S_GAME_OVER):
+                self._go_home()
 
     # ------------------------------------------------------------------
     # Collision resolution
@@ -425,7 +438,7 @@ class Game:
 
     def _resolve_collisions(self, old_x: float, old_y: float):
         car = self.car
-        if car.crashed or self.state in (S_FINISHED, S_GAME_OVER):
+        if car.crashed or self.state in (S_FINISHED, S_GAME_OVER, S_GAME_WON):
             return
         car_pts = car.corners()
         car_box = car.aabb()
@@ -548,7 +561,7 @@ class Game:
     # ------------------------------------------------------------------
 
     def _check_pedestrian_collision(self):
-        if self.state in (S_FINISHED, S_GAME_OVER):
+        if self.state in (S_FINISHED, S_GAME_OVER, S_GAME_WON):
             return
         # Oriented-box vs point (with the pedestrian's radius as padding):
         # transform each pedestrian into the car's local frame.
@@ -605,8 +618,14 @@ class Game:
         if math.hypot(self.car.x - tp[0], self.car.y - tp[1]) < GOAL_RADIUS:
             self.obj_idx += 1
             if self.obj_idx >= len(self.objectives):
-                self.state = S_FINISHED
                 self.sfx.play("tick")
+                if self.level_idx >= len(LEVELS) - 1:
+                    # Final level complete → victory!
+                    self._award_level_score()
+                    self.state = S_GAME_WON
+                    self.fireworks = Fireworks()
+                else:
+                    self.state = S_FINISHED
 
     def _advance_after_boarding(self):
         """Called when the fare finishes getting in: gain passenger, retarget B."""
@@ -745,6 +764,10 @@ class Game:
         # Pedestrian-hit animation (over the world, under HUD)
         if self.impact:
             self.impact.draw(self.screen, self.cam_x, self.cam_y)
+
+        # Victory fireworks
+        if self.fireworks is not None:
+            self.fireworks.draw(self.screen)
 
         self.mini_map.draw(self.screen, self.car, self.game_map,
                            self.npcs, self.cam_x, self.cam_y,
