@@ -12,6 +12,8 @@ from constants import (
     C_WHITE, C_BLACK, C_MARKER_A, C_MARKER_B, C_MARKER_P, C_GAS,
     MODE_TAXI,
 )
+from car import render_car
+from car_types import CARS
 
 
 class ScreenRenderer:
@@ -84,6 +86,55 @@ class ScreenRenderer:
         if code_msg:
             m = self.font.render(code_msg, True, (235, 110, 90))
             surf.blit(m, m.get_rect(centerx=SCREEN_W // 2, top=box_y + 124))
+
+    # ------------------------------------------------------------------
+    # Garage / car selection
+    # ------------------------------------------------------------------
+
+    def _car_preview(self, ctype, size):
+        s = pygame.Surface((46, 46), pygame.SRCALPHA)
+        render_car(s, 23, 23, -90, ctype)      # facing up, showroom style
+        return pygame.transform.scale(s, (size, size))
+
+    def _stat_bar(self, surf, x, y, label, frac):
+        surf.blit(self.font.render(label, True, (150, 160, 175)), (x, y - 3))
+        bx, bw, bh = x + 44, 110, 9
+        pygame.draw.rect(surf, (30, 34, 42), (bx, y, bw, bh), border_radius=3)
+        col = ((90, 200, 120) if frac > 0.66 else
+               (220, 180, 60) if frac > 0.33 else (220, 90, 70))
+        pygame.draw.rect(surf, col, (bx, y, int(bw * frac), bh), border_radius=3)
+
+    def draw_garage(self, surf, tick: int, car_idx: int):
+        surf.fill((18, 22, 30))
+        head = self.title.render("CHOOSE YOUR CAR", True, C_MARKER_B)
+        surf.blit(head, head.get_rect(centerx=SCREEN_W // 2, top=34))
+
+        cols, tw, th = 4, 232, 250
+        ox = (SCREEN_W - cols * tw) // 2
+        oy = 120
+        for i, ct in enumerate(CARS):
+            tx = ox + (i % cols) * tw
+            ty = oy + (i // cols) * th
+            rect = pygame.Rect(tx + 8, ty + 8, tw - 16, th - 16)
+            sel = (i == car_idx)
+            pygame.draw.rect(surf, (44, 52, 66) if sel else (32, 38, 48),
+                             rect, border_radius=10)
+            if sel:
+                pygame.draw.rect(surf, C_MARKER_A, rect, 3, border_radius=10)
+
+            prev = self._car_preview(ct, 96)
+            surf.blit(prev, prev.get_rect(center=(rect.centerx, rect.top + 58)))
+            nm = self.big.render(ct.name, True, C_WHITE if sel else (175, 182, 195))
+            surf.blit(nm, nm.get_rect(centerx=rect.centerx, top=rect.top + 108))
+
+            bx = rect.left + 16
+            self._stat_bar(surf, bx, rect.top + 150, "SPD", ct.bar_speed)
+            self._stat_bar(surf, bx, rect.top + 172, "ACC", ct.bar_accel)
+            self._stat_bar(surf, bx, rect.top + 194, "HND", ct.bar_handling)
+
+        hint = self.big.render("LEFT / RIGHT: choose       ENTER: drive",
+                               True, C_WHITE)
+        surf.blit(hint, hint.get_rect(centerx=SCREEN_W // 2, top=SCREEN_H - 64))
 
     # ------------------------------------------------------------------
     # Level intro screen

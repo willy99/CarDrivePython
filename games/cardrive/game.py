@@ -20,6 +20,7 @@ from constants import (
 from level_config import LEVELS, level_by_passcode
 from screens import ScreenRenderer
 from car import Car
+from car_types import CARS
 from npc_car import NPCCar
 from game_map import GameMap
 from pedestrian import Pedestrian, TaxiPassenger
@@ -67,10 +68,12 @@ class Game:
         self._notifications: list[tuple[str, tuple, int]] = []
         self._gameover_reason = ""
 
-        # Front-end flow: 'home' -> 'intro' -> 'play'
+        # Front-end flow: 'home' -> 'garage' -> 'intro' -> 'play'
         self.screen_mode = "home"
         self.code_input  = ""
         self.code_msg    = ""
+        self.car_idx     = 0        # chosen car (persists across levels)
+        self._pending_level = 0     # where to go after the garage
 
         # Player-as-teacher bookkeeping
         self._ptile = None
@@ -83,7 +86,7 @@ class Game:
     def _init_level(self):
         cfg = LEVELS[self.level_idx]
         self.game_map    = GameMap(cfg)
-        self.car         = Car(*self.game_map.start_pos)
+        self.car         = Car(*self.game_map.start_pos, CARS[self.car_idx])
         self.npcs        = [NPCCar(self.game_map) for _ in range(cfg.npc_count)]
         self.pedestrians = self._spawn_all_pedestrians(cfg.peds_per_light)
 
@@ -263,6 +266,8 @@ class Game:
         t = pygame.time.get_ticks()
         if self.screen_mode == "home":
             self._tick_home(t)
+        elif self.screen_mode == "garage":
+            self._tick_garage(t)
         elif self.screen_mode == "intro":
             self._tick_intro(t)
         else:
@@ -302,18 +307,35 @@ class Game:
 
     def _submit_code(self):
         if not self.code_input:
-            # Empty → start a fresh game at level 1
-            self.total_score = 0
-            self.best_ms = None
-            self._goto_intro(0)
+            self._goto_garage(0)            # fresh game at level 1
             return
         idx = level_by_passcode(self.code_input)
         if idx is None:
             self.code_msg = f'"{self.code_input}" is not a valid code'
         else:
-            self.total_score = 0
-            self.best_ms = None
-            self._goto_intro(idx)
+            self._goto_garage(idx)
+
+    def _goto_garage(self, level_idx: int):
+        self.total_score = 0
+        self.best_ms = None
+        self._pending_level = level_idx
+        self.screen_mode = "garage"
+
+    def _tick_garage(self, t: int):
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit(); sys.exit()
+            if event.type == pygame.KEYDOWN:
+                if event.key in (pygame.K_ESCAPE, pygame.K_h):
+                    self._go_home()
+                elif event.key in (pygame.K_LEFT, pygame.K_UP):
+                    self.car_idx = (self.car_idx - 1) % len(CARS)
+                elif event.key in (pygame.K_RIGHT, pygame.K_DOWN):
+                    self.car_idx = (self.car_idx + 1) % len(CARS)
+                elif event.key in (pygame.K_SPACE, pygame.K_RETURN, pygame.K_KP_ENTER):
+                    self._goto_intro(self._pending_level)
+        self.screens.draw_garage(self.screen, t, self.car_idx)
+        pygame.display.flip()
 
     def _tick_intro(self, t: int):
         for event in pygame.event.get():

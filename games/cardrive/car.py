@@ -3,34 +3,119 @@ import math
 import pygame
 
 from constants import (
-    MAX_SPEED, REVERSE_MAX, ACCEL, BRAKE, FRICTION, STEER_BASE,
-    CAR_W, CAR_H,
-    C_CAR_BODY, C_CAR_CRASH, C_CAR_WINDOW, C_HEADLIGHT, C_BLACK, C_BRAKE,
+    FRICTION, C_CAR_CRASH, C_CAR_WINDOW, C_HEADLIGHT, C_BLACK, C_BRAKE,
 )
+from car_types import DEFAULT_CAR
 from utils import polygon_corners
 
 
+# ---------------------------------------------------------------------------
+# Shared body renderer (used by the car on the road AND the garage preview)
+# ---------------------------------------------------------------------------
+
+def render_car(surf, sx, sy, angle, ctype, *, braking=False, crashed=False):
+    """Draw a car of `ctype` centred at screen (sx, sy) facing `angle` deg."""
+    rad = math.radians(angle)
+    cos_a, sin_a = math.cos(rad), math.sin(rad)
+
+    def l2s(lx, ly):
+        return (sx + lx * cos_a - ly * sin_a, sy + lx * sin_a + ly * cos_a)
+
+    def poly(pts, col, border=1):
+        scr = [l2s(px, py) for px, py in pts]
+        pygame.draw.polygon(surf, col, scr)
+        if border:
+            pygame.draw.polygon(surf, C_BLACK, scr, border)
+
+    hw, hh = ctype.w / 2, ctype.h / 2
+    body = C_CAR_CRASH if crashed else ctype.color
+    shape = ctype.shape
+
+    if shape == "bolide":
+        # F1: 4 exposed wheels, narrow nose, front & rear wings
+        for wx in (-hw + 4, hw - 6):
+            for wy in (-hh - 3, hh + 3):
+                poly([(wx - 3, wy - 2), (wx + 3, wy - 2),
+                      (wx + 3, wy + 2), (wx - 3, wy + 2)], (25, 25, 25))
+        poly([(-hw, -2), (hw - 8, -hh + 1), (hw, 0),
+              (hw - 8, hh - 1), (-hw, 2)], body)            # tapered chassis
+        poly([(-hw, -hh - 1), (-hw + 4, -hh - 1),
+              (-hw + 4, hh + 1), (-hw, hh + 1)], body)      # rear wing
+        poly([(hw - 3, -hh + 2), (hw, -hh + 2),
+              (hw, hh - 2), (hw - 3, hh - 2)], body)        # front wing
+        pygame.draw.circle(surf, C_CAR_WINDOW, l2s(-2, 0), 3)  # cockpit
+
+    elif shape == "van":
+        poly([(-hw, -hh), (hw, -hh), (hw, hh), (-hw, hh)], body)
+        # big windshield + side windows
+        poly([(hw - 7, -hh + 2), (hw - 2, -hh + 2),
+              (hw - 2, hh - 2), (hw - 7, hh - 2)], C_CAR_WINDOW, 0)
+        poly([(-hw + 3, -hh + 2), (hw - 9, -hh + 2),
+              (hw - 9, hh - 2), (-hw + 3, hh - 2)], (150, 150, 160), 0)
+
+    elif shape == "classic":
+        poly([(-hw, -hh), (hw, -hh), (hw, hh), (-hw, hh)], body)
+        poly([(-hw + 2, -hh + 3), (hw - 4, -hh + 3),
+              (hw - 4, hh - 3), (-hw + 2, hh - 3)], C_CAR_WINDOW, 0)  # cabin
+        pygame.draw.line(surf, C_BLACK, l2s(3, -hh + 3), l2s(3, hh - 3), 1)
+
+    elif shape == "sport":
+        # sleek wedge
+        poly([(-hw + 2, -hh), (hw, -hh + 3), (hw, hh - 3),
+              (-hw + 2, hh), (-hw, 0)], body)
+        poly([(-2, -hh + 3), (hw - 5, -hh + 4),
+              (hw - 5, hh - 4), (-2, hh - 3)], C_CAR_WINDOW, 0)
+
+    elif shape == "compact":
+        poly([(-hw, -hh + 1), (hw, -hh + 1), (hw, hh - 1), (-hw, hh - 1)], body)
+        poly([(-hw + 2, -hh + 3), (hw - 3, -hh + 3),
+              (hw - 3, hh - 3), (-hw + 2, hh - 3)], C_CAR_WINDOW, 0)
+
+    else:  # 'sedan'
+        poly([(-hw, -hh), (hw, -hh), (hw, hh), (-hw, hh)], body)
+        poly([(2, -hh + 2), (hw - 2, -hh + 2),
+              (hw - 2, hh - 2), (2, hh - 2)], C_CAR_WINDOW, 0)
+
+    # Headlights (front = +x)
+    for side in (-1, 1):
+        hx, hy = l2s(hw - 1, side * (hh - 3))
+        pygame.draw.circle(surf, C_HEADLIGHT, (int(hx), int(hy)), 2)
+    # Brake lights (rear = -x)
+    if braking and not crashed:
+        for side in (-1, 1):
+            bx, by = l2s(-hw + 1, side * (hh - 3))
+            pygame.draw.circle(surf, C_BRAKE, (int(bx), int(by)), 2)
+
+
 class Car:
-    """Player-controlled car with physics, collision helpers, and rendering."""
+    """Player-controlled car; handling comes from its CarType."""
 
-    W = CAR_W
-    H = CAR_H
-
-    def __init__(self, x: float, y: float):
+    def __init__(self, x: float, y: float, ctype=DEFAULT_CAR):
         self.x = float(x)
         self.y = float(y)
-        self.angle = 0.0      # degrees; 0 = right, 90 = down
+        self.angle = 0.0
         self.speed = 0.0
         self.crashed = False
         self.crash_timer = 0
         self.braking = False
-        # Grip multipliers (1.0 = dry; rain lowers them — set via set_wet)
+
+        # Handling from the chosen car
+        self.ctype       = ctype
+        self.W           = ctype.w
+        self.H           = ctype.h
+        self.max_speed   = ctype.max_speed
+        self.base_accel  = ctype.accel
+        self.base_brake  = ctype.brake
+        self.base_steer  = ctype.steer
+        self.reverse_max = ctype.reverse_max
+        self.base_fric   = ctype.friction
+
+        # Grip multipliers (1.0 = dry; rain lowers them)
         self.steer_mult    = 1.0
         self.friction_mult = 1.0
         self.accel_mult    = 1.0
 
-    def set_wet(self, rain_steer: float, rain_friction: float, rain_accel: float):
-        """Apply wet-weather grip loss."""
+    def set_wet(self, rain_steer, rain_friction, rain_accel):
         self.steer_mult    = rain_steer
         self.friction_mult = rain_friction
         self.accel_mult    = rain_accel
@@ -62,8 +147,8 @@ class Car:
     def _steer(self, keys):
         if abs(self.speed) <= 0.05:
             return
-        eff = min(abs(self.speed) / MAX_SPEED, 1.0)
-        steer = STEER_BASE * (0.3 + 0.7 * eff) * self.steer_mult
+        eff = min(abs(self.speed) / self.max_speed, 1.0)
+        steer = self.base_steer * (0.3 + 0.7 * eff) * self.steer_mult
         sign = 1 if self.speed > 0 else -1
         if keys[pygame.K_LEFT]:
             self.angle -= steer * sign
@@ -71,20 +156,17 @@ class Car:
             self.angle += steer * sign
 
     def _throttle(self, keys):
-        friction = FRICTION * self.friction_mult
-        # Brake lights: pressing DOWN while moving forward
-        self.braking = bool(keys[pygame.K_DOWN] or keys[pygame.K_SPACE]) and self.speed > 0.1
+        friction = self.base_fric * self.friction_mult
+        self.braking = bool(keys[pygame.K_DOWN]) and self.speed > 0.1
         if keys[pygame.K_UP]:
-            self.speed = (self.speed + BRAKE if self.speed < 0
-                          else min(self.speed + ACCEL * self.accel_mult, MAX_SPEED))
-        elif keys[pygame.K_DOWN]:
+            self.speed = (self.speed + self.base_brake if self.speed < 0
+                          else min(self.speed + self.base_accel * self.accel_mult,
+                                   self.max_speed))
+        elif keys[pygame.K_DOWN] or keys[pygame.K_SPACE]:
             if self.speed > 0:
-                self.speed = max(self.speed - BRAKE, 0.0)
+                self.speed = max(self.speed - self.base_brake, 0.0)
             else:
-                self.speed = max(self.speed - ACCEL * 0.6, -REVERSE_MAX)
-        elif keys[pygame.K_SPACE]:
-            if self.speed > 0:
-                self.speed = max(self.speed - BRAKE, 0.0)
+                self.speed = max(self.speed - self.base_accel * 0.6, -self.reverse_max)
         else:
             if abs(self.speed) < friction:
                 self.speed = 0.0
@@ -120,32 +202,5 @@ class Car:
     # ------------------------------------------------------------------
 
     def draw(self, surf, cam_x: float, cam_y: float):
-        sx = self.x - cam_x
-        sy = self.y - cam_y
-        rad = math.radians(self.angle)
-        cos_a, sin_a = math.cos(rad), math.sin(rad)
-
-        def l2s(lx, ly):
-            return (sx + lx * cos_a - ly * sin_a,
-                    sy + lx * sin_a + ly * cos_a)
-
-        hw, hh = self.W / 2, self.H / 2
-        body_col = C_CAR_CRASH if self.crashed else C_CAR_BODY
-
-        body = [l2s(-hw, -hh), l2s(hw, -hh), l2s(hw, hh), l2s(-hw, hh)]
-        pygame.draw.polygon(surf, body_col, body)
-        pygame.draw.polygon(surf, C_BLACK, body, 1)
-
-        win = [l2s(2, -hh + 2), l2s(hw - 2, -hh + 2),
-               l2s(hw - 2, hh - 2), l2s(2, hh - 2)]
-        pygame.draw.polygon(surf, C_CAR_WINDOW, win)
-
-        for side in (-1, 1):
-            hpx, hpy = l2s(hw - 1, side * (hh - 3))
-            pygame.draw.circle(surf, C_HEADLIGHT, (int(hpx), int(hpy)), 3)
-
-        # Rear brake lights (red) when braking
-        if self.braking and not self.crashed:
-            for side in (-1, 1):
-                bpx, bpy = l2s(-hw + 1, side * (hh - 3))
-                pygame.draw.circle(surf, C_BRAKE, (int(bpx), int(bpy)), 3)
+        render_car(surf, self.x - cam_x, self.y - cam_y, self.angle, self.ctype,
+                   braking=self.braking, crashed=self.crashed)
