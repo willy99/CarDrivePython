@@ -77,11 +77,14 @@ class Car:
         if keys[pygame.K_UP]:
             self.speed = (self.speed + BRAKE if self.speed < 0
                           else min(self.speed + ACCEL * self.accel_mult, MAX_SPEED))
-        elif keys[pygame.K_DOWN] or keys[pygame.K_SPACE]:
+        elif keys[pygame.K_DOWN]:
             if self.speed > 0:
                 self.speed = max(self.speed - BRAKE, 0.0)
             else:
                 self.speed = max(self.speed - ACCEL * 0.6, -REVERSE_MAX)
+        elif keys[pygame.K_SPACE]:
+            if self.speed > 0:
+                self.speed = max(self.speed - BRAKE, 0.0)
         else:
             if abs(self.speed) < friction:
                 self.speed = 0.0
