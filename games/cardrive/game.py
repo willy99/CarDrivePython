@@ -26,6 +26,7 @@ from pedestrian import Pedestrian, TaxiPassenger
 from hud import HUD
 from mini_map import MiniMap
 from effects import NightOverlay, Rain, ImpactBurst
+from sounds import SoundFX
 from utils import sat_overlap, rect_poly
 
 # SkidMark: (world_x, world_y, angle_deg, age_frames)
@@ -56,6 +57,7 @@ class Game:
         title_font = pygame.font.Font(None, 90)
         self.hud     = HUD(font, big_font)
         self.screens = ScreenRenderer(font, big_font, title_font)
+        self.sfx     = SoundFX()
 
         self.level_idx   = 0
         self.total_score = 0
@@ -442,6 +444,7 @@ class Game:
         if abs(car.speed) >= CRASH_THRESH:
             if not car.crashed:
                 self.level_crashes += 1
+                self.sfx.play("crash")
             car.crash()
         else:
             car.x, car.y = ox, oy
@@ -495,6 +498,7 @@ class Game:
             if abs(lx) <= hw and abs(ly) <= hh:
                 self.impact = ImpactBurst(ped.x, ped.y)
                 self.car.speed = 0.0
+                self.sfx.play("crash")
                 self._trigger_game_over("Pedestrian hit!")
                 return
 
@@ -536,11 +540,13 @@ class Game:
             self.obj_idx += 1
             if self.obj_idx >= len(self.objectives):
                 self.state = S_FINISHED
+                self.sfx.play("tick")
 
     def _advance_after_boarding(self):
         """Called when the fare finishes getting in: gain passenger, retarget B."""
         self.has_passenger = True
         self.obj_idx += 1
+        self.sfx.play("door")
         self._notifications.append(
             ("Passenger aboard — go!", (80, 220, 80),
              pygame.time.get_ticks() + 2500))
@@ -667,7 +673,8 @@ class Game:
         if self.night:
             self.night.draw(self.screen,
                             self.car.x - self.cam_x,
-                            self.car.y - self.cam_y)
+                            self.car.y - self.cam_y,
+                            self.car.angle)
 
         # Pedestrian-hit animation (over the world, under HUD)
         if self.impact:

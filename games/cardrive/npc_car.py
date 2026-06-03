@@ -9,7 +9,7 @@ from constants import (
     NPC_CRUISE_MIN, NPC_CRUISE_MAX, NPC_ACCEL, NPC_BRAKE,
     NPC_TURN_EASE, NPC_LANE_FRAC, NPC_REACT, NPC_GAP,
     NPC_TURN_PROB, NPC_STUCK_LIMIT, NPC_REVERSE_FRAMES, NPC_REVERSE_SPEED,
-    C_CAR_WINDOW, C_HEADLIGHT, C_BLACK,
+    C_CAR_WINDOW, C_HEADLIGHT, C_BLACK, C_BRAKE,
 )
 from utils import polygon_corners
 
@@ -274,3 +274,9 @@ class NPCCar:
         for side in (-1, 1):
             hpx, hpy = l2s(hw - 1, side * (hh - 3))
             pygame.draw.circle(surf, C_HEADLIGHT, (int(hpx), int(hpy)), 2)
+
+        # Rear brake lights when slowing/stopped (e.g. queued at a red light)
+        if self.speed < 0.7:
+            for side in (-1, 1):
+                bpx, bpy = l2s(-hw + 1, side * (hh - 3))
+                pygame.draw.circle(surf, C_BRAKE, (int(bpx), int(bpy)), 2)

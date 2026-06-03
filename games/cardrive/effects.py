@@ -10,7 +10,7 @@ import pygame
 
 from constants import (
     SCREEN_W, SCREEN_H,
-    NIGHT_DARKNESS, HEADLIGHT_RADIUS,
+    NIGHT_DARKNESS, HEADLIGHT_RADIUS, HEADLIGHT_FWD,
 )
 
 
@@ -108,12 +108,19 @@ class NightOverlay:
             pygame.draw.circle(mask, (0, 0, 0, a), (radius, radius), r)
         return mask
 
-    def draw(self, surf, car_screen_x: float, car_screen_y: float):
+    def draw(self, surf, car_screen_x: float, car_screen_y: float,
+             angle_deg: float = 0.0):
+        # Push the lit area forward along the car's heading so the headlights
+        # illuminate the road AHEAD rather than centring on the car.
+        rad = math.radians(angle_deg)
+        fwd = HEADLIGHT_RADIUS * HEADLIGHT_FWD
+        cx = int(car_screen_x + math.cos(rad) * fwd)
+        cy = int(car_screen_y + math.sin(rad) * fwd)
+
         self._dark.fill((4, 6, 22, NIGHT_DARKNESS))
         self._dark.blit(
             self._mask,
-            (int(car_screen_x) - self._mask_off,
-             int(car_screen_y) - self._mask_off),
+            (cx - self._mask_off, cy - self._mask_off),
             special_flags=pygame.BLEND_RGBA_SUB,
         )
         surf.blit(self._dark, (0, 0))

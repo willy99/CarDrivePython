@@ -5,7 +5,7 @@ import pygame
 from constants import (
     MAX_SPEED, REVERSE_MAX, ACCEL, BRAKE, FRICTION, STEER_BASE,
     CAR_W, CAR_H,
-    C_CAR_BODY, C_CAR_CRASH, C_CAR_WINDOW, C_HEADLIGHT, C_BLACK,
+    C_CAR_BODY, C_CAR_CRASH, C_CAR_WINDOW, C_HEADLIGHT, C_BLACK, C_BRAKE,
 )
 from utils import polygon_corners
 
@@ -23,6 +23,7 @@ class Car:
         self.speed = 0.0
         self.crashed = False
         self.crash_timer = 0
+        self.braking = False
         # Grip multipliers (1.0 = dry; rain lowers them — set via set_wet)
         self.steer_mult    = 1.0
         self.friction_mult = 1.0
@@ -71,6 +72,8 @@ class Car:
 
     def _throttle(self, keys):
         friction = FRICTION * self.friction_mult
+        # Brake lights: pressing DOWN while moving forward
+        self.braking = bool(keys[pygame.K_DOWN]) and self.speed > 0.1
         if keys[pygame.K_UP]:
             self.speed = (self.speed + BRAKE if self.speed < 0
                           else min(self.speed + ACCEL * self.accel_mult, MAX_SPEED))
@@ -137,3 +140,9 @@ class Car:
         for side in (-1, 1):
             hpx, hpy = l2s(hw - 1, side * (hh - 3))
             pygame.draw.circle(surf, C_HEADLIGHT, (int(hpx), int(hpy)), 3)
+
+        # Rear brake lights (red) when braking
+        if self.braking and not self.crashed:
+            for side in (-1, 1):
+                bpx, bpy = l2s(-hw + 1, side * (hh - 3))
+                pygame.draw.circle(surf, C_BRAKE, (int(bpx), int(bpy)), 3)

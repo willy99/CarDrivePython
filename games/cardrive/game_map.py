@@ -9,7 +9,7 @@ from constants import (
     SCREEN_W, SCREEN_H,
     C_ASPHALT, C_GRASS, C_GRASS_DARK,
     C_HOUSE_WALL, C_HOUSE_ROOF, C_HOUSE_BORDER,
-    C_PAVEMENT, C_BLACK, C_WHITE,
+    C_PAVEMENT, C_BLACK, C_WHITE, C_LANE,
     C_MARKER_A, C_MARKER_B, C_MARKER_P, C_GAS,
     MODE_TAXI,
 )
@@ -360,6 +360,7 @@ class GameMap:
                 if self.grid[ty][tx] == 0:
                     pygame.draw.rect(surf, C_ASPHALT, (px, py, TILE, TILE))
                     self._draw_pavement_edge(surf, tx, ty, px, py)
+                    self._draw_lane(surf, tx, ty, px, py)
                 else:
                     col = C_GRASS if (tx + ty) % 2 == 0 else C_GRASS_DARK
                     pygame.draw.rect(surf, col, (px, py, TILE, TILE))
@@ -412,6 +413,32 @@ class GameMap:
                 elif ddy ==  1: brd = (px, py + TILE - 6, TILE, 6)
                 else:           brd = (px, py, TILE, 6)
                 pygame.draw.rect(surf, C_PAVEMENT, brd)
+
+    def _draw_lane(self, surf, tx: int, ty: int, px: int, py: int):
+        """
+        Dashed lane markings.  On this open map a 'lane tile' is one where the
+        road flows along a single axis (road both sides on exactly one axis):
+        those line up into dashed guide lines along the streets.
+        """
+        def road(x, y):
+            return (0 <= x < self.map_w_tiles and 0 <= y < self.map_h_tiles
+                    and self.grid[y][x] == 0)
+
+        horiz = road(tx - 1, ty) and road(tx + 1, ty)
+        vert  = road(tx, ty - 1) and road(tx, ty + 1)
+
+        if horiz and not vert:
+            cy = py + TILE // 2
+            x = px + 4
+            while x < px + TILE - 4:
+                pygame.draw.line(surf, C_LANE, (x, cy), (min(x + 14, px + TILE - 4), cy), 2)
+                x += 24
+        elif vert and not horiz:
+            cx = px + TILE // 2
+            y = py + 4
+            while y < py + TILE - 4:
+                pygame.draw.line(surf, C_LANE, (cx, y), (cx, min(y + 14, py + TILE - 4)), 2)
+                y += 24
 
     def _draw_marker(self, surf, cam_x, cam_y, pos, color, label,
                      font, tick: int, pulse: bool):

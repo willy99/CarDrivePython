@@ -38,6 +38,8 @@ C_CAR_BODY     = (30, 100, 220)
 C_CAR_CRASH    = (220, 40,  40)
 C_CAR_WINDOW   = (170,210, 240)
 C_HEADLIGHT    = (255,245, 180)
+C_BRAKE        = (255, 55,  40)   # rear brake lights
+C_LANE         = (210,200,  80)   # road lane markings
 C_WHITE        = (255,255, 255)
 C_BLACK        = (0,   0,   0)
 C_MARKER_A     = (50, 210,  80)   # green  – start
@@ -109,16 +111,17 @@ PICKUP_STOP_SPEED = 0.5    # |speed| below this counts as "stopped"
 # Fuel (only levels whose cfg.fuel is not None)
 # ---------------------------------------------------------------------------
 FUEL_MAX         = 100.0   # full tank
-FUEL_DRAIN       = 0.018   # consumed per unit-speed per frame
-FUEL_IDLE_DRAIN  = 0.003   # consumed per frame while engine on but still
-FUEL_REFILL_RATE = 1.4     # refilled per frame while parked on a gas station
-GAS_RADIUS       = TILE * 0.85   # how close to a pump counts as refuelling
+FUEL_DRAIN       = 0.013   # consumed per unit-speed per frame (gentler)
+FUEL_IDLE_DRAIN  = 0.002   # consumed per frame while engine on but still
+FUEL_REFILL_RATE = 1.6     # refilled per frame while parked on a gas station
+GAS_RADIUS       = TILE * 0.9    # how close to a pump counts as refuelling
 
 # ---------------------------------------------------------------------------
 # Night mode
 # ---------------------------------------------------------------------------
 NIGHT_DARKNESS   = 222     # alpha of the darkness layer (0-255)
-HEADLIGHT_RADIUS = 210     # radius of the lit area around the car (px)
+HEADLIGHT_RADIUS = 200     # radius of the lit area (px)
+HEADLIGHT_FWD    = 0.55    # push the lit area forward by this fraction of radius
 
 # ---------------------------------------------------------------------------
 # Rain (reduced grip)
