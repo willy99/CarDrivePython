@@ -683,16 +683,17 @@ class Game:
     def _update_skid_marks(self, keys):
         car = self.car
         # Generate new marks when braking hard
+        braking = keys[pygame.K_DOWN] or keys[pygame.K_SPACE]
         if (self.state == S_RACING
                 and not car.crashed
                 and abs(car.speed) > SKID_MIN_SPEED
-                and keys[pygame.K_DOWN] or keys[pygame.K_SPACE]
+                and braking
                 and self._frame % SKID_INTERVAL == 0):
             rad = math.radians(car.angle)
             cos_a = math.cos(rad)
             sin_a = math.sin(rad)
-            hw = Car.W / 2
-            hh = Car.H / 2
+            hw = car.W / 2
+            hh = car.H / 2
             # Rear-left and rear-right wheel positions (local → world)
             for side in (-1, 1):
                 lx = -(hw - 4)

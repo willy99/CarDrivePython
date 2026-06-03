@@ -56,10 +56,13 @@ class HUD:
         bx, by, bw, bh = 14, 14, 160, 18
         pygame.draw.rect(surf, (30, 30, 30),
                          (bx - 2, by - 2, bw + 4, bh + 4), border_radius=4)
-        fill = int(bw * abs(car.speed) / MAX_SPEED)
+        # Normalise against THIS car's own top speed so the bar never overflows.
+        top = getattr(car, "max_speed", MAX_SPEED) or MAX_SPEED
+        frac = min(1.0, abs(car.speed) / top)
+        fill = int(bw * frac)
         if car.crashed:
             bar_col = C_CAR_CRASH
-        elif abs(car.speed) > MAX_SPEED * 0.7:
+        elif frac > 0.7:
             bar_col = (220, 160, 20)
         else:
             bar_col = (50, 200, 80)
