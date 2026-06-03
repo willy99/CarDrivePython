@@ -73,7 +73,7 @@ class Car:
     def _throttle(self, keys):
         friction = FRICTION * self.friction_mult
         # Brake lights: pressing DOWN while moving forward
-        self.braking = bool(keys[pygame.K_DOWN]) and self.speed > 0.1
+        self.braking = bool(keys[pygame.K_DOWN] or keys[pygame.K_SPACE]) and self.speed > 0.1
         if keys[pygame.K_UP]:
             self.speed = (self.speed + BRAKE if self.speed < 0
                           else min(self.speed + ACCEL * self.accel_mult, MAX_SPEED))
@@ -85,6 +85,8 @@ class Car:
         elif keys[pygame.K_SPACE]:
             if self.speed > 0:
                 self.speed = max(self.speed - BRAKE, 0.0)
+            if self.speed < 0:
+                self.speed = 0
         else:
             if abs(self.speed) < friction:
                 self.speed = 0.0
