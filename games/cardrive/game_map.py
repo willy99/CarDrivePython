@@ -360,10 +360,19 @@ class GameMap:
                 if self.grid[ty][tx] == 0:
                     pygame.draw.rect(surf, C_ASPHALT, (px, py, TILE, TILE))
                     self._draw_pavement_edge(surf, tx, ty, px, py)
-                    self._draw_lane(surf, tx, ty, px, py)
                 else:
                     col = C_GRASS if (tx + ty) % 2 == 0 else C_GRASS_DARK
                     pygame.draw.rect(surf, col, (px, py, TILE, TILE))
+
+        # Lane markings in a SECOND pass so dashes on tile boundaries aren't
+        # painted over by the next tile's asphalt fill.
+        for ty in range(ty0, ty1):
+            for tx in range(tx0, tx1):
+                if self.grid[ty][tx] == 0:
+                    self._draw_lane(surf, tx,
+                                    ty,
+                                    tx * TILE - int(cam_x),
+                                    ty * TILE - int(cam_y))
 
         for h in self.houses:
             hx = h.x - int(cam_x)
@@ -416,29 +425,53 @@ class GameMap:
 
     def _draw_lane(self, surf, tx: int, ty: int, px: int, py: int):
         """
-        Dashed lane markings.  On this open map a 'lane tile' is one where the
-        road flows along a single axis (road both sides on exactly one axis):
-        those line up into dashed guide lines along the streets.
+        Dashed CENTRE line dividing the street into two halves.
+
+        For each road tile we measure how far the road extends to each side
+        (distance transform).  A tile sits on the centre line of a street
+        when it is the middle of the narrow axis of that street; for
+        even-width streets the line falls on the boundary between the two
+        central tiles.  Plazas/intersections (equal extents) get no line.
         """
-        def road(x, y):
-            return (0 <= x < self.map_w_tiles and 0 <= y < self.map_h_tiles
-                    and self.grid[y][x] == 0)
+        cap = 8
 
-        horiz = road(tx - 1, ty) and road(tx + 1, ty)
-        vert  = road(tx, ty - 1) and road(tx, ty + 1)
+        def reach(ddx, ddy):
+            n, x, y = 0, tx, ty
+            for _ in range(cap):
+                x += ddx; y += ddy
+                if 0 <= x < self.map_w_tiles and 0 <= y < self.map_h_tiles \
+                        and self.grid[y][x] == 0:
+                    n += 1
+                else:
+                    break
+            return n
 
-        if horiz and not vert:
-            cy = py + TILE // 2
-            x = px + 4
-            while x < px + TILE - 4:
-                pygame.draw.line(surf, C_LANE, (x, cy), (min(x + 14, px + TILE - 4), cy), 2)
-                x += 24
-        elif vert and not horiz:
-            cx = px + TILE // 2
-            y = py + 4
-            while y < py + TILE - 4:
-                pygame.draw.line(surf, C_LANE, (cx, y), (cx, min(y + 14, py + TILE - 4)), 2)
-                y += 24
+        dl, dr = reach(-1, 0), reach(1, 0)
+        du, dd = reach(0, -1), reach(0, 1)
+        h_ext, v_ext = dl + dr + 1, du + dd + 1
+
+        if v_ext < h_ext:                 # horizontal street → horizontal line
+            if du == dd:
+                self._dash_h(surf, px, py + TILE // 2)
+            elif du == dd - 1:            # even width → centre boundary
+                self._dash_h(surf, px, py + TILE)
+        elif h_ext < v_ext:               # vertical street → vertical line
+            if dl == dr:
+                self._dash_v(surf, px + TILE // 2, py)
+            elif dl == dr - 1:
+                self._dash_v(surf, px + TILE, py)
+
+    def _dash_h(self, surf, px, y):
+        x = px + 2
+        while x < px + TILE - 2:
+            pygame.draw.line(surf, C_LANE, (x, y), (min(x + 13, px + TILE - 2), y), 2)
+            x += 22
+
+    def _dash_v(self, surf, x, py):
+        y = py + 2
+        while y < py + TILE - 2:
+            pygame.draw.line(surf, C_LANE, (x, y), (x, min(y + 13, py + TILE - 2)), 2)
+            y += 22
 
     def _draw_marker(self, surf, cam_x, cam_y, pos, color, label,
                      font, tick: int, pulse: bool):

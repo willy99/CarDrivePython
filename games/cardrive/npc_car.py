@@ -161,7 +161,11 @@ class NPCCar:
 
         for ped in peds:
             dx, dy = ped.x - self.x, ped.y - self.y
-            if (dx * self.dx + dy * self.dy) > 0 and math.hypot(dx, dy) < NPC_REACT:
+            fwd = dx * self.dx + dy * self.dy           # distance ahead
+            lat = abs(dx * -self.dy + dy * self.dx)     # offset to the side
+            # Only yield to a pedestrian genuinely IN our lane ahead — not one
+            # standing on the pavement at the side of the road.
+            if 0 < fwd < NPC_REACT and lat < TILE * 0.55:
                 return "ped"
 
         for o in others:
@@ -185,9 +189,14 @@ class NPCCar:
         nx, ny = self.tx + self.dx, self.ty + self.dy
         cx = nx * TILE + TILE // 2
         cy = ny * TILE + TILE // 2
-        lane = NPC_LANE_FRAC * TILE * max(0, self._map.road - 1)
-        rx, ry = -self.dy, self.dx
-        return cx + rx * lane, cy + ry * lane
+        # Drive toward the CENTRE of the street (away from the kerb), with a
+        # slight right bias so two-way traffic passes. Centre = roomier side.
+        rx, ry = -self.dy, self.dx                 # right of travel
+        sr = self._open_space(rx, ry, 4)
+        sl = self._open_space(-rx, -ry, 4)
+        off_tiles = max(-1.2, min(1.6, (sr - sl) * 0.5 + 0.4))
+        off = off_tiles * (TILE * 0.5)
+        return cx + rx * off, cy + ry * off
 
     def update(self, peds=(), others=()):
         # Backing-up phase of a reroute
