@@ -51,13 +51,13 @@ C_PASSENGER    = (250,225,  95)   # passenger figure
 # ---------------------------------------------------------------------------
 # Car physics
 # ---------------------------------------------------------------------------
-MAX_SPEED    = 7.0
-REVERSE_MAX  = 2.5
-ACCEL        = 0.14
-BRAKE        = 0.28
+MAX_SPEED    = 5.0
+REVERSE_MAX  = 2.0
+ACCEL        = 0.05
+BRAKE        = 0.25
 FRICTION     = 0.025
 STEER_BASE   = 2.8
-CRASH_THRESH = 2.8
+CRASH_THRESH = 1.3
 
 # ---------------------------------------------------------------------------
 # Scoring
@@ -79,15 +79,16 @@ SKID_INTERVAL  =   3   # generate a mark every N frames while braking
 # NPC traffic AI
 # ---------------------------------------------------------------------------
 NPC_CRUISE_MIN = 1.5     # slowest preferred speed
-NPC_CRUISE_MAX = 2.6     # fastest preferred speed
+NPC_CRUISE_MAX = 3.0     # fastest preferred speed
 NPC_ACCEL      = 0.07    # speed ramp-up per frame
 NPC_BRAKE      = 0.22    # speed ramp-down per frame
 NPC_TURN_EASE  = 0.22    # heading easing factor (smooth cornering)
 NPC_LANE_FRAC  = 0.20    # lane offset (fraction of TILE) per extra road tile
-NPC_REACT      = 52      # px: pedestrian look-ahead distance
-NPC_GAP        = 48      # px: car-following gap (queue spacing)
+NPC_REACT      = 32      # px: pedestrian look-ahead distance
+NPC_GAP        = 58      # px: car-following gap (queue spacing)
 NPC_TURN_PROB  = 0.30    # chance to turn (vs. go straight) at a junction
 NPC_STUCK_LIMIT   = 45   # frames blocked (oncoming) before backing out & rerouting
+NPC_QUEUE_LIMIT   = 120  # frames in a non-red queue before wiggling free of a jam
 NPC_REVERSE_FRAMES = 12  # frames spent backing up during a reroute
 NPC_REVERSE_SPEED  = 0.9 # px/frame while backing up
 

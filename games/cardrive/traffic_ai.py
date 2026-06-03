@@ -15,6 +15,7 @@ Actions: 0=straight  1=left  2=right  3=back/U-turn
 Reward : progress made, minus time spent stuck, plus a bonus for escaping a jam.
 """
 
+import math
 import random
 
 
@@ -22,13 +23,14 @@ class QBrain:
     N_ACTIONS = 4   # straight, left, right, back
 
     def __init__(self, alpha=0.35, gamma=0.85, eps=0.12,
-                 eps_min=0.03, eps_decay=0.99990):
+                 eps_min=0.03, eps_decay=0.99990, temp=0.35):
         self.q: dict[tuple, list] = {}
         self.alpha = alpha
         self.gamma = gamma
         self.eps = eps
         self.eps_min = eps_min
         self.eps_decay = eps_decay
+        self.temp = temp           # softmax temperature (higher = more variety)
         # telemetry
         self.updates = 0
         self.resolved = 0          # jams successfully escaped
@@ -46,13 +48,27 @@ class QBrain:
             self.q[state] = list(prior)
 
     def choose(self, state, valid):
-        """ε-greedy among the currently-valid actions."""
+        """
+        Softmax (Boltzmann) sampling over the valid actions.
+
+        Unlike a greedy argmax this keeps VARIETY: when two options are about
+        equally good (e.g. turn left vs. right at a crossroads) cars split
+        roughly 50/50 instead of the whole shared-brain fleet herding onto the
+        same route — while better-valued actions are still preferred.
+        """
         if not valid:
             return 0
-        if random.random() < self.eps:
-            return random.choice(valid)
         row = self._row(state)
-        return max(valid, key=lambda a: row[a])
+        m = max(row[a] for a in valid)
+        weights = [math.exp((row[a] - m) / self.temp) for a in valid]
+        total = sum(weights)
+        r = random.random() * total
+        acc = 0.0
+        for a, w in zip(valid, weights):
+            acc += w
+            if r <= acc:
+                return a
+        return valid[-1]
 
     def learn(self, s, a, reward, s2, valid2):
         row = self._row(s)

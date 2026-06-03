@@ -664,7 +664,7 @@ class Game:
         if (self.state == S_RACING
                 and not car.crashed
                 and abs(car.speed) > SKID_MIN_SPEED
-                and keys[pygame.K_DOWN]
+                and keys[pygame.K_DOWN] or keys[pygame.K_SPACE]
                 and self._frame % SKID_INTERVAL == 0):
             rad = math.radians(car.angle)
             cos_a = math.cos(rad)

@@ -47,6 +47,9 @@ LEVELS: list[LevelConfig] = [
     # ── Taxi fares ─────────────────────────────────────────────────────
     LevelConfig(7, 6, 5, 11, 120, 0.22, 0.45, 2,
                 cell=4, road=2, mode=MODE_TAXI, title="Taxi!", passcode="FARE"),
+    LevelConfig(7, 10, 10, 45, 140, 0.22, 0.45, 2,
+                cell=4, road=1, mode=MODE_TAXI, title="Traffic jaammm", passcode="JAMM"),
+
     LevelConfig(8, 7, 6, 16, 130, 0.16, 0.55, 3,
                 cell=4, road=2, mode=MODE_TAXI, rain=True,
                 title="Rainy Fare", passcode="RAIN"),

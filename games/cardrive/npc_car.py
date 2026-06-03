@@ -8,7 +8,8 @@ from constants import (
     SCREEN_W, SCREEN_H,
     NPC_CRUISE_MIN, NPC_CRUISE_MAX, NPC_ACCEL, NPC_BRAKE,
     NPC_TURN_EASE, NPC_LANE_FRAC, NPC_REACT, NPC_GAP,
-    NPC_TURN_PROB, NPC_STUCK_LIMIT, NPC_REVERSE_FRAMES, NPC_REVERSE_SPEED,
+    NPC_TURN_PROB, NPC_STUCK_LIMIT, NPC_QUEUE_LIMIT,
+    NPC_REVERSE_FRAMES, NPC_REVERSE_SPEED,
     C_CAR_WINDOW, C_HEADLIGHT, C_BLACK, C_BRAKE,
 )
 from utils import polygon_corners
@@ -62,6 +63,7 @@ class NPCCar:
         self.dx, self.dy = 0, 0
         self._was_junction = False
         self._oncoming = 0          # frames jammed by an oncoming car
+        self._queue = 0             # frames stuck in a (non-red) queue
         self._reverse = 0
         # Q-learning decision bookkeeping
         self._dec_state = None
@@ -83,6 +85,7 @@ class NPCCar:
         self.speed = self.cruise
         self._reverse = 0
         self._oncoming = 0
+        self._queue = 0
         self.idle = 0
         self._dec_state = None
         self._was_junction = False
@@ -246,6 +249,23 @@ class NPCCar:
                 return "oncoming" if oncoming else "queue"
         return None
 
+    def _red_ahead(self, depth=5) -> bool:
+        """A red light controls a tile a few steps ahead → legitimate wait."""
+        for k in range(1, depth + 1):
+            tile = (self.tx + self.dx * k, self.ty + self.dy * k)
+            light = self._map.tile_to_light.get(tile)
+            if light is not None and light.is_red:
+                return True
+        return False
+
+    def _escape(self):
+        """Back up and ask the brain for a fresh direction to break a jam."""
+        self._decision(blocked=True)
+        self._oncoming = 0
+        self._queue = 0
+        self._reverse = NPC_REVERSE_FRAMES
+        self._was_junction = True
+
     # ------------------------------------------------------------------
     # Per-frame update
     # ------------------------------------------------------------------
@@ -283,19 +303,23 @@ class NPCCar:
         if self.speed < 0.2:
             self._stall += 1
 
-        # An oncoming deadlock that persists → ask the brain for an escape
-        # (it learns which way works) and back up. Red lights / orderly queues
-        # are legitimate waits and never trigger this.
-        if reason == "oncoming" and self.speed < 0.25:
-            self._oncoming += 1
-            if self._oncoming > NPC_STUCK_LIMIT:
-                self._decision(blocked=True)
-                self._oncoming = 0
-                self._reverse = NPC_REVERSE_FRAMES
-                self._was_junction = True
-                return
+        # Persistent blockage → back up and reroute (the brain learns which
+        # way works).  A waiting-at-a-red queue is legitimate and is left
+        # alone; a non-red queue (a real jam / circular deadlock) eventually
+        # wiggles free so traffic never permanently locks.
+        if self.speed < 0.25:
+            if reason == "oncoming":
+                self._oncoming += 1; self._queue = 0
+                if self._oncoming > NPC_STUCK_LIMIT:
+                    self._escape(); return
+            elif reason == "queue" and not self._red_ahead():
+                self._queue += 1; self._oncoming = 0
+                if self._queue > NPC_QUEUE_LIMIT:
+                    self._escape(); return
+            else:
+                self._oncoming = 0; self._queue = 0
         else:
-            self._oncoming = 0
+            self._oncoming = 0; self._queue = 0
 
         if self.speed < target_speed:
             self.speed = min(target_speed, self.speed + NPC_ACCEL)
