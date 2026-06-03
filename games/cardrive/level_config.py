@@ -39,9 +39,9 @@ LEVELS: list[LevelConfig] = [
                 cell=4, road=2, title="Rush",          passcode="HONK"),
     LevelConfig(4, 6, 5, 13,  105,  0.18, 0.50, 2,
                 cell=3, road=2, title="Tight Corners", passcode="LANE"),
-    LevelConfig(5, 7, 6, 15,   95,  0.12, 0.58, 3,
+    LevelConfig(5, 7, 6,  8,   95,  0.12, 0.58, 3,
                 cell=3, road=1, title="Narrow Lanes",  passcode="DASH"),
-    LevelConfig(6, 8, 6, 18,   85,  0.08, 0.65, 3,
+    LevelConfig(6, 8, 6, 10,   85,  0.08, 0.65, 3,
                 cell=3, road=1, title="Gridlock",      passcode="ZOOM"),
 
     # ── Taxi fares ─────────────────────────────────────────────────────
@@ -63,18 +63,18 @@ LEVELS: list[LevelConfig] = [
                 title="Fuel Run", passcode="PUMP"),
 
     # ── Skill builders before the boss ─────────────────────────────────
-    LevelConfig(12, 8, 6, 20, 120, 0.07, 0.62, 3,
+    LevelConfig(12, 8, 6, 11, 120, 0.07, 0.62, 3,
                 cell=3, road=1, mode=MODE_TAXI,
                 title="Backstreets", passcode="MAZE"),
     LevelConfig(13, 8, 7, 18, 150, 0.10, 0.58, 3,
                 cell=3, road=2, mode=MODE_TAXI, night=True, rain=True,
                 title="Storm", passcode="STRM"),
-    LevelConfig(14, 8, 7, 20, 165, 0.06, 0.64, 3,
+    LevelConfig(14, 8, 7, 11, 165, 0.06, 0.64, 3,
                 cell=3, road=1, mode=MODE_TAXI, fuel=FUEL_MAX, gas_count=4,
                 title="Last Tank", passcode="TANK"),
 
     # ── BOSS ───────────────────────────────────────────────────────────
-    LevelConfig(15, 9, 7, 24, 210, 0.05, 0.68, 3,
+    LevelConfig(15, 9, 7, 13, 210, 0.05, 0.68, 3,
                 cell=3, road=1, mode=MODE_TAXI, night=True, rain=True,
                 fuel=FUEL_MAX, gas_count=5, title="The Gauntlet", passcode="BOSS"),
 ]

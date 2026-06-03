@@ -12,6 +12,7 @@ from constants import (
     C_CAR_WINDOW, C_HEADLIGHT, C_BLACK, C_BRAKE,
 )
 from utils import polygon_corners
+from traffic_ai import BRAIN, bucket
 
 
 NPC_COLORS = [
@@ -60,8 +61,31 @@ class NPCCar:
 
         self.dx, self.dy = 0, 0
         self._was_junction = False
-        self._stuck = 0
+        self._oncoming = 0          # frames jammed by an oncoming car
         self._reverse = 0
+        # Q-learning decision bookkeeping
+        self._dec_state = None
+        self._dec_action = 0
+        self._dec_pos = (self.x, self.y)
+        self._stall = 0             # frames not moving since last decision
+        self._was_blocked = False
+        self.idle = 0               # frames continuously not moving (keep-alive)
+        self._spawn_dir()
+        self.angle = math.degrees(math.atan2(self.dy, self.dx))
+
+    def respawn(self):
+        """Relocate to a fresh road tile (used to recycle hopelessly stuck
+        cars so traffic never permanently grid-locks)."""
+        tx, ty = random.choice(self._map.road_tiles())
+        self.tx, self.ty = tx, ty
+        self.x = float(tx * TILE + TILE // 2)
+        self.y = float(ty * TILE + TILE // 2)
+        self.speed = self.cruise
+        self._reverse = 0
+        self._oncoming = 0
+        self.idle = 0
+        self._dec_state = None
+        self._was_junction = False
         self._spawn_dir()
         self.angle = math.degrees(math.atan2(self.dy, self.dx))
 
@@ -112,40 +136,77 @@ class NPCCar:
     # Direction choice at each tile
     # ------------------------------------------------------------------
 
+    # ------------------------------------------------------------------
+    # Learned decisions (Q-brain)
+    # ------------------------------------------------------------------
+
+    def _action_dirs(self):
+        """Directions for actions 0=straight 1=left 2=right 3=back."""
+        dx, dy = self.dx, self.dy
+        return [(dx, dy), (dy, -dx), (-dy, dx), (-dx, -dy)]
+
+    def _encode_state(self, blocked: bool):
+        d = self._action_dirs()
+        fwd_open  = 1 if self._valid(self.tx + d[0][0], self.ty + d[0][1]) else 0
+        left_sp   = bucket(self._open_space(*d[1]))
+        right_sp  = bucket(self._open_space(*d[2]))
+        back_open = 1 if self._valid(self.tx + d[3][0], self.ty + d[3][1]) else 0
+        return (fwd_open, left_sp, right_sp, back_open, 1 if blocked else 0)
+
+    def _valid_actions(self, blocked: bool):
+        d = self._action_dirs()
+        opts = [i for i in range(4)
+                if self._valid(self.tx + d[i][0], self.ty + d[i][1])]
+        if not blocked:
+            no_uturn = [i for i in opts if i != 3]
+            if no_uturn:
+                opts = no_uturn
+        return opts or [3]
+
+    @staticmethod
+    def _prior(state):
+        """Heuristic starting values so an unlearned state already drives
+        sensibly: prefer straight, then the roomier turn, avoid U-turns."""
+        fwd, ls, rs, bo, blocked = state
+        return [
+            0.6 if fwd else -1.0,          # straight
+            0.15 + 0.12 * ls,              # left
+            0.15 + 0.12 * rs,              # right
+            0.10 if blocked else -0.4,     # back / U-turn
+        ]
+
+    def _decision(self, blocked: bool):
+        """Pick a direction with the shared brain and learn from the last one."""
+        dirs = self._action_dirs()
+        new_state = self._encode_state(blocked)
+        valid = self._valid_actions(blocked)
+        BRAIN.ensure(new_state, self._prior(new_state))
+
+        if self._dec_state is not None:
+            moved = math.hypot(self.x - self._dec_pos[0], self.y - self._dec_pos[1])
+            reward = moved / TILE - 0.03 * self._stall
+            if self._was_blocked and moved > 0.5 * TILE:
+                reward += 2.0
+                BRAIN.resolved += 1
+            BRAIN.learn(self._dec_state, self._dec_action, reward, new_state, valid)
+
+        action = BRAIN.choose(new_state, valid)
+        self.dx, self.dy = dirs[action]
+
+        self._dec_state = new_state
+        self._dec_action = action
+        self._dec_pos = (self.x, self.y)
+        self._stall = 0
+        self._was_blocked = blocked
+
     def _choose_next_dir(self):
+        """Called on each tile arrival: decide at junctions / forced corners."""
         straight_ok = self._valid(self.tx + self.dx, self.ty + self.dy)
-        turns = self._real_turns()
-
-        if not straight_ok:
-            # Road ends ahead → must turn into the roomiest side street,
-            # or U-turn at a dead end.
-            if turns:
-                self.dx, self.dy = self._roomiest(turns)
-            else:
-                self.dx, self.dy = -self.dx, -self.dy
-            self._was_junction = bool(turns)
-            return
-
-        if turns:
-            # Decide ONCE when first entering a junction (rising edge) so the
-            # car doesn't wiggle while crossing it.
-            if not self._was_junction and random.random() < NPC_TURN_PROB:
-                self.dx, self.dy = random.choice(turns)
-            self._was_junction = True
-        else:
-            self._was_junction = False
-        # otherwise: keep going straight
-
-    def _reroute(self):
-        """Blocked for too long → pick the roomiest non-forward direction."""
-        cands = [(ddx, ddy) for ddx, ddy in _DIRS
-                 if (ddx, ddy) != (self.dx, self.dy)
-                 and self._open_space(ddx, ddy) > 0]
-        if cands:
-            self.dx, self.dy = self._roomiest(cands)
-        self._stuck = 0
-        self._reverse = NPC_REVERSE_FRAMES
-        self._was_junction = True   # don't immediately re-decide
+        junction = bool(self._real_turns())
+        # Decide on junction entry (rising edge) or whenever we can't go straight.
+        if (junction and not self._was_junction) or (not straight_ok):
+            self._decision(blocked=False)
+        self._was_junction = junction
 
     # ------------------------------------------------------------------
     # Why (if at all) must we hold position?
@@ -173,12 +234,16 @@ class NPCCar:
                 continue
             dx, dy = o.x - self.x, o.y - self.y
             fwd = dx * self.dx + dy * self.dy
+            if not (0 < fwd < NPC_GAP):
+                continue
             lat = abs(dx * -self.dy + dy * self.dx)
-            if 0 < fwd < NPC_GAP and lat < TILE * 0.5:
-                # oncoming (facing us) → potential deadlock; same dir → queue
-                if (o.dx * self.dx + o.dy * self.dy) < 0:
-                    return "oncoming"
-                return "queue"
+            oncoming = (o.dx * self.dx + o.dy * self.dy) < 0
+            # Oncoming cars only block if nearly head-on in our path — if
+            # they're offset (the two cars are passing on a narrow street)
+            # we keep going.  Same-direction cars use the normal queue band.
+            band = TILE * 0.28 if oncoming else TILE * 0.5
+            if lat < band:
+                return "oncoming" if oncoming else "queue"
         return None
 
     # ------------------------------------------------------------------
@@ -213,15 +278,24 @@ class NPCCar:
         reason = self._stop_reason(peds, others)
         target_speed = 0.0 if reason else self.cruise
 
-        # Track genuine blockage (oncoming car / pedestrian) → reroute if it
-        # persists. Red lights and orderly queues are NOT a reason to reroute.
-        if reason in ("oncoming", "ped") and self.speed < 0.25:
-            self._stuck += 1
-            if self._stuck > NPC_STUCK_LIMIT:
-                self._reroute()
+        # Time spent not moving since the last decision (used as a penalty so
+        # the brain learns to avoid getting stuck).
+        if self.speed < 0.2:
+            self._stall += 1
+
+        # An oncoming deadlock that persists → ask the brain for an escape
+        # (it learns which way works) and back up. Red lights / orderly queues
+        # are legitimate waits and never trigger this.
+        if reason == "oncoming" and self.speed < 0.25:
+            self._oncoming += 1
+            if self._oncoming > NPC_STUCK_LIMIT:
+                self._decision(blocked=True)
+                self._oncoming = 0
+                self._reverse = NPC_REVERSE_FRAMES
+                self._was_junction = True
                 return
         else:
-            self._stuck = 0
+            self._oncoming = 0
 
         if self.speed < target_speed:
             self.speed = min(target_speed, self.speed + NPC_ACCEL)
@@ -243,6 +317,9 @@ class NPCCar:
             self.tx += self.dx
             self.ty += self.dy
             self._choose_next_dir()
+
+        # Keep-alive counter: how long we've been essentially motionless
+        self.idle = self.idle + 1 if self.speed < 0.2 else 0
 
     # ------------------------------------------------------------------
     # Collision helpers

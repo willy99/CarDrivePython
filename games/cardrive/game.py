@@ -27,6 +27,7 @@ from hud import HUD
 from mini_map import MiniMap
 from effects import NightOverlay, Rain, ImpactBurst
 from sounds import SoundFX
+from traffic_ai import BRAIN, bucket
 from utils import sat_overlap, rect_poly
 
 # SkidMark: (world_x, world_y, angle_deg, age_frames)
@@ -71,6 +72,10 @@ class Game:
         self.code_input  = ""
         self.code_msg    = ""
 
+        # Player-as-teacher bookkeeping
+        self._ptile = None
+        self._pdir  = (0, 0)
+
     # ------------------------------------------------------------------
     # Level management
     # ------------------------------------------------------------------
@@ -114,6 +119,8 @@ class Game:
         self.skid_marks: list[_SkidMark] = []
         self.impact = None          # ImpactBurst when a pedestrian is hit
         self.mini_map = MiniMap(self.game_map)
+        self._ptile = None
+        self._pdir  = (0, 0)
 
         self._notifications.clear()
         self._gameover_reason = ""
@@ -362,6 +369,11 @@ class Game:
 
         for npc in self.npcs:
             npc.update(self.pedestrians, self.npcs)
+            # Keep-alive: recycle a hopelessly stuck car if it's off-screen,
+            # so a far-away deadlock can never freeze all the traffic.
+            if npc.idle > 300 and math.hypot(npc.x - self.car.x,
+                                             npc.y - self.car.y) > SCREEN_W:
+                npc.respawn()
 
         old_x, old_y = self.car.x, self.car.y
         if self.state not in (S_FINISHED, S_GAME_OVER):
@@ -371,6 +383,7 @@ class Game:
 
         if self.state == S_RACING:
             self._check_red_light(old_x, old_y)
+            self._teach_from_player()
 
         self._check_pedestrian_collision()
         self._check_goal()
@@ -476,6 +489,59 @@ class Game:
                     (f"RED LIGHT  -{SCORE_VIOLATION} pts",
                      (255, 80, 80), tick + 2000)
                 )
+
+    # ------------------------------------------------------------------
+    # Teach the shared traffic brain from the player's good driving
+    # ------------------------------------------------------------------
+
+    def _open_space_at(self, tx, ty, ddx, ddy, limit=6):
+        gm = self.game_map
+        n, x, y = 0, tx, ty
+        for _ in range(limit):
+            x += ddx; y += ddy
+            if 0 <= x < gm.map_w_tiles and 0 <= y < gm.map_h_tiles \
+                    and gm.grid[y][x] == 0:
+                n += 1
+            else:
+                break
+        return n
+
+    def _teach_from_player(self):
+        """When the player drives through traffic, feed it as a demonstration."""
+        gm = self.game_map
+        tx, ty = int(self.car.x) // TILE, int(self.car.y) // TILE
+        cur = (tx, ty)
+        if cur == self._ptile:
+            return
+        prev = self._ptile
+        self._ptile = cur
+        if prev is None:
+            return
+        mdx, mdy = tx - prev[0], ty - prev[1]
+        if abs(mdx) + abs(mdy) != 1:        # only clean single-tile steps
+            self._pdir = (mdx, mdy)
+            return
+        gdx, gdy = self._pdir if self._pdir != (0, 0) else (mdx, mdy)
+        self._pdir = (mdx, mdy)
+
+        # Only teach when there is real traffic nearby (a genuine lesson)
+        near = any(abs(n.x - self.car.x) < TILE * 2.5
+                   and abs(n.y - self.car.y) < TILE * 2.5 for n in self.npcs)
+        if not near:
+            return
+
+        # Encode the same state/action space the NPCs use
+        dirs = [(gdx, gdy), (gdy, -gdx), (-gdy, gdx), (-gdx, -gdy)]
+        action = next((i for i, d in enumerate(dirs) if d == (mdx, mdy)), None)
+        if action is None:
+            return
+        px, py = prev
+        fwd_open  = 1 if self._open_space_at(px, py, *dirs[0], 1) else 0
+        left_sp   = bucket(self._open_space_at(px, py, *dirs[1]))
+        right_sp  = bucket(self._open_space_at(px, py, *dirs[2]))
+        back_open = 1 if self._open_space_at(px, py, *dirs[3], 1) else 0
+        state = (fwd_open, left_sp, right_sp, back_open, 0)
+        BRAIN.demonstrate(state, action)
 
     # ------------------------------------------------------------------
     # Pedestrian collision (any speed = game over)
@@ -694,6 +760,7 @@ class Game:
             mode=self.mode, has_passenger=self.has_passenger,
             fuel=self.fuel, max_fuel=self.max_fuel,
             level_title=cfg.title,
+            traffic_iq=BRAIN.skill, traffic_resolved=BRAIN.resolved,
         )
         pygame.display.flip()
 

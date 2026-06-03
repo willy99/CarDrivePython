@@ -29,7 +29,8 @@ class HUD:
              countdown_s: int | None, notifications: list,
              *, mode: str = "race", has_passenger: bool = False,
              fuel: float | None = None, max_fuel: float | None = None,
-             level_title: str = ""):
+             level_title: str = "",
+             traffic_iq: int = 0, traffic_resolved: int = 0):
 
         self._draw_speed_bar(surf, car)
         if fuel is not None and max_fuel:
@@ -41,6 +42,7 @@ class HUD:
         if state in (S_WAITING, S_RACING) and target_pos is not None:
             self._draw_compass(surf, car, target_pos)
 
+        self._draw_traffic_iq(surf, traffic_iq, traffic_resolved)
         self._draw_controls_hint(surf)
         self._draw_notifications(surf, notifications, tick)
         self._draw_messages(surf, car, state, race_ms, countdown_s,
@@ -132,6 +134,11 @@ class HUD:
         dist_tiles = int(math.hypot(dx, dy) / TILE)
         dt = self.font.render(str(dist_tiles), True, C_WHITE)
         surf.blit(dt, dt.get_rect(center=(cx, cy + 48)))
+
+    def _draw_traffic_iq(self, surf, iq: int, resolved: int):
+        txt = self.font.render(
+            f"Traffic IQ {iq}   jams solved {resolved}", True, (130, 200, 230))
+        surf.blit(txt, (14, SCREEN_H - 50))
 
     def _draw_controls_hint(self, surf):
         hint = self.font.render(

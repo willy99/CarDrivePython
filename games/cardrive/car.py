@@ -77,7 +77,7 @@ class Car:
         if keys[pygame.K_UP]:
             self.speed = (self.speed + BRAKE if self.speed < 0
                           else min(self.speed + ACCEL * self.accel_mult, MAX_SPEED))
-        elif keys[pygame.K_DOWN]:
+        elif keys[pygame.K_DOWN] or keys[pygame.K_SPACE]:
             if self.speed > 0:
                 self.speed = max(self.speed - BRAKE, 0.0)
             else:
