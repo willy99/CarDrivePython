@@ -142,11 +142,11 @@ class HUD:
         surf.blit(dt, dt.get_rect(center=(cx, cy + 48)))
 
     def _draw_god_badge(self, surf, tick: int):
-        """Pulsing 'MURZIK' badge above the speed bar when god mode is on."""
+        """Pulsing 'GODMODE' badge above the speed bar when god mode is on."""
         import math
         pulse = 0.65 + 0.35 * math.sin(tick * 0.012)
         col = (int(255 * pulse), int(220 * pulse), int(60 * pulse))
-        label = self.font.render("** MURZIK **", True, col)
+        label = self.font.render("** GODMODE **", True, col)
         surf.blit(label, label.get_rect(centerx=87, top=SCREEN_H - 78))
 
     def _draw_traffic_iq(self, surf, iq: int, resolved: int):

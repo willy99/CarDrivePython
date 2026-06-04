@@ -79,7 +79,7 @@ class Game:
         self._ptile = None
         self._pdir  = (0, 0)
 
-        # Cheats — type MURZIK during play to toggle god mode
+        # Cheats — type GODMODE during play to toggle god mode
         self.god_mode   = False
         self._cheat_buf = ""
 
@@ -266,7 +266,7 @@ class Game:
     def _toggle_god_mode(self):
         self.god_mode = not self.god_mode
         self.sfx.play("tick")
-        msg = "GOD MODE  ON  —  MURZIK!" if self.god_mode else "God mode OFF"
+        msg = "GOD MODE  ON  —  GODMODE!" if self.god_mode else "God mode OFF"
         col = (255, 220, 60) if self.god_mode else (180, 180, 195)
         self._notifications.append(
             (msg, col, pygame.time.get_ticks() + 3500))
@@ -448,10 +448,11 @@ class Game:
                 continue
             key = event.key
 
-            # Cheat code: a rolling buffer of letters → MURZIK toggles God mode
+            # Cheat code: a rolling buffer of letters → GODMODE toggles God mode
             if event.unicode and event.unicode.isalpha():
-                self._cheat_buf = (self._cheat_buf + event.unicode.lower())[-5:]
-                if self._cheat_buf == "murzik":
+                code = "godmode"
+                self._cheat_buf = (self._cheat_buf + event.unicode.lower())[-len(code):]
+                if self._cheat_buf == code:
                     self._cheat_buf = ""
                     self._toggle_god_mode()
 
