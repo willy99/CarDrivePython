@@ -11,6 +11,7 @@ from constants import (
     C_HOUSE_WALL, C_HOUSE_ROOF, C_HOUSE_BORDER,
     C_PAVEMENT, C_BLACK, C_WHITE, C_LANE,
     C_MARKER_A, C_MARKER_B, C_MARKER_P, C_GAS,
+    C_SNOW_LIGHT, C_SNOW_DARK, C_SNOW_ROOF, C_SNOW_PAVE, C_ICE_ASPHALT,
     MODE_TAXI,
 )
 from level_config import LevelConfig
@@ -52,6 +53,7 @@ class GameMap:
         self.gas_stations: list[tuple[float, float]] = []
         # Speed cameras: (world_x, world_y, fire_cooldown_frame_until)
         self.cameras: list[list] = []
+        self.winter = bool(getattr(cfg, "winter", False))
 
         self._generate(cfg)
         self._pick_objectives(cfg)
@@ -384,15 +386,20 @@ class GameMap:
         tx1 = min(self.map_w_tiles, tx0 + SCREEN_W // TILE + 2)
         ty1 = min(self.map_h_tiles, ty0 + SCREEN_H // TILE + 2)
 
+        # Winter swaps grass → snow, asphalt → slushy grey
+        asphalt_col = C_ICE_ASPHALT if self.winter else C_ASPHALT
+        ground_a = C_SNOW_LIGHT if self.winter else C_GRASS
+        ground_b = C_SNOW_DARK  if self.winter else C_GRASS_DARK
+
         for ty in range(ty0, ty1):
             for tx in range(tx0, tx1):
                 px = tx * TILE - int(cam_x)
                 py = ty * TILE - int(cam_y)
                 if self.grid[ty][tx] == 0:
-                    pygame.draw.rect(surf, C_ASPHALT, (px, py, TILE, TILE))
+                    pygame.draw.rect(surf, asphalt_col, (px, py, TILE, TILE))
                     self._draw_pavement_edge(surf, tx, ty, px, py)
                 else:
-                    col = C_GRASS if (tx + ty) % 2 == 0 else C_GRASS_DARK
+                    col = ground_a if (tx + ty) % 2 == 0 else ground_b
                     pygame.draw.rect(surf, col, (px, py, TILE, TILE))
 
         # Lane markings in a SECOND pass so dashes on tile boundaries aren't
@@ -405,13 +412,14 @@ class GameMap:
                                     tx * TILE - int(cam_x),
                                     ty * TILE - int(cam_y))
 
+        roof_col = C_SNOW_ROOF if self.winter else C_HOUSE_ROOF
         for h in self.houses:
             hx = h.x - int(cam_x)
             hy = h.y - int(cam_y)
             if -h.width < hx < SCREEN_W and -h.height < hy < SCREEN_H:
                 pygame.draw.rect(surf, C_HOUSE_WALL,   (hx, hy, h.width, h.height))
                 ri = 6
-                pygame.draw.rect(surf, C_HOUSE_ROOF,
+                pygame.draw.rect(surf, roof_col,
                                  (hx + ri, hy + ri, h.width - ri * 2, h.height - ri * 2))
                 pygame.draw.rect(surf, C_HOUSE_BORDER, (hx, hy, h.width, h.height), 2)
 
@@ -466,6 +474,7 @@ class GameMap:
             pygame.draw.circle(surf, (255, 255, 220), (ix, iy), 6)
 
     def _draw_pavement_edge(self, surf, tx: int, ty: int, px: int, py: int):
+        col = C_SNOW_PAVE if self.winter else C_PAVEMENT
         for ddx, ddy in ((1, 0), (-1, 0), (0, 1), (0, -1)):
             nx, ny = tx + ddx, ty + ddy
             if 0 <= nx < self.map_w_tiles and 0 <= ny < self.map_h_tiles \
@@ -474,7 +483,7 @@ class GameMap:
                 elif ddx == -1: brd = (px, py, 6, TILE)
                 elif ddy ==  1: brd = (px, py + TILE - 6, TILE, 6)
                 else:           brd = (px, py, TILE, 6)
-                pygame.draw.rect(surf, C_PAVEMENT, brd)
+                pygame.draw.rect(surf, col, brd)
 
     def _draw_lane(self, surf, tx: int, ty: int, px: int, py: int):
         """

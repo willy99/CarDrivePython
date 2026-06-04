@@ -44,6 +44,7 @@ class ScreenRenderer:
         rows = [
             ("Arrows",    "drive (Up gas, Down brake)"),
             ("L / R",     "steer when moving"),
+            ("H",         "honk, make others go away"),
             ("Goal",      "reach the gold B marker"),
             ("Red light", "stop — running it costs points"),
             ("People",    "never hit them — game over"),
@@ -175,6 +176,17 @@ class ScreenRenderer:
             self._chip(surf, label, value, col, cy)
             cy += 40
 
+        # On winter levels, a short reminder about drift recovery
+        if getattr(cfg, "winter", False):
+            tip1 = self.font.render(
+                "When the rear slides:  steer INTO the slide.",
+                True, (210, 220, 240))
+            tip2 = self.font.render(
+                "FWD car: press GAS to recover.   RWD car: LIFT OFF gas.",
+                True, (200, 200, 220))
+            surf.blit(tip1, tip1.get_rect(centerx=SCREEN_W // 2, top=SCREEN_H - 175))
+            surf.blit(tip2, tip2.get_rect(centerx=SCREEN_W // 2, top=SCREEN_H - 152))
+
         # Passcode
         pc = self.font.render(
             f"Level code:  {cfg.passcode}   (note it to resume here later)",
@@ -205,6 +217,7 @@ class ScreenRenderer:
         weather = []
         if cfg.night: weather.append("night")
         if cfg.rain:  weather.append("rain")
+        if getattr(cfg, "winter", False): weather.append("ice + snow")
         if cfg.fuel is not None: weather.append("fuel limit")
         if weather:
             chips.append(("Hazards", ", ".join(weather), (150, 120, 210)))

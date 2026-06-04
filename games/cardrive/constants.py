@@ -127,7 +127,8 @@ DAMAGE_HANDLING_MIN_MULT = 0.55   # worst-case handling/accel multiplier
 # ---------------------------------------------------------------------------
 # Police chase
 # ---------------------------------------------------------------------------
-POLICE_CRUISE     = 3.2     # px/frame baseline pursuit speed
+POLICE_CRUISE_MAX     = 3.5     # px/frame baseline pursuit speed
+POLICE_CRUISE_MIN     = 2.2     # px/frame baseline pursuit speed
 POLICE_CATCH_DIST = TILE * 0.65  # how close = caught
 
 # ---------------------------------------------------------------------------
@@ -162,6 +163,36 @@ HEADLIGHT_FWD    = 0.55    # push the lit area forward by this fraction of radiu
 RAIN_STEER_MULT    = 0.60  # steering authority in the wet
 RAIN_FRICTION_MULT = 0.45  # less friction → longer slides / braking
 RAIN_ACCEL_MULT    = 0.85  # slight traction loss on acceleration
+
+# ---------------------------------------------------------------------------
+# Winter (snow + ice + actual drift physics)
+# ---------------------------------------------------------------------------
+# Visual palette (replaces the grass + roof colours)
+C_SNOW_LIGHT   = (228, 232, 240)
+C_SNOW_DARK    = (205, 212, 224)
+C_SNOW_ROOF    = (240, 245, 250)
+C_SNOW_PAVE    = (200, 205, 215)
+C_ICE_ASPHALT  = (96,  100, 112)   # slushy grey-blue
+# Physics multipliers (worse than rain — proper ice)
+WINTER_STEER_MULT    = 0.55
+WINTER_FRICTION_MULT = 0.30
+WINTER_ACCEL_MULT    = 0.55
+# Lateral grip — fraction of lateral velocity removed each frame.
+# 1.0 = perfect grip (no drift); near 0 = pure ice (heading and motion diverge).
+LATERAL_GRIP_DRY     = 1.00
+LATERAL_GRIP_RAIN    = 0.65
+LATERAL_GRIP_WINTER  = 0.10
+# How sharply hard cornering injects lateral velocity (oversteer kick)
+SKID_INJECT_RWD      = 1.25   # rear-wheel-drive: more oversteer with throttle
+SKID_INJECT_FWD      = 0.85   # front-wheel-drive: less oversteer
+# Counter-steer bonus: temporarily restores lateral grip when you steer INTO
+# the slide and apply the correct pedal for your drivetrain (gas for FWD,
+# off-throttle for RWD).
+COUNTER_STEER_BONUS  = 3.5
+
+# Drivetrain identifiers
+DRIVETRAIN_FWD = "FWD"
+DRIVETRAIN_RWD = "RWD"
 
 # ---------------------------------------------------------------------------
 # Race / game states

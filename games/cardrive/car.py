@@ -6,6 +6,9 @@ from constants import (
     FRICTION, C_CAR_CRASH, C_CAR_WINDOW, C_HEADLIGHT, C_BLACK, C_BRAKE,
     DAMAGE_PER_CRASH, DAMAGE_HANDLING_THRESH, DAMAGE_FATAL,
     DAMAGE_HANDLING_MIN_MULT,
+    LATERAL_GRIP_DRY, LATERAL_GRIP_RAIN, LATERAL_GRIP_WINTER,
+    SKID_INJECT_FWD, SKID_INJECT_RWD, COUNTER_STEER_BONUS,
+    DRIVETRAIN_RWD,
 )
 from car_types import DEFAULT_CAR
 from utils import polygon_corners
@@ -115,7 +118,8 @@ class Car:
         self.x = float(x)
         self.y = float(y)
         self.angle = 0.0
-        self.speed = 0.0
+        self.speed = 0.0            # forward (body-x) velocity
+        self.lat_vel = 0.0          # body-y velocity (positive = body-left)
         self.crashed = False
         self.crash_timer = 0
         self.braking = False
@@ -131,16 +135,27 @@ class Car:
         self.base_steer  = ctype.steer
         self.reverse_max = ctype.reverse_max
         self.base_fric   = ctype.friction
+        self.drivetrain  = ctype.drivetrain
 
-        # Grip multipliers (1.0 = dry; rain lowers them)
+        # Grip multipliers (1.0 = dry; rain/winter lower them)
         self.steer_mult    = 1.0
         self.friction_mult = 1.0
         self.accel_mult    = 1.0
+        self.lat_grip      = LATERAL_GRIP_DRY    # fraction of vlat removed/frame
 
     def set_wet(self, rain_steer, rain_friction, rain_accel):
+        """Apply wet-weather grip loss (rain)."""
         self.steer_mult    = rain_steer
         self.friction_mult = rain_friction
         self.accel_mult    = rain_accel
+        self.lat_grip      = LATERAL_GRIP_RAIN
+
+    def set_winter(self, w_steer, w_friction, w_accel):
+        """Apply ice-grade grip loss — drift physics become very visible."""
+        self.steer_mult    = w_steer
+        self.friction_mult = w_friction
+        self.accel_mult    = w_accel
+        self.lat_grip      = LATERAL_GRIP_WINTER
 
     # ------------------------------------------------------------------
     # Update
@@ -152,19 +167,26 @@ class Car:
             return
         self._steer(keys)
         self._throttle(keys)
+        self._apply_grip(keys)
+
         rad = math.radians(self.angle)
-        self.x += self.speed * math.cos(rad)
-        self.y += self.speed * math.sin(rad)
+        fx, fy = math.cos(rad), math.sin(rad)
+        # body-y unit (left of heading): (-sin, cos)
+        rx, ry = -math.sin(rad), math.cos(rad)
+        self.x += self.speed * fx + self.lat_vel * rx
+        self.y += self.speed * fy + self.lat_vel * ry
 
     def _update_crashed(self):
         self.crash_timer -= 1
         if self.crash_timer <= 0:
             self.crashed = False
             self.speed = 0.0
+            self.lat_vel = 0.0
         self.speed *= 0.88
+        self.lat_vel *= 0.85
         rad = math.radians(self.angle)
-        self.x += self.speed * math.cos(rad)
-        self.y += self.speed * math.sin(rad)
+        self.x += self.speed * math.cos(rad) + self.lat_vel * -math.sin(rad)
+        self.y += self.speed * math.sin(rad) + self.lat_vel * math.cos(rad)
 
     def _damage_mult(self) -> float:
         """1.0 when undamaged; drops to DAMAGE_HANDLING_MIN_MULT at fatal."""
@@ -178,16 +200,30 @@ class Car:
         self.damage = min(DAMAGE_FATAL, self.damage + amount)
 
     def _steer(self, keys):
-        if abs(self.speed) <= 0.05:
+        if abs(self.speed) <= 0.05 and abs(self.lat_vel) <= 0.05:
             return
         eff = min(abs(self.speed) / self.max_speed, 1.0)
         dmg = self._damage_mult()
         steer = self.base_steer * (0.3 + 0.7 * eff) * self.steer_mult * dmg
         sign = 1 if self.speed > 0 else -1
+        delta = 0.0
         if keys[pygame.K_LEFT]:
-            self.angle -= steer * sign
+            delta -= steer * sign
         if keys[pygame.K_RIGHT]:
-            self.angle += steer * sign
+            delta += steer * sign
+        if delta == 0.0:
+            return
+        self.angle += delta
+
+        # When the body rotates by Δθ, the WORLD velocity vector is unchanged,
+        # so its components in the new body frame shift.  This is what gives
+        # us drift: heading and motion diverge until lateral grip pulls them
+        # back together (see _apply_grip).
+        rad = math.radians(delta)
+        cos_d, sin_d = math.cos(rad), math.sin(rad)
+        new_fwd = self.speed * cos_d + self.lat_vel * sin_d
+        new_lat = self.lat_vel * cos_d - self.speed * sin_d
+        self.speed, self.lat_vel = new_fwd, new_lat
 
     def _throttle(self, keys):
         friction = self.base_fric * self.friction_mult
@@ -199,7 +235,8 @@ class Car:
                                    self.max_speed))
         elif keys[pygame.K_DOWN] or keys[pygame.K_SPACE]:
             if self.speed > 0:
-                self.speed = max(self.speed - self.base_brake, 0.0)
+                # Brakes apply LESS on ice (friction_mult is part of base_brake here)
+                self.speed = max(self.speed - self.base_brake * self.friction_mult, 0.0)
             else:
                 self.speed = max(self.speed - self.base_accel * 0.6, -self.reverse_max)
         else:
@@ -209,6 +246,40 @@ class Car:
                 self.speed -= friction
             else:
                 self.speed += friction
+
+    def _apply_grip(self, keys):
+        """
+        Pull lateral velocity back toward zero (the tires gripping the road).
+
+        On dry roads `lat_grip` is 1.0 → lateral velocity vanishes every frame,
+        so the car behaves exactly as before (no visible drift).
+
+        On winter `lat_grip` is tiny → lateral velocity persists, the car
+        slides.  Counter-steering (turning INTO the slide) combined with the
+        correct pedal for your drivetrain temporarily restores extra grip:
+
+          • FWD: PRESS GAS while counter-steering — front wheels pull straight
+          • RWD: LIFT OFF the gas — weight shifts back, rear regains grip
+        """
+        if abs(self.lat_vel) < 0.05:
+            self.lat_vel = 0.0
+            return
+
+        grip = self.lat_grip
+
+        # Detect counter-steer + correct pedal for drivetrain
+        skid_sign = 1 if self.lat_vel > 0 else -1
+        steer_in = -1 if keys[pygame.K_LEFT] else 1 if keys[pygame.K_RIGHT] else 0
+        is_counter = steer_in != 0 and steer_in == skid_sign
+        if is_counter:
+            gas_on = bool(keys[pygame.K_UP])
+            if self.drivetrain == DRIVETRAIN_RWD and not gas_on:
+                grip = min(1.0, grip * COUNTER_STEER_BONUS)
+            elif self.drivetrain != DRIVETRAIN_RWD and gas_on:
+                grip = min(1.0, grip * COUNTER_STEER_BONUS)
+
+        # Decay lateral velocity
+        self.lat_vel *= max(0.0, 1.0 - grip)
 
     # ------------------------------------------------------------------
     # Collision helpers

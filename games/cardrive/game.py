@@ -15,6 +15,7 @@ from constants import (
     MODE_TAXI,
     FUEL_DRAIN, FUEL_IDLE_DRAIN, FUEL_REFILL_RATE, GAS_RADIUS,
     RAIN_STEER_MULT, RAIN_FRICTION_MULT, RAIN_ACCEL_MULT,
+    WINTER_STEER_MULT, WINTER_FRICTION_MULT, WINTER_ACCEL_MULT,
     MODE_CHASE,
     HONK_RADIUS, HONK_NUDGE, HONK_NUDGE_FRAMES, HONK_COOLDOWN,
     SCORE_SPEEDING, CAMERA_LIMIT_FRAC, CAMERA_RADIUS, CAMERA_COOLDOWN,
@@ -32,7 +33,7 @@ from game_map import GameMap
 from pedestrian import Pedestrian, TaxiPassenger
 from hud import HUD
 from mini_map import MiniMap
-from effects import NightOverlay, Rain, ImpactBurst, Fireworks
+from effects import NightOverlay, Rain, Snow, ImpactBurst, Fireworks
 from sounds import SoundFX
 from traffic_ai import BRAIN, bucket
 from utils import sat_overlap, rect_poly
@@ -126,7 +127,12 @@ class Game:
         # --- weather / time-of-day effects ---
         self.night = NightOverlay() if cfg.night else None
         self.rain  = Rain()         if cfg.rain  else None
-        if cfg.rain:
+        self.snow  = Snow()         if getattr(cfg, "winter", False) else None
+        # Winter takes precedence over rain (you don't get both at once)
+        if getattr(cfg, "winter", False):
+            self.car.set_winter(WINTER_STEER_MULT, WINTER_FRICTION_MULT,
+                                WINTER_ACCEL_MULT)
+        elif cfg.rain:
             self.car.set_wet(RAIN_STEER_MULT, RAIN_FRICTION_MULT, RAIN_ACCEL_MULT)
 
         self.skid_marks: list[_SkidMark] = []
@@ -144,7 +150,7 @@ class Game:
                            key=lambda t: -((t[0] * TILE - self.car.x) ** 2 +
                                             (t[1] * TILE - self.car.y) ** 2))
             for sp in tiles[: cfg.police_count]:
-                self.police.append(PoliceCar(self.game_map, sp))
+                self.police.append(PoliceCar(self.game_map, sp, car=self.car))
 
         # Honk + camera flash + pause state
         self._honk_cd        = 0       # frames until honk available again
@@ -447,6 +453,8 @@ class Game:
         # Weather animation
         if self.rain:
             self.rain.update()
+        if self.snow:
+            self.snow.update()
 
         # Traffic lights + pedestrians
         for light in self.game_map.traffic_lights:
@@ -938,6 +946,8 @@ class Game:
         # Weather + darkness over the world (under HUD / mini-map)
         if self.rain:
             self.rain.draw(self.screen)
+        if self.snow:
+            self.snow.draw(self.screen)
         if self.night:
             self.night.draw(self.screen,
                             self.car.x - self.cam_x,

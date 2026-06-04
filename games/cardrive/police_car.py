@@ -12,7 +12,7 @@ import pygame
 from constants import (
     TILE, NPC_W, NPC_H,
     SCREEN_W, SCREEN_H,
-    NPC_TURN_EASE, POLICE_CRUISE,
+    NPC_TURN_EASE, POLICE_CRUISE_MAX, POLICE_CRUISE_MIN,
     C_BLACK, C_CAR_WINDOW,
 )
 from utils import polygon_corners
@@ -30,11 +30,14 @@ class PoliceCar:
     H = NPC_H
     COLOR = (30, 30, 60)        # dark navy body
 
-    def __init__(self, game_map, spawn_pos=None):
+    def __init__(self, game_map, spawn_pos=None, car=None):
         self._map = game_map
-        self.cruise = POLICE_CRUISE
+        self.cruise = random.uniform(POLICE_CRUISE_MIN, POLICE_CRUISE_MAX)
         self.speed = self.cruise
-        self.dx, self.dy = 1, 0
+        if car:
+            if self.speed >= car.speed:
+                self.speed = self.speed * 0.90
+        self.dx, self.dy = random.randint(0,1), random.randint(0,1)
         self.angle = 0.0
 
         if spawn_pos is None:

@@ -168,6 +168,43 @@ class NightOverlay:
         surf.blit(self._dark, (0, 0))
 
 
+class Snow:
+    """Snowflakes drifting down with a gentle horizontal sway."""
+
+    _COLOR = (245, 248, 255)
+
+    def __init__(self, flakes: int = 110):
+        # each flake: [x, y, size, fall_speed, sway_phase, sway_speed]
+        self._flakes = [self._spawn() for _ in range(flakes)]
+        self._tint = pygame.Surface((SCREEN_W, SCREEN_H), pygame.SRCALPHA)
+        self._tint.fill((220, 230, 245, 18))      # cool wintery tint
+
+    @staticmethod
+    def _spawn():
+        return [
+            random.uniform(0, SCREEN_W),
+            random.uniform(-SCREEN_H, SCREEN_H),
+            random.uniform(1.4, 2.6),              # radius
+            random.uniform(1.0, 2.2),              # fall speed
+            random.uniform(0, math.tau),
+            random.uniform(0.04, 0.10),
+        ]
+
+    def update(self):
+        for f in self._flakes:
+            f[1] += f[3]
+            f[4] += f[5]
+            f[0] += math.cos(f[4]) * 0.6
+            if f[1] > SCREEN_H + 4:
+                f[0] = random.uniform(0, SCREEN_W)
+                f[1] = -4
+
+    def draw(self, surf):
+        surf.blit(self._tint, (0, 0))
+        for x, y, r, *_ in self._flakes:
+            pygame.draw.circle(surf, self._COLOR, (int(x), int(y)), int(r))
+
+
 class Rain:
     """Animated diagonal rain streaks plus a faint cool tint."""
 
