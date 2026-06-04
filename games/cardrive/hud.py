@@ -30,7 +30,8 @@ class HUD:
              *, mode: str = "race", has_passenger: bool = False,
              fuel: float | None = None, max_fuel: float | None = None,
              level_title: str = "",
-             traffic_iq: int = 0, traffic_resolved: int = 0):
+             traffic_iq: int = 0, traffic_resolved: int = 0,
+             god_mode: bool = False):
 
         self._draw_speed_bar(surf, car)
         if fuel is not None and max_fuel:
@@ -43,6 +44,8 @@ class HUD:
             self._draw_compass(surf, car, target_pos)
 
         self._draw_traffic_iq(surf, traffic_iq, traffic_resolved)
+        if god_mode:
+            self._draw_god_badge(surf, tick)
         self._draw_controls_hint(surf)
         self._draw_notifications(surf, notifications, tick)
         self._draw_messages(surf, car, state, race_ms, countdown_s,
@@ -137,6 +140,14 @@ class HUD:
         dist_tiles = int(math.hypot(dx, dy) / TILE)
         dt = self.font.render(str(dist_tiles), True, C_WHITE)
         surf.blit(dt, dt.get_rect(center=(cx, cy + 48)))
+
+    def _draw_god_badge(self, surf, tick: int):
+        """Pulsing 'MURZIK' badge above the speed bar when god mode is on."""
+        import math
+        pulse = 0.65 + 0.35 * math.sin(tick * 0.012)
+        col = (int(255 * pulse), int(220 * pulse), int(60 * pulse))
+        label = self.font.render("** MURZIK **", True, col)
+        surf.blit(label, label.get_rect(centerx=87, top=SCREEN_H - 78))
 
     def _draw_traffic_iq(self, surf, iq: int, resolved: int):
         txt = self.font.render(

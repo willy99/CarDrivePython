@@ -79,6 +79,10 @@ class Game:
         self._ptile = None
         self._pdir  = (0, 0)
 
+        # Cheats — type MURZIK during play to toggle god mode
+        self.god_mode   = False
+        self._cheat_buf = ""
+
     # ------------------------------------------------------------------
     # Level management
     # ------------------------------------------------------------------
@@ -256,6 +260,16 @@ class Game:
         self.screen_mode = "home"
         self.code_input  = ""
         self.code_msg    = ""
+        self.god_mode    = False        # cheats reset on returning to menu
+        self._cheat_buf  = ""
+
+    def _toggle_god_mode(self):
+        self.god_mode = not self.god_mode
+        self.sfx.play("tick")
+        msg = "GOD MODE  ON  —  MURZIK!" if self.god_mode else "God mode OFF"
+        col = (255, 220, 60) if self.god_mode else (180, 180, 195)
+        self._notifications.append(
+            (msg, col, pygame.time.get_ticks() + 3500))
 
     # ------------------------------------------------------------------
     # Main loop
@@ -371,9 +385,10 @@ class Game:
         if self.state == S_RACING:
             self.race_ms = tick - self.race_start
 
-        # Countdown expiry
+        # Countdown expiry (skipped in god mode)
         if (self.state == S_RACING
                 and cfg.countdown_s is not None
+                and not self.god_mode
                 and self.race_ms >= cfg.countdown_s * 1000):
             self._trigger_game_over("Time's up!")
             return
@@ -433,6 +448,13 @@ class Game:
                 continue
             key = event.key
 
+            # Cheat code: a rolling buffer of letters → MURZIK toggles God mode
+            if event.unicode and event.unicode.isalpha():
+                self._cheat_buf = (self._cheat_buf + event.unicode.lower())[-5:]
+                if self._cheat_buf == "murzik":
+                    self._cheat_buf = ""
+                    self._toggle_god_mode()
+
             # ESC → menu (NOT quit: sys.exit() hangs the browser canvas)
             if key == pygame.K_ESCAPE:
                 self._go_home()
@@ -490,6 +512,11 @@ class Game:
 
     def _apply_collision(self, car, ox, oy, bounce: float):
         if abs(car.speed) >= CRASH_THRESH:
+            # God mode: bounce off instead of crashing
+            if self.god_mode:
+                car.x, car.y = ox, oy
+                car.speed *= bounce
+                return
             if not car.crashed:
                 self.level_crashes += 1
                 self.sfx.play("crash")
@@ -503,6 +530,8 @@ class Game:
     # ------------------------------------------------------------------
 
     def _check_red_light(self, old_x: float, old_y: float):
+        if self.god_mode:
+            return
         old_tx = int(old_x) // TILE
         old_ty = int(old_y) // TILE
         new_tx = int(self.car.x) // TILE
@@ -585,6 +614,8 @@ class Game:
     def _check_pedestrian_collision(self):
         if self.state in (S_FINISHED, S_GAME_OVER, S_GAME_WON):
             return
+        if self.god_mode:
+            return
         # Oriented-box vs point (with the pedestrian's radius as padding):
         # transform each pedestrian into the car's local frame.
         rad = math.radians(self.car.angle)
@@ -664,6 +695,10 @@ class Game:
 
     def _update_fuel(self):
         if self.fuel is None or self.state != S_RACING:
+            return
+        # God mode: keep the tank topped up.
+        if self.god_mode:
+            self.fuel = self.max_fuel
             return
         # Drain proportional to speed, plus a small idle draw
         self.fuel -= FUEL_DRAIN * abs(self.car.speed) + FUEL_IDLE_DRAIN
@@ -807,6 +842,7 @@ class Game:
             fuel=self.fuel, max_fuel=self.max_fuel,
             level_title=cfg.title,
             traffic_iq=BRAIN.skill, traffic_resolved=BRAIN.resolved,
+            god_mode=self.god_mode,
         )
         pygame.display.flip()
 
