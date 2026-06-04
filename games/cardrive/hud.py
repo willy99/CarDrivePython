@@ -31,7 +31,8 @@ class HUD:
              fuel: float | None = None, max_fuel: float | None = None,
              level_title: str = "",
              traffic_iq: int = 0, traffic_resolved: int = 0,
-             god_mode: bool = False):
+             god_mode: bool = False,
+             damage: float = 0.0):
 
         self._draw_speed_bar(surf, car)
         if fuel is not None and max_fuel:
@@ -44,6 +45,8 @@ class HUD:
             self._draw_compass(surf, car, target_pos)
 
         self._draw_traffic_iq(surf, traffic_iq, traffic_resolved)
+        if damage > 0:
+            self._draw_damage(surf, damage)
         if god_mode:
             self._draw_god_badge(surf, tick)
         self._draw_controls_hint(surf)
@@ -149,6 +152,32 @@ class HUD:
         label = self.font.render("** GODMODE **", True, col)
         surf.blit(label, label.get_rect(centerx=87, top=SCREEN_H - 78))
 
+    def _draw_damage(self, surf, damage: float):
+        """A small dent-meter under the fuel gauge area."""
+        bx, by, bw, bh = 14, SCREEN_H - 70, 110, 7
+        frac = max(0.0, min(1.0, damage / 100.0))
+        pygame.draw.rect(surf, (30, 30, 30),
+                         (bx - 2, by - 2, bw + 4, bh + 4), border_radius=3)
+        col = ((220, 220, 60) if frac < 0.45 else
+               (230, 140, 50) if frac < 0.75 else (220, 50, 40))
+        pygame.draw.rect(surf, col, (bx, by, int(bw * frac), bh), border_radius=2)
+        lbl = self.font.render(f"Damage {int(damage)}%", True, (200, 200, 210))
+        surf.blit(lbl, (bx + bw + 8, by - 4))
+
+    def draw_pause(self, surf, tick: int):
+        """Dim overlay + a big PAUSED label (called only while paused)."""
+        veil = pygame.Surface((SCREEN_W, SCREEN_H), pygame.SRCALPHA)
+        veil.fill((10, 12, 20, 170))
+        surf.blit(veil, (0, 0))
+        head = self.big_font.render("PAUSED", True, C_WHITE)
+        shadow = self.big_font.render("PAUSED", True, C_BLACK)
+        cx, cy = SCREEN_W // 2, SCREEN_H // 2 - 10
+        surf.blit(shadow, shadow.get_rect(center=(cx + 2, cy + 2)))
+        surf.blit(head,   head.get_rect(center=(cx, cy)))
+        hint = self.font.render("P: resume      ESC: menu",
+                                True, (200, 210, 225))
+        surf.blit(hint, hint.get_rect(center=(cx, cy + 60)))
+
     def _draw_traffic_iq(self, surf, iq: int, resolved: int):
         txt = self.font.render(
             f"Traffic IQ {iq}   jams solved {resolved}", True, (130, 200, 230))
@@ -156,7 +185,7 @@ class HUD:
 
     def _draw_controls_hint(self, surf):
         hint = self.font.render(
-            "Arrows: drive   ESC: menu   R: restart",
+            "Arrows: drive   H: honk   P: pause   R: restart   ESC: menu",
             True, (180, 180, 180),
         )
         surf.blit(hint, (10, SCREEN_H - 28))

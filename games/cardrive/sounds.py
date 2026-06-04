@@ -64,11 +64,19 @@ class SoundFX:
                     + _silence(rate, 0.02)
                     + _sine(rate, 1080, 0.08, 0.5))
             door = _noise(rate, 0.04, 0.5) + _sine(rate, 150, 0.14, 0.6)
+            # Honk: a "beep-beep" two-tone toot
+            honk = (_sine(rate, 420, 0.10, 0.55, decay=False)
+                    + _silence(rate, 0.03)
+                    + _sine(rate, 380, 0.12, 0.55, decay=False))
+            # Camera shutter / siren chirp — a rising sweep
+            flash = _sine(rate, 1400, 0.10, 0.45)
 
             self._snd = {
                 "crash": self._make(crash),
                 "tick":  self._make(tick),
                 "door":  self._make(door),
+                "honk":  self._make(honk),
+                "flash": self._make(flash),
             }
             self.enabled = True
         except Exception:

@@ -4,6 +4,8 @@ import pygame
 
 from constants import (
     FRICTION, C_CAR_CRASH, C_CAR_WINDOW, C_HEADLIGHT, C_BLACK, C_BRAKE,
+    DAMAGE_PER_CRASH, DAMAGE_HANDLING_THRESH, DAMAGE_FATAL,
+    DAMAGE_HANDLING_MIN_MULT,
 )
 from car_types import DEFAULT_CAR
 from utils import polygon_corners
@@ -13,7 +15,8 @@ from utils import polygon_corners
 # Shared body renderer (used by the car on the road AND the garage preview)
 # ---------------------------------------------------------------------------
 
-def render_car(surf, sx, sy, angle, ctype, *, braking=False, crashed=False):
+def render_car(surf, sx, sy, angle, ctype, *, braking=False, crashed=False,
+               damage=0.0):
     """Draw a car of `ctype` centred at screen (sx, sy) facing `angle` deg."""
     rad = math.radians(angle)
     cos_a, sin_a = math.cos(rad), math.sin(rad)
@@ -76,6 +79,24 @@ def render_car(surf, sx, sy, angle, ctype, *, braking=False, crashed=False):
         poly([(2, -hh + 2), (hw - 2, -hh + 2),
               (hw - 2, hh - 2), (2, hh - 2)], C_CAR_WINDOW, 0)
 
+    # Damage marks — dark dents + a windshield crack at heavy damage
+    if damage > 0 and not crashed:
+        # dark dent splotches; more appear with damage
+        import random as _r
+        _r.seed(int(damage) * 7 + ctype.w)        # stable across frames
+        n_dents = int(damage / 15)
+        for _ in range(n_dents):
+            dx = _r.uniform(-hw + 2, hw - 2)
+            dy = _r.uniform(-hh + 1, hh - 1)
+            pygame.draw.circle(surf, (40, 35, 35), l2s(dx, dy), 2)
+        # Windshield crack lines once damage is heavy
+        if damage > 55:
+            wsx, wsy = l2s(0, 0)
+            for off in (-3, 0, 3):
+                pygame.draw.line(surf, C_BLACK,
+                                 l2s(2 + off, -hh + 2),
+                                 l2s(hw - 3, off), 1)
+
     # Headlights (front = +x)
     for side in (-1, 1):
         hx, hy = l2s(hw - 1, side * (hh - 3))
@@ -98,6 +119,7 @@ class Car:
         self.crashed = False
         self.crash_timer = 0
         self.braking = False
+        self.damage = 0.0
 
         # Handling from the chosen car
         self.ctype       = ctype
@@ -144,11 +166,23 @@ class Car:
         self.x += self.speed * math.cos(rad)
         self.y += self.speed * math.sin(rad)
 
+    def _damage_mult(self) -> float:
+        """1.0 when undamaged; drops to DAMAGE_HANDLING_MIN_MULT at fatal."""
+        if self.damage <= DAMAGE_HANDLING_THRESH:
+            return 1.0
+        span = max(1.0, DAMAGE_FATAL - DAMAGE_HANDLING_THRESH)
+        t = min(1.0, (self.damage - DAMAGE_HANDLING_THRESH) / span)
+        return 1.0 - t * (1.0 - DAMAGE_HANDLING_MIN_MULT)
+
+    def add_damage(self, amount: float = DAMAGE_PER_CRASH):
+        self.damage = min(DAMAGE_FATAL, self.damage + amount)
+
     def _steer(self, keys):
         if abs(self.speed) <= 0.05:
             return
         eff = min(abs(self.speed) / self.max_speed, 1.0)
-        steer = self.base_steer * (0.3 + 0.7 * eff) * self.steer_mult
+        dmg = self._damage_mult()
+        steer = self.base_steer * (0.3 + 0.7 * eff) * self.steer_mult * dmg
         sign = 1 if self.speed > 0 else -1
         if keys[pygame.K_LEFT]:
             self.angle -= steer * sign
@@ -158,9 +192,10 @@ class Car:
     def _throttle(self, keys):
         friction = self.base_fric * self.friction_mult
         self.braking = bool(keys[pygame.K_DOWN]) and self.speed > 0.1
+        dmg = self._damage_mult()
         if keys[pygame.K_UP]:
             self.speed = (self.speed + self.base_brake if self.speed < 0
-                          else min(self.speed + self.base_accel * self.accel_mult,
+                          else min(self.speed + self.base_accel * self.accel_mult * dmg,
                                    self.max_speed))
         elif keys[pygame.K_DOWN] or keys[pygame.K_SPACE]:
             if self.speed > 0:
@@ -203,4 +238,5 @@ class Car:
 
     def draw(self, surf, cam_x: float, cam_y: float):
         render_car(surf, self.x - cam_x, self.y - cam_y, self.angle, self.ctype,
-                   braking=self.braking, crashed=self.crashed)
+                   braking=self.braking, crashed=self.crashed,
+                   damage=self.damage)

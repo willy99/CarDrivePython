@@ -50,10 +50,13 @@ class GameMap:
         # objectives: ordered list of (pos, label, color) the player must reach
         self.objectives: list[tuple[tuple, str, tuple]] = []
         self.gas_stations: list[tuple[float, float]] = []
+        # Speed cameras: (world_x, world_y, fire_cooldown_frame_until)
+        self.cameras: list[list] = []
 
         self._generate(cfg)
         self._pick_objectives(cfg)
         self._place_gas_stations(cfg)
+        self._place_cameras(cfg)
 
     # ------------------------------------------------------------------
     # Carving primitives
@@ -317,6 +320,34 @@ class GameMap:
         rng.shuffle(candidates)
         self.gas_stations = candidates[: cfg.gas_count]
 
+    def _place_cameras(self, cfg: LevelConfig):
+        """Place speed cameras on a sample of road tiles along straight runs."""
+        if cfg.camera_count <= 0:
+            return
+        rng = random.Random()
+        # Prefer mid-corridor tiles (axis-aligned road flow) — less annoying
+        # than placing one right at a junction.
+        candidates = []
+        for ty in range(self.map_h_tiles):
+            for tx in range(self.map_w_tiles):
+                if self.grid[ty][tx] != 0:
+                    continue
+                h = (0 < tx < self.map_w_tiles - 1
+                     and self.grid[ty][tx - 1] == 0 and self.grid[ty][tx + 1] == 0)
+                v = (0 < ty < self.map_h_tiles - 1
+                     and self.grid[ty - 1][tx] == 0 and self.grid[ty + 1][tx] == 0)
+                if h ^ v:
+                    candidates.append((tx, ty))
+        rng.shuffle(candidates)
+        for tx, ty in candidates[: cfg.camera_count * 6]:
+            wx = tx * TILE + TILE // 2
+            wy = ty * TILE + TILE // 2
+            # don't crowd existing cameras
+            if all(abs(c[0] - wx) + abs(c[1] - wy) > TILE * 4 for c in self.cameras):
+                self.cameras.append([wx, wy, 0])     # [x, y, cooldown_until]
+            if len(self.cameras) >= cfg.camera_count:
+                break
+
     # ------------------------------------------------------------------
     # Queries
     # ------------------------------------------------------------------
@@ -396,6 +427,10 @@ class GameMap:
         for gx, gy in self.gas_stations:
             self._draw_gas_station(surf, cam_x, cam_y, gx, gy, font)
 
+        # Speed cameras
+        for cam in self.cameras:
+            self._draw_camera(surf, cam_x, cam_y, cam[0], cam[1], cam[2], tick)
+
         # Start marker + objective markers (pickup / dropoff)
         self._draw_marker(surf, cam_x, cam_y, self.start_pos, C_MARKER_A, "A", font, tick, False)
         for pos, label, color in self.objectives:
@@ -411,6 +446,24 @@ class GameMap:
         pygame.draw.rect(surf, C_GAS,   (ix - 14, iy - 14, 28, 28), border_radius=4)
         g = font.render("FUEL", True, C_BLACK)
         surf.blit(g, g.get_rect(center=(ix, iy)))
+
+    def _draw_camera(self, surf, cam_x, cam_y, gx, gy, cooldown_until, tick):
+        sx = gx - cam_x
+        sy = gy - cam_y
+        if not (-40 < sx < SCREEN_W + 40 and -40 < sy < SCREEN_H + 40):
+            return
+        ix, iy = int(sx), int(sy)
+        # Pole
+        pygame.draw.rect(surf, (40, 40, 40), (ix - 1, iy + 4, 2, 12))
+        # Box body
+        pygame.draw.rect(surf, (30, 30, 35), (ix - 8, iy - 6, 16, 12), border_radius=2)
+        pygame.draw.rect(surf, (80, 80, 90), (ix - 8, iy - 6, 16, 12), 1, border_radius=2)
+        # Lens
+        pygame.draw.circle(surf, (140, 140, 180), (ix, iy), 3)
+        # If it recently fired, draw a flash
+        frames_since = tick - (cooldown_until - 90)
+        if 0 < frames_since < 12:
+            pygame.draw.circle(surf, (255, 255, 220), (ix, iy), 6)
 
     def _draw_pavement_edge(self, surf, tx: int, ty: int, px: int, py: int):
         for ddx, ddy in ((1, 0), (-1, 0), (0, 1), (0, -1)):

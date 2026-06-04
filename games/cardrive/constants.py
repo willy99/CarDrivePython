@@ -95,8 +95,40 @@ NPC_REVERSE_SPEED  = 0.9 # px/frame while backing up
 # ---------------------------------------------------------------------------
 # Game modes
 # ---------------------------------------------------------------------------
-MODE_RACE = 'race'   # drive A → B
-MODE_TAXI = 'taxi'   # drive A → pickup → dropoff
+MODE_RACE  = 'race'    # drive A → B
+MODE_TAXI  = 'taxi'    # drive A → pickup → dropoff
+MODE_CHASE = 'chase'   # police pursue you; reach B before they catch you
+
+# ---------------------------------------------------------------------------
+# Honk (H key) — nudges NPCs that are blocking the player
+# ---------------------------------------------------------------------------
+HONK_RADIUS         = TILE * 3.2
+HONK_NUDGE          = 7        # px lateral nudge per frame for nearby NPCs
+HONK_NUDGE_FRAMES   = 20       # how long the nudge lingers
+HONK_COOLDOWN       = 30       # frames between honks (anti-spam)
+
+# ---------------------------------------------------------------------------
+# Speed cameras
+# ---------------------------------------------------------------------------
+SCORE_SPEEDING       = 150     # penalty per speeding ticket
+CAMERA_LIMIT_FRAC    = 0.55    # camera fires above 55% of the CAR's max speed
+CAMERA_RADIUS        = TILE * 1.2
+CAMERA_COOLDOWN      = 90      # frames a given camera waits before firing again
+CAMERA_FLASH_FRAMES  = 14      # screen-flash duration
+
+# ---------------------------------------------------------------------------
+# Crash damage (visible dents + degraded handling)
+# ---------------------------------------------------------------------------
+DAMAGE_PER_CRASH         = 28.0
+DAMAGE_HANDLING_THRESH   = 45.0   # above this, steering/accel start to suffer
+DAMAGE_FATAL             = 100.0  # totalled
+DAMAGE_HANDLING_MIN_MULT = 0.55   # worst-case handling/accel multiplier
+
+# ---------------------------------------------------------------------------
+# Police chase
+# ---------------------------------------------------------------------------
+POLICE_CRUISE     = 3.2     # px/frame baseline pursuit speed
+POLICE_CATCH_DIST = TILE * 0.65  # how close = caught
 
 # ---------------------------------------------------------------------------
 # Taxi scoring

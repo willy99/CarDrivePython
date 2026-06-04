@@ -15,6 +15,11 @@ from constants import (
     MODE_TAXI,
     FUEL_DRAIN, FUEL_IDLE_DRAIN, FUEL_REFILL_RATE, GAS_RADIUS,
     RAIN_STEER_MULT, RAIN_FRICTION_MULT, RAIN_ACCEL_MULT,
+    MODE_CHASE,
+    HONK_RADIUS, HONK_NUDGE, HONK_NUDGE_FRAMES, HONK_COOLDOWN,
+    SCORE_SPEEDING, CAMERA_LIMIT_FRAC, CAMERA_RADIUS, CAMERA_COOLDOWN,
+    CAMERA_FLASH_FRAMES,
+    DAMAGE_PER_CRASH, DAMAGE_FATAL,
     S_WAITING, S_RACING, S_FINISHED, S_GAME_OVER, S_GAME_WON,
 )
 from level_config import LEVELS, level_by_passcode
@@ -22,6 +27,7 @@ from screens import ScreenRenderer
 from car import Car
 from car_types import CARS
 from npc_car import NPCCar
+from police_car import PoliceCar
 from game_map import GameMap
 from pedestrian import Pedestrian, TaxiPassenger
 from hud import HUD
@@ -129,6 +135,23 @@ class Game:
         self.mini_map = MiniMap(self.game_map)
         self._ptile = None
         self._pdir  = (0, 0)
+
+        # Police chase
+        self.police: list[PoliceCar] = []
+        if cfg.police_count > 0:
+            # Spawn far from the player's start
+            tiles = sorted(self.game_map.road_tiles(),
+                           key=lambda t: -((t[0] * TILE - self.car.x) ** 2 +
+                                            (t[1] * TILE - self.car.y) ** 2))
+            for sp in tiles[: cfg.police_count]:
+                self.police.append(PoliceCar(self.game_map, sp))
+
+        # Honk + camera flash + pause state
+        self._honk_cd        = 0       # frames until honk available again
+        self._honk_active    = 0       # frames remaining of the nudge effect
+        self._camera_flash   = 0       # frames remaining of screen-flash
+        self.paused          = False
+        self._pause_start_ms = 0
 
         self._notifications.clear()
         self._gameover_reason = ""
@@ -272,6 +295,28 @@ class Game:
             (msg, col, pygame.time.get_ticks() + 3500))
 
     # ------------------------------------------------------------------
+    # Pause / Honk
+    # ------------------------------------------------------------------
+
+    def _toggle_pause(self, tick: int):
+        if not self.paused:
+            self.paused = True
+            self._pause_start_ms = tick
+        else:
+            # Slide the race start forward by however long we were paused, so
+            # the timer / countdown / fuel are unaffected by the break.
+            paused_for = tick - self._pause_start_ms
+            self.race_start += paused_for
+            self.paused = False
+
+    def _honk(self):
+        self.sfx.play("honk")
+        self._honk_cd = HONK_COOLDOWN
+        self._honk_active = HONK_NUDGE_FRAMES
+        self._notifications.append(
+            ("BEEP!", (255, 235, 80), pygame.time.get_ticks() + 800))
+
+    # ------------------------------------------------------------------
     # Main loop
     # ------------------------------------------------------------------
 
@@ -286,9 +331,15 @@ class Game:
             self._tick_intro(t)
         else:
             self._handle_events(t)
-            keys = pygame.key.get_pressed()
-            self._update(keys, t)
-            self._draw(t)
+            if self.paused:
+                # Render the world frozen + the pause overlay
+                self._draw(t)
+                self.hud.draw_pause(self.screen, t)
+                pygame.display.flip()
+            else:
+                keys = pygame.key.get_pressed()
+                self._update(keys, t)
+                self._draw(t)
         self.clock.tick(FPS)
 
     def run(self):
@@ -405,11 +456,29 @@ class Game:
 
         for npc in self.npcs:
             npc.update(self.pedestrians, self.npcs)
-            # Keep-alive: recycle a hopelessly stuck car if it's off-screen,
-            # so a far-away deadlock can never freeze all the traffic.
             if npc.idle > 300 and math.hypot(npc.x - self.car.x,
                                              npc.y - self.car.y) > SCREEN_W:
                 npc.respawn()
+
+        # Honk effect: nudge NPCs near the player to the side for a moment
+        if self._honk_active > 0:
+            self._honk_active -= 1
+            for n in self.npcs:
+                if math.hypot(n.x - self.car.x, n.y - self.car.y) < HONK_RADIUS:
+                    # Push laterally away from the player's heading
+                    rad = math.radians(self.car.angle)
+                    perp_x, perp_y = -math.sin(rad), math.cos(rad)
+                    side = 1 if (n.x - self.car.x) * perp_x + (n.y - self.car.y) * perp_y >= 0 else -1
+                    nx = n.x + perp_x * HONK_NUDGE * 0.25 * side
+                    ny = n.y + perp_y * HONK_NUDGE * 0.25 * side
+                    if self.game_map.is_road(nx, ny):
+                        n.x, n.y = nx, ny
+        if self._honk_cd > 0:
+            self._honk_cd -= 1
+
+        # Police cars (chase mode)
+        for cop in self.police:
+            cop.update(self.car)
 
         if self.fireworks is not None:
             self.fireworks.update()
@@ -422,6 +491,8 @@ class Game:
 
         if self.state == S_RACING:
             self._check_red_light(old_x, old_y)
+            self._check_speed_cameras(tick)
+            self._check_police_catch()
             self._teach_from_player()
 
         self._check_pedestrian_collision()
@@ -467,6 +538,11 @@ class Game:
                     self._go_home()
                 continue
 
+            # P: toggle pause (only during a live race)
+            if key == pygame.K_p and self.state == S_RACING:
+                self._toggle_pause(tick)
+                continue
+
             if key == pygame.K_r:
                 if self.state == S_GAME_OVER:
                     self._go_home()          # game over is final → back to menu
@@ -474,8 +550,12 @@ class Game:
                     self._retry_level()      # quick restart of the attempt
             if key == pygame.K_SPACE and self.state == S_FINISHED:
                 self._next_level()           # → next level's intro
-            if key == pygame.K_h and self.state in (S_FINISHED, S_GAME_OVER):
-                self._go_home()
+            # H: honk during play, but on end screens H still → home
+            if key == pygame.K_h:
+                if self.state in (S_FINISHED, S_GAME_OVER):
+                    self._go_home()
+                elif self.state == S_RACING and self._honk_cd <= 0:
+                    self._honk()
 
     # ------------------------------------------------------------------
     # Collision resolution
@@ -521,6 +601,10 @@ class Game:
             if not car.crashed:
                 self.level_crashes += 1
                 self.sfx.play("crash")
+                car.add_damage(DAMAGE_PER_CRASH)
+                if car.damage >= DAMAGE_FATAL:
+                    self._trigger_game_over("Car totalled!")
+                    return
             car.crash()
         else:
             car.x, car.y = ox, oy
@@ -554,6 +638,44 @@ class Game:
                     (f"RED LIGHT  -{SCORE_VIOLATION} pts",
                      (255, 80, 80), tick + 2000)
                 )
+
+    # ------------------------------------------------------------------
+    # Speed cameras
+    # ------------------------------------------------------------------
+
+    def _check_speed_cameras(self, tick: int):
+        if self.god_mode or not self.game_map.cameras:
+            return
+        car = self.car
+        limit = car.max_speed * CAMERA_LIMIT_FRAC
+        if abs(car.speed) < limit:
+            return
+        for cam in self.game_map.cameras:
+            if tick < cam[2]:                 # still on cooldown
+                continue
+            if math.hypot(car.x - cam[0], car.y - cam[1]) < CAMERA_RADIUS:
+                cam[2] = tick + CAMERA_COOLDOWN * (1000 // 60)
+                self.total_score = max(0, self.total_score - SCORE_SPEEDING)
+                self._camera_flash = CAMERA_FLASH_FRAMES
+                self.sfx.play("flash")
+                self._notifications.append(
+                    (f"SPEED CAMERA  -{SCORE_SPEEDING} pts",
+                     (255, 240, 120), tick + 2200))
+                break
+
+    # ------------------------------------------------------------------
+    # Police chase: caught?
+    # ------------------------------------------------------------------
+
+    def _check_police_catch(self):
+        if self.god_mode:
+            return
+        for cop in self.police:
+            if cop.caught(self.car):
+                self.car.speed = 0.0
+                self.sfx.play("crash")
+                self._trigger_game_over("Caught by police!")
+                return
 
     # ------------------------------------------------------------------
     # Teach the shared traffic brain from the player's good driving
@@ -810,6 +932,8 @@ class Game:
         self.car.draw(self.screen, self.cam_x, self.cam_y)
         if self.has_passenger:
             self._draw_passenger()
+        for cop in self.police:
+            cop.draw(self.screen, self.cam_x, self.cam_y, tick)
 
         # Weather + darkness over the world (under HUD / mini-map)
         if self.rain:
@@ -828,6 +952,14 @@ class Game:
         if self.fireworks is not None:
             self.fireworks.draw(self.screen)
 
+        # Speed-camera screen flash
+        if self._camera_flash > 0:
+            self._camera_flash -= 1
+            alpha = int(190 * self._camera_flash / CAMERA_FLASH_FRAMES)
+            flash = pygame.Surface((SCREEN_W, SCREEN_H), pygame.SRCALPHA)
+            flash.fill((255, 255, 255, alpha))
+            self.screen.blit(flash, (0, 0))
+
         self.mini_map.draw(self.screen, self.car, self.game_map,
                            self.npcs, self.cam_x, self.cam_y,
                            tick=tick, target_pos=self.target_pos)
@@ -844,6 +976,7 @@ class Game:
             level_title=cfg.title,
             traffic_iq=BRAIN.skill, traffic_resolved=BRAIN.resolved,
             god_mode=self.god_mode,
+            damage=self.car.damage,
         )
         pygame.display.flip()
 

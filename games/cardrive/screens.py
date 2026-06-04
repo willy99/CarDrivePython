@@ -149,17 +149,28 @@ class ScreenRenderer:
             t = self.big.render(cfg.title, True, C_WHITE)
             surf.blit(t, t.get_rect(centerx=SCREEN_W // 2, top=140))
 
+        # Optional narrative line — italic-feel, dispatcher-voice mood
+        narrative_y = 205
+        if getattr(cfg, "narrative", ""):
+            nr = self.font.render(f'“{cfg.narrative}”',
+                                  True, (215, 200, 140))
+            surf.blit(nr, nr.get_rect(centerx=SCREEN_W // 2, top=narrative_y))
+            narrative_y += 30
+
         # Goal line
+        from constants import MODE_CHASE
         if cfg.mode == MODE_TAXI:
             goal = "Pick up your passenger at P, then deliver to B."
+        elif cfg.mode == MODE_CHASE:
+            goal = "Reach B before the police catch you."
         else:
             goal = "Drive from A to the gold B marker as fast as you can."
         g = self.font.render(goal, True, (190, 200, 215))
-        surf.blit(g, g.get_rect(centerx=SCREEN_W // 2, top=205))
+        surf.blit(g, g.get_rect(centerx=SCREEN_W // 2, top=narrative_y))
 
         # Difficulty chips
         chips = self._difficulty_chips(cfg)
-        cy = 260
+        cy = narrative_y + 55
         for label, value, col in chips:
             self._chip(surf, label, value, col, cy)
             cy += 40
