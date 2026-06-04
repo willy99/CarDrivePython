@@ -14,6 +14,36 @@ from constants import (
 )
 from car import render_car
 from car_types import CARS
+import i18n
+from i18n import t
+
+
+# Clickable language flag — top, between the speed bar and the timer
+# (a zone that is free on every screen, gameplay included).
+FLAG_RECT = pygame.Rect(330, 6, 52, 30)
+
+
+def draw_flag(surf, font):
+    """Draw the CURRENT language's flag + 2-letter code; returns FLAG_RECT."""
+    r = FLAG_RECT
+    fw = 30
+    flag = pygame.Rect(r.x, r.y + 3, fw, r.h - 8)
+    lang = i18n.get_lang()
+    if lang == "uk":
+        half = flag.h // 2
+        pygame.draw.rect(surf, (0, 87, 183), (flag.x, flag.y, flag.w, half))
+        pygame.draw.rect(surf, (255, 215, 0),
+                         (flag.x, flag.y + half, flag.w, flag.h - half))
+        code = "UA"
+    else:
+        pygame.draw.rect(surf, (240, 240, 245), flag)             # St George
+        pygame.draw.rect(surf, (200, 30, 40),
+                         (flag.x, flag.centery - 2, flag.w, 4))
+        pygame.draw.rect(surf, (200, 30, 40),
+                         (flag.centerx - 2, flag.y, 4, flag.h))
+        code = "EN"
+    pygame.draw.rect(surf, C_BLACK, flag, 1)
+    surf.blit(font.render(code, True, C_WHITE), (flag.right + 6, r.y + 6))
 
 
 class ScreenRenderer:
@@ -29,10 +59,10 @@ class ScreenRenderer:
     def draw_home(self, surf, tick: int, code_input: str, code_msg: str):
         surf.fill((18, 22, 30))
 
-        # Title
+        # Title (brand — not translated)
         title = self.title.render("CARDRIVE", True, C_MARKER_B)
         surf.blit(title, title.get_rect(centerx=SCREEN_W // 2, top=54))
-        sub = self.font.render("a top-down driving challenge", True, (150, 160, 175))
+        sub = self.font.render(t("home.subtitle"), True, (150, 160, 175))
         surf.blit(sub, sub.get_rect(centerx=SCREEN_W // 2, top=120))
 
         # Two info columns (kept clear of each other)
@@ -40,27 +70,27 @@ class ScreenRenderer:
         right_x = 560
         y0 = 175
 
-        self._heading(surf, "HOW TO PLAY", left_x, y0)
+        self._heading(surf, t("home.howto"), left_x, y0)
         rows = [
-            ("Arrows",    "drive (Up gas, Down brake)"),
-            ("L / R",     "steer when moving"),
-            ("H",         "honk, make others go away"),
-            ("Goal",      "reach the gold B marker"),
-            ("Red light", "stop — running it costs points"),
-            ("People",    "never hit them — game over"),
-            ("R / ESC",   "restart  /  quit"),
+            (t("home.k.arrows"),  t("home.v.arrows")),
+            (t("home.k.lr"),      t("home.v.lr")),
+            (t("home.k.honk"),    t("home.v.honk")),
+            (t("home.k.goal"),    t("home.v.goal")),
+            (t("home.k.red"),     t("home.v.red")),
+            (t("home.k.people"),  t("home.v.people")),
+            (t("home.k.restart"), t("home.v.restart")),
         ]
         y = y0 + 38
         for k, v in rows:
             self._kv(surf, k, v, left_x, y)
             y += 32
 
-        self._heading(surf, "MODES & HAZARDS", right_x, y0)
+        self._heading(surf, t("home.modes"), right_x, y0)
         modes = [
-            (C_MARKER_P,    "Taxi",  "carry a fare from P to B"),
-            (C_GAS,         "Fuel",  "refuel at FUEL stations"),
-            ((110,130,180), "Night", "headlights only"),
-            ((150,170,210), "Rain",  "less grip, longer slides"),
+            (C_MARKER_P,    t("home.m.taxi"),  t("home.mv.taxi")),
+            (C_GAS,         t("home.m.fuel"),  t("home.mv.fuel")),
+            ((110,130,180), t("home.m.night"), t("home.mv.night")),
+            ((150,170,210), t("home.m.rain"),  t("home.mv.rain")),
         ]
         y = y0 + 38
         for col, k, v in modes:
@@ -70,11 +100,11 @@ class ScreenRenderer:
 
         # Start + passcode box
         box_y = SCREEN_H - 150
-        start = self.big.render("Press  ENTER  to start", True, C_WHITE)
+        start = self.big.render(t("home.start"), True, C_WHITE)
         surf.blit(start, start.get_rect(centerx=SCREEN_W // 2, top=box_y))
 
         cursor = "_" if (tick // 400) % 2 == 0 else " "
-        code_label = self.font.render("Have a level code?  Type it:", True, (170, 180, 195))
+        code_label = self.font.render(t("home.code_prompt"), True, (170, 180, 195))
         surf.blit(code_label, code_label.get_rect(centerx=SCREEN_W // 2, top=box_y + 56))
 
         code_disp = (code_input + cursor) if len(code_input) < 6 else code_input
@@ -87,6 +117,8 @@ class ScreenRenderer:
         if code_msg:
             m = self.font.render(code_msg, True, (235, 110, 90))
             surf.blit(m, m.get_rect(centerx=SCREEN_W // 2, top=box_y + 124))
+
+        draw_flag(surf, self.font)
 
     # ------------------------------------------------------------------
     # Garage / car selection
@@ -106,8 +138,9 @@ class ScreenRenderer:
         pygame.draw.rect(surf, col, (bx, y, int(bw * frac), bh), border_radius=3)
 
     def draw_garage(self, surf, tick: int, car_idx: int):
+        from constants import DRIVETRAIN_RWD
         surf.fill((18, 22, 30))
-        head = self.title.render("CHOOSE YOUR CAR", True, C_MARKER_B)
+        head = self.title.render(t("garage.title"), True, C_MARKER_B)
         surf.blit(head, head.get_rect(centerx=SCREEN_W // 2, top=34))
 
         cols, tw, th = 4, 232, 250
@@ -123,49 +156,54 @@ class ScreenRenderer:
             if sel:
                 pygame.draw.rect(surf, C_MARKER_A, rect, 3, border_radius=10)
 
-            prev = self._car_preview(ct, 96)
-            surf.blit(prev, prev.get_rect(center=(rect.centerx, rect.top + 58)))
+            prev = self._car_preview(ct, 92)
+            surf.blit(prev, prev.get_rect(center=(rect.centerx, rect.top + 52)))
             nm = self.big.render(ct.name, True, C_WHITE if sel else (175, 182, 195))
-            surf.blit(nm, nm.get_rect(centerx=rect.centerx, top=rect.top + 108))
+            surf.blit(nm, nm.get_rect(centerx=rect.centerx, top=rect.top + 98))
+
+            # Drivetrain badge (matters on ice)
+            dt_key = "garage.rwd" if ct.drivetrain == DRIVETRAIN_RWD else "garage.fwd"
+            dt = self.font.render(t(dt_key), True, (150, 170, 200))
+            surf.blit(dt, dt.get_rect(centerx=rect.centerx, top=rect.top + 128))
 
             bx = rect.left + 16
-            self._stat_bar(surf, bx, rect.top + 150, "SPD", ct.bar_speed)
-            self._stat_bar(surf, bx, rect.top + 172, "ACC", ct.bar_accel)
-            self._stat_bar(surf, bx, rect.top + 194, "HND", ct.bar_handling)
+            self._stat_bar(surf, bx, rect.top + 152, t("garage.spd"), ct.bar_speed)
+            self._stat_bar(surf, bx, rect.top + 174, t("garage.acc"), ct.bar_accel)
+            self._stat_bar(surf, bx, rect.top + 196, t("garage.hnd"), ct.bar_handling)
 
-        hint = self.big.render("LEFT / RIGHT: choose       ENTER: drive",
-                               True, C_WHITE)
+        hint = self.big.render(t("garage.hint"), True, C_WHITE)
         surf.blit(hint, hint.get_rect(centerx=SCREEN_W // 2, top=SCREEN_H - 64))
+        draw_flag(surf, self.font)
 
     # ------------------------------------------------------------------
     # Level intro screen
     # ------------------------------------------------------------------
 
     def draw_intro(self, surf, cfg, tick: int):
+        from constants import MODE_CHASE
         surf.fill((18, 22, 30))
 
-        head = self.title.render(f"LEVEL {cfg.level_num}", True, C_MARKER_B)
+        head = self.title.render(t("intro.level", n=cfg.level_num), True, C_MARKER_B)
         surf.blit(head, head.get_rect(centerx=SCREEN_W // 2, top=70))
         if cfg.title:
-            t = self.big.render(cfg.title, True, C_WHITE)
-            surf.blit(t, t.get_rect(centerx=SCREEN_W // 2, top=140))
+            tsurf = self.big.render(cfg.title, True, C_WHITE)   # title = brand name
+            surf.blit(tsurf, tsurf.get_rect(centerx=SCREEN_W // 2, top=140))
 
-        # Optional narrative line — italic-feel, dispatcher-voice mood
+        # Optional narrative line — localised dispatcher voice
         narrative_y = 205
-        if getattr(cfg, "narrative", ""):
-            nr = self.font.render(f'“{cfg.narrative}”',
-                                  True, (215, 200, 140))
+        line = i18n.narrative(cfg.title) or getattr(cfg, "narrative", "")
+        if line:
+            nr = self.font.render(f'“{line}”', True, (215, 200, 140))
             surf.blit(nr, nr.get_rect(centerx=SCREEN_W // 2, top=narrative_y))
             narrative_y += 30
 
         # Goal line
-        from constants import MODE_CHASE
         if cfg.mode == MODE_TAXI:
-            goal = "Pick up your passenger at P, then deliver to B."
+            goal = t("intro.goal.taxi")
         elif cfg.mode == MODE_CHASE:
-            goal = "Reach B before the police catch you."
+            goal = t("intro.goal.chase")
         else:
-            goal = "Drive from A to the gold B marker as fast as you can."
+            goal = t("intro.goal.race")
         g = self.font.render(goal, True, (190, 200, 215))
         surf.blit(g, g.get_rect(centerx=SCREEN_W // 2, top=narrative_y))
 
@@ -178,49 +216,48 @@ class ScreenRenderer:
 
         # On winter levels, a short reminder about drift recovery
         if getattr(cfg, "winter", False):
-            tip1 = self.font.render(
-                "When the rear slides:  steer INTO the slide.",
-                True, (210, 220, 240))
-            tip2 = self.font.render(
-                "FWD car: press GAS to recover.   RWD car: LIFT OFF gas.",
-                True, (200, 200, 220))
+            tip1 = self.font.render(t("intro.tip1"), True, (210, 220, 240))
+            tip2 = self.font.render(t("intro.tip2"), True, (200, 200, 220))
             surf.blit(tip1, tip1.get_rect(centerx=SCREEN_W // 2, top=SCREEN_H - 175))
             surf.blit(tip2, tip2.get_rect(centerx=SCREEN_W // 2, top=SCREEN_H - 152))
 
         # Passcode
-        pc = self.font.render(
-            f"Level code:  {cfg.passcode}   (note it to resume here later)",
-            True, (150, 200, 150),
-        )
+        pc = self.font.render(t("intro.code", code=cfg.passcode),
+                              True, (150, 200, 150))
         surf.blit(pc, pc.get_rect(centerx=SCREEN_W // 2, top=SCREEN_H - 120))
 
-        go = self.big.render("Press  SPACE  to begin", True, C_WHITE)
+        go = self.big.render(t("intro.begin"), True, C_WHITE)
         if (tick // 500) % 2 == 0:
             surf.blit(go, go.get_rect(centerx=SCREEN_W // 2, top=SCREEN_H - 76))
+
+        draw_flag(surf, self.font)
 
     # ------------------------------------------------------------------
     # Helpers
     # ------------------------------------------------------------------
 
     def _difficulty_chips(self, cfg):
-        size = f"{cfg.mx}×{cfg.my} rooms"
-        street = {1: "very narrow", 2: "narrow", 3: "wide"}.get(cfg.road, "narrow")
-        traffic = ("light" if cfg.npc_count <= 8 else
-                   "moderate" if cfg.npc_count <= 16 else "heavy")
+        size = t("chip.rooms", w=cfg.mx, h=cfg.my)
+        street_key = {1: "street.very_narrow", 2: "street.narrow",
+                      3: "street.wide"}.get(cfg.road, "street.narrow")
+        traffic_key = ("traffic.light" if cfg.npc_count <= 8 else
+                       "traffic.moderate" if cfg.npc_count <= 16 else "traffic.heavy")
+        traffic = t("traffic.cars", lvl=t(traffic_key), n=cfg.npc_count)
+        time_val = (t("time.nolimit") if cfg.countdown_s is None
+                    else t("time.secs", n=cfg.countdown_s))
         chips = [
-            ("Map",     size,                         (90, 140, 200)),
-            ("Streets", street,                       (200, 160, 60)),
-            ("Traffic", f"{traffic} ({cfg.npc_count} cars)", (200, 110, 70)),
-            ("Time",    "no limit" if cfg.countdown_s is None
-                        else f"{cfg.countdown_s}s",   (180, 80, 80)),
+            (t("chip.map"),     size,    (90, 140, 200)),
+            (t("chip.streets"), t(street_key), (200, 160, 60)),
+            (t("chip.traffic"), traffic, (200, 110, 70)),
+            (t("chip.time"),    time_val, (180, 80, 80)),
         ]
         weather = []
-        if cfg.night: weather.append("night")
-        if cfg.rain:  weather.append("rain")
-        if getattr(cfg, "winter", False): weather.append("ice + snow")
-        if cfg.fuel is not None: weather.append("fuel limit")
+        if cfg.night: weather.append(t("hazard.night"))
+        if cfg.rain:  weather.append(t("hazard.rain"))
+        if getattr(cfg, "winter", False): weather.append(t("hazard.winter"))
+        if cfg.fuel is not None: weather.append(t("hazard.fuel"))
         if weather:
-            chips.append(("Hazards", ", ".join(weather), (150, 120, 210)))
+            chips.append((t("chip.hazards"), ", ".join(weather), (150, 120, 210)))
         return chips
 
     def _chip(self, surf, label, value, col, y):

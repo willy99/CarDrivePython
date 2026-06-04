@@ -10,6 +10,8 @@ from constants import (
     S_WAITING, S_RACING, S_FINISHED, S_GAME_OVER, S_GAME_WON,
 )
 from utils import fmt_time
+from i18n import t
+from level_config import LEVELS
 
 
 class HUD:
@@ -75,7 +77,7 @@ class HUD:
         if fill > 0:
             pygame.draw.rect(surf, bar_col, (bx, by, fill, bh), border_radius=3)
         surf.blit(
-            self.font.render(f"Speed: {abs(car.speed):.1f}", True, C_WHITE),
+            self.font.render(t("hud.speed", v=f"{abs(car.speed):.1f}"), True, C_WHITE),
             (bx + 4, by + 1),
         )
 
@@ -88,24 +90,24 @@ class HUD:
         col = (220, 40, 40) if frac < 0.2 else (220, 160, 20) if frac < 0.45 else C_GAS
         if fill > 0:
             pygame.draw.rect(surf, col, (bx, by, fill, bh), border_radius=3)
-        surf.blit(self.font.render(f"Fuel {int(frac*100)}%", True, C_BLACK),
+        surf.blit(self.font.render(t("hud.fuel", p=int(frac*100)), True, C_BLACK),
                   (bx + 6, by - 2))
 
     def _draw_level_score(self, surf, level_num: int, total_score: int,
                           violations: int, level_title: str = ""):
-        # Shift down when a fuel gauge occupies the usual row
-        y = 38 if not level_title else 38
-        name = f"Level {level_num}" + (f": {level_title}" if level_title else "")
-        txt = self.font.render(f"{name}   Score: {total_score}", True, C_WHITE)
+        name = (t("hud.level_title", n=level_num, title=level_title)
+                if level_title else t("hud.level", n=level_num))
+        score = t("hud.score", s=total_score)
+        txt = self.font.render(f"{name}   {score}", True, C_WHITE)
         surf.blit(txt, (14, 56))
         if violations:
-            v = self.font.render(f"Violations: {violations}", True, (255, 120, 50))
+            v = self.font.render(t("hud.violations", v=violations), True, (255, 120, 50))
             surf.blit(v, (14, 74))
 
     def _draw_timer(self, surf, state: int, race_ms: int,
                     countdown_s: int | None):
         if state == S_WAITING:
-            text = "Press UP to start"
+            text = t("hud.press_up")
             col  = C_WHITE
         elif countdown_s is not None and state == S_RACING:
             remaining_ms = max(0, countdown_s * 1000 - race_ms)
@@ -115,12 +117,12 @@ class HUD:
         else:
             text = fmt_time(race_ms)
             col  = C_WHITE
-        t = self.font.render(text, True, col)
-        surf.blit(t, t.get_rect(centerx=SCREEN_W // 2, top=10))
+        surf_t = self.font.render(text, True, col)
+        surf.blit(surf_t, surf_t.get_rect(centerx=SCREEN_W // 2, top=10))
 
     def _draw_best_time(self, surf, best_ms: int | None):
         if best_ms is not None:
-            s = self.font.render(f"Best: {fmt_time(best_ms)}", True,
+            s = self.font.render(t("hud.best", t=fmt_time(best_ms)), True,
                                  (180, 180, 180))
             surf.blit(s, s.get_rect(centerx=SCREEN_W // 2, top=30))
 
@@ -161,7 +163,7 @@ class HUD:
         col = ((220, 220, 60) if frac < 0.45 else
                (230, 140, 50) if frac < 0.75 else (220, 50, 40))
         pygame.draw.rect(surf, col, (bx, by, int(bw * frac), bh), border_radius=2)
-        lbl = self.font.render(f"Damage {int(damage)}%", True, (200, 200, 210))
+        lbl = self.font.render(t("hud.damage", d=int(damage)), True, (200, 200, 210))
         surf.blit(lbl, (bx + bw + 8, by - 4))
 
     def draw_pause(self, surf, tick: int):
@@ -169,25 +171,21 @@ class HUD:
         veil = pygame.Surface((SCREEN_W, SCREEN_H), pygame.SRCALPHA)
         veil.fill((10, 12, 20, 170))
         surf.blit(veil, (0, 0))
-        head = self.big_font.render("PAUSED", True, C_WHITE)
-        shadow = self.big_font.render("PAUSED", True, C_BLACK)
+        head = self.big_font.render(t("pause.title"), True, C_WHITE)
+        shadow = self.big_font.render(t("pause.title"), True, C_BLACK)
         cx, cy = SCREEN_W // 2, SCREEN_H // 2 - 10
         surf.blit(shadow, shadow.get_rect(center=(cx + 2, cy + 2)))
         surf.blit(head,   head.get_rect(center=(cx, cy)))
-        hint = self.font.render("P: resume      ESC: menu",
-                                True, (200, 210, 225))
+        hint = self.font.render(t("pause.hint"), True, (200, 210, 225))
         surf.blit(hint, hint.get_rect(center=(cx, cy + 60)))
 
     def _draw_traffic_iq(self, surf, iq: int, resolved: int):
         txt = self.font.render(
-            f"Traffic IQ {iq}   jams solved {resolved}", True, (130, 200, 230))
+            t("hud.iq", iq=iq, r=resolved), True, (130, 200, 230))
         surf.blit(txt, (14, SCREEN_H - 50))
 
     def _draw_controls_hint(self, surf):
-        hint = self.font.render(
-            "Arrows: drive   H: honk   P: pause   R: restart   ESC: menu",
-            True, (180, 180, 180),
-        )
+        hint = self.font.render(t("hud.controls"), True, (180, 180, 180))
         surf.blit(hint, (10, SCREEN_H - 28))
 
     def _draw_notifications(self, surf, notifications: list, tick: int):
@@ -212,33 +210,27 @@ class HUD:
             return
 
         if car.crashed and state not in (S_FINISHED, S_GAME_OVER):
-            self._center_msg(surf, "CRASHED!  Press R to respawn", C_CAR_CRASH)
+            self._center_msg(surf, t("hud.crashed"), C_CAR_CRASH)
 
         if state == S_FINISHED:
-            self._center_msg(surf, f"LEVEL COMPLETE!  {fmt_time(race_ms)}", C_MARKER_B)
-            sub = self.font.render(
-                "SPACE: next level     R: replay     H: home", True, C_WHITE
-            )
+            self._center_msg(surf, t("hud.level_done", t=fmt_time(race_ms)), C_MARKER_B)
+            sub = self.font.render(t("hud.next_hint"), True, C_WHITE)
             surf.blit(sub, sub.get_rect(center=(SCREEN_W // 2, SCREEN_H // 2 + 52)))
 
         if state == S_GAME_OVER:
-            self._center_msg(surf, "GAME OVER", C_CAR_CRASH)
-            sub = self.font.render("Press R or H for the menu  (resume with a level code)",
-                                   True, C_WHITE)
+            self._center_msg(surf, t("hud.gameover"), C_CAR_CRASH)
+            sub = self.font.render(t("hud.gameover_hint"), True, C_WHITE)
             surf.blit(sub, sub.get_rect(center=(SCREEN_W // 2, SCREEN_H // 2 + 52)))
 
         if state == S_WAITING:
-            if mode == MODE_TAXI:
-                txt = "Pick up the passenger at  P,  then deliver to  B !"
-            else:
-                txt = "Drive from  A  to  B  as fast as possible!"
+            txt = t("hud.start_taxi") if mode == MODE_TAXI else t("hud.start_race")
             msg = self.font.render(txt, True, C_WHITE)
             surf.blit(msg, msg.get_rect(center=(SCREEN_W // 2, SCREEN_H - 56)))
 
         # Persistent objective banner while racing a taxi fare
         if state == S_RACING and mode == MODE_TAXI:
-            banner = ("Passenger aboard → deliver to  B" if has_passenger
-                      else "Head to  P  to pick up your passenger")
+            banner = (t("hud.banner_aboard") if has_passenger
+                      else t("hud.banner_topickup"))
             col = C_MARKER_B if has_passenger else (255, 160, 60)
             b = self.font.render(banner, True, col)
             surf.blit(b, b.get_rect(center=(SCREEN_W // 2, SCREEN_H - 30)))
@@ -248,15 +240,14 @@ class HUD:
         # pulsing rainbow-ish title
         hue = (tick // 6) % 3
         col = [C_MARKER_B, C_MARKER_A, (90, 180, 255)][hue]
-        title = self.big_font.render("CONGRATULATIONS!", True, col)
-        shadow = self.big_font.render("CONGRATULATIONS!", True, C_BLACK)
+        title = self.big_font.render(t("win.title"), True, col)
+        shadow = self.big_font.render(t("win.title"), True, C_BLACK)
         surf.blit(shadow, shadow.get_rect(center=(cx + 2, SCREEN_H // 2 - 58)))
         surf.blit(title,  title.get_rect(center=(cx, SCREEN_H // 2 - 60)))
 
-        l1 = self.font.render("You completed all 15 levels of CarDrive!",
-                              True, C_WHITE)
-        l2 = self.font.render(f"Final score:  {total_score}", True, C_MARKER_B)
-        l3 = self.font.render("Press SPACE for the menu", True, C_WHITE)
+        l1 = self.font.render(t("win.body", n=len(LEVELS)), True, C_WHITE)
+        l2 = self.font.render(t("win.score", s=total_score), True, C_MARKER_B)
+        l3 = self.font.render(t("win.menu"), True, C_WHITE)
         surf.blit(l1, l1.get_rect(center=(cx, SCREEN_H // 2 + 4)))
         surf.blit(l2, l2.get_rect(center=(cx, SCREEN_H // 2 + 36)))
         if (tick // 500) % 2 == 0:

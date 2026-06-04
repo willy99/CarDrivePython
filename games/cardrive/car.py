@@ -227,18 +227,22 @@ class Car:
 
     def _throttle(self, keys):
         friction = self.base_fric * self.friction_mult
-        self.braking = bool(keys[pygame.K_DOWN]) and self.speed > 0.1
+        self.braking = bool(keys[pygame.K_DOWN] or keys[pygame.K_SPACE]) and self.speed > 0.1
         dmg = self._damage_mult()
         if keys[pygame.K_UP]:
             self.speed = (self.speed + self.base_brake if self.speed < 0
                           else min(self.speed + self.base_accel * self.accel_mult * dmg,
                                    self.max_speed))
-        elif keys[pygame.K_DOWN] or keys[pygame.K_SPACE]:
+        elif keys[pygame.K_DOWN]:
             if self.speed > 0:
                 # Brakes apply LESS on ice (friction_mult is part of base_brake here)
                 self.speed = max(self.speed - self.base_brake * self.friction_mult, 0.0)
             else:
                 self.speed = max(self.speed - self.base_accel * 0.6, -self.reverse_max)
+        elif keys[pygame.K_SPACE]:
+            if self.speed > 0:
+                # Brakes apply LESS on ice (friction_mult is part of base_brake here)
+                self.speed = max(self.speed - self.base_brake * self.friction_mult, 0.0)
         else:
             if abs(self.speed) < friction:
                 self.speed = 0.0

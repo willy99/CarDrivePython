@@ -49,8 +49,8 @@ LEVELS: list[LevelConfig] = [
 
     LevelConfig(4, 6, 5, 11,  120,  0.24, 0.40, 2,
                 cell=4, road=2, title="Be carefull",  passcode="CARE",
-                police_count=4,
-                camera_count=3,
+                police_count=1,
+                camera_count=5,
                 narrative="На кожному кроці камери!"),
 
     LevelConfig(5, 6, 5, 13,  105,  0.18, 0.50, 2,
@@ -62,6 +62,7 @@ LEVELS: list[LevelConfig] = [
     LevelConfig(8, 12, 6, 10, 60, 0.08, 0.65, 3,
                 cell=3, road=1, title="Out of time", passcode="UPUP",
                 camera_count=3,
+                police_count=2,
                 narrative="Диспетчер дзвонить уже втретє. Поспішай — але дивись на камери."),
 
     # ── Taxi fares ─────────────────────────────────────────────────────
@@ -129,6 +130,7 @@ LEVELS: list[LevelConfig] = [
     # ── BOSS ───────────────────────────────────────────────────────────
     LevelConfig(24, 9, 9, 13, 120, 0.05, 0.68, 3,
                 cell=3, road=1, mode=MODE_TAXI, night=True, rain=True,
+                police_count=1,
                 fuel=FUEL_MAX, gas_count=5, title="The Gauntlet", passcode="BOSS",
                 narrative="Остання зміна. Дощ, ніч, бак напівпорожній. Усе як завжди."),
 ]

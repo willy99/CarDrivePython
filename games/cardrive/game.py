@@ -24,7 +24,9 @@ from constants import (
     S_WAITING, S_RACING, S_FINISHED, S_GAME_OVER, S_GAME_WON,
 )
 from level_config import LEVELS, level_by_passcode
-from screens import ScreenRenderer
+from screens import ScreenRenderer, FLAG_RECT, draw_flag
+import i18n
+from i18n import t
 from car import Car
 from car_types import CARS
 from npc_car import NPCCar
@@ -251,11 +253,11 @@ class Game:
         if self.violations == 0:
             level_score += SCORE_CLEAN_BONUS
             self._notifications.append(
-                (f"Clean run!  +{SCORE_CLEAN_BONUS} pts", (80, 220, 80), tick + 3000))
+                (t("note.clean", n=SCORE_CLEAN_BONUS), (80, 220, 80), tick + 3000))
         if self.mode == MODE_TAXI and self.level_crashes == 0:
             level_score += SCORE_SMOOTH_BONUS
             self._notifications.append(
-                (f"Smooth ride!  +{SCORE_SMOOTH_BONUS} pts", (250, 220, 90), tick + 3000))
+                (t("note.smooth", n=SCORE_SMOOTH_BONUS), (250, 220, 90), tick + 3000))
 
         self.total_score += level_score
         if self.best_ms is None or self.race_ms < self.best_ms:
@@ -295,7 +297,7 @@ class Game:
     def _toggle_god_mode(self):
         self.god_mode = not self.god_mode
         self.sfx.play("tick")
-        msg = "GOD MODE  ON  —  GODMODE!" if self.god_mode else "God mode OFF"
+        msg = t("note.god_on") if self.god_mode else t("note.god_off")
         col = (255, 220, 60) if self.god_mode else (180, 180, 195)
         self._notifications.append(
             (msg, col, pygame.time.get_ticks() + 3500))
@@ -320,7 +322,7 @@ class Game:
         self._honk_cd = HONK_COOLDOWN
         self._honk_active = HONK_NUDGE_FRAMES
         self._notifications.append(
-            ("BEEP!", (255, 235, 80), pygame.time.get_ticks() + 800))
+            (t("note.beep"), (255, 235, 80), pygame.time.get_ticks() + 800))
 
     # ------------------------------------------------------------------
     # Main loop
@@ -357,10 +359,25 @@ class Game:
     # Home & intro screens
     # ------------------------------------------------------------------
 
+    def _flag_event(self, event, allow_key=True) -> bool:
+        """Toggle language on a click of the flag (or the L key). Returns True
+        if it handled the event."""
+        if event.type == pygame.MOUSEBUTTONDOWN and getattr(event, "button", 1) == 1:
+            if FLAG_RECT.collidepoint(event.pos):
+                i18n.toggle_lang()
+                return True
+        if allow_key and event.type == pygame.KEYDOWN and event.key == pygame.K_l:
+            i18n.toggle_lang()
+            return True
+        return False
+
     def _tick_home(self, t: int):
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 pygame.quit(); sys.exit()
+            # Flag toggles language (mouse only on home — L is a code letter)
+            if self._flag_event(event, allow_key=False):
+                continue
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_ESCAPE:
                     self.code_input = ""          # clear the code box
@@ -382,7 +399,7 @@ class Game:
             return
         idx = level_by_passcode(self.code_input)
         if idx is None:
-            self.code_msg = f'"{self.code_input}" is not a valid code'
+            self.code_msg = t("home.code_bad", code=self.code_input)
         else:
             self._goto_garage(idx)
 
@@ -396,6 +413,8 @@ class Game:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 pygame.quit(); sys.exit()
+            if self._flag_event(event):
+                continue
             if event.type == pygame.KEYDOWN:
                 if event.key in (pygame.K_ESCAPE, pygame.K_h):
                     self._go_home()
@@ -412,6 +431,8 @@ class Game:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 pygame.quit(); sys.exit()
+            if self._flag_event(event):
+                continue
             if event.type == pygame.KEYDOWN:
                 if event.key in (pygame.K_ESCAPE, pygame.K_h):
                     self._go_home()
@@ -447,7 +468,7 @@ class Game:
                 and cfg.countdown_s is not None
                 and not self.god_mode
                 and self.race_ms >= cfg.countdown_s * 1000):
-            self._trigger_game_over("Time's up!")
+            self._trigger_game_over(t("reason.time"))
             return
 
         # Weather animation
@@ -523,6 +544,8 @@ class Game:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 pygame.quit(); sys.exit()
+            if self._flag_event(event, allow_key=False):   # click flag → lang
+                continue
             if event.type != pygame.KEYDOWN:
                 continue
             key = event.key
@@ -611,7 +634,7 @@ class Game:
                 self.sfx.play("crash")
                 car.add_damage(DAMAGE_PER_CRASH)
                 if car.damage >= DAMAGE_FATAL:
-                    self._trigger_game_over("Car totalled!")
+                    self._trigger_game_over(t("reason.totalled"))
                     return
             car.crash()
         else:
@@ -643,7 +666,7 @@ class Game:
                 self.total_score  = max(0, self.total_score - SCORE_VIOLATION)
                 tick = pygame.time.get_ticks()
                 self._notifications.append(
-                    (f"RED LIGHT  -{SCORE_VIOLATION} pts",
+                    (t("note.redlight", n=SCORE_VIOLATION),
                      (255, 80, 80), tick + 2000)
                 )
 
@@ -667,7 +690,7 @@ class Game:
                 self._camera_flash = CAMERA_FLASH_FRAMES
                 self.sfx.play("flash")
                 self._notifications.append(
-                    (f"SPEED CAMERA  -{SCORE_SPEEDING} pts",
+                    (t("note.camera", n=SCORE_SPEEDING),
                      (255, 240, 120), tick + 2200))
                 break
 
@@ -682,7 +705,7 @@ class Game:
             if cop.caught(self.car):
                 self.car.speed = 0.0
                 self.sfx.play("crash")
-                self._trigger_game_over("Caught by police!")
+                self._trigger_game_over(t("reason.police"))
                 return
 
     # ------------------------------------------------------------------
@@ -762,7 +785,7 @@ class Game:
                 self.impact = ImpactBurst(ped.x, ped.y)
                 self.car.speed = 0.0
                 self.sfx.play("crash")
-                self._trigger_game_over("Pedestrian hit!")
+                self._trigger_game_over(t("reason.pedestrian"))
                 return
 
     def _trigger_game_over(self, reason: str):
@@ -770,7 +793,7 @@ class Game:
         self._gameover_reason = reason
         tick = pygame.time.get_ticks()
         self._notifications.append(
-            (f"GAME OVER – {reason}", (220, 40, 40), tick + 5000)
+            (t("note.gameover", reason=reason), (220, 40, 40), tick + 5000)
         )
 
     # ------------------------------------------------------------------
@@ -794,7 +817,7 @@ class Game:
                 if near and abs(self.car.speed) < PICKUP_STOP_SPEED:
                     p.start_boarding()
                     self._notifications.append(
-                        ("Passenger boarding…", (250, 220, 90),
+                        (t("note.boarding"), (250, 220, 90),
                          pygame.time.get_ticks() + 1500))
             return
 
@@ -817,7 +840,7 @@ class Game:
         self.obj_idx += 1
         self.sfx.play("door")
         self._notifications.append(
-            ("Passenger aboard — go!", (80, 220, 80),
+            (t("note.aboard"), (80, 220, 80),
              pygame.time.get_ticks() + 2500))
 
     # ------------------------------------------------------------------
@@ -840,7 +863,7 @@ class Game:
                 break
         if self.fuel <= 0:
             self.fuel = 0
-            self._trigger_game_over("Out of fuel!")
+            self._trigger_game_over(t("reason.fuel"))
 
     # ------------------------------------------------------------------
     # Skid marks
@@ -988,6 +1011,7 @@ class Game:
             god_mode=self.god_mode,
             damage=self.car.damage,
         )
+        draw_flag(self.screen, self.hud.font)
         pygame.display.flip()
 
     def _draw_passenger(self):
