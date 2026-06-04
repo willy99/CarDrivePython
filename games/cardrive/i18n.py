@@ -101,17 +101,17 @@ _STRINGS = {
     # ---- Intro screen ----
     "intro.level":        {"en": "LEVEL {n}", "uk": "РІВЕНЬ {n}"},
     "intro.goal.taxi":    {"en": "Pick up your passenger at P, then deliver to B.",
-                           "uk": "Забери пасажира на P і довези до B."},
+                           "uk": "Забери пасажира на точці P і довези до точки B."},
     "intro.goal.chase":   {"en": "Reach B before the police catch you.",
-                           "uk": "Дістанься B, поки поліція не спіймала."},
+                           "uk": "Дістанься точки B, поки поліція не спіймала."},
     "intro.goal.race":    {"en": "Drive from A to the gold B marker as fast as you can.",
-                           "uk": "Мчи від A до золотої B якомога швидше."},
+                           "uk": "Мчи від A до точки B якомога швидше."},
     "intro.tip1":         {"en": "When the rear slides:  steer INTO the slide.",
-                           "uk": "Коли зад заносить — кермуй У БІК заносу."},
+                           "uk": "Коли зад заносить — крути кермо У БІК заносу."},
     "intro.tip2":         {"en": "FWD car: press GAS to recover.   RWD car: LIFT OFF gas.",
                            "uk": "Передній привід: ДОДАЙ ГАЗ.   Задній: ВІДПУСТИ газ."},
     "intro.code":         {"en": "Level code:  {code}   (note it to resume here later)",
-                           "uk": "Код рівня:  {code}   (запиши, щоб продовжити пізніше)"},
+                           "uk": "Код рівня:  {code}   (на майбутнє, щоб продовжити прямо з нього)"},
     "intro.begin":        {"en": "Press  SPACE  to begin",
                            "uk": "Натисни  SPACE  щоб почати"},
     # chips
@@ -119,7 +119,7 @@ _STRINGS = {
     "chip.streets":       {"en": "Streets", "uk": "Вулиці"},
     "chip.traffic":       {"en": "Traffic", "uk": "Трафік"},
     "chip.time":          {"en": "Time", "uk": "Час"},
-    "chip.hazards":       {"en": "Hazards", "uk": "Небезпеки"},
+    "chip.hazards":       {"en": "Hazards", "uk": "Небезпека"},
     "chip.rooms":         {"en": "{w}x{h} rooms", "uk": "{w}x{h} кімнат"},
     "street.very_narrow": {"en": "very narrow", "uk": "дуже вузькі"},
     "street.narrow":      {"en": "narrow", "uk": "вузькі"},
@@ -132,7 +132,7 @@ _STRINGS = {
     "time.secs":          {"en": "{n}s", "uk": "{n}с"},
     "hazard.night":       {"en": "night", "uk": "ніч"},
     "hazard.rain":        {"en": "rain", "uk": "дощ"},
-    "hazard.winter":      {"en": "ice + snow", "uk": "лід і сніг"},
+    "hazard.winter":      {"en": "ice + snow", "uk": "сракопадік"},
     "hazard.fuel":        {"en": "fuel limit", "uk": "ліміт пального"},
 
     # ---- HUD ----
@@ -142,7 +142,7 @@ _STRINGS = {
     "hud.level_title":    {"en": "Level {n}: {title}", "uk": "Рівень {n}: {title}"},
     "hud.score":          {"en": "Score: {s}", "uk": "Бали: {s}"},
     "hud.violations":     {"en": "Violations: {v}", "uk": "Порушення: {v}"},
-    "hud.press_up":       {"en": "Press UP to start", "uk": "Натисни ВГОРУ"},
+    "hud.press_up":       {"en": "Press UP to start", "uk": "Натисни UP"},
     "hud.best":           {"en": "Best: {t}", "uk": "Рекорд: {t}"},
     "hud.iq":             {"en": "Traffic IQ {iq}   jams solved {r}",
                            "uk": "IQ трафіку {iq}   заторів вирішено {r}"},
@@ -182,18 +182,18 @@ _STRINGS = {
     "note.redlight":      {"en": "RED LIGHT  -{n} pts", "uk": "ЧЕРВОНЕ  -{n} балів"},
     "note.clean":         {"en": "Clean run!  +{n} pts", "uk": "Чистий заїзд!  +{n}"},
     "note.smooth":        {"en": "Smooth ride!  +{n} pts", "uk": "Плавна їзда!  +{n}"},
-    "note.boarding":      {"en": "Passenger boarding…", "uk": "Пасажир сідає…"},
-    "note.aboard":        {"en": "Passenger aboard — go!", "uk": "Пасажир у авто — поїхали!"},
+    "note.boarding":      {"en": "Passenger boarding…", "uk": "Пасажир пхається…"},
+    "note.aboard":        {"en": "Passenger aboard — go!", "uk": "Пасажир в салоні — поїхали!"},
     "note.gameover":      {"en": "GAME OVER – {reason}", "uk": "КІНЕЦЬ – {reason}"},
     "note.camera":        {"en": "SPEED CAMERA  -{n} pts", "uk": "КАМЕРА  -{n} балів"},
-    "note.beep":          {"en": "BEEP!", "uk": "БІП!"},
+    "note.beep":          {"en": "BEEP!", "uk": "БУП!"},
     "note.god_on":        {"en": "GOD MODE  ON", "uk": "БОГ-РЕЖИМ УВІМК"},
     "note.god_off":       {"en": "God mode OFF", "uk": "Бог-режим вимк"},
-    "reason.pedestrian":  {"en": "Pedestrian hit!", "uk": "Збито пішохода!"},
-    "reason.time":        {"en": "Time's up!", "uk": "Час вийшов!"},
-    "reason.fuel":        {"en": "Out of fuel!", "uk": "Скінчилось пальне!"},
-    "reason.police":      {"en": "Caught by police!", "uk": "Спіймала поліція!"},
-    "reason.totalled":    {"en": "Car totalled!", "uk": "Авто розбито!"},
+    "reason.pedestrian":  {"en": "Pedestrian hit!", "uk": "Збито кегля!"},
+    "reason.time":        {"en": "Time's up!", "uk": "Цигіль вийшов!"},
+    "reason.fuel":        {"en": "Out of fuel!", "uk": "Скінчилося пальне!"},
+    "reason.police":      {"en": "Caught by police!", "uk": "Дратуті, інспектор Петренко!"},
+    "reason.totalled":    {"en": "Car totalled!", "uk": "Корито розбито!"},
 }
 
 
@@ -203,10 +203,10 @@ _STRINGS = {
 
 _NARRATIVE = {
     "First Drive": {
-        "uk": "Перший день за кермом. Не поспішай — спершу відчуй машину.",
+        "uk": "Перший день за кермом. Не поспішай — по-перше, відчуй машину.",
         "en": "First day behind the wheel. Take it slow — get a feel for the car."},
     "Rush": {
-        "uk": "Година пік. Усі кудись запізнюються — крім тебе. (тобі теж пора.)",
+        "uk": "Година пік. Усі кудись летять — крім тебе. (тобі теж пора.)",
         "en": "Rush hour. Everyone's late — except you. (you're late too.)"},
     "Be carefull": {
         "uk": "На кожному кроці камери!",
@@ -215,13 +215,13 @@ _NARRATIVE = {
         "uk": "Диспетчер дзвонить уже втретє. Поспішай — але дивись на камери.",
         "en": "Dispatch is calling for the third time. Hurry — but mind the cameras."},
     "Downtown": {
-        "uk": "Старе місто. Тут диспетчер не любить, коли затримуються.",
+        "uk": "Старе місто. Тут не полюбляють, коли затримуються.",
         "en": "Old town. The dispatcher hates it when you're late here."},
     "Night Shift": {
-        "uk": "Вулиці тихі. Фари у фари — і нічого більше.",
+        "uk": "Вулиці тихі. Нічні розмови. І затишна атмосфера",
         "en": "Quiet streets. Headlights to headlights — nothing more."},
     "Storm": {
-        "uk": "Гроза прийшла з заходу. Не геройствуй — поверни додому.",
+        "uk": "Гроза прийшла з заходу. Надягай кальоши.",
         "en": "A storm rolled in from the west. Don't play hero — just get home."},
     "First Snow": {
         "uk": "Перший сніжок. Гальмуй заздалегідь — кермом виправляй заноси.",
@@ -230,12 +230,12 @@ _NARRATIVE = {
         "uk": "Сніг ліпиться до лобового. Пасажир хоче додому без сюрпризів.",
         "en": "Snow on the windshield. Your fare just wants a calm ride home."},
     "Blizzard Night": {
-        "uk": "Завірюха. Бачиш — фари, чуєш — серце. Решта — занос.",
+        "uk": "Завірюха. Бачиш — фари, чуєш — серце. Решта — дріфт.",
         "en": "A blizzard. You see headlights, you hear your heartbeat. The rest is drift."},
     "Cop Chase": {
-        "uk": "Сирени за спиною. Без причини — але це не врятує.",
+        "uk": "Сирени за спиною. Права дома забув, тому не гальмуй.",
         "en": "Sirens behind you. No reason given — but that won't help."},
     "The Gauntlet": {
-        "uk": "Остання зміна. Дощ, ніч, бак напівпорожній. Усе як завжди.",
+        "uk": "Остання зміна. Дощ, ніч, бак напівпорожній. Усе як завжди. А дома чекають",
         "en": "Last shift. Rain, night, half a tank. Same as always."},
 }
