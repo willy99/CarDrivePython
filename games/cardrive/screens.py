@@ -20,7 +20,7 @@ from i18n import t
 
 # Clickable language flag — top, between the speed bar and the timer
 # (a zone that is free on every screen, gameplay included).
-FLAG_RECT = pygame.Rect(330, 6, 52, 30)
+FLAG_RECT = pygame.Rect(80, 60, 52, 30)
 
 
 def draw_flag(surf, font):
