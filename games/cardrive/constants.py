@@ -95,9 +95,10 @@ NPC_REVERSE_SPEED  = 0.9 # px/frame while backing up
 # ---------------------------------------------------------------------------
 # Game modes
 # ---------------------------------------------------------------------------
-MODE_RACE  = 'race'    # drive A → B
-MODE_TAXI  = 'taxi'    # drive A → pickup → dropoff
-MODE_CHASE = 'chase'   # police pursue you; reach B before they catch you
+MODE_RACE     = 'race'      # drive A → B
+MODE_TAXI     = 'taxi'      # drive A → pickup → dropoff
+MODE_CHASE    = 'chase'     # police pursue you; reach B before they catch you
+MODE_DELIVERY = 'delivery'  # chain 3 quick drop-offs in one run
 
 # ---------------------------------------------------------------------------
 # Honk (H key) — nudges NPCs that are blocking the player
@@ -125,6 +126,12 @@ DAMAGE_FATAL             = 100.0  # totalled
 DAMAGE_HANDLING_MIN_MULT = 0.55   # worst-case handling/accel multiplier
 
 # ---------------------------------------------------------------------------
+# Camera shake on crash
+# ---------------------------------------------------------------------------
+SHAKE_DURATION  = 25   # frames the camera shakes after a crash
+SHAKE_MAGNITUDE = 8    # peak pixel displacement
+
+# ---------------------------------------------------------------------------
 # Police chase
 # ---------------------------------------------------------------------------
 POLICE_CRUISE_MAX     = 3.5     # px/frame baseline pursuit speed
@@ -134,8 +141,9 @@ POLICE_CATCH_DIST = TILE * 0.65  # how close = caught
 # ---------------------------------------------------------------------------
 # Taxi scoring
 # ---------------------------------------------------------------------------
-SCORE_FARE_BASE    = 600   # base fare for completing a delivery
-SCORE_SMOOTH_BONUS = 300   # bonus for delivering with zero crashes
+SCORE_FARE_BASE      = 600   # base fare for completing a taxi delivery
+SCORE_SMOOTH_BONUS   = 300   # bonus for delivering with zero crashes
+SCORE_DELIVERY_BASE  = 250   # bonus per completed drop-off in Delivery Blitz
 
 # Taxi pickup: must come to a near-full stop close to the waiting passenger
 PICKUP_RADIUS     = TILE * 1.5
@@ -202,3 +210,53 @@ S_RACING    = 1   # timer running
 S_FINISHED  = 2   # reached final goal of a (non-last) level
 S_GAME_OVER = 3   # hit pedestrian, ran out of time, or out of fuel
 S_GAME_WON  = 4   # completed the final level — celebration!
+
+# ---------------------------------------------------------------------------
+# Drifting skill system
+# ---------------------------------------------------------------------------
+DRIFT_THRESHOLD    = 0.9   # |lat_vel| above this = drifting
+DRIFT_MIN_FRAMES   = 18    # frames before a drift starts scoring
+DRIFT_SCORE_PER_S  = 40    # base score per second of controlled drift
+DRIFT_CRASH_PEN    = 60    # score penalty for crashing mid-drift
+DRIFT_COMBO_MULT   = 0.30  # +30 % per consecutive drift in the chain
+
+# ---------------------------------------------------------------------------
+# Near-miss / red-light threading bonus
+# ---------------------------------------------------------------------------
+NEAR_MISS_RADIUS   = TILE * 1.7   # detection sphere around each ped
+NEAR_MISS_BONUS    = 80            # max score for a slick thread
+NEAR_MISS_PENALTY  = 40            # extra penalty for a clumsy scare
+NEAR_MISS_SPD_MIN  = 2.2           # minimum speed to earn a bonus
+
+# ---------------------------------------------------------------------------
+# Dynamic traffic density
+# ---------------------------------------------------------------------------
+TRAFFIC_WAVE_PERIOD = 70.0   # seconds for one sine oscillation
+TRAFFIC_WAVE_AMP    = 0.28   # ±28 % of base NPC count
+
+# ---------------------------------------------------------------------------
+# Police roadblocks (MODE_CHASE only)
+# ---------------------------------------------------------------------------
+ROADBLOCK_SPAWN_DELAY = 22   # seconds into the run before first block
+ROADBLOCK_COOLDOWN    = 35   # seconds between blocks
+ROADBLOCK_AHEAD_TILES = 11   # nominal tiles ahead of the player
+ROADBLOCK_LIFETIME    = 900  # frames before auto-despawn (~15 s @ 60 fps)
+
+# ---------------------------------------------------------------------------
+# Persistent road hazards  (potholes + rain puddles)
+# ---------------------------------------------------------------------------
+POTHOLE_RADIUS     = 14     # world-px detection radius
+POTHOLE_KICK       = 0.40   # |lat_vel| injected on hit
+PUDDLE_KICK        = 0.70   # puddle kick (stronger, rain levels)
+HAZARD_COOLDOWN    = 72     # frames before the same hazard can fire again
+
+# ---------------------------------------------------------------------------
+# One-way streets
+# ---------------------------------------------------------------------------
+ONE_WAY_PROB         = 0.30   # fraction of corridors tagged one-way
+ONE_WAY_VIOLATION_F  = 40     # wrong-way frames before violation fires
+
+# ---------------------------------------------------------------------------
+# Roundabouts
+# ---------------------------------------------------------------------------
+ROUNDABOUT_PROB      = 0.18   # probability a room becomes a roundabout

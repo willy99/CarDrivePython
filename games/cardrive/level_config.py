@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from typing import Optional
 
-from constants import MODE_RACE, MODE_TAXI, MODE_CHASE, FUEL_MAX
+from constants import MODE_RACE, MODE_TAXI, MODE_CHASE, MODE_DELIVERY, FUEL_MAX
 
 
 @dataclass(frozen=True)
@@ -133,6 +133,13 @@ LEVELS: list[LevelConfig] = [
                 police_count=1,
                 fuel=FUEL_MAX, gas_count=5, title="The Gauntlet", passcode="BOSS",
                 narrative="Остання зміна. Дощ, ніч, бак напівпорожній. Усе як завжди."),
+
+    # ── BONUS: Delivery Blitz ──────────────────────────────────────────
+    LevelConfig(25, 8, 7, 16, 210, 0.15, 0.62, 3,
+                cell=3, road=2, mode=MODE_DELIVERY, night=True, rain=True,
+                camera_count=4, police_count=0,
+                title="Delivery Blitz", passcode="BLITZ",
+                narrative="3 fares, 3 minutes. Every red light costs you."),
 ]
 
 

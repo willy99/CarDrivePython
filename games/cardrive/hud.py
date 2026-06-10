@@ -5,8 +5,8 @@ import pygame
 from constants import (
     SCREEN_W, SCREEN_H, TILE, FPS,
     MAX_SPEED,
-    C_CAR_CRASH, C_WHITE, C_BLACK, C_MARKER_B, C_MARKER_A, C_GAS,
-    MODE_TAXI,
+    C_CAR_CRASH, C_WHITE, C_BLACK, C_MARKER_B, C_MARKER_A, C_GAS, C_MARKER_P,
+    MODE_TAXI, MODE_DELIVERY,
     S_WAITING, S_RACING, S_FINISHED, S_GAME_OVER, S_GAME_WON,
 )
 from utils import fmt_time
@@ -34,7 +34,8 @@ class HUD:
              level_title: str = "",
              traffic_iq: int = 0, traffic_resolved: int = 0,
              god_mode: bool = False,
-             damage: float = 0.0):
+             damage: float = 0.0,
+             delivery_info: str = ""):
 
         self._draw_speed_bar(surf, car)
         if fuel is not None and max_fuel:
@@ -54,7 +55,8 @@ class HUD:
         self._draw_controls_hint(surf)
         self._draw_notifications(surf, notifications, tick)
         self._draw_messages(surf, car, state, race_ms, countdown_s,
-                            mode, has_passenger, total_score, tick)
+                            mode, has_passenger, total_score, tick,
+                            delivery_info=delivery_info)
 
     # ------------------------------------------------------------------
     # Elements
@@ -204,7 +206,8 @@ class HUD:
     def _draw_messages(self, surf, car, state: int, race_ms: int,
                        countdown_s: int | None,
                        mode: str = "race", has_passenger: bool = False,
-                       total_score: int = 0, tick: int = 0):
+                       total_score: int = 0, tick: int = 0,
+                       delivery_info: str = ""):
         if state == S_GAME_WON:
             self._draw_victory(surf, total_score, tick)
             return
@@ -223,7 +226,12 @@ class HUD:
             surf.blit(sub, sub.get_rect(center=(SCREEN_W // 2, SCREEN_H // 2 + 52)))
 
         if state == S_WAITING:
-            txt = t("hud.start_taxi") if mode == MODE_TAXI else t("hud.start_race")
+            if mode == MODE_DELIVERY:
+                txt = t("hud.start_delivery")
+            elif mode == MODE_TAXI:
+                txt = t("hud.start_taxi")
+            else:
+                txt = t("hud.start_race")
             msg = self.font.render(txt, True, C_WHITE)
             surf.blit(msg, msg.get_rect(center=(SCREEN_W // 2, SCREEN_H - 56)))
 
@@ -233,6 +241,12 @@ class HUD:
                       else t("hud.banner_topickup"))
             col = C_MARKER_B if has_passenger else (255, 160, 60)
             b = self.font.render(banner, True, col)
+            surf.blit(b, b.get_rect(center=(SCREEN_W // 2, SCREEN_H - 30)))
+
+        # Delivery blitz banner
+        if state == S_RACING and mode == MODE_DELIVERY and delivery_info:
+            col = C_MARKER_B if "D" in delivery_info[:3] else C_MARKER_P
+            b = self.font.render(delivery_info, True, col)
             surf.blit(b, b.get_rect(center=(SCREEN_W // 2, SCREEN_H - 30)))
 
     def _draw_victory(self, surf, total_score: int, tick: int):

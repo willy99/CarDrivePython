@@ -1,12 +1,15 @@
 import math
+import random
 import sys
 
 import pygame
 
+import storage
+
 from constants import (
     SCREEN_W, SCREEN_H, FPS, TILE,
     CRASH_THRESH, GOAL_RADIUS,
-    C_GRASS, C_ASPHALT, C_BLACK, C_PASSENGER,
+    C_GRASS, C_ASPHALT, C_BLACK, C_PASSENGER, C_WHITE,
     SCORE_LEVEL_BASE, SCORE_TIME_PENALTY_MS,
     SCORE_VIOLATION, SCORE_TIME_SURPLUS, SCORE_CLEAN_BONUS,
     SCORE_FARE_BASE, SCORE_SMOOTH_BONUS,
@@ -21,7 +24,18 @@ from constants import (
     SCORE_SPEEDING, CAMERA_LIMIT_FRAC, CAMERA_RADIUS, CAMERA_COOLDOWN,
     CAMERA_FLASH_FRAMES,
     DAMAGE_PER_CRASH, DAMAGE_FATAL,
+    SHAKE_DURATION, SHAKE_MAGNITUDE,
     S_WAITING, S_RACING, S_FINISHED, S_GAME_OVER, S_GAME_WON,
+    # New features
+    DRIFT_THRESHOLD, DRIFT_MIN_FRAMES, DRIFT_SCORE_PER_S,
+    DRIFT_CRASH_PEN, DRIFT_COMBO_MULT,
+    NEAR_MISS_RADIUS, NEAR_MISS_BONUS, NEAR_MISS_PENALTY, NEAR_MISS_SPD_MIN,
+    TRAFFIC_WAVE_PERIOD, TRAFFIC_WAVE_AMP,
+    ROADBLOCK_SPAWN_DELAY, ROADBLOCK_COOLDOWN, ROADBLOCK_AHEAD_TILES, ROADBLOCK_LIFETIME,
+    POTHOLE_KICK, PUDDLE_KICK, HAZARD_COOLDOWN,
+    ONE_WAY_VIOLATION_F,
+    NPC_W, NPC_H,
+    MODE_DELIVERY, SCORE_DELIVERY_BASE,
 )
 from level_config import LEVELS, level_by_passcode
 from screens import ScreenRenderer, FLAG_RECT, draw_flag
@@ -42,6 +56,58 @@ from utils import sat_overlap, rect_poly
 
 # SkidMark: (world_x, world_y, angle_deg, age_frames)
 _SkidMark = tuple[float, float, float, int]
+
+from utils import polygon_corners as _poly_corners, sat_overlap as _sat
+
+
+class _Roadblock:
+    """A row of static police cars blocking a corridor with one narrow gap.
+
+    Placed in MODE_CHASE after ROADBLOCK_SPAWN_DELAY seconds.
+    """
+    W, H = NPC_W + 4, NPC_H + 2
+
+    def __init__(self, positions: list[tuple[float, float]], angle: float):
+        self.positions = positions   # (wx, wy) for each blocking car
+        self.angle = angle
+        self.age = 0
+
+    def update(self):
+        self.age += 1
+
+    @property
+    def done(self) -> bool:
+        return self.age > ROADBLOCK_LIFETIME
+
+    def collides_with(self, car) -> bool:
+        cpts = car.corners()
+        for wx, wy in self.positions:
+            if _sat(cpts, _poly_corners(wx, wy, self.W, self.H, self.angle)):
+                return True
+        return False
+
+    def draw(self, surf, cam_x: float, cam_y: float, tick: int):
+        for wx, wy in self.positions:
+            sx, sy = wx - cam_x, wy - cam_y
+            if not (-60 < sx < SCREEN_W + 60 and -60 < sy < SCREEN_H + 60):
+                continue
+            ix, iy = int(sx), int(sy)
+            rad = math.radians(self.angle)
+            cos_a, sin_a = math.cos(rad), math.sin(rad)
+
+            def l2s(lx, ly):
+                return (ix + lx * cos_a - ly * sin_a,
+                        iy + lx * sin_a + ly * cos_a)
+
+            hw, hh = self.W / 2, self.H / 2
+            body = [l2s(-hw, -hh), l2s(hw, -hh), l2s(hw, hh), l2s(-hw, hh)]
+            # Navy blue police body
+            pygame.draw.polygon(surf, (30, 40, 130), body)
+            pygame.draw.polygon(surf, (255, 255, 255), body, 1)
+            # Flashing light bar (alternating red/blue every 15 frames)
+            flash_col = (220, 30, 30) if (tick // 15) % 2 == 0 else (30, 100, 220)
+            top = l2s(-hw * 0.3, 0)
+            pygame.draw.circle(surf, flash_col, (int(top[0]), int(top[1])), 4)
 
 
 class Game:
@@ -81,7 +147,6 @@ class Game:
         self.screen_mode = "home"
         self.code_input  = ""
         self.code_msg    = ""
-        self.car_idx     = 0        # chosen car (persists across levels)
         self._pending_level = 0     # where to go after the garage
 
         # Player-as-teacher bookkeeping
@@ -91,6 +156,19 @@ class Game:
         # Cheats — type GODMODE during play to toggle god mode
         self.god_mode   = False
         self._cheat_buf = ""
+
+        # Persistent save data (loaded once; re-saved on level completion)
+        self._save_data = storage.load()
+        i18n.set_lang(self._save_data.get("lang", "en"))
+        self.car_idx = self._save_data.get("car", 0)
+
+        # Level map
+        self._levelmap_idx        = 0          # currently highlighted cell
+        self._levelmap_msg        = ""         # transient notification text
+        self._levelmap_arrowrects = (None, None)  # (prev, next) from last draw
+
+        # Garage
+        self._garage_msg = ""
 
     # ------------------------------------------------------------------
     # Level management
@@ -103,12 +181,18 @@ class Game:
         self.npcs        = [NPCCar(self.game_map) for _ in range(cfg.npc_count)]
         self.pedestrians = self._spawn_all_pedestrians(cfg.peds_per_light)
 
-        self.state      = S_WAITING
-        self.race_start = 0
-        self.race_ms    = 0
-        self.violations = 0
+        self.state         = S_WAITING
+        self.race_start    = 0
+        self.race_ms       = 0
+        self.violations    = 0
         self.level_crashes = 0
-        self._frame     = 0
+        self.level_speeding = 0
+        self.level_honks    = 0
+        self._frame        = 0
+
+        # Camera shake
+        self._shake_timer = 0
+        self._shake_mag   = 0.0
 
         # --- objective tracking (race = 1 goal, taxi = pickup then dropoff) ---
         self.mode          = cfg.mode
@@ -160,6 +244,28 @@ class Game:
         self._camera_flash   = 0       # frames remaining of screen-flash
         self.paused          = False
         self._pause_start_ms = 0
+
+        # Drifting skill system
+        self._drift_frames   = 0       # consecutive drifting frames
+        self._drift_combo    = 0       # number of consecutive scored drifts
+        self._drift_idle     = 0       # frames since last drift
+        self._was_drifting   = False
+
+        # Green-light streak bonus
+        self._green_streak   = 0       # consecutive green-light passes
+
+        # Delivery Blitz progress
+        self._deliveries_done = 0
+
+        # Dynamic traffic density
+        self._traffic_check_frame = 0
+
+        # Roadblocks (chase mode)
+        self.roadblocks: list[_Roadblock] = []
+        self._roadblock_cd   = int(ROADBLOCK_SPAWN_DELAY * FPS)
+
+        # Wrong-way tracking
+        self._wrong_way_frames = 0
 
         self._notifications.clear()
         self._gameover_reason = ""
@@ -247,14 +353,20 @@ class Game:
             remaining_ms = max(0, cfg.countdown_s * 1000 - self.race_ms)
             surplus = (remaining_ms // 1000) * SCORE_TIME_SURPLUS
 
-        base = SCORE_FARE_BASE if self.mode == MODE_TAXI else SCORE_LEVEL_BASE
+        if self.mode == MODE_TAXI:
+            base = SCORE_FARE_BASE
+        elif self.mode == MODE_DELIVERY:
+            base = 0        # per-delivery bonuses already added during play
+        else:
+            base = SCORE_LEVEL_BASE
         level_score = max(0, base - time_pen - viol_pen + surplus)
 
+        smooth_ride = (self.mode == MODE_TAXI and self.level_crashes == 0)
         if self.violations == 0:
             level_score += SCORE_CLEAN_BONUS
             self._notifications.append(
                 (t("note.clean", n=SCORE_CLEAN_BONUS), (80, 220, 80), tick + 3000))
-        if self.mode == MODE_TAXI and self.level_crashes == 0:
+        if smooth_ride:
             level_score += SCORE_SMOOTH_BONUS
             self._notifications.append(
                 (t("note.smooth", n=SCORE_SMOOTH_BONUS), (250, 220, 90), tick + 3000))
@@ -262,6 +374,39 @@ class Game:
         self.total_score += level_score
         if self.best_ms is None or self.race_ms < self.best_ms:
             self.best_ms = self.race_ms
+
+        # Persist progress to localStorage / JSON
+        sd = self._save_data
+        key = str(self.level_idx)
+        if key not in sd["best"] or self.race_ms < sd["best"][key]:
+            sd["best"][key] = self.race_ms
+        if self.level_idx not in sd["done"]:
+            sd["done"].append(self.level_idx)
+        sd["stats"]["levels"]    += 1
+        sd["stats"]["violations"] += self.violations
+        sd["stats"]["crashes"]    += self.level_crashes
+        sd["stats"]["speeding"]   += self.level_speeding
+        sd["stats"]["honks"]      += self.level_honks
+        if self.violations == 0:
+            sd["stats"]["clean"] += 1
+        if smooth_ride:
+            sd["stats"]["smooth"] = sd["stats"].get("smooth", 0) + 1
+        sd["car"]  = self.car_idx
+        sd["lang"] = i18n.get_lang()
+        storage.save(sd)
+
+        self._check_car_unlocks(tick)
+
+    def _check_car_unlocks(self, tick: int):
+        """Fire notifications for any cars that just became available."""
+        done_count = storage.count_done(self._save_data)
+        for ct in CARS:
+            if ct.unlock_req == 0:
+                continue
+            if done_count == ct.unlock_req:
+                self._notifications.append(
+                    (t("note.car_unlocked", name=ct.name),
+                     (255, 215, 60), tick + 5000))
 
     def _next_level(self):
         self._award_level_score()
@@ -288,11 +433,15 @@ class Game:
         self.screen_mode = "play"
 
     def _go_home(self):
-        self.screen_mode = "home"
-        self.code_input  = ""
-        self.code_msg    = ""
-        self.god_mode    = False        # cheats reset on returning to menu
-        self._cheat_buf  = ""
+        self.screen_mode  = "home"
+        self.code_input   = ""
+        self.code_msg     = ""
+        self.god_mode     = False        # cheats reset on returning to menu
+        self._cheat_buf   = ""
+
+    def _goto_levelmap(self):
+        self.screen_mode   = "levelmap"
+        self._levelmap_msg = ""
 
     def _toggle_god_mode(self):
         self.god_mode = not self.god_mode
@@ -321,6 +470,7 @@ class Game:
         self.sfx.play("honk")
         self._honk_cd = HONK_COOLDOWN
         self._honk_active = HONK_NUDGE_FRAMES
+        self.level_honks += 1
         self._notifications.append(
             (t("note.beep"), (255, 235, 80), pygame.time.get_ticks() + 800))
 
@@ -337,6 +487,8 @@ class Game:
             self._tick_garage(t)
         elif self.screen_mode == "intro":
             self._tick_intro(t)
+        elif self.screen_mode == "levelmap":
+            self._tick_levelmap(t)
         else:
             self._handle_events(t)
             if self.paused:
@@ -377,11 +529,15 @@ class Game:
                 pygame.quit(); sys.exit()
             # Flag toggles language (mouse only on home — L is a code letter)
             if self._flag_event(event, allow_key=False):
+                self._save_data["lang"] = i18n.get_lang()
+                storage.save(self._save_data)
                 continue
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_ESCAPE:
-                    self.code_input = ""          # clear the code box
+                    self.code_input = ""
                     self.code_msg = ""
+                elif event.key == pygame.K_TAB:
+                    self._goto_levelmap()
                 elif event.key in (pygame.K_RETURN, pygame.K_KP_ENTER):
                     self._submit_code()
                 elif event.key == pygame.K_BACKSPACE:
@@ -408,23 +564,32 @@ class Game:
         self.best_ms = None
         self._pending_level = level_idx
         self.screen_mode = "garage"
+        self._garage_msg = ""
 
     def _tick_garage(self, t: int):
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 pygame.quit(); sys.exit()
             if self._flag_event(event):
+                self._save_data["lang"] = i18n.get_lang()
+                storage.save(self._save_data)
                 continue
             if event.type == pygame.KEYDOWN:
                 if event.key in (pygame.K_ESCAPE, pygame.K_h):
                     self._go_home()
                 elif event.key in (pygame.K_LEFT, pygame.K_UP):
                     self.car_idx = (self.car_idx - 1) % len(CARS)
+                    self._garage_msg = ""
                 elif event.key in (pygame.K_RIGHT, pygame.K_DOWN):
                     self.car_idx = (self.car_idx + 1) % len(CARS)
+                    self._garage_msg = ""
                 elif event.key in (pygame.K_SPACE, pygame.K_RETURN, pygame.K_KP_ENTER):
-                    self._goto_intro(self._pending_level)
-        self.screens.draw_garage(self.screen, t, self.car_idx)
+                    if storage.is_car_unlocked(self._save_data, self.car_idx, CARS):
+                        self._goto_intro(self._pending_level)
+                    else:
+                        self._garage_msg = i18n.t("garage.locked_hint")
+        self.screens.draw_garage(self.screen, t, self.car_idx, self._save_data,
+                                 self._garage_msg)
         pygame.display.flip()
 
     def _tick_intro(self, t: int):
@@ -440,6 +605,69 @@ class Game:
                                    pygame.K_KP_ENTER, pygame.K_UP):
                     self._start_play()
         self.screens.draw_intro(self.screen, LEVELS[self.level_idx], t)
+        pygame.display.flip()
+
+    def _tick_levelmap(self, t: int):
+        done_set = set(self._save_data.get("done", []))
+        n   = len(LEVELS)
+        PPP = 30        # levels per page (must match screens.py COLS × ROWS_PP)
+
+        def _page_of(idx):
+            return idx // PPP
+
+        prev_rect, next_rect = self._levelmap_arrowrects
+
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit(); sys.exit()
+            if self._flag_event(event):
+                self._save_data["lang"] = i18n.get_lang()
+                storage.save(self._save_data)
+                continue
+            if event.type == pygame.KEYDOWN:
+                key = event.key
+                if key in (pygame.K_ESCAPE, pygame.K_h):
+                    self._go_home()
+                elif key == pygame.K_LEFT:
+                    self._levelmap_idx = (self._levelmap_idx - 1) % n
+                    self._levelmap_msg = ""
+                elif key == pygame.K_RIGHT:
+                    self._levelmap_idx = (self._levelmap_idx + 1) % n
+                    self._levelmap_msg = ""
+                elif key == pygame.K_UP:
+                    self._levelmap_idx = (self._levelmap_idx - 6) % n
+                    self._levelmap_msg = ""
+                elif key == pygame.K_DOWN:
+                    self._levelmap_idx = (self._levelmap_idx + 6) % n
+                    self._levelmap_msg = ""
+                elif key == pygame.K_PAGEUP:
+                    pg = _page_of(self._levelmap_idx)
+                    self._levelmap_idx = max(0, (pg - 1) * PPP)
+                    self._levelmap_msg = ""
+                elif key == pygame.K_PAGEDOWN:
+                    pg = _page_of(self._levelmap_idx)
+                    self._levelmap_idx = min(n - 1, (pg + 1) * PPP)
+                    self._levelmap_msg = ""
+                elif key in (pygame.K_RETURN, pygame.K_KP_ENTER, pygame.K_SPACE):
+                    idx = self._levelmap_idx
+                    if idx in done_set:
+                        self._goto_garage(idx)
+                    else:
+                        self._levelmap_msg = i18n.t("levelmap.locked_msg")
+            elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+                mx, my = event.pos
+                pg = _page_of(self._levelmap_idx)
+                if prev_rect and prev_rect.collidepoint(mx, my):
+                    self._levelmap_idx = max(0, (pg - 1) * PPP)
+                    self._levelmap_msg = ""
+                elif next_rect and next_rect.collidepoint(mx, my):
+                    self._levelmap_idx = min(n - 1, (pg + 1) * PPP)
+                    self._levelmap_msg = ""
+
+        self._levelmap_arrowrects = self.screens.draw_levelmap(
+            self.screen, LEVELS, done_set,
+            self._save_data.get("best", {}),
+            self._levelmap_idx, self._levelmap_msg, t)
         pygame.display.flip()
 
     # ------------------------------------------------------------------
@@ -537,6 +765,14 @@ class Game:
         # Skid marks
         self._update_skid_marks(keys)
 
+        # ---- New feature updates ----
+        if self.state == S_RACING:
+            self._update_drift(tick)
+            self._update_traffic_density(tick)
+            self._check_road_hazards(tick)
+            self._check_wrong_way(tick)
+            self._update_roadblocks(old_x, old_y, tick)
+
         # Prune expired notifications
         self._notifications = [n for n in self._notifications if n[2] > tick]
 
@@ -633,6 +869,10 @@ class Game:
                 self.level_crashes += 1
                 self.sfx.play("crash")
                 car.add_damage(DAMAGE_PER_CRASH)
+                # Trigger camera shake — stronger the harder the hit
+                speed_frac = min(1.0, abs(car.speed) / car.max_speed)
+                self._shake_timer = SHAKE_DURATION
+                self._shake_mag   = SHAKE_MAGNITUDE * (0.5 + 0.5 * speed_frac)
                 if car.damage >= DAMAGE_FATAL:
                     self._trigger_game_over(t("reason.totalled"))
                     return
@@ -659,16 +899,30 @@ class Game:
         old_key = (old_tx, old_ty)
         tile_map = self.game_map.tile_to_light
 
-        if new_key in tile_map:
-            light = tile_map[new_key]
-            if tile_map.get(old_key) is not light and light.is_red:
-                self.violations  += 1
-                self.total_score  = max(0, self.total_score - SCORE_VIOLATION)
-                tick = pygame.time.get_ticks()
+        if new_key not in tile_map:
+            return
+        light = tile_map[new_key]
+        if tile_map.get(old_key) is light:
+            return          # still inside the same light zone, not a new entry
+
+        tick = pygame.time.get_ticks()
+        if light.is_red:
+            # Violation
+            self.violations  += 1
+            self.total_score  = max(0, self.total_score - SCORE_VIOLATION)
+            self._notifications.append(
+                (t("note.redlight", n=SCORE_VIOLATION), (255, 80, 80), tick + 2000))
+            self._check_near_miss(tick)
+            self._green_streak = 0   # break the streak
+        else:
+            # Green or yellow — count the streak
+            self._green_streak += 1
+            if self._green_streak >= 2:
+                bonus = 15 * self._green_streak   # ×2=30, ×3=45, ×4=60 …
+                self.total_score += bonus
                 self._notifications.append(
-                    (t("note.redlight", n=SCORE_VIOLATION),
-                     (255, 80, 80), tick + 2000)
-                )
+                    (t("note.green_streak", n=self._green_streak, b=bonus),
+                     (60, 220, 100), tick + 1800))
 
     # ------------------------------------------------------------------
     # Speed cameras
@@ -688,6 +942,7 @@ class Game:
                 cam[2] = tick + CAMERA_COOLDOWN * (1000 // 60)
                 self.total_score = max(0, self.total_score - SCORE_SPEEDING)
                 self._camera_flash = CAMERA_FLASH_FRAMES
+                self.level_speeding += 1
                 self.sfx.play("flash")
                 self._notifications.append(
                     (t("note.camera", n=SCORE_SPEEDING),
@@ -788,6 +1043,250 @@ class Game:
                 self._trigger_game_over(t("reason.pedestrian"))
                 return
 
+    # ------------------------------------------------------------------
+    # Near-miss / red-light threading bonus
+    # ------------------------------------------------------------------
+
+    def _check_near_miss(self, tick: int):
+        """Called when the player runs a red light — score the pass quality."""
+        if not self.pedestrians:
+            return
+        closest = min(
+            math.hypot(self.car.x - p.x, self.car.y - p.y)
+            for p in self.pedestrians
+        )
+        if closest > NEAR_MISS_RADIUS:
+            return          # no pedestrians nearby at all
+        speed = abs(self.car.speed)
+        tight = closest < NEAR_MISS_RADIUS * 0.6
+        # Professional: high speed, tight gap
+        if speed >= NEAR_MISS_SPD_MIN and tight:
+            bonus = int(NEAR_MISS_BONUS * min(1.0, speed / self.car.max_speed))
+            self.total_score += bonus
+            self._notifications.append(
+                (t("note.near_miss_pro", n=bonus), (100, 220, 255), tick + 2200))
+        # Clumsy: slow-crawl scare
+        elif speed < NEAR_MISS_SPD_MIN * 0.55 and closest < NEAR_MISS_RADIUS * 0.45:
+            self.total_score = max(0, self.total_score - NEAR_MISS_PENALTY)
+            self._notifications.append(
+                (t("note.near_miss_ugly", n=NEAR_MISS_PENALTY), (255, 140, 50), tick + 2000))
+
+    # ------------------------------------------------------------------
+    # Drifting skill system
+    # ------------------------------------------------------------------
+
+    def _update_drift(self, tick: int):
+        """Track sustained lateral slides and award / penalise accordingly."""
+        currently = (
+            abs(self.car.lat_vel) > DRIFT_THRESHOLD
+            and not self.car.crashed
+            and abs(self.car.speed) > 0.8
+        )
+
+        if self._was_drifting and not currently:
+            # Drift just ended — crashed mid-drift?
+            if self.car.crashed and self._drift_frames >= DRIFT_MIN_FRAMES // 2:
+                self.total_score = max(0, self.total_score - DRIFT_CRASH_PEN)
+                self._drift_combo = 0
+                self._drift_idle  = 999   # force combo reset
+                self._notifications.append(
+                    (t("note.drift_crash", n=DRIFT_CRASH_PEN), (220, 60, 60), tick + 1800))
+            elif self._drift_frames >= DRIFT_MIN_FRAMES:
+                # Clean completion — award score
+                secs = self._drift_frames / FPS
+                mult = 1.0 + self._drift_combo * DRIFT_COMBO_MULT
+                score = int(DRIFT_SCORE_PER_S * secs * mult)
+                self.total_score += score
+                self._drift_combo += 1
+                if self._drift_combo >= 3:
+                    col = (255, 120, 20)
+                elif self._drift_combo >= 2:
+                    col = (255, 200, 50)
+                else:
+                    col = (200, 160, 60)
+                if self._drift_combo > 1:
+                    lbl = t("note.drift_combo", n=score, x=self._drift_combo)
+                else:
+                    lbl = t("note.drift_bonus", n=score)
+                self._notifications.append((lbl, col, tick + 2000))
+            self._drift_frames = 0
+
+        if currently:
+            self._drift_frames += 1
+            self._drift_idle = 0
+        else:
+            # Reset combo after 3 seconds without drifting
+            self._drift_idle += 1
+            if self._drift_idle > 180:
+                self._drift_combo = 0
+
+        self._was_drifting = currently
+
+    # ------------------------------------------------------------------
+    # Dynamic traffic density
+    # ------------------------------------------------------------------
+
+    def _update_traffic_density(self, tick: int):
+        """Oscillate NPC count with a slow sine wave to vary traffic flow."""
+        if self._frame - self._traffic_check_frame < 150:   # check every 2.5 s
+            return
+        self._traffic_check_frame = self._frame
+        cfg = LEVELS[self.level_idx]
+        base = cfg.npc_count
+        if base == 0:
+            return
+        phase = (self.race_ms / 1000.0) * (2 * math.pi / TRAFFIC_WAVE_PERIOD)
+        target = max(base // 2,
+                     int(base * (1.0 + TRAFFIC_WAVE_AMP * math.sin(phase))))
+        if len(self.npcs) < target:
+            # Spawn one NPC far from the player
+            far = [tile for tile in self.game_map.road_tiles()
+                   if math.hypot(tile[0] * TILE - self.car.x,
+                                 tile[1] * TILE - self.car.y) > SCREEN_W * 0.75]
+            if far:
+                sp = random.choice(far[:20])
+                npc = NPCCar(self.game_map)
+                npc.tx, npc.ty = sp
+                npc.x = float(sp[0] * TILE + TILE // 2)
+                npc.y = float(sp[1] * TILE + TILE // 2)
+                self.npcs.append(npc)
+
+    # ------------------------------------------------------------------
+    # Roadblocks (MODE_CHASE)
+    # ------------------------------------------------------------------
+
+    def _update_roadblocks(self, old_x: float, old_y: float, tick: int):
+        """Spawn, age, and collide against police roadblocks."""
+        if self.mode != MODE_CHASE:
+            return
+        if self._roadblock_cd > 0:
+            self._roadblock_cd -= 1
+        elif (self.race_ms / 1000 >= ROADBLOCK_SPAWN_DELAY
+              and len(self.roadblocks) == 0):
+            self._try_spawn_roadblock()
+
+        for rb in list(self.roadblocks):
+            rb.update()
+            if rb.done:
+                self.roadblocks.remove(rb)
+                continue
+            if not self.car.crashed and rb.collides_with(self.car):
+                self._apply_collision(self.car, old_x, old_y, -0.35)
+                if not self.car.crashed:    # soft bounce
+                    self.roadblocks.remove(rb)
+
+    def _try_spawn_roadblock(self):
+        """Place a police roadblock ahead of the player in their lane."""
+        car = self.car
+        rad = math.radians(car.angle)
+        cdx, cdy = math.cos(rad), math.sin(rad)
+        # Snap to dominant axis
+        if abs(cdx) >= abs(cdy):
+            dx, dy = (1 if cdx >= 0 else -1), 0
+        else:
+            dx, dy = 0, (1 if cdy >= 0 else -1)
+        rx, ry = -dy, dx     # perpendicular (road width direction)
+
+        ptx = int(car.x) // TILE
+        pty = int(car.y) // TILE
+        gm  = self.game_map
+
+        for skip in range(6, ROADBLOCK_AHEAD_TILES + 5):
+            btx = ptx + dx * skip
+            bty = pty + dy * skip
+            if not (0 <= btx < gm.map_w_tiles and 0 <= bty < gm.map_h_tiles):
+                continue
+            if gm.grid[bty][btx] != 0:
+                continue
+            # Collect road tiles across the corridor
+            road_tiles = []
+            for w in range(-3, 4):
+                tx = btx + rx * w
+                ty = bty + ry * w
+                if (0 <= tx < gm.map_w_tiles and 0 <= ty < gm.map_h_tiles
+                        and gm.grid[ty][tx] == 0):
+                    road_tiles.append((tx, ty))
+            if len(road_tiles) < 2:
+                continue
+            # Leave one random gap
+            gap_idx = random.randint(0, len(road_tiles) - 1)
+            positions = [
+                (tx * TILE + TILE // 2, ty * TILE + TILE // 2)
+                for i, (tx, ty) in enumerate(road_tiles)
+                if i != gap_idx
+            ]
+            if positions:
+                angle = math.degrees(math.atan2(ry, rx))
+                self.roadblocks.append(_Roadblock(positions, angle))
+                self._roadblock_cd = int(ROADBLOCK_COOLDOWN * FPS)
+                # Brief notification
+                self._notifications.append(
+                    (t("note.roadblock"), (255, 80, 255), pygame.time.get_ticks() + 2000))
+            return
+
+    # ------------------------------------------------------------------
+    # Road hazards: potholes and puddles
+    # ------------------------------------------------------------------
+
+    def _check_road_hazards(self, tick: int):
+        """Inject lateral velocity when the car hits a pothole or puddle."""
+        if self.car.crashed or abs(self.car.speed) < 1.2:
+            return
+        for ph in self.game_map.potholes:
+            wx, wy, r, ptype, last_frame = ph
+            if self._frame - last_frame < HAZARD_COOLDOWN:
+                continue
+            if math.hypot(self.car.x - wx, self.car.y - wy) < r:
+                ph[4] = self._frame
+                spd_frac = min(1.0, abs(self.car.speed) / self.car.max_speed)
+                if ptype == 'puddle':
+                    kick = random.choice([-1, 1]) * PUDDLE_KICK * (0.6 + 0.4 * spd_frac)
+                    self._notifications.append(
+                        (t("note.puddle"), (80, 130, 200), tick + 1200))
+                else:
+                    kick = random.choice([-1, 1]) * POTHOLE_KICK * (0.5 + 0.5 * spd_frac)
+                    self._notifications.append(
+                        (t("note.pothole"), (140, 120, 80), tick + 1200))
+                self.car.lat_vel += kick
+                break
+
+    # ------------------------------------------------------------------
+    # Wrong-way detection
+    # ------------------------------------------------------------------
+
+    def _check_wrong_way(self, tick: int):
+        """Fire a violation after ONE_WAY_VIOLATION_F frames of wrong-way travel."""
+        if self.god_mode or self.car.crashed:
+            self._wrong_way_frames = 0
+            return
+        tx = int(self.car.x) // TILE
+        ty = int(self.car.y) // TILE
+
+        # Check both one-way streets and roundabout ring directions
+        one_way = self.game_map.one_way.get((tx, ty))
+        rb_dir  = self.game_map.roundabout_dir.get((tx, ty))
+        allowed = one_way or rb_dir
+
+        if allowed is None:
+            self._wrong_way_frames = 0
+            return
+
+        rad = math.radians(self.car.angle)
+        cdx, cdy = math.cos(rad), math.sin(rad)
+        dot = cdx * allowed[0] + cdy * allowed[1]
+
+        if dot < -0.3 and abs(self.car.speed) > 0.5:
+            self._wrong_way_frames += 1
+            if self._wrong_way_frames == ONE_WAY_VIOLATION_F:
+                self.violations += 1
+                self.total_score = max(0, self.total_score - SCORE_VIOLATION)
+                self._notifications.append(
+                    (t("note.wrong_way", n=SCORE_VIOLATION), (255, 60, 60), tick + 2500))
+                # Re-arm after another full window
+                self._wrong_way_frames = 0
+        else:
+            self._wrong_way_frames = 0
+
     def _trigger_game_over(self, reason: str):
         self.state = S_GAME_OVER
         self._gameover_reason = reason
@@ -807,6 +1306,32 @@ class Game:
         if tp is None:
             return
         label = self.objectives[self.obj_idx][1]
+
+        # ── Delivery Blitz: drive-through waypoints (no stop required) ──
+        if self.mode == MODE_DELIVERY:
+            if math.hypot(self.car.x - tp[0], self.car.y - tp[1]) < GOAL_RADIUS:
+                tick = pygame.time.get_ticks()
+                if label.startswith('D'):
+                    self._deliveries_done += 1
+                    self.total_score += SCORE_DELIVERY_BASE
+                    self._notifications.append(
+                        (t("note.delivery_done", n=self._deliveries_done,
+                           b=SCORE_DELIVERY_BASE),
+                         (255, 200, 80), tick + 2200))
+                    self.sfx.play("door")
+                else:
+                    self._notifications.append(
+                        (t("note.delivery_pickup"), (255, 160, 60), tick + 1200))
+                self.obj_idx += 1
+                if self.obj_idx >= len(self.objectives):
+                    self.sfx.play("tick")
+                    if self.level_idx >= len(LEVELS) - 1:
+                        self._award_level_score()
+                        self.state = S_GAME_WON
+                        self.fireworks = Fireworks()
+                    else:
+                        self.state = S_FINISHED
+            return
 
         # Taxi pickup: must STOP next to the waiting passenger; boarding then
         # plays out in _update and advances the objective when complete.
@@ -899,11 +1424,11 @@ class Game:
             if age < SKID_MAX_AGE
         ]
 
-    def _draw_skid_marks(self):
+    def _draw_skid_marks(self, cam_x: float, cam_y: float):
         """Draw tyre marks on the road surface (rendered before cars)."""
         for wx, wy, angle, age in self.skid_marks:
-            sx = wx - self.cam_x
-            sy = wy - self.cam_y
+            sx = wx - cam_x
+            sy = wy - cam_y
             if not (-12 < sx < SCREEN_W + 12 and -12 < sy < SCREEN_H + 12):
                 continue
 
@@ -950,21 +1475,59 @@ class Game:
     # ------------------------------------------------------------------
 
     def _draw(self, tick: int):
+        # Camera shake: compute a per-frame random offset that decays over time
+        if self._shake_timer > 0:
+            self._shake_timer -= 1
+            decay = self._shake_timer / SHAKE_DURATION
+            sx = random.uniform(-self._shake_mag, self._shake_mag) * decay
+            sy = random.uniform(-self._shake_mag, self._shake_mag) * decay
+        else:
+            sx = sy = 0.0
+        cam_x = self.cam_x + sx
+        cam_y = self.cam_y + sy
+
         self.screen.fill(C_GRASS)
-        self.game_map.draw(self.screen, self.cam_x, self.cam_y,
+        self.game_map.draw(self.screen, cam_x, cam_y,
                            self.hud.font, tick)
-        self._draw_skid_marks()        # on road, under cars
+        self._draw_skid_marks(cam_x, cam_y)
         for npc in self.npcs:
-            npc.draw(self.screen, self.cam_x, self.cam_y)
+            npc.draw(self.screen, cam_x, cam_y)
         for ped in self.pedestrians:
-            ped.draw(self.screen, self.cam_x, self.cam_y)
+            ped.draw(self.screen, cam_x, cam_y)
         if self.passenger is not None:
-            self.passenger.draw(self.screen, self.cam_x, self.cam_y)
-        self.car.draw(self.screen, self.cam_x, self.cam_y)
+            self.passenger.draw(self.screen, cam_x, cam_y)
+        self.car.draw(self.screen, cam_x, cam_y)
         if self.has_passenger:
-            self._draw_passenger()
+            self._draw_passenger(cam_x, cam_y)
         for cop in self.police:
-            cop.draw(self.screen, self.cam_x, self.cam_y, tick)
+            cop.draw(self.screen, cam_x, cam_y, tick)
+        for rb in self.roadblocks:
+            rb.draw(self.screen, cam_x, cam_y, tick)
+
+        # Wrong-way overlay strip
+        if self._wrong_way_frames > 10:
+            frac = min(1.0, self._wrong_way_frames / ONE_WAY_VIOLATION_F)
+            alpha = int(80 * frac)
+            ww = pygame.Surface((SCREEN_W, SCREEN_H), pygame.SRCALPHA)
+            ww.fill((220, 30, 30, alpha))
+            self.screen.blit(ww, (0, 0))
+            if self._wrong_way_frames > ONE_WAY_VIOLATION_F // 2:
+                lbl = self.hud.font.render(t("note.wrong_way_warn"), True, (255, 80, 80))
+                self.screen.blit(lbl, lbl.get_rect(centerx=SCREEN_W // 2, top=SCREEN_H - 55))
+
+        # Drift indicator: pulse the speed-bar border gold when drifting
+        if self._was_drifting and self._drift_frames >= DRIFT_MIN_FRAMES:
+            pulse = 0.5 + 0.5 * math.sin(self._frame * 0.3)
+            alpha = int(180 * pulse)
+            drift_col = (255, 200, 40, alpha) if self._drift_combo <= 1 else (255, 130, 20, alpha)
+            ds = pygame.Surface((SCREEN_W // 2, 26), pygame.SRCALPHA)
+            ds.fill((0, 0, 0, 0))
+            pygame.draw.rect(ds, drift_col, (0, 0, SCREEN_W // 2, 26), 3, border_radius=4)
+            secs = self._drift_frames / FPS
+            lbl = self.hud.font.render(t("note.drifting", s=f"{secs:.1f}"), True,
+                                       (255, 200, 40) if self._drift_combo <= 1 else (255, 130, 20))
+            ds.blit(lbl, (6, 5))
+            self.screen.blit(ds, (SCREEN_W // 4, 8))
 
         # Weather + darkness over the world (under HUD / mini-map)
         if self.rain:
@@ -973,13 +1536,13 @@ class Game:
             self.snow.draw(self.screen)
         if self.night:
             self.night.draw(self.screen,
-                            self.car.x - self.cam_x,
-                            self.car.y - self.cam_y,
+                            self.car.x - cam_x,
+                            self.car.y - cam_y,
                             self.car.angle)
 
         # Pedestrian-hit animation (over the world, under HUD)
         if self.impact:
-            self.impact.draw(self.screen, self.cam_x, self.cam_y)
+            self.impact.draw(self.screen, cam_x, cam_y)
 
         # Victory fireworks
         if self.fireworks is not None:
@@ -998,6 +1561,17 @@ class Game:
                            tick=tick, target_pos=self.target_pos)
 
         cfg = LEVELS[self.level_idx]
+        # Build delivery progress string for the HUD banner
+        delivery_info = ""
+        if self.mode == MODE_DELIVERY and self.state == S_RACING:
+            n_total = sum(1 for _, lbl, _ in self.objectives if lbl.startswith('D'))
+            if self.obj_idx < len(self.objectives):
+                next_lbl = self.objectives[self.obj_idx][1]
+                delivery_info = t("hud.banner_delivery",
+                                  done=self._deliveries_done,
+                                  total=n_total, nxt=next_lbl)
+            else:
+                delivery_info = t("hud.banner_delivery_done", total=n_total)
         self.hud.draw(
             self.screen, self.car, self.state,
             self.race_ms, self.best_ms,
@@ -1010,13 +1584,14 @@ class Game:
             traffic_iq=BRAIN.skill, traffic_resolved=BRAIN.resolved,
             god_mode=self.god_mode,
             damage=self.car.damage,
+            delivery_info=delivery_info,
         )
         draw_flag(self.screen, self.hud.font)
         pygame.display.flip()
 
-    def _draw_passenger(self):
+    def _draw_passenger(self, cam_x: float, cam_y: float):
         """Small passenger figure riding in the car."""
-        sx = int(self.car.x - self.cam_x)
-        sy = int(self.car.y - self.cam_y)
+        sx = int(self.car.x - cam_x)
+        sy = int(self.car.y - cam_y)
         pygame.draw.circle(self.screen, C_PASSENGER, (sx, sy), 5)
         pygame.draw.circle(self.screen, C_BLACK,     (sx, sy), 5, 1)

@@ -229,10 +229,12 @@ class Car:
         friction = self.base_fric * self.friction_mult
         self.braking = bool(keys[pygame.K_DOWN] or keys[pygame.K_SPACE]) and self.speed > 0.1
         dmg = self._damage_mult()
+        # Damage degrades both acceleration rate AND top speed.
+        speed_cap = self.max_speed * dmg
         if keys[pygame.K_UP]:
             self.speed = (self.speed + self.base_brake if self.speed < 0
                           else min(self.speed + self.base_accel * self.accel_mult * dmg,
-                                   self.max_speed))
+                                   speed_cap))
         elif keys[pygame.K_DOWN]:
             if self.speed > 0:
                 # Brakes apply LESS on ice (friction_mult is part of base_brake here)

@@ -67,6 +67,11 @@ class TrafficLight:
         return self.state == 'RED'
 
     @property
+    def is_green(self) -> bool:
+        """True during GREEN or BLINK_GREEN (safe to drive through)."""
+        return self.state in ('GREEN', 'BLINK_GREEN')
+
+    @property
     def _green_lamp_on(self) -> bool:
         """Steady during GREEN; flickering during BLINK_GREEN."""
         s = self.state

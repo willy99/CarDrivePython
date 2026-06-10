@@ -1,5 +1,6 @@
 import math
 import random
+from collections import deque
 
 import pygame
 
@@ -12,7 +13,9 @@ from constants import (
     C_PAVEMENT, C_BLACK, C_WHITE, C_LANE,
     C_MARKER_A, C_MARKER_B, C_MARKER_P, C_GAS,
     C_SNOW_LIGHT, C_SNOW_DARK, C_SNOW_ROOF, C_SNOW_PAVE, C_ICE_ASPHALT,
-    MODE_TAXI,
+    MODE_TAXI, MODE_DELIVERY,
+    ONE_WAY_PROB, ROUNDABOUT_PROB,
+    POTHOLE_RADIUS, POTHOLE_KICK, PUDDLE_KICK,
 )
 from level_config import LevelConfig
 from traffic_light import TrafficLight
@@ -55,8 +58,23 @@ class GameMap:
         self.cameras: list[list] = []
         self.winter = bool(getattr(cfg, "winter", False))
 
+        # ---- New feature data structures ----
+        # one_way: (tx,ty) → (dx,dy) allowed travel direction
+        self.one_way: dict[tuple[int, int], tuple[int, int]] = {}
+        # roundabout ring tiles and their flow direction
+        self.roundabout_tiles: set[tuple[int, int]] = set()
+        self.roundabout_dir: dict[tuple[int, int], tuple[int, int]] = {}
+        self.roundabout_centers: set[tuple[int, int]] = set()
+        # potholes: [wx, wy, radius, type('pothole'|'puddle'), last_hit_frame]
+        self.potholes: list[list] = []
+        # Internal: corridor records for one-way tagging
+        self._h_corr_list: list[tuple[int, int]] = []  # (cx, cy) starts
+        self._v_corr_list: list[tuple[int, int]] = []
+
         self._generate(cfg)
         self._pick_objectives(cfg)
+        # Fix one-way directions so all objectives remain reachable from start
+        self._ensure_one_way_reachable()
         self._place_gas_stations(cfg)
         self._place_cameras(cfg)
 
@@ -76,6 +94,7 @@ class GameMap:
         for dy in range(self.cell):
             for dx in range(self.road):
                 self.grid[cy + dy][cx + dx] = 0
+        self._h_corr_list.append((cx, cy))
 
     def _v_corridor(self, mx: int, my: int):
         cx = OX + mx * self.step
@@ -83,6 +102,7 @@ class GameMap:
         for dy in range(self.road):
             for dx in range(self.cell):
                 self.grid[cy + dy][cx + dx] = 0
+        self._v_corr_list.append((cx, cy))
 
     # ------------------------------------------------------------------
     # Generation pipeline
@@ -128,6 +148,11 @@ class GameMap:
 
         # Traffic lights on a fraction of carved corridors
         self._place_traffic_lights(rng, cfg.light_prob)
+
+        # Post-process: one-way streets, roundabouts, potholes
+        self._place_one_ways(rng, cfg)
+        self._place_roundabouts(rng, cfg)
+        self._place_potholes(rng, cfg)
 
     # ------------------------------------------------------------------
     # Flood fill + house placement
@@ -244,14 +269,26 @@ class GameMap:
     # ------------------------------------------------------------------
 
     def _room_centers(self) -> list[tuple[float, float]]:
-        return [
-            (
-                (OX + mx * self.step + self.cell // 2) * TILE + TILE // 2,
-                (OY + my * self.step + self.cell // 2) * TILE + TILE // 2,
-            )
-            for my in range(self.my)
-            for mx in range(self.mx)
-        ]
+        centers = []
+        for my in range(self.my):
+            for mx in range(self.mx):
+                wx = (OX + mx * self.step + self.cell // 2) * TILE + TILE // 2
+                wy = (OY + my * self.step + self.cell // 2) * TILE + TILE // 2
+                tx, ty = wx // TILE, wy // TILE
+                # If this centre is a roundabout island (non-road), step to the
+                # nearest cardinal neighbour that is a road tile so the car / marker
+                # never spawns on the impassable island.
+                if (tx, ty) in self.roundabout_centers:
+                    for ddx, ddy in ((0, -1), (1, 0), (0, 1), (-1, 0)):
+                        ntx, nty = tx + ddx, ty + ddy
+                        if (0 <= ntx < self.map_w_tiles
+                                and 0 <= nty < self.map_h_tiles
+                                and self.grid[nty][ntx] == 0):
+                            wx = ntx * TILE + TILE // 2
+                            wy = nty * TILE + TILE // 2
+                            break
+                centers.append((wx, wy))
+        return centers
 
     @staticmethod
     def _dist(a, b):
@@ -274,23 +311,35 @@ class GameMap:
         rooms = self._room_centers()
         max_d = self._max_room_dist(rooms)
 
-        if cfg.mode == MODE_TAXI and len(rooms) >= 3:
+        if cfg.mode == MODE_DELIVERY:
+            # 3 delivery pairs → need start + 6 rooms (fall back to 2 pairs if few rooms)
+            pairs = 3 if len(rooms) >= 7 else 2
+            need  = 1 + pairs * 2
+            chosen = self._pick_spread_rooms(rng, rooms, need, max_d * 0.22)
+            self.start_pos = chosen[0]
+            self.objectives = []
+            for i in range(pairs):
+                p_room = chosen[1 + i * 2]
+                d_room = chosen[2 + i * 2]
+                num = str(i + 1)
+                self.objectives.append((p_room, f"P{num}", C_MARKER_P))
+                self.objectives.append((d_room, f"D{num}", C_MARKER_B))
+            self.end_pos = self.objectives[-1][0]
+
+        elif cfg.mode == MODE_TAXI and len(rooms) >= 3:
             # Need 3 distinct rooms, each pair reasonably far apart.
             need = 3
             min_sep = max_d * 0.45
-        else:
-            need = 2
-            min_sep = max_d * 0.55
-
-        chosen = self._pick_spread_rooms(rng, rooms, need, min_sep)
-
-        if cfg.mode == MODE_TAXI and len(chosen) >= 3:
+            chosen = self._pick_spread_rooms(rng, rooms, need, min_sep)
             a, pickup, b = chosen[0], chosen[1], chosen[2]
             self.start_pos  = a
             self.pickup_pos = pickup
             self.end_pos    = b
             self.objectives = [(pickup, "P", C_MARKER_P), (b, "B", C_MARKER_B)]
         else:
+            need = 2
+            min_sep = max_d * 0.55
+            chosen = self._pick_spread_rooms(rng, rooms, need, min_sep)
             a, b = chosen[0], chosen[1]
             self.start_pos = a
             self.end_pos   = b
@@ -349,6 +398,217 @@ class GameMap:
                 self.cameras.append([wx, wy, 0])     # [x, y, cooldown_until]
             if len(self.cameras) >= cfg.camera_count:
                 break
+
+    # ------------------------------------------------------------------
+    # One-way streets
+    # ------------------------------------------------------------------
+
+    def _place_one_ways(self, rng: random.Random, cfg: LevelConfig):
+        """Tag a fraction of corridor tiles as one-way streets.
+
+        Only applied from level 5 onwards so beginners can learn the roads.
+        """
+        if getattr(cfg, 'level_num', 99) < 5:
+            return
+        for cx, cy in self._h_corr_list:
+            if rng.random() < ONE_WAY_PROB:
+                direction = (1, 0) if rng.random() < 0.5 else (-1, 0)
+                for dy in range(self.cell):
+                    for dx in range(self.road):
+                        self.one_way[(cx + dx, cy + dy)] = direction
+
+        for cx, cy in self._v_corr_list:
+            if rng.random() < ONE_WAY_PROB:
+                direction = (0, 1) if rng.random() < 0.5 else (0, -1)
+                for dy in range(self.road):
+                    for dx in range(self.cell):
+                        self.one_way[(cx + dx, cy + dy)] = direction
+
+    # ------------------------------------------------------------------
+    # Roundabouts
+    # ------------------------------------------------------------------
+
+    def _place_roundabouts(self, rng: random.Random, cfg: LevelConfig):
+        """Convert some room-centres into mini roundabouts (diamond style).
+
+        Requires cell >= 3.  Only applied from level 4 onwards.
+        The centre tile becomes a non-road island; the 4 cardinal neighbours
+        form the ring with a clockwise flow.
+        """
+        if getattr(cfg, 'level_num', 99) < 4 or self.cell < 3:
+            return
+        # Clockwise flow: N→E→S→W→N
+        # Ring tile at (cx, cy-1) → go EAST (+1,0)
+        # Ring tile at (cx+1, cy) → go SOUTH (0,+1)
+        # Ring tile at (cx, cy+1) → go WEST (-1,0)
+        # Ring tile at (cx-1, cy) → go NORTH (0,-1)
+        ring_dirs = {(0, -1): (1, 0), (1, 0): (0, 1),
+                     (0, 1): (-1, 0), (-1, 0): (0, -1)}
+
+        for my in range(self.my):
+            for mx in range(self.mx):
+                if rng.random() > ROUNDABOUT_PROB:
+                    continue
+                # Centre of this room
+                rx = OX + mx * self.step
+                ry = OY + my * self.step
+                cx = rx + self.cell // 2
+                cy = ry + self.cell // 2
+                # The 4 cardinal ring tiles must all be road
+                ring_tiles = [(cx + ddx, cy + ddy) for ddx, ddy in ring_dirs]
+                if not all(
+                    0 <= tx < self.map_w_tiles
+                    and 0 <= ty < self.map_h_tiles
+                    and self.grid[ty][tx] == 0
+                    for tx, ty in ring_tiles
+                ):
+                    continue
+                if self.grid[cy][cx] != 0:
+                    continue
+                # Mark centre as island (non-road)
+                self.grid[cy][cx] = 1
+                self.roundabout_centers.add((cx, cy))
+                # Tag the ring
+                for (ddx, ddy), flow in ring_dirs.items():
+                    tile = (cx + ddx, cy + ddy)
+                    self.roundabout_tiles.add(tile)
+                    self.roundabout_dir[tile] = flow
+                # Remove any one-way tags that landed on ring tiles
+                # (roundabout flow takes precedence)
+                for tile in ring_tiles:
+                    self.one_way.pop(tile, None)
+
+    # ------------------------------------------------------------------
+    # Potholes & puddles
+    # ------------------------------------------------------------------
+
+    def _place_potholes(self, rng: random.Random, cfg: LevelConfig):
+        """Scatter potholes (and puddles on rain levels) on road tiles."""
+        n = max(2, getattr(cfg, 'level_num', 1) // 3)
+        is_rain = bool(getattr(cfg, 'rain', False))
+
+        # Prefer corridor tiles for more interesting encounters
+        corridor_set = set(self.one_way.keys())
+        candidates = list(corridor_set) if corridor_set else []
+        # Fall back to any straight road tile
+        if not candidates:
+            for ty in range(self.map_h_tiles):
+                for tx in range(self.map_w_tiles):
+                    if self.grid[ty][tx] == 0 and (tx, ty) not in self.roundabout_tiles:
+                        nh = (0 < tx < self.map_w_tiles - 1
+                              and self.grid[ty][tx - 1] == 0
+                              and self.grid[ty][tx + 1] == 0)
+                        nv = (0 < ty < self.map_h_tiles - 1
+                              and self.grid[ty - 1][tx] == 0
+                              and self.grid[ty + 1][tx] == 0)
+                        if nh ^ nv:
+                            candidates.append((tx, ty))
+
+        rng.shuffle(candidates)
+        placed = 0
+        for tx, ty in candidates:
+            if placed >= n:
+                break
+            if (tx, ty) in self.roundabout_tiles or (tx, ty) in self.roundabout_centers:
+                continue
+            wx = tx * TILE + rng.randint(10, TILE - 10)
+            wy = ty * TILE + rng.randint(10, TILE - 10)
+            if all(math.hypot(wx - p[0], wy - p[1]) > TILE * 1.5
+                   for p in self.potholes):
+                ptype = 'puddle' if is_rain and rng.random() < 0.45 else 'pothole'
+                r = POTHOLE_RADIUS * (1 if ptype == 'pothole' else 2)
+                self.potholes.append([wx, wy, r, ptype, 0])
+                placed += 1
+
+    # ------------------------------------------------------------------
+    # One-way reachability repair
+    # ------------------------------------------------------------------
+
+    def _bfs_one_way_reachable(self, start_tile: tuple) -> set:
+        """BFS from start_tile honouring one-way constraints.
+
+        A move from (tx,ty) → (ntx,nty) in direction (ddx,ddy) is blocked when
+        the destination tile carries a one-way tag pointing in ANY other direction.
+        """
+        reachable: set = {start_tile}
+        q: deque = deque([start_tile])
+        while q:
+            tx, ty = q.popleft()
+            for ddx, ddy in ((1, 0), (-1, 0), (0, 1), (0, -1)):
+                ntx, nty = tx + ddx, ty + ddy
+                if not (0 <= ntx < self.map_w_tiles and 0 <= nty < self.map_h_tiles):
+                    continue
+                if self.grid[nty][ntx] != 0:
+                    continue
+                if (ntx, nty) in reachable:
+                    continue
+                ow = self.one_way.get((ntx, nty))
+                if ow is not None and ow != (ddx, ddy):
+                    continue          # one-way blocks this entry direction
+                reachable.add((ntx, nty))
+                q.append((ntx, nty))
+        return reachable
+
+    @staticmethod
+    def _goal_reachable(goal_tile: tuple, reachable: set) -> bool:
+        """True when the goal tile itself OR any cardinal neighbour is reachable.
+
+        Objectives placed on roundabout-island centres (non-road, grid!=0) are
+        invisible to the BFS, but the player only needs to arrive within
+        GOAL_RADIUS (~1.8 TILE), so reaching any adjacent road tile is enough.
+        """
+        if goal_tile in reachable:
+            return True
+        tx, ty = goal_tile
+        return any((tx + ddx, ty + ddy) in reachable
+                   for ddx, ddy in ((1, 0), (-1, 0), (0, 1), (0, -1)))
+
+    def _ensure_one_way_reachable(self):
+        """Remove any one-way tags that make start → objectives unreachable.
+
+        Must be called AFTER _pick_objectives so start_pos and objectives
+        are already set.  Iteratively strips blocking tags until the whole
+        route is passable, falling back to clearing all one-ways if needed.
+        """
+        if not self.one_way:
+            return
+        start_tile = (int(self.start_pos[0]) // TILE, int(self.start_pos[1]) // TILE)
+        goal_tiles = [(int(pos[0]) // TILE, int(pos[1]) // TILE)
+                      for pos, _, _ in self.objectives]
+        if self.pickup_pos:
+            goal_tiles.append((int(self.pickup_pos[0]) // TILE,
+                                int(self.pickup_pos[1]) // TILE))
+
+        for _pass in range(12):
+            reachable = self._bfs_one_way_reachable(start_tile)
+            still_blocked = [g for g in goal_tiles
+                             if not self._goal_reachable(g, reachable)]
+            if not still_blocked:
+                return          # all goals reachable — we're done
+
+            # Find one-way tiles that are unreachable yet adjacent to the
+            # reachable frontier: they are the bottleneck, remove their tags.
+            to_remove = set()
+            for ntx, nty in list(self.one_way.keys()):
+                if (ntx, nty) in reachable:
+                    continue
+                ow = self.one_way[(ntx, nty)]
+                for ddx, ddy in ((1, 0), (-1, 0), (0, 1), (0, -1)):
+                    from_tx, from_ty = ntx - ddx, nty - ddy
+                    if (from_tx, from_ty) in reachable and ow != (ddx, ddy):
+                        to_remove.add((ntx, nty))
+                        break
+            if not to_remove:
+                # Can't resolve iteratively — wipe all one-ways as last resort
+                self.one_way.clear()
+                return
+            for tile in to_remove:
+                del self.one_way[tile]
+
+        # Safety net after max passes
+        reachable = self._bfs_one_way_reachable(start_tile)
+        if any(not self._goal_reachable(g, reachable) for g in goal_tiles):
+            self.one_way.clear()
 
     # ------------------------------------------------------------------
     # Queries
@@ -411,6 +671,45 @@ class GameMap:
                                     ty,
                                     tx * TILE - int(cam_x),
                                     ty * TILE - int(cam_y))
+
+        # One-way arrows (drawn over lane markings)
+        for ty in range(ty0, ty1):
+            for tx in range(tx0, tx1):
+                ow = self.one_way.get((tx, ty))
+                if ow:
+                    self._draw_oneway_arrow(surf,
+                                            tx * TILE - int(cam_x),
+                                            ty * TILE - int(cam_y), ow)
+
+        # Roundabout centre islands (non-road tiles drawn specially)
+        for cx, cy in self.roundabout_centers:
+            px = cx * TILE - int(cam_x)
+            py = cy * TILE - int(cam_y)
+            if -TILE < px < SCREEN_W + TILE and -TILE < py < SCREEN_H + TILE:
+                col_fill = C_SNOW_LIGHT if self.winter else C_GRASS
+                # Already drawn as grass; add a decorative ring/circle
+                csx, csy = px + TILE // 2, py + TILE // 2
+                pygame.draw.circle(surf, C_PAVEMENT, (csx, csy), TILE // 2 - 2)
+                pygame.draw.circle(surf, col_fill,   (csx, csy), TILE // 2 - 8)
+                dot = (200, 205, 215) if self.winter else (80, 155, 65)
+                pygame.draw.circle(surf, dot, (csx, csy), 5)
+
+        # Potholes / puddles (drawn on road surface)
+        for ph in self.potholes:
+            wx, wy, r, ptype = ph[0], ph[1], ph[2], ph[3]
+            sx = int(wx - cam_x)
+            sy = int(wy - cam_y)
+            if -r * 2 < sx < SCREEN_W + r * 2 and -r * 2 < sy < SCREEN_H + r * 2:
+                if ptype == 'puddle':
+                    pygame.draw.ellipse(surf, (60, 85, 125),
+                                        (sx - r, sy - int(r * 0.65), r * 2, int(r * 1.3)))
+                    pygame.draw.ellipse(surf, (90, 125, 180),
+                                        (sx - r + 2, sy - int(r * 0.55), r * 2 - 4, int(r * 1.1)), 1)
+                else:
+                    pygame.draw.ellipse(surf, (30, 27, 22),
+                                        (sx - r, sy - int(r * 0.65), r * 2, int(r * 1.3)))
+                    pygame.draw.ellipse(surf, (22, 18, 14),
+                                        (sx - r + 2, sy - int(r * 0.55), r * 2 - 4, int(r * 1.1)), 1)
 
         roof_col = C_SNOW_ROOF if self.winter else C_HOUSE_ROOF
         for h in self.houses:
@@ -534,6 +833,22 @@ class GameMap:
         while y < py + TILE - 2:
             pygame.draw.line(surf, C_LANE, (x, y), (x, min(y + 13, py + TILE - 2)), 2)
             y += 22
+
+    def _draw_oneway_arrow(self, surf, px: int, py: int, direction: tuple):
+        """Small triangle arrow pointing in the allowed travel direction."""
+        cx, cy = px + TILE // 2, py + TILE // 2
+        dx, dy = direction
+        length = 13
+        tip   = (cx + dx * length,          cy + dy * length)
+        base  = (cx - dx * length,          cy - dy * length)
+        # perpendicular
+        pdx, pdy = -dy, dx
+        left  = (base[0] + pdx * 6,  base[1] + pdy * 6)
+        right = (base[0] - pdx * 6,  base[1] - pdy * 6)
+        col = (190, 175, 55) if not self.winter else (170, 180, 200)
+        pygame.draw.polygon(surf, col, [tip, left, right])
+        pygame.draw.polygon(surf, (40, 35, 10) if not self.winter else (90, 95, 110),
+                            [tip, left, right], 1)
 
     def _draw_marker(self, surf, cam_x, cam_y, pos, color, label,
                      font, tick: int, pulse: bool):

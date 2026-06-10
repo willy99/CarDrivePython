@@ -46,6 +46,18 @@ def narrative(title: str) -> str | None:
 # ---------------------------------------------------------------------------
 
 _STRINGS = {
+    # ---- Driving style (8-point scale, best → worst) ----
+    "style.ace":        {"en": "The Ace",        "uk": "Ас"},
+    "style.careful":    {"en": "Careful Driver",  "uk": "Обережний"},
+    "style.gentleman":  {"en": "Gentleman",       "uk": "Інтелігент"},
+    "style.normal":     {"en": "Average Driver",  "uk": "Середнячок"},
+    "style.speeder":    {"en": "Speed Freak",     "uk": "Газонога"},
+    "style.weaver":     {"en": "Lane Weaver",     "uk": "Шашечник"},
+    "style.violator":   {"en": "Rule Breaker",    "uk": "Порушник"},
+    "style.jerk":       {"en": "Road Menace",     "uk": "Повний гавнюк"},
+
+    "style.label":      {"en": "Your style:",     "uk": "Твій стиль:"},
+
     # ---- Home screen ----
     "home.subtitle":      {"en": "a top-down driving challenge",
                            "uk": "Драйв із висоти пташиного польоту"},
@@ -86,6 +98,8 @@ _STRINGS = {
     "home.mv.cops":       {"en": "chasing, murdering",
                             "uk": "ні хвилини спокою"},
 
+    "home.map_hint":      {"en": "TAB: level map", "uk": "TAB: карта рівнів"},
+
     "home.start":         {"en": "Press  ENTER  to start",
                            "uk": "Натисни  ENTER  щоб почати"},
     "home.code_prompt":   {"en": "Have a level code?  Type it:",
@@ -93,6 +107,7 @@ _STRINGS = {
     "home.code_bad":      {"en": '"{code}" is not a valid code',
                            "uk": '"{code}" — відхилено'},
 
+    # ---- Garage ----
     # ---- Garage ----
     "garage.title":       {"en": "CHOOSE YOUR CAR", "uk": "ОБЕРИ АВТО"},
     "garage.spd":         {"en": "SPD", "uk": "ШВД"},
@@ -102,15 +117,22 @@ _STRINGS = {
                            "uk": "ЛІВО / ПРАВО: вибір       ENTER: поїхали"},
     "garage.fwd":         {"en": "front-wheel drive", "uk": "передній привід"},
     "garage.rwd":         {"en": "rear-wheel drive",  "uk": "задній привід"},
+    "garage.locked":      {"en": "LOCKED",            "uk": "ЗАМКНЕНО"},
+    "garage.unlock_at":   {"en": "Complete {n} levels to unlock",
+                           "uk": "Пройди {n} рівнів, щоб відкрити"},
+    "garage.locked_hint": {"en": "This car is locked — complete more levels",
+                           "uk": "Авто заблоковане — пройди більше рівнів"},
 
     # ---- Intro screen ----
     "intro.level":        {"en": "LEVEL {n}", "uk": "РІВЕНЬ {n}"},
-    "intro.goal.taxi":    {"en": "Pick up your passenger at P, then deliver to B.",
-                           "uk": "Забери пасажира на точці P і довези до точки B."},
-    "intro.goal.chase":   {"en": "Reach B before the police catch you.",
-                           "uk": "Дістанься точки B, поки поліція не спіймала."},
-    "intro.goal.race":    {"en": "Drive from A to the gold B marker as fast as you can.",
-                           "uk": "Мчи від A до точки B якомога швидше."},
+    "intro.goal.taxi":     {"en": "Pick up your passenger at P, then deliver to B.",
+                            "uk": "Забери пасажира на точці P і довези до точки B."},
+    "intro.goal.chase":    {"en": "Reach B before the police catch you.",
+                            "uk": "Дістанься точки B, поки поліція не спіймала."},
+    "intro.goal.race":     {"en": "Drive from A to the gold B marker as fast as you can.",
+                            "uk": "Мчи від A до точки B якомога швидше."},
+    "intro.goal.delivery": {"en": "Chain 3 deliveries: touch each P to pick up, D to drop off.",
+                            "uk": "3 замовлення поспіль: торкнись P — підбираєш, D — здаєш."},
     "intro.tip1":         {"en": "When the rear slides:  steer INTO the slide.",
                            "uk": "Коли зад заносить — крути кермо У БІК заносу."},
     "intro.tip2":         {"en": "FWD car: press GAS to recover.   RWD car: LIFT OFF gas.",
@@ -166,6 +188,12 @@ _STRINGS = {
                            "uk": "Мчи від  A  до  B  якнайшвидше!"},
     "hud.start_taxi":     {"en": "Pick up the passenger at  P,  then deliver to  B !",
                            "uk": "Забери пасажира на  P  і довези до  B !"},
+    "hud.start_delivery": {"en": "Chain 3 deliveries: P = pickup,  D = drop-off.  Go!",
+                           "uk": "3 замовлення: P — підбери, D — здай. Вперед!"},
+    "hud.banner_delivery":{"en": "Fare {done}/{total}  → {nxt}",
+                           "uk": "Замовлення {done}/{total}  → {nxt}"},
+    "hud.banner_delivery_done": {"en": "All {total} deliveries done!",
+                                 "uk": "Усі {total} замовлення виконано!"},
     "hud.banner_aboard":  {"en": "Passenger aboard → deliver to  B",
                            "uk": "Пасажир у авто → вези до  B"},
     "hud.banner_topickup":{"en": "Head to  P  to pick up your passenger",
@@ -183,6 +211,15 @@ _STRINGS = {
     "pause.hint":         {"en": "P: resume      ESC: menu",
                            "uk": "P: продовжити      ESC: меню"},
 
+    # ---- Level map ----
+    "levelmap.title":     {"en": "LEVEL MAP", "uk": "КАРТА РІВНІВ"},
+    "levelmap.hint":      {"en": "Arrows: navigate   ENTER: play completed   ESC: back",
+                           "uk": "Стрілки: навігація   ENTER: грати пройдені   ESC: назад"},
+    "levelmap.done":      {"en": "DONE", "uk": "ПРОЙДЕНО"},
+    "levelmap.locked_msg":{"en": "Not completed yet — type level code on home screen",
+                           "uk": "Ще не пройдено — введи код рівня на головному екрані"},
+    "levelmap.code":      {"en": "Code: {code}", "uk": "Код: {code}"},
+
     # ---- Notifications / reasons ----
     "note.redlight":      {"en": "RED LIGHT  -{n} pts", "uk": "ЧЕРВОНЕ  -{n} балів"},
     "note.clean":         {"en": "Clean run!  +{n} pts", "uk": "Чистий заїзд!  +{n}"},
@@ -194,11 +231,41 @@ _STRINGS = {
     "note.beep":          {"en": "BEEP!", "uk": "БУП!"},
     "note.god_on":        {"en": "GOD MODE  ON", "uk": "БОГ-РЕЖИМ УВІМК"},
     "note.god_off":       {"en": "God mode OFF", "uk": "Бог-режим вимк"},
+    "note.car_unlocked":  {"en": "{name} unlocked!", "uk": "{name} розблоковано!"},
     "reason.pedestrian":  {"en": "Pedestrian hit!", "uk": "Збито кегля!"},
     "reason.time":        {"en": "Time's up!", "uk": "Цигіль вийшов!"},
     "reason.fuel":        {"en": "Out of fuel!", "uk": "Скінчилося пальне!"},
     "reason.police":      {"en": "Caught by police!", "uk": "Дратуті, інспектор Петренко!"},
     "reason.totalled":    {"en": "Car totalled!", "uk": "Корито розбито!"},
+
+    # ---- Drifting ----
+    "note.drift_bonus":   {"en": "DRIFT  +{n}", "uk": "ЗАНОС  +{n}"},
+    "note.drift_combo":   {"en": "DRIFT COMBO ×{x}  +{n}", "uk": "ЗАНОС КОМБО ×{x}  +{n}"},
+    "note.drift_crash":   {"en": "Drift crash!  -{n}", "uk": "Занос — аварія!  -{n}"},
+    "note.drifting":      {"en": "DRIFTING  {s}s", "uk": "ЗАНОС  {s}с"},
+
+    # ---- Near-miss ----
+    "note.near_miss_pro": {"en": "Red-light thread!  +{n}", "uk": "Пролетів на червоний!  +{n}"},
+    "note.near_miss_ugly":{"en": "Clumsy near-miss  -{n}", "uk": "Ледве не задавив  -{n}"},
+
+    # ---- Road hazards ----
+    "note.pothole":       {"en": "POTHOLE!", "uk": "ЯМА!"},
+    "note.puddle":        {"en": "PUDDLE — slippery!", "uk": "КАЛЮЖА — ковзко!"},
+
+    # ---- One-way / wrong-way ----
+    "note.wrong_way":     {"en": "WRONG WAY!  -{n} pts", "uk": "ЗУСТРІЧНА!  -{n} балів"},
+    "note.wrong_way_warn":{"en": "◄ WRONG WAY ►", "uk": "◄ ЗУСТРІЧНА ►"},
+
+    # ---- Roadblock ----
+    "note.roadblock":     {"en": "POLICE ROADBLOCK AHEAD!", "uk": "ПОПЕРЕДУ ЗАСАДА!"},
+
+    # ---- Green-light streak ----
+    "note.green_streak":  {"en": "GREEN ×{n}  +{b}", "uk": "ЗЕЛЕНИЙ ×{n}  +{b}"},
+
+    # ---- Delivery Blitz ----
+    "note.delivery_pickup": {"en": "Package picked up!", "uk": "Вантаж взято!"},
+    "note.delivery_done":   {"en": "Delivery {n} complete  +{b}",
+                             "uk": "Доставка {n} виконана  +{b}"},
 }
 
 
@@ -243,4 +310,7 @@ _NARRATIVE = {
     "The Gauntlet": {
         "uk": "Остання зміна. Дощ, ніч, бак напівпорожній. Усе як завжди. А дома чекають",
         "en": "Last shift. Rain, night, half a tank. Same as always."},
+    "Delivery Blitz": {
+        "uk": "3 замовлення, один шанс. Кожна зупинка на червоний коштує тобі грошей.",
+        "en": "3 fares, 3 minutes. Every red light costs you."},
 }

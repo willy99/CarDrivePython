@@ -10,7 +10,7 @@ Saved schema (all optional, merged over the default):
     car    : last chosen car index
     best   : { "<level_idx>": best_ms }
     done   : [completed level indices]
-    stats  : { levels, violations, crashes, speeding, honks, clean, peds }
+    stats  : { levels, violations, crashes, speeding, honks, clean, smooth, peds }
 """
 
 import json
@@ -26,7 +26,7 @@ def default() -> dict:
         "best": {},
         "done": [],
         "stats": {"levels": 0, "violations": 0, "crashes": 0,
-                  "speeding": 0, "honks": 0, "clean": 0, "peds": 0},
+                  "speeding": 0, "honks": 0, "clean": 0, "smooth": 0, "peds": 0},
     }
 
 
@@ -90,24 +90,64 @@ def save(data: dict):
 
 
 # ---------------------------------------------------------------------------
-# Driving-style classification (from accumulated stats)
+# Car unlock helper
+# ---------------------------------------------------------------------------
+
+def count_done(data: dict) -> int:
+    """Number of unique completed levels."""
+    return len(set(data.get("done", [])))
+
+
+def is_car_unlocked(data: dict, car_idx: int, cars) -> bool:
+    """Return True if the car at car_idx is available to the player."""
+    req = cars[car_idx].unlock_req
+    return req == 0 or count_done(data) >= req
+
+
+# ---------------------------------------------------------------------------
+# Driving-style classification from accumulated stats (8-point scale)
+#
+# Scale from most careful/skilled (index 0) to most reckless (index 7):
+#   ace → careful → gentleman → normal → speeder → weaver → violator → jerk
 # ---------------------------------------------------------------------------
 
 def driving_style(stats: dict) -> str:
-    """Return an i18n key describing the player's style."""
-    lv = max(1, stats.get("levels", 0))
-    v  = stats.get("violations", 0) / lv      # red lights / level
-    c  = stats.get("crashes", 0) / lv         # crashes / level
-    sp = stats.get("speeding", 0) / lv        # tickets / level
-    hk = stats.get("honks", 0) / lv           # honks / level
-    rough = v + sp
+    """Return an i18n key describing the player's driving character."""
+    lv  = max(1, stats.get("levels", 0))
+    v   = stats.get("violations", 0) / lv       # red lights / level
+    c   = stats.get("crashes", 0)   / lv         # crashes / level
+    sp  = stats.get("speeding", 0)  / lv         # camera tickets / level
+    hk  = stats.get("honks", 0)     / lv         # honks / level
+    cl  = stats.get("clean", 0)     / lv         # fraction of levels without violations
+    sm  = stats.get("smooth", 0)    / lv         # fraction of levels with 0 crashes
 
-    if c >= 1.5 and rough >= 1.5:
-        return "style.jerk"        # повний гавнюк
-    if rough >= 1.2:
-        return "style.violator"    # порушечник
-    if hk >= 2.2:
-        return "style.weaver"      # шашечник
-    if v < 0.3 and c < 0.4 and sp < 0.3:
-        return "style.gentleman"   # обережний інтелігент
-    return "style.normal"
+    # --- tier 8: total menace ---
+    if c >= 1.5 and (v + sp) >= 1.5:
+        return "style.jerk"
+
+    # --- tier 7: rule-breaker ---
+    if v >= 1.0 or (v >= 0.6 and sp >= 0.6):
+        return "style.violator"
+
+    # --- tier 6: lane-weaver / horn-blarer ---
+    if hk >= 2.0:
+        return "style.weaver"
+
+    # --- tier 5: speed-demon ---
+    if sp >= 0.9 or (sp >= 0.5 and c >= 0.7):
+        return "style.speeder"
+
+    # --- tier 4: average ---
+    if v >= 0.3 or c >= 0.5 or sp >= 0.3:
+        return "style.normal"
+
+    # --- tier 3: gentleman driver ---
+    if cl < 0.55 or sm < 0.40:
+        return "style.gentleman"
+
+    # --- tier 2: careful ---
+    if cl < 0.80 or sm < 0.65:
+        return "style.careful"
+
+    # --- tier 1: the ace (almost never gets here) ---
+    return "style.ace"

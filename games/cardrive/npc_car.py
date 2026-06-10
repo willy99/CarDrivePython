@@ -160,6 +160,18 @@ class NPCCar:
         d = self._action_dirs()
         opts = [i for i in range(4)
                 if self._valid(self.tx + d[i][0], self.ty + d[i][1])]
+        # Respect one-way streets: don't move onto a tile against its allowed dir
+        one_way = getattr(self._map, 'one_way', {})
+        if one_way:
+            ow_ok = []
+            for i in opts:
+                ntx = self.tx + d[i][0]
+                nty = self.ty + d[i][1]
+                ow = one_way.get((ntx, nty))
+                if ow is None or (d[i][0] == ow[0] and d[i][1] == ow[1]):
+                    ow_ok.append(i)
+            if ow_ok:
+                opts = ow_ok
         if not blocked:
             no_uturn = [i for i in opts if i != 3]
             if no_uturn:
@@ -204,6 +216,29 @@ class NPCCar:
 
     def _choose_next_dir(self):
         """Called on each tile arrival: decide at junctions / forced corners."""
+        # Roundabout ring: follow the prescribed circulation direction
+        rb_tiles = getattr(self._map, 'roundabout_tiles', set())
+        rb_dir   = getattr(self._map, 'roundabout_dir',   {})
+        if (self.tx, self.ty) in rb_tiles:
+            flow = rb_dir.get((self.tx, self.ty))
+            if flow:
+                # Look for exits (non-ring road tiles reachable from here)
+                exits = [
+                    (ddx, ddy) for ddx, ddy in _DIRS
+                    if (ddx, ddy) != (-flow[0], -flow[1])          # not backward
+                    and self._valid(self.tx + ddx, self.ty + ddy)
+                    and (self.tx + ddx, self.ty + ddy) not in rb_tiles
+                ]
+                # 40 % chance to take an exit when one is available
+                if exits and random.random() < 0.40:
+                    self.dx, self.dy = random.choice(exits)
+                elif self._valid(self.tx + flow[0], self.ty + flow[1]):
+                    self.dx, self.dy = flow
+                elif exits:
+                    self.dx, self.dy = random.choice(exits)
+                self._was_junction = True
+                return
+
         straight_ok = self._valid(self.tx + self.dx, self.ty + self.dy)
         junction = bool(self._real_turns())
         # Decide on junction entry (rising edge) or whenever we can't go straight.
