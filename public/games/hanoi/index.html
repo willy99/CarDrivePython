@@ -1,0 +1,1075 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tower of Hanoi</title>
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+body { background:#050010; overflow:hidden; font-family:'Segoe UI',system-ui,sans-serif; color:#fff; user-select:none; }
+
+canvas { position:fixed; inset:0; }
+#game-canvas { cursor:pointer; z-index:1; }
+
+#app { position:fixed; inset:0; z-index:2; pointer-events:none; display:flex; flex-direction:column; }
+
+/* HUD */
+#hud {
+  pointer-events:all;
+  flex-shrink:0; height:60px;
+  display:flex; align-items:center; justify-content:space-between;
+  padding:0 20px;
+  background:rgba(0,0,0,0.5); backdrop-filter:blur(12px);
+  border-bottom:1px solid rgba(255,255,255,0.07);
+}
+.hud-block { display:flex; flex-direction:column; align-items:center; gap:1px; min-width:56px; }
+.hud-lbl { font-size:9px; letter-spacing:2px; text-transform:uppercase; color:rgba(255,255,255,0.35); }
+.hud-val { font-size:19px; font-weight:700; font-variant-numeric:tabular-nums; line-height:1.1; }
+.hud-title { font-size:13px; font-weight:900; letter-spacing:4px; text-transform:uppercase;
+  background:linear-gradient(90deg,#c084fc,#60a5fa,#34d399);
+  -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; }
+#hud-diff { font-size:11px; font-weight:700; letter-spacing:1px; text-transform:uppercase; }
+#hud-timer { color:#7dd3fc; }
+#hud-timer.elapsed { color:#a3e635; }
+#hud-timer.warn  { color:#fbbf24; animation:blink 1s infinite; }
+#hud-timer.danger{ color:#f87171; animation:blink .45s infinite; }
+@keyframes blink { 0%,100%{opacity:1} 50%{opacity:.25} }
+#hud-moves { color:#34d399; }
+#hud-level { color:#a78bfa; }
+#hud-best  { color:#fbbf24; }
+
+/* Footer */
+#footer {
+  pointer-events:all;
+  margin-top:auto; flex-shrink:0; height:52px;
+  display:flex; align-items:center; justify-content:center; gap:12px;
+  background:rgba(0,0,0,0.5); backdrop-filter:blur(12px);
+  border-top:1px solid rgba(255,255,255,0.07);
+}
+.btn {
+  padding:8px 18px; border-radius:9px;
+  border:1px solid rgba(255,255,255,0.18);
+  background:rgba(255,255,255,0.07); color:#fff;
+  font-size:13px; font-weight:600; cursor:pointer; transition:all .18s;
+}
+.btn:hover { background:rgba(255,255,255,0.14); border-color:rgba(255,255,255,0.35); transform:translateY(-1px); }
+.btn:disabled { opacity:.3; cursor:not-allowed; transform:none; }
+.btn-primary {
+  background:linear-gradient(135deg,#5b21b6,#4338ca);
+  border-color:rgba(167,139,250,.35);
+  box-shadow:0 0 18px rgba(91,33,182,.45);
+}
+.btn-primary:hover:not(:disabled) { background:linear-gradient(135deg,#6d28d9,#4f46e5); box-shadow:0 0 28px rgba(91,33,182,.7); }
+
+/* Overlay */
+#overlay {
+  position:fixed; inset:0; z-index:10;
+  display:flex; align-items:center; justify-content:center;
+  background:rgba(0,0,0,.7); backdrop-filter:blur(10px);
+  opacity:0; pointer-events:none; transition:opacity .35s;
+}
+#overlay.show { opacity:1; pointer-events:all; }
+#ov-box {
+  background:linear-gradient(145deg,rgba(25,10,55,.97),rgba(8,4,24,.97));
+  border:1px solid rgba(255,255,255,.12); border-radius:22px;
+  padding:36px 44px; text-align:center; max-width:400px; width:90%;
+  box-shadow:0 24px 60px rgba(0,0,0,.9),0 0 80px rgba(120,60,255,.25);
+  transform:scale(.82) translateY(20px); transition:transform .4s cubic-bezier(.34,1.56,.64,1);
+}
+#overlay.show #ov-box { transform:scale(1) translateY(0); }
+.ov-emoji { font-size:54px; display:block; margin-bottom:12px; }
+.ov-title { font-size:27px; font-weight:800; margin-bottom:6px; }
+.ov-sub   { font-size:14px; color:rgba(255,255,255,.55); margin-bottom:20px; }
+.ov-stats { display:flex; justify-content:center; gap:22px; margin-bottom:22px;
+  padding:14px 0; border-top:1px solid rgba(255,255,255,.07); border-bottom:1px solid rgba(255,255,255,.07); }
+.stat { display:flex; flex-direction:column; align-items:center; gap:3px; }
+.stat-v { font-size:21px; font-weight:700; }
+.stat-l { font-size:10px; letter-spacing:1.5px; text-transform:uppercase; color:rgba(255,255,255,.35); }
+.ov-btns { display:flex; gap:10px; justify-content:center; }
+
+/* Confetti */
+.confetti { position:fixed; pointer-events:none; z-index:200; animation:cfall linear forwards; }
+@keyframes cfall { 0%{transform:translateY(0) rotate(0deg);opacity:1} 100%{transform:translateY(110vh) rotate(720deg);opacity:0} }
+
+/* Hover peg label */
+#peg-hint {
+  position:fixed; bottom:64px; left:50%; transform:translateX(-50%);
+  font-size:12px; color:rgba(255,255,255,.3); letter-spacing:.5px;
+  pointer-events:none; transition:opacity .3s;
+}
+
+/* Name entry row in win overlay */
+.name-row {
+  display:flex; align-items:center; gap:8px; justify-content:center;
+  margin-top:16px; padding-top:14px; border-top:1px solid rgba(255,255,255,.07);
+}
+.name-row input {
+  background:rgba(255,255,255,.08); border:1px solid rgba(255,255,255,.2);
+  color:#fff; border-radius:8px; padding:7px 12px; font-size:13px; width:140px;
+  outline:none; transition:border-color .18s;
+}
+.name-row input:focus { border-color:rgba(167,139,250,.7); }
+.name-row input::placeholder { color:rgba(255,255,255,.3); }
+
+/* Hall of Fame overlay */
+#hof-overlay {
+  position:fixed; inset:0; z-index:20;
+  display:flex; align-items:center; justify-content:center;
+  background:rgba(0,0,0,.75); backdrop-filter:blur(12px);
+  opacity:0; pointer-events:none; transition:opacity .3s;
+}
+#hof-overlay.show { opacity:1; pointer-events:all; }
+#hof-box {
+  background:linear-gradient(145deg,rgba(20,8,50,.98),rgba(6,3,18,.98));
+  border:1px solid rgba(255,255,255,.1); border-radius:22px;
+  width:min(780px,95vw); max-height:85vh; overflow:hidden;
+  display:flex; flex-direction:column;
+  box-shadow:0 30px 80px rgba(0,0,0,.9),0 0 100px rgba(100,50,255,.2);
+}
+#hof-header {
+  padding:22px 28px 16px; border-bottom:1px solid rgba(255,255,255,.07);
+  display:flex; align-items:center; justify-content:space-between; flex-shrink:0;
+}
+#hof-header h2 { font-size:20px; font-weight:800; letter-spacing:1px; }
+#hof-close { background:rgba(255,255,255,.08); border:1px solid rgba(255,255,255,.15);
+  color:#fff; border-radius:8px; padding:6px 14px; cursor:pointer; font-size:13px; transition:all .18s; }
+#hof-close:hover { background:rgba(255,255,255,.15); }
+
+#hof-filters {
+  padding:12px 28px; display:flex; gap:6px; flex-wrap:wrap; flex-shrink:0;
+  border-bottom:1px solid rgba(255,255,255,.06);
+}
+.hof-tab {
+  padding:5px 12px; border-radius:20px; font-size:12px; font-weight:600;
+  cursor:pointer; border:1px solid rgba(255,255,255,.15); color:rgba(255,255,255,.6);
+  background:transparent; transition:all .15s;
+}
+.hof-tab.active, .hof-tab:hover { border-color:rgba(167,139,250,.6); color:#fff; background:rgba(167,139,250,.15); }
+
+#hof-table-wrap { overflow-y:auto; padding:0 28px 20px; flex:1; }
+#hof-table { width:100%; border-collapse:collapse; font-size:13px; margin-top:10px; }
+#hof-table th {
+  text-align:left; padding:8px 10px; font-size:10px; letter-spacing:1.5px;
+  text-transform:uppercase; color:rgba(255,255,255,.35);
+  border-bottom:1px solid rgba(255,255,255,.07); position:sticky; top:0;
+  background:rgba(10,4,25,.98);
+}
+#hof-table td { padding:9px 10px; border-bottom:1px solid rgba(255,255,255,.04); vertical-align:middle; }
+.hof-rank { font-weight:700; font-size:15px; }
+.hof-gold   { color:#fbbf24; }
+.hof-silver { color:#94a3b8; }
+.hof-bronze { color:#b87333; }
+.hof-row-me td { background:rgba(167,139,250,.07); }
+.hof-badge {
+  display:inline-block; padding:2px 7px; border-radius:10px; font-size:11px;
+  font-weight:700; letter-spacing:.5px;
+}
+.hof-eff-bar {
+  height:4px; border-radius:2px; background:rgba(255,255,255,.1); margin-top:4px; width:80px;
+}
+.hof-eff-fill { height:100%; border-radius:2px; background:linear-gradient(90deg,#6d28d9,#2563eb); }
+#hof-empty { padding:40px; text-align:center; color:rgba(255,255,255,.35); font-size:14px; }
+.percentile-badge {
+  display:inline-block; padding:4px 12px; border-radius:20px; font-size:12px; font-weight:700;
+  background:linear-gradient(135deg,#1d4ed8,#7c3aed); border:1px solid rgba(167,139,250,.4);
+  margin-top:6px;
+}
+</style>
+</head>
+<body>
+
+<canvas id="bg-canvas"></canvas>
+<canvas id="game-canvas"></canvas>
+
+<div id="app">
+  <div id="hud">
+    <div class="hud-block">
+      <span class="hud-lbl">Level</span>
+      <span class="hud-val" id="hud-level">1</span>
+    </div>
+    <div style="display:flex;flex-direction:column;align-items:center;gap:3px">
+      <span class="hud-title">Tower of Hanoi</span>
+      <span id="hud-diff">Tutorial</span>
+    </div>
+    <div class="hud-block">
+      <span class="hud-lbl" id="hud-timer-lbl">Time</span>
+      <span class="hud-val" id="hud-timer">0:00</span>
+    </div>
+    <div class="hud-block">
+      <span class="hud-lbl">Moves</span>
+      <span class="hud-val" id="hud-moves">0</span>
+    </div>
+    <div class="hud-block">
+      <span class="hud-lbl">Min</span>
+      <span class="hud-val" id="hud-best">7</span>
+    </div>
+  </div>
+
+  <div id="footer">
+    <a class="btn" href="/" target="_top">← Home</a>
+    <button class="btn" onclick="restartLevel()">↺ Restart</button>
+    <button class="btn btn-primary" id="btn-next" onclick="nextLevel()" disabled>Next Level →</button>
+    <button class="btn" onclick="openHof()">🏆 Hall of Fame</button>
+  </div>
+</div>
+
+<div id="overlay">
+  <div id="ov-box">
+    <span class="ov-emoji" id="ov-emoji">🏆</span>
+    <div class="ov-title" id="ov-title"></div>
+    <div class="ov-sub"   id="ov-sub"></div>
+    <div id="ov-percentile"></div>
+    <div class="ov-stats" id="ov-stats"></div>
+    <div class="name-row" id="ov-name-row">
+      <input id="ov-name-input" type="text" maxlength="20" placeholder="Your name…">
+      <button class="btn btn-primary" onclick="submitScore()">Save Score</button>
+    </div>
+    <div class="ov-btns"  id="ov-btns"></div>
+  </div>
+</div>
+
+<!-- Hall of Fame overlay -->
+<div id="hof-overlay">
+  <div id="hof-box">
+    <div id="hof-header">
+      <h2>🏆 Hall of Fame</h2>
+      <button id="hof-close" onclick="closeHof()">✕ Close</button>
+    </div>
+    <div id="hof-filters"></div>
+    <div id="hof-table-wrap">
+      <div id="hof-empty" style="display:none">No records yet — complete a level to enter!</div>
+      <table id="hof-table" style="display:none">
+        <thead>
+          <tr>
+            <th>#</th><th>Player</th><th>Level</th>
+            <th>Efficiency</th><th>Moves</th><th>Optimal</th><th>Time</th><th>Date</th>
+          </tr>
+        </thead>
+        <tbody id="hof-body"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<div id="peg-hint">Click a peg to pick up its top disc</div>
+
+<script>
+// ═══════════════════════════════════════════════════════════
+//  STARS BACKGROUND
+// ═══════════════════════════════════════════════════════════
+const bgCanvas = document.getElementById('bg-canvas');
+const bgCtx    = bgCanvas.getContext('2d');
+
+function drawStars() {
+  const W = bgCanvas.width  = window.innerWidth;
+  const H = bgCanvas.height = window.innerHeight;
+  const g = bgCtx.createRadialGradient(W/2,H*.4,0,W/2,H/2,Math.max(W,H)*.9);
+  g.addColorStop(0,'#1a0533'); g.addColorStop(.5,'#0d0020'); g.addColorStop(1,'#040010');
+  bgCtx.fillStyle = g; bgCtx.fillRect(0,0,W,H);
+  // nebulae
+  [[W*.15,H*.25,W*.35,'rgba(120,40,200,.055)'],[W*.75,H*.65,W*.3,'rgba(30,70,220,.045)'],
+   [W*.5,H*.1,W*.25,'rgba(200,30,100,.04)'],[W*.85,H*.2,W*.2,'rgba(60,160,200,.035)']].forEach(([x,y,r,c])=>{
+    const ng=bgCtx.createRadialGradient(x,y,0,x,y,r);
+    ng.addColorStop(0,c); ng.addColorStop(1,'transparent');
+    bgCtx.fillStyle=ng; bgCtx.fillRect(0,0,W,H);
+  });
+  // stars
+  let s=1234567;
+  const rng=()=>{s=(s*1664525+1013904223)&0xffffffff; return(s>>>0)/0xffffffff;};
+  for(let i=0;i<250;i++){
+    bgCtx.beginPath();
+    bgCtx.arc(rng()*W,rng()*H,rng()*1.4+.2,0,Math.PI*2);
+    bgCtx.fillStyle=`hsla(${200+rng()*60},60%,95%,${rng()*.6+.3})`;
+    bgCtx.fill();
+  }
+}
+drawStars();
+
+// ═══════════════════════════════════════════════════════════
+//  GAME CANVAS
+// ═══════════════════════════════════════════════════════════
+const gc  = document.getElementById('game-canvas');
+const ctx = gc.getContext('2d');
+
+// ═══════════════════════════════════════════════════════════
+//  CONFIG
+// ═══════════════════════════════════════════════════════════
+const LEVELS = [
+  {num:1,disks:3,timeLimit:0,  name:'Tutorial',  color:'#34d399'},
+  {num:2,disks:3,timeLimit:55, name:'Easy',      color:'#38bdf8'},
+  {num:3,disks:4,timeLimit:100,name:'Medium',    color:'#818cf8'},
+  {num:4,disks:4,timeLimit:65, name:'Tricky',    color:'#fbbf24'},
+  {num:5,disks:5,timeLimit:160,name:'Hard',      color:'#fb923c'},
+  {num:6,disks:5,timeLimit:105,name:'Expert',    color:'#f87171'},
+  {num:7,disks:6,timeLimit:260,name:'Master',    color:'#e879f9'},
+  {num:8,disks:7,timeLimit:400,name:'Legend',    color:'#facc15'},
+];
+
+// Disk size 1 = smallest (top), size N = largest (bottom)
+// Colors from largest (bottom) to smallest (top):
+const DISK_PALETTES = [
+  {top:'#ff6060',side:'#c0302a',inner:'#8a2020'},
+  {top:'#ff9f43',side:'#cc7020',inner:'#8a4a10'},
+  {top:'#ffe234',side:'#c8a010',inner:'#806800'},
+  {top:'#2ed573',side:'#0e9e54',inner:'#086638'},
+  {top:'#4da8ff',side:'#1060c0',inner:'#083880'},
+  {top:'#b09bfe',side:'#6d28d9',inner:'#3d1090'},
+  {top:'#f472b6',side:'#be185d',inner:'#7a0840'},
+];
+
+const PEG_XS      = [-2.4, 0, 2.4];   // world X of each peg
+const PEG_R       = 0.09;
+const PEG_H       = 3.2;
+const DISK_H      = 0.24;             // thickness of one disk
+const DISK_GAP    = 0.04;
+const INNER_R     = 0.15;             // hole radius (fits over peg)
+const BASE_Y      = -0.04;            // base top surface Y
+const BASE_DEPTH  = 0.38;            // base thickness downward
+const LIFT_Y      = PEG_H + 0.5;     // height disk floats during animation
+
+function diskOuterR(size, totalDisks) {
+  const minR = 0.32, maxR = 1.12;
+  if (totalDisks === 1) return maxR;
+  // size 1 = smallest → minR,  size N = largest → maxR
+  return minR + (size - 1) * (maxR - minR) / (totalDisks - 1);
+}
+
+function diskBottomY(stackIdx) {
+  return BASE_Y + stackIdx * (DISK_H + DISK_GAP);
+}
+
+// ═══════════════════════════════════════════════════════════
+//  PROJECTION  (oblique – camera above-front-right)
+// ═══════════════════════════════════════════════════════════
+// World: X=right, Y=up, Z+ = INTO scene (away from viewer)
+// Viewer at Z = -∞, slightly above
+let SC = 90;  // pixels per world unit
+let OX = 0, OY = 0; // screen origin (maps world 0,BASE_Y,0)
+
+function updateProj() {
+  const HUD_H    = 60, FOOT_H = 52;
+  const areaH    = window.innerHeight - HUD_H - FOOT_H;
+  const areaW    = window.innerWidth;
+  SC  = Math.min(areaW * 0.115, areaH * 0.19);
+  OX  = areaW / 2;
+  OY  = HUD_H + areaH * 0.62;   // baseline Y on screen
+}
+
+// Project world → screen
+// Z+ goes up-and-left on screen (receding effect)
+function P(wx, wy, wz) {
+  return [
+    OX + (wx - wz * 0.38) * SC,
+    OY - (wy + wz * 0.42) * SC
+  ];
+}
+
+// ═══════════════════════════════════════════════════════════
+//  DRAW PRIMITIVES
+// ═══════════════════════════════════════════════════════════
+const N_SEGS = 52; // polygon segments for circles
+
+// Trace a horizontal circle path (in XZ plane at world Y=wy)
+function hCircPath(cx, wy, cz, r, cw=true) {
+  const step = (Math.PI * 2) / N_SEGS;
+  for (let i = 0; i <= N_SEGS; i++) {
+    const t = cw ? (i / N_SEGS) * Math.PI * 2 : -(i / N_SEGS) * Math.PI * 2;
+    const [sx, sy] = P(cx + r * Math.cos(t), wy, cz + r * Math.sin(t));
+    i === 0 ? ctx.moveTo(sx, sy) : ctx.lineTo(sx, sy);
+  }
+  ctx.closePath();
+}
+
+// Fill a horizontal ring (outer clockwise, inner counter-clockwise = hole)
+function fillHRing(cx, wy, cz, rOuter, rInner, color) {
+  ctx.beginPath();
+  hCircPath(cx, wy, cz, rOuter, true);
+  hCircPath(cx, wy, cz, rInner, false);
+  ctx.fillStyle = color;
+  ctx.fill('evenodd');
+}
+
+// Fill a horizontal disc
+function fillHDisc(cx, wy, cz, r, color) {
+  ctx.beginPath();
+  hCircPath(cx, wy, cz, r, true);
+  ctx.fillStyle = color;
+  ctx.fill();
+}
+
+// Draw the front-facing arc of a cylinder wall (outer surface)
+// "Front" in our view = negative Z side (toward viewer)
+function drawCylOuterSide(cx, cz, r, yBot, yTop, colorBot, colorTop) {
+  // Draw front semicircle wall (t from π to 2π, where sin(t)<0 → Z negative = front)
+  const pts_bot = [], pts_top = [];
+  for (let i = 0; i <= N_SEGS/2; i++) {
+    const t = Math.PI + (i / (N_SEGS/2)) * Math.PI;
+    pts_bot.push(P(cx + r * Math.cos(t), yBot, cz + r * Math.sin(t)));
+    pts_top.push(P(cx + r * Math.cos(t), yTop, cz + r * Math.sin(t)));
+  }
+  ctx.beginPath();
+  ctx.moveTo(...pts_bot[0]);
+  pts_bot.forEach(p => ctx.lineTo(...p));
+  for (let i = pts_top.length-1; i >= 0; i--) ctx.lineTo(...pts_top[i]);
+  ctx.closePath();
+
+  // Vertical gradient
+  const [,sy_bot] = P(cx, yBot, cz);
+  const [,sy_top] = P(cx, yTop, cz);
+  const grad = ctx.createLinearGradient(0, sy_bot, 0, sy_top);
+  grad.addColorStop(0, colorBot); grad.addColorStop(1, colorTop);
+  ctx.fillStyle = grad; ctx.fill();
+
+  // Left/right edge highlights
+  ctx.strokeStyle = 'rgba(255,255,255,0.12)';
+  ctx.lineWidth = 1;
+  ctx.stroke();
+}
+
+// Inner cylinder wall (hole's inner surface) – back half
+function drawCylInnerSide(cx, cz, r, yBot, yTop, color) {
+  // Only bottom edge visible from above; draw as a thin strip
+  const pBL = P(cx - r, yBot, cz);
+  const pBR = P(cx + r, yBot, cz);
+  const pTL = P(cx - r, yTop, cz);
+  const pTR = P(cx + r, yTop, cz);
+  ctx.beginPath();
+  ctx.moveTo(...pBL); ctx.lineTo(...pBR);
+  ctx.lineTo(...pTR); ctx.lineTo(...pTL);
+  ctx.closePath();
+  ctx.fillStyle = color; ctx.fill();
+}
+
+// ═══════════════════════════════════════════════════════════
+//  DRAW BASE
+// ═══════════════════════════════════════════════════════════
+function drawBase() {
+  const x1=-3, x2=3, z1=-0.55, z2=0.55;
+  const yT = BASE_Y, yB = BASE_Y - BASE_DEPTH;
+
+  // Top face (wood)
+  ctx.beginPath();
+  [P(x1,yT,z1),P(x2,yT,z1),P(x2,yT,z2),P(x1,yT,z2)].forEach(([sx,sy],i)=>
+    i===0 ? ctx.moveTo(sx,sy) : ctx.lineTo(sx,sy));
+  ctx.closePath();
+  const gTop = ctx.createLinearGradient(...P(x1,yT,z2), ...P(x2,yT,z1));
+  gTop.addColorStop(0,'#a07040'); gTop.addColorStop(1,'#705020');
+  ctx.fillStyle = gTop; ctx.fill();
+  ctx.strokeStyle='rgba(255,200,80,.15)'; ctx.lineWidth=1; ctx.stroke();
+
+  // Front face (z2 side – closest to viewer)
+  ctx.beginPath();
+  [P(x1,yT,z2),P(x2,yT,z2),P(x2,yB,z2),P(x1,yB,z2)].forEach(([sx,sy],i)=>
+    i===0 ? ctx.moveTo(sx,sy) : ctx.lineTo(sx,sy));
+  ctx.closePath();
+  const gFront = ctx.createLinearGradient(...P(0,yT,z2), ...P(0,yB,z2));
+  gFront.addColorStop(0,'#5c3a14'); gFront.addColorStop(1,'#3a2008');
+  ctx.fillStyle = gFront; ctx.fill();
+
+  // Right face (x2 side)
+  ctx.beginPath();
+  [P(x2,yT,z1),P(x2,yT,z2),P(x2,yB,z2),P(x2,yB,z1)].forEach(([sx,sy],i)=>
+    i===0 ? ctx.moveTo(sx,sy) : ctx.lineTo(sx,sy));
+  ctx.closePath();
+  ctx.fillStyle='#4a2c0a'; ctx.fill();
+
+  // Glow under base
+  const [bsx,bsy] = P(0, yB, 0);
+  const gGlow = ctx.createRadialGradient(bsx,bsy+6,0,bsx,bsy+6,SC*4);
+  gGlow.addColorStop(0,'rgba(160,100,40,.18)'); gGlow.addColorStop(1,'transparent');
+  ctx.fillStyle = gGlow; ctx.fillRect(0,0,gc.width,gc.height);
+}
+
+// ═══════════════════════════════════════════════════════════
+//  DRAW ONE PEG
+// ═══════════════════════════════════════════════════════════
+function drawPeg(pegIdx, highlighted) {
+  const cx = PEG_XS[pegIdx], cz = 0;
+  const yBot = BASE_Y, yTop = PEG_H;
+  const r = PEG_R;
+
+  const col  = highlighted ? 'rgba(255,200,60,.85)' : 'rgba(180,150,255,.75)';
+  const colD = highlighted ? 'rgba(180,120,20,.6)'  : 'rgba(80,60,150,.5)';
+
+  // Cylinder side (front half)
+  drawCylOuterSide(cx, cz, r, yBot, yTop, colD, col);
+
+  // Bottom disc cap (at base level)
+  fillHDisc(cx, yBot, cz, r, colD);
+
+  // Top disc cap
+  fillHDisc(cx, yTop, cz, r, highlighted ? 'rgba(255,220,80,1)' : 'rgba(200,180,255,1)');
+
+  // Glow
+  if (highlighted) {
+    const [sx,sy] = P(cx, yTop*0.5, cz);
+    const gGlow = ctx.createRadialGradient(sx,sy,0,sx,sy,SC*0.8);
+    gGlow.addColorStop(0,'rgba(255,200,50,.12)'); gGlow.addColorStop(1,'transparent');
+    ctx.fillStyle=gGlow; ctx.fillRect(0,0,gc.width,gc.height);
+  }
+}
+
+// ═══════════════════════════════════════════════════════════
+//  DRAW ONE DISK
+// ═══════════════════════════════════════════════════════════
+function drawOneDisk(cx, worldY, cz, size, totalDisks, alpha, lifted) {
+  const rO  = diskOuterR(size, totalDisks);
+  const rI  = INNER_R;
+  const h   = DISK_H;
+  const pal = DISK_PALETTES[size - 1];   // size1=smallest=palettes[0]
+
+  ctx.globalAlpha = alpha;
+
+  // Outer side wall (front half)
+  drawCylOuterSide(cx, cz, rO, worldY, worldY + h, pal.side, pal.top);
+
+  // Inner side wall (hole)
+  drawCylInnerSide(cx, cz, rI, worldY, worldY + h, pal.inner);
+
+  // Bottom ring
+  fillHRing(cx, worldY, cz, rO, rI, pal.side);
+
+  // Top ring (brightest – faces camera)
+  // Gradient on top ring for sheen
+  const [tsx, tsy] = P(cx, worldY + h, cz);
+  const gSheen = ctx.createRadialGradient(tsx - SC*rO*.3, tsy - SC*rO*.15, 0, tsx, tsy, SC*rO);
+  gSheen.addColorStop(0, shineColor(pal.top));
+  gSheen.addColorStop(.5, pal.top);
+  gSheen.addColorStop(1, pal.side);
+  fillHRing(cx, worldY + h, cz, rO, rI, gSheen);
+
+  // Selection glow ring
+  if (lifted) {
+    ctx.save();
+    const [gx, gy] = P(cx, worldY + h * 0.5, cz);
+    const gGlow = ctx.createRadialGradient(gx, gy, SC*rI, gx, gy, SC*rO*1.4);
+    gGlow.addColorStop(0, 'rgba(255,220,80,.0)');
+    gGlow.addColorStop(.5,'rgba(255,220,80,.25)');
+    gGlow.addColorStop(1, 'rgba(255,220,80,.0)');
+    ctx.fillStyle = gGlow; ctx.fillRect(0,0,gc.width,gc.height);
+    ctx.restore();
+  }
+
+  ctx.globalAlpha = 1;
+}
+
+function shineColor(hex) {
+  // Return a lighter/whiter version for the sheen highlight
+  return hex + 'cc';  // crude: just semi-transparent brighter
+}
+
+// ═══════════════════════════════════════════════════════════
+//  GAME STATE
+// ═══════════════════════════════════════════════════════════
+let G = {
+  levelIdx: 0,
+  stacks: [[],[],[]],
+  selectedPeg: null,
+  moves: 0,
+  gameOver: false,
+  timerInterval: null,
+  timeElapsed: 0,
+  timeRemaining: 0,
+  flying: null,      // {size, x, y, z, phase, t, fromX, fromY, toX, toY}
+  hoveredPeg: null,
+  rafId: null,
+};
+
+function totalDisks() { return LEVELS[G.levelIdx].disks; }
+function minMoves()   { return (1 << totalDisks()) - 1; }
+
+// ═══════════════════════════════════════════════════════════
+//  RENDER LOOP
+// ═══════════════════════════════════════════════════════════
+function render() {
+  gc.width  = window.innerWidth;
+  gc.height = window.innerHeight;
+  updateProj();
+
+  ctx.clearRect(0, 0, gc.width, gc.height);
+
+  drawBase();
+
+  // Pass 1: draw all pegs behind disks
+  for (let peg = 0; peg < 3; peg++) {
+    const hl = (peg === G.selectedPeg) || (peg === G.hoveredPeg && !G.gameOver);
+    drawPeg(peg, hl);
+  }
+
+  // Pass 2: draw all disk stacks
+  for (let peg = 0; peg < 3; peg++) {
+    const stack = G.stacks[peg];
+    for (let idx = 0; idx < stack.length; idx++) {
+      const size = stack[idx];
+      const isLifted = (G.selectedPeg === peg && idx === stack.length - 1);
+      const worldY = diskBottomY(idx) + (isLifted ? 0.55 : 0);
+      drawOneDisk(PEG_XS[peg], worldY, 0, size, totalDisks(), 1, isLifted);
+    }
+  }
+
+  // Draw flying disk
+  if (G.flying) {
+    const f = G.flying;
+    drawOneDisk(f.x, f.y, 0, f.size, totalDisks(), 1, true);
+  }
+
+  // Pass 3: redraw peg rods ON TOP so they appear through disk holes
+  // (peg radius 0.09 < hole radius 0.15, so it only shows inside the hole)
+  for (let peg = 0; peg < 3; peg++) {
+    if (G.stacks[peg].length === 0) continue;
+    const hl = (peg === G.selectedPeg) || (peg === G.hoveredPeg && !G.gameOver);
+    drawPeg(peg, hl);
+  }
+}
+
+// ═══════════════════════════════════════════════════════════
+//  ANIMATION
+// ═══════════════════════════════════════════════════════════
+function easeIn(t)    { return t * t; }
+function easeOut(t)   { return 1 - (1-t)*(1-t); }
+function easeInOut(t) { return t<.5 ? 2*t*t : 1-Math.pow(-2*t+2,2)/2; }
+
+const PHASE_DUR = [220, 320, 200]; // ms for up, across, down
+
+function startFlyAnim(size, fromPeg, toPeg, toStackIdx, onDone) {
+  const fromStackIdx = G.stacks[fromPeg].length; // already moved
+  const fromY = diskBottomY(fromStackIdx);        // pre-move bottom Y
+  const toY   = diskBottomY(toStackIdx);
+
+  G.flying = {
+    size,
+    x: PEG_XS[fromPeg], y: fromY,
+    fromX: PEG_XS[fromPeg], toX: PEG_XS[toPeg],
+    fromY, toY,
+    phase: 0, t: 0, tStart: performance.now(),
+  };
+
+  function tick(now) {
+    const f = G.flying;
+    if (!f) return;
+    const elapsed = now - f.tStart;
+    f.t = Math.min(elapsed / PHASE_DUR[f.phase], 1);
+
+    if (f.phase === 0) {
+      // UP
+      f.y = f.fromY + easeIn(f.t) * (LIFT_Y - f.fromY);
+      f.x = f.fromX;
+    } else if (f.phase === 1) {
+      // ACROSS
+      f.x = f.fromX + easeInOut(f.t) * (f.toX - f.fromX);
+      f.y = LIFT_Y;
+    } else {
+      // DOWN
+      f.x = f.toX;
+      f.y = LIFT_Y + easeOut(f.t) * (f.toY - LIFT_Y);
+    }
+
+    render();
+
+    if (f.t >= 1) {
+      f.phase++;
+      f.tStart = now;
+      f.t = 0;
+      if (f.phase > 2) {
+        G.flying = null;
+        render();
+        onDone();
+        return;
+      }
+    }
+    G.rafId = requestAnimationFrame(tick);
+  }
+  G.rafId = requestAnimationFrame(tick);
+}
+
+// ═══════════════════════════════════════════════════════════
+//  CLICK / HOVER
+// ═══════════════════════════════════════════════════════════
+function screenXToPeg(sx) {
+  // Pegs are at world X = -2.4, 0, 2.4; map screen X to closest peg
+  const pegScreenXs = PEG_XS.map(wx => P(wx, 0, 0)[0]);
+  let best = -1, bestDist = Infinity;
+  pegScreenXs.forEach((px, i) => {
+    const d = Math.abs(sx - px);
+    if (d < bestDist) { bestDist = d; best = i; }
+  });
+  // Only accept if within ~half the column width
+  const colW = gc.width / 3;
+  return bestDist < colW * 0.6 ? best : -1;
+}
+
+gc.addEventListener('mousemove', e => {
+  if (G.flying || G.gameOver) { G.hoveredPeg = null; render(); return; }
+  const peg = screenXToPeg(e.clientX);
+  if (peg !== G.hoveredPeg) { G.hoveredPeg = peg; render(); }
+});
+
+gc.addEventListener('click', e => {
+  if (G.flying || G.gameOver) return;
+  const peg = screenXToPeg(e.clientX);
+  if (peg === -1) return;
+  handlePegClick(peg);
+});
+
+gc.addEventListener('mouseleave', () => { G.hoveredPeg = null; render(); });
+
+function handlePegClick(peg) {
+  if (G.selectedPeg === null) {
+    if (G.stacks[peg].length === 0) { shakeHint(); return; }
+    G.selectedPeg = peg;
+    render();
+  } else if (G.selectedPeg === peg) {
+    G.selectedPeg = null;
+    render();
+  } else {
+    const from = G.selectedPeg, to = peg;
+    const movingSize = G.stacks[from][G.stacks[from].length - 1];
+    const topTo      = G.stacks[to].length ? G.stacks[to][G.stacks[to].length - 1] : Infinity;
+
+    G.selectedPeg = null;
+
+    if (movingSize > topTo) {   // can't place larger on smaller
+      shakeHint(); render(); return;
+    }
+
+    // Do move
+    const toIdx = G.stacks[to].length;
+    G.stacks[to].push(G.stacks[from].pop());
+    G.moves++;
+    document.getElementById('hud-moves').textContent = G.moves;
+
+    startFlyAnim(movingSize, from, to, toIdx, () => {
+      checkWin();
+    });
+  }
+}
+
+function shakeHint() {
+  const el = document.getElementById('peg-hint');
+  el.style.animation = 'none';
+  void el.offsetWidth;
+  el.style.animation = 'blink .15s ease 3';
+}
+
+// ═══════════════════════════════════════════════════════════
+//  LOCALSTORAGE — PERSISTENCE
+// ═══════════════════════════════════════════════════════════
+const LS_LEVEL  = 'hanoi_level';
+const LS_NAME   = 'hanoi_name';
+const LS_SCORES = 'hanoi_scores';
+
+function lsGet(key, fallback) {
+  try { const v = localStorage.getItem(key); return v === null ? fallback : JSON.parse(v); }
+  catch { return fallback; }
+}
+function lsSet(key, val) {
+  try { localStorage.setItem(key, JSON.stringify(val)); } catch {}
+}
+
+function getScores()          { return lsGet(LS_SCORES, []); }
+function getSavedName()       { return lsGet(LS_NAME, ''); }
+function getSavedLevel()      { return lsGet(LS_LEVEL, 0); }
+
+function saveScoreEntry(entry) {
+  const list = getScores();
+  list.push(entry);
+  // Keep best 300 entries total
+  list.sort((a,b) => b.eff - a.eff || b.levelNum - a.levelNum);
+  lsSet(LS_SCORES, list.slice(0, 300));
+}
+
+// Returns 1–100 percentile (100 = best) for this level & efficiency
+function getPercentile(levelNum, eff) {
+  const same = getScores().filter(s => s.levelNum === levelNum);
+  if (!same.length) return null;
+  const worse = same.filter(s => s.eff < eff).length;
+  return Math.round(((worse + 1) / (same.length + 1)) * 100);
+}
+
+// ═══════════════════════════════════════════════════════════
+//  WIN / LOSE
+// ═══════════════════════════════════════════════════════════
+let _pendingScore = null;   // score object waiting for name confirmation
+
+function checkWin() {
+  if (G.stacks[2].length !== totalDisks()) return;
+  G.gameOver = true;
+  stopTimer();
+  document.getElementById('btn-next').disabled = G.levelIdx >= LEVELS.length - 1;
+
+  const level = LEVELS[G.levelIdx];
+  const eff   = Math.round((minMoves() / G.moves) * 100);
+  const perfect = G.moves === minMoves();
+
+  let timeStr = '--';
+  if (level.timeLimit === 0) {
+    timeStr = `${Math.floor(G.timeElapsed/60)}:${String(G.timeElapsed%60).padStart(2,'0')}`;
+  } else {
+    const used = level.timeLimit - G.timeRemaining;
+    timeStr = `${Math.floor(used/60)}:${String(used%60).padStart(2,'0')}`;
+  }
+
+  _pendingScore = { levelNum: level.num, levelName: level.name, disks: level.disks,
+                    moves: G.moves, minMoves: minMoves(), eff, timeStr, ts: Date.now() };
+
+  const pct = getPercentile(level.num, eff);
+
+  setTimeout(() => {
+    document.getElementById('ov-emoji').textContent = perfect ? '🏆' : '⭐';
+    document.getElementById('ov-title').textContent = 'Level Complete!';
+    document.getElementById('ov-sub').textContent   = perfect
+      ? 'Perfect – optimal solution!'
+      : `${G.moves - minMoves()} extra move${G.moves-minMoves()===1?'':'s'}`;
+
+    // Percentile badge
+    const pctEl = document.getElementById('ov-percentile');
+    if (pct !== null) {
+      const top = 100 - pct + 1;
+      pctEl.innerHTML = `<div class="percentile-badge">Top ${top}% on Level ${level.num}</div>`;
+    } else {
+      pctEl.innerHTML = '<div class="percentile-badge">First record on this level!</div>';
+    }
+
+    document.getElementById('ov-stats').innerHTML = `
+      <div class="stat"><span class="stat-v" style="color:#34d399">${G.moves}</span><span class="stat-l">Moves</span></div>
+      <div class="stat"><span class="stat-v" style="color:#fbbf24">${minMoves()}</span><span class="stat-l">Optimal</span></div>
+      <div class="stat"><span class="stat-v" style="color:#38bdf8">${timeStr}</span><span class="stat-l">${level.timeLimit===0?'Time':'Used'}</span></div>
+      <div class="stat"><span class="stat-v" style="color:#f472b6">${eff}%</span><span class="stat-l">Efficiency</span></div>
+    `;
+
+    // Pre-fill saved name
+    const nameInput = document.getElementById('ov-name-input');
+    nameInput.value = getSavedName();
+
+    const hasNext = G.levelIdx < LEVELS.length - 1;
+    document.getElementById('ov-btns').innerHTML = `
+      <button class="btn" onclick="closeOverlay();restartLevel()">↺ Retry</button>
+      ${hasNext ? `<button class="btn btn-primary" onclick="closeOverlay();nextLevel()">Next →</button>`
+                : `<button class="btn btn-primary" onclick="closeOverlay()">🎉 Done!</button>`}
+    `;
+    document.getElementById('overlay').classList.add('show');
+    spawnConfetti();
+  }, 300);
+}
+
+function submitScore() {
+  if (!_pendingScore) return;
+  const nameInput = document.getElementById('ov-name-input');
+  const name = nameInput.value.trim() || 'Anonymous';
+  lsSet(LS_NAME, name);
+  saveScoreEntry({ ..._pendingScore, name });
+  _pendingScore = null;
+  // Hide name row, show confirmation
+  document.getElementById('ov-name-row').innerHTML =
+    `<span style="color:#34d399;font-size:13px">✓ Score saved to Hall of Fame!</span>`;
+}
+
+function showLose() {
+  _pendingScore = null;
+  document.getElementById('ov-percentile').innerHTML = '';
+  document.getElementById('ov-name-row').innerHTML =
+    '<button class="btn btn-primary" onclick="closeOverlay();restartLevel()">↺ Try Again</button>';
+  document.getElementById('ov-emoji').textContent = '⏰';
+  document.getElementById('ov-title').textContent = "Time's Up!";
+  document.getElementById('ov-sub').textContent   = "So close! Try again.";
+  document.getElementById('ov-stats').innerHTML = `<div class="stat"><span class="stat-v" style="color:#f87171">${G.moves}</span><span class="stat-l">Moves</span></div>`;
+  document.getElementById('ov-btns').innerHTML = '';
+  document.getElementById('overlay').classList.add('show');
+}
+
+function closeOverlay() {
+  document.getElementById('overlay').classList.remove('show');
+  // Restore name-row to default state for next win
+  document.getElementById('ov-name-row').innerHTML = `
+    <input id="ov-name-input" type="text" maxlength="20" placeholder="Your name…">
+    <button class="btn btn-primary" onclick="submitScore()">Save Score</button>
+  `;
+}
+
+// ═══════════════════════════════════════════════════════════
+//  HALL OF FAME
+// ═══════════════════════════════════════════════════════════
+let _hofFilter = 0;  // 0 = all levels
+
+function openHof() {
+  _hofFilter = 0;
+  renderHof();
+  document.getElementById('hof-overlay').classList.add('show');
+}
+function closeHof() { document.getElementById('hof-overlay').classList.remove('show'); }
+
+function renderHof() {
+  // Build filter tabs
+  const filtersEl = document.getElementById('hof-filters');
+  filtersEl.innerHTML = ['All', ...LEVELS.map(l => `Lvl ${l.num}`)].map((label, i) =>
+    `<button class="hof-tab ${_hofFilter===i?'active':''}" onclick="_hofFilter=${i};renderHof()">${label}</button>`
+  ).join('');
+
+  const all = getScores();
+  const rows = _hofFilter === 0 ? all : all.filter(s => s.levelNum === _hofFilter);
+
+  const emptyEl = document.getElementById('hof-empty');
+  const tableEl = document.getElementById('hof-table');
+  const bodyEl  = document.getElementById('hof-body');
+
+  if (!rows.length) {
+    emptyEl.style.display = 'block';
+    tableEl.style.display = 'none';
+    return;
+  }
+  emptyEl.style.display = 'none';
+  tableEl.style.display = 'table';
+
+  const myName = getSavedName();
+  const medals = ['🥇','🥈','🥉'];
+  const rankCls = ['hof-gold','hof-silver','hof-bronze'];
+
+  bodyEl.innerHTML = rows.map((s, i) => {
+    const rank = i + 1;
+    const rankDisp = rank <= 3
+      ? `<span class="${rankCls[i]}">${medals[i]}</span>`
+      : `<span style="color:rgba(255,255,255,.4)">${rank}</span>`;
+    const lvlColor = LEVELS.find(l => l.num === s.levelNum)?.color ?? '#fff';
+    const date = new Date(s.ts).toLocaleDateString(undefined, {month:'short', day:'numeric'});
+    const isMe = s.name === myName && myName;
+    return `<tr class="${isMe?'hof-row-me':''}">
+      <td class="hof-rank">${rankDisp}</td>
+      <td><strong>${esc(s.name)}</strong>${isMe?' <span style="font-size:10px;color:#a78bfa">(you)</span>':''}</td>
+      <td><span class="hof-badge" style="background:${lvlColor}22;color:${lvlColor};border:1px solid ${lvlColor}44">
+        Lvl ${s.levelNum} · ${s.levelName??''}
+      </span></td>
+      <td>
+        <div style="font-weight:700;color:${effColor(s.eff)}">${s.eff}%</div>
+        <div class="hof-eff-bar"><div class="hof-eff-fill" style="width:${s.eff}%"></div></div>
+      </td>
+      <td>${s.moves}</td>
+      <td>${s.minMoves}</td>
+      <td style="color:rgba(255,255,255,.6)">${s.timeStr}</td>
+      <td style="color:rgba(255,255,255,.35);font-size:12px">${date}</td>
+    </tr>`;
+  }).join('');
+}
+
+function effColor(eff) {
+  if (eff >= 95) return '#34d399';
+  if (eff >= 75) return '#fbbf24';
+  if (eff >= 50) return '#fb923c';
+  return '#f87171';
+}
+
+function esc(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+// ═══════════════════════════════════════════════════════════
+//  TIMER
+// ═══════════════════════════════════════════════════════════
+function startTimer() {
+  stopTimer();
+  const level = LEVELS[G.levelIdx];
+  const timerEl = document.getElementById('hud-timer');
+  const lblEl   = document.getElementById('hud-timer-lbl');
+
+  if (level.timeLimit === 0) {
+    lblEl.textContent = 'Time';
+    timerEl.className = 'hud-val elapsed';
+    timerEl.textContent = '0:00';
+    G.timerInterval = setInterval(() => {
+      if (G.gameOver) return;
+      G.timeElapsed++;
+      timerEl.textContent = `${Math.floor(G.timeElapsed/60)}:${String(G.timeElapsed%60).padStart(2,'0')}`;
+    }, 1000);
+  } else {
+    lblEl.textContent = 'Left';
+    G.timeRemaining = level.timeLimit;
+    refreshTimer();
+    G.timerInterval = setInterval(() => {
+      if (G.gameOver) return;
+      G.timeRemaining--;
+      refreshTimer();
+      if (G.timeRemaining <= 0) { stopTimer(); G.gameOver = true; setTimeout(showLose, 200); }
+    }, 1000);
+  }
+}
+
+function refreshTimer() {
+  const t = G.timeRemaining;
+  const el = document.getElementById('hud-timer');
+  el.textContent = `${Math.floor(t/60)}:${String(t%60).padStart(2,'0')}`;
+  const r = t / LEVELS[G.levelIdx].timeLimit;
+  el.className = 'hud-val' + (r<=.12?' danger':r<=.3?' warn':'');
+}
+
+function stopTimer() {
+  if (G.timerInterval) { clearInterval(G.timerInterval); G.timerInterval = null; }
+}
+
+// ═══════════════════════════════════════════════════════════
+//  LEVEL MANAGEMENT
+// ═══════════════════════════════════════════════════════════
+function initLevel() {
+  closeOverlay();
+  stopTimer();
+  if (G.rafId) { cancelAnimationFrame(G.rafId); G.rafId = null; }
+
+  const n = totalDisks();
+  G.stacks      = [Array.from({length:n},(_,i)=>n-i),[],[]];
+  G.selectedPeg = null;
+  G.moves       = 0;
+  G.gameOver    = false;
+  G.flying      = null;
+  G.hoveredPeg  = null;
+  G.timeElapsed = 0;
+
+  const level = LEVELS[G.levelIdx];
+  document.getElementById('hud-level').textContent  = level.num;
+  document.getElementById('hud-diff').textContent   = level.name;
+  document.getElementById('hud-diff').style.color   = level.color;
+  document.getElementById('hud-moves').textContent  = '0';
+  document.getElementById('hud-best').textContent   = minMoves();
+  document.getElementById('btn-next').disabled      = true;
+
+  render();
+  setTimeout(() => startTimer(), 500);
+}
+
+function restartLevel() { initLevel(); }
+function nextLevel() {
+  if (G.levelIdx < LEVELS.length - 1) {
+    G.levelIdx++;
+    lsSet(LS_LEVEL, G.levelIdx);
+    initLevel();
+  }
+}
+
+// ═══════════════════════════════════════════════════════════
+//  CONFETTI
+// ═══════════════════════════════════════════════════════════
+function spawnConfetti() {
+  const pal=['#ff6b6b','#ffd32a','#2ed573','#1e90ff','#a78bfa','#fd79a8','#38bdf8'];
+  for(let i=0;i<72;i++) setTimeout(()=>{
+    const el=document.createElement('div');
+    const sz=7+Math.random()*8;
+    el.className='confetti';
+    el.style.cssText=`left:${10+Math.random()*80}%;top:-10px;width:${sz}px;height:${sz}px;
+      background:${pal[Math.floor(Math.random()*pal.length)]};
+      border-radius:${Math.random()>.5?'50%':'2px'};
+      animation-duration:${1.6+Math.random()*2}s;`;
+    document.body.appendChild(el);
+    setTimeout(()=>el.remove(),4000);
+  }, i*25);
+}
+
+// ═══════════════════════════════════════════════════════════
+//  RESIZE
+// ═══════════════════════════════════════════════════════════
+window.addEventListener('resize', () => { drawStars(); render(); });
+
+// ═══════════════════════════════════════════════════════════
+//  BOOT
+// ═══════════════════════════════════════════════════════════
+G.levelIdx = Math.min(getSavedLevel(), LEVELS.length - 1);
+initLevel();
+</script>
+</body>
+</html>

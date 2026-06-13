@@ -386,10 +386,9 @@ body{background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,san
       <h3>🔌 Connection</h3>
       <div id="connect-form">
         <input class="inp" id="lobby-username" placeholder="Your name…" maxlength="20"/>
-        <input class="inp" id="lobby-server" value="ws://localhost:8080" placeholder="WebSocket server URL"/>
         <button class="btn btn-primary" id="connect-btn" onclick="lobbyConnect()">Connect to Lobby</button>
         <div id="connect-hint" style="font-size:.76rem;color:var(--text3);line-height:1.5;">
-          Run the local server: <code style="color:var(--blueL);">node memorize-server/server.js</code>
+          Connecting to <code id="ws-url-hint" style="color:var(--blueL);"></code>
         </div>
       </div>
     </div>
@@ -873,7 +872,7 @@ function showScreen(id) {
   document.getElementById(id).classList.add('active');
 }
 function goMenu() { showScreen('screen-menu'); }
-function showLobby() { showScreen('screen-lobby'); }
+
 
 // ═══════════════════════════════════════════════════
 // WORD MEMORY MODE
@@ -1379,20 +1378,30 @@ let ws = null;
 let pendingInvite = null;
 let selectedGrid = '4x4';
 
+// On localhost → local dev server; on Cloudflare (or any deployed host) → /ws on same host
+function wsUrl() {
+  const isLocal = location.hostname === 'localhost' || location.hostname === '127.0.0.1';
+  return isLocal ? 'ws://localhost:8080' : `wss://${location.host}/ws`;
+}
+
 function selectGrid(el) {
   document.querySelectorAll('.grid-opt').forEach(e=>e.classList.remove('active'));
   el.classList.add('active');
   selectedGrid = el.dataset.grid;
 }
 
+function showLobby() {
+  showScreen('screen-lobby');
+  document.getElementById('ws-url-hint').textContent = wsUrl();
+}
+
 function lobbyConnect() {
   const username = document.getElementById('lobby-username').value.trim();
-  const serverUrl = document.getElementById('lobby-server').value.trim();
   if (!username) { alert('Enter your name first!'); return; }
   if (ws) { ws.close(); ws = null; }
   setWsStatus('connecting');
   try {
-    ws = new WebSocket(serverUrl);
+    ws = new WebSocket(wsUrl());
   } catch(e) {
     setWsStatus('offline'); return;
   }

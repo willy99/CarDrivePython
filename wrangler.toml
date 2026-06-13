@@ -1,14 +1,27 @@
-# Cloudflare Workers static-assets deployment.
-# `npx wrangler deploy` serves the built React app from ./dist as a static site
-# (no Worker script needed — assets-only deployment).
+# Cloudflare Workers deployment.
+# Build first: npm run build
+# Deploy:      npx wrangler deploy
+#
+# The Worker (worker/index.js) handles:
+#   /ws  → GameServer Durable Object (Memorize Pairs Battle WebSocket)
+#   /*   → Static assets from ./dist with COOP/COEP headers (needed for CarDrive WASM)
 
 name = "cardrivepython"
 compatibility_date = "2025-01-01"
+main = "worker/index.js"
 
 [assets]
 directory = "./dist"
-# Serve index.html for any unmatched path so React Router routes
-# (e.g. /play/cardrive) work on direct load / refresh.
-# Real files like /games/cardrive/index.html exist, so they are served as-is
-# and never hit this fallback.
+# React Router SPA fallback — real files (game HTML, WASM bundles) are served
+# as-is and never hit this fallback.
 not_found_handling = "single-page-application"
+binding = "ASSETS"
+
+[durable_objects]
+bindings = [
+  { name = "GAME_SERVER", class_name = "GameServer" }
+]
+
+[[migrations]]
+tag = "v1"
+new_classes = ["GameServer"]
