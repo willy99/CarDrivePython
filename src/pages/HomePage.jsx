@@ -11,15 +11,22 @@ const GAMES = [
     color:       'bg-blue-700',
     available:   true,
   },
-  // Add future games below:
-  // {
-  //   id:          'snake',
-  //   title:       'Snake',
-  //   description: 'Classic snake game',
-  //   emoji:       '🐍',
-  //   color:       'bg-green-700',
-  //   available:   false,
-  // },
+  {
+    id:          'hanoi',
+    title:       'Tower of Hanoi',
+    description: '8 levels: from tutorial to Legend with countdown timers',
+    emoji:       '🗼',
+    color:       'bg-purple-700',
+    available:   true,
+  },
+  {
+    id:          'memorize',
+    title:       'Memorize',
+    description: 'Word sequences, object spotting & live multiplayer pairs battle',
+    emoji:       '🧠',
+    color:       'bg-violet-700',
+    available:   true,
+  },
 ]
 
 export default function HomePage() {

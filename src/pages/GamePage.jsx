@@ -7,6 +7,8 @@ import GameFrame from '../components/GameFrame'
 // serves the React app instead of the static game → blank iframe.
 const GAME_PATHS = {
   cardrive: '/games/cardrive/index.html',
+  hanoi:    '/games/hanoi/index.html',
+  memorize: '/games/memorize/index.html',
 }
 
 export default function GamePage() {
