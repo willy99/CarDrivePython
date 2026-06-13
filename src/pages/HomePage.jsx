@@ -21,8 +21,8 @@ const GAMES = [
   },
   {
     id:          'memorize',
-    title:       'Memorize',
-    description: 'Word sequences, object spotting & live multiplayer pairs battle',
+    title:       'MemBrain',
+    description: 'Word recall, object spotting, math drills & multiplayer pairs battle',
     emoji:       '🧠',
     color:       'bg-violet-700',
     available:   true,

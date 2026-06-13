@@ -4,6 +4,7 @@
 const OBJECTS = [
   'duck','ball','star','heart','diamond','crown','rocket','moon',
   'flower','butterfly','apple','cloud','fish','mushroom','snowflake','sun',
+  'turtle','balloon','icecream','lightning','planet','gift','cat','tree',
 ];
 
 function shuffle(arr) { return [...arr].sort(() => Math.random() - 0.5); }
@@ -14,7 +15,7 @@ class GameRoom {
     this.id = id;
     this.players = [p1, p2];
     this.gridSize = gridSize;
-    const [rows, cols] = gridSize.split('x').map(Number);
+    const [cols, rows] = gridSize.split('x').map(Number);
     const pairCount = (rows * cols) / 2;
     const pool = shuffle(OBJECTS).slice(0, pairCount);
     this.cards = shuffle([...pool, ...pool]);
@@ -186,29 +187,50 @@ export class GameServer {
       case 'card_flip': {
         const myName = this.wsSessions.get(ws);
         if (!myName) return;
-        const p    = this.players.get(myName);
-        const room = p?.room && this.rooms.get(p.room);
+        const p = this.players.get(myName);
+        if (!p?.room) return;
+        const roomId = p.room;
+        const room = this.rooms.get(roomId);
         if (!room) return;
         const result = room.flipCard(myName, msg.index);
         if (result.error) return;
 
         if (result.type === 'card_revealed') {
+          // First card of the turn — just reveal it
           this.broadcastRoom(room, result);
         } else if (result.type === 'pair_found') {
-          this.broadcastRoom(room, result);
-          if (result.gameOver) {
-            setTimeout(() => {
-              this.broadcastRoom(room, { type: 'game_over', scores: room.scores, winner: room.getWinner() });
-            }, 700);
-          }
-        } else if (result.type === 'no_match') {
-          this.broadcastRoom(room, result);
+          // Second card matched: reveal it first so both players can see it, then confirm pair
+          this.broadcastRoom(room, {
+            type: 'card_revealed', index: msg.index,
+            object: room.cards[msg.index], by: myName,
+          });
           setTimeout(() => {
-            const indices = [...result.indices];
-            room.hideCards(indices);
-            this.broadcastRoom(room, { type: 'cards_hidden', indices });
-            this.broadcastRoom(room, { type: 'turn_change', player: room.currentTurn });
-          }, 1_400);
+            const r = this.rooms.get(roomId); if (!r) return;
+            this.broadcastRoom(r, result);
+            if (result.gameOver) {
+              setTimeout(() => {
+                this.broadcastRoom(r, { type: 'game_over', scores: r.scores, winner: r.getWinner() });
+              }, 600);
+            }
+          }, 450);
+        } else if (result.type === 'no_match') {
+          // Second card didn't match: reveal it first, then after a pause hide both and switch turn
+          this.broadcastRoom(room, {
+            type: 'card_revealed', index: msg.index,
+            object: room.cards[msg.index], by: myName,
+          });
+          const noMatch = result;
+          setTimeout(() => {
+            const r = this.rooms.get(roomId); if (!r) return;
+            this.broadcastRoom(r, noMatch);                // send score/hole update
+            setTimeout(() => {
+              const r2 = this.rooms.get(roomId); if (!r2) return;
+              const indices = [...noMatch.indices];
+              r2.hideCards(indices);
+              this.broadcastRoom(r2, { type: 'cards_hidden', indices });
+              this.broadcastRoom(r2, { type: 'turn_change', player: r2.currentTurn });
+            }, 900);
+          }, 750);
         }
         break;
       }
