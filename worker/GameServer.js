@@ -1,23 +1,39 @@
 // Cloudflare Durable Object — Memorize Pairs Battle WebSocket server
 // One global instance ("global-lobby") handles the entire lobby + all rooms.
 
-const OBJECTS = [
-  'duck','ball','star','heart','diamond','crown','rocket','moon',
-  'flower','butterfly','apple','cloud','fish','mushroom','snowflake','sun',
-  'turtle','balloon','icecream','lightning','planet','gift','cat','tree',
-];
+// Card collections — keep IN SYNC with public/games/memorize/index.html COLLECTIONS.
+// The server only needs each collection's token pool to deal the cards.
+const COLLECTIONS = {
+  classic:  ['duck','ball','star','heart','diamond','crown','rocket','moon',
+             'flower','butterfly','apple','cloud','fish','mushroom','snowflake','sun',
+             'turtle','balloon','icecream','lightning','planet','gift','cat','tree'],
+  animals:  ['🐶','🐱','🐭','🐹','🐰','🦊','🐻','🐼','🐨','🐯','🦁','🐮','🐷','🐸','🐵','🐔','🐧','🐦','🦄','🐴','🐗','🐺','🦓','🦒'],
+  sealife:  ['🐠','🐟','🐡','🦈','🐙','🦑','🦐','🦞','🦀','🐬','🐳','🐋','🐢','🐊','🦭','🐚','🦦','🪼','🦩','🦆','🦢','🐸','🦫','🪸'],
+  fruits:   ['🍎','🍐','🍊','🍋','🍌','🍉','🍇','🍓','🫐','🍈','🍒','🍑','🥭','🍍','🥥','🥝','🍅','🍆','🥑','🥦','🥬','🥒','🌶️','🌽'],
+  food:     ['🍔','🍟','🍕','🌭','🥪','🌮','🌯','🥙','🧆','🥚','🍳','🥞','🧇','🥓','🍗','🍖','🥨','🧀','🥗','🍝','🍜','🍣','🍱','🍙'],
+  sweets:   ['🍦','🍧','🍨','🍩','🍪','🎂','🍰','🧁','🥧','🍫','🍬','🍭','🍮','🍯','🍡','🥮','🥠','🍢','🧋','🍵','🌰','🥜','🍓','🫐'],
+  flora:    ['🌸','🌹','🌺','🌻','🌷','🌼','💐','🏵️','🌳','🌲','🌴','🌵','🌿','🍀','🍁','🍂','🍃','🌱','🪴','🌾','🪷','🍄','🎍','🌰'],
+  kitchen:  ['🍴','🥄','🔪','🍳','🥘','🫕','🍲','🥣','🥢','🧂','🫖','🍵','☕','🥤','🧋','🍶','🍽️','🧊','🧈','🧇','🍞','🥖','🥡','🧁'],
+  devices:  ['💻','🖥️','⌨️','🖱️','🖨️','📱','☎️','📞','📟','📠','📷','📹','🎥','📺','📻','🎙️','⏰','⌚','🔋','🔌','💡','🔦','🧮','🎮'],
+  transport:['🚗','🚕','🚙','🚌','🚎','🏎️','🚓','🚑','🚒','🚐','🚚','🚛','🚜','🏍️','🛵','🚲','🛴','✈️','🚀','🚁','⛵','🚤','🚢','🚂'],
+  sports:   ['⚽','🏀','🏈','⚾','🥎','🎾','🏐','🏉','🥏','🎱','🏓','🏸','🥅','🏒','🏑','🥍','🏏','⛳','🏹','🎣','🥊','🥋','🎽','⛸️'],
+  smileys:  ['😀','😃','😄','😁','😆','😅','😂','🤣','😊','😇','🙂','🙃','😉','😍','🥰','😘','😗','😋','😜','🤪','😎','🤩','🥳','😏'],
+  funpoop:  ['💩','😈','👿','👹','👺','🤡','👻','💀','☠️','👽','👾','🤖','🎃','😺','😸','😹','😻','😼','😽','🙀','😿','😾','🤓','🥶'],
+  cats:     ['😺','😸','😹','😻','😼','😽','🙀','😿','😾','🐱','🐈','🐈‍⬛','🦁','🐯','🐅','🐆'],
+};
 
 function shuffle(arr) { return [...arr].sort(() => Math.random() - 0.5); }
 
 // ── In-memory game room ──────────────────────────────────────────────────────
 class GameRoom {
-  constructor(id, p1, p2, gridSize) {
+  constructor(id, p1, p2, gridSize, collection) {
     this.id = id;
     this.players = [p1, p2];
     this.gridSize = gridSize;
+    this.collection = COLLECTIONS[collection] ? collection : 'classic';
     const [cols, rows] = gridSize.split('x').map(Number);
     const pairCount = (rows * cols) / 2;
-    const pool = shuffle(OBJECTS).slice(0, pairCount);
+    const pool = shuffle(COLLECTIONS[this.collection]).slice(0, pairCount);
     this.cards = shuffle([...pool, ...pool]);
     const total = rows * cols;
     this.revealed   = new Array(total).fill(false);
@@ -148,8 +164,9 @@ export class GameServer {
         const tp = this.players.get(msg.target);
         if (!tp || tp.status !== 'lobby') { this.send(ws, { type: 'error', msg: 'Player unavailable' }); return; }
         const inviteId = `i${++this.counter}`;
-        this.pendingInvites.set(inviteId, { from: myName, to: msg.target, gridSize: msg.gridSize || '4x4' });
-        this.send(tp.ws, { type: 'invite', from: myName, inviteId, gridSize: msg.gridSize || '4x4' });
+        const collection = COLLECTIONS[msg.collection] ? msg.collection : 'classic';
+        this.pendingInvites.set(inviteId, { from: myName, to: msg.target, gridSize: msg.gridSize || '4x4', collection });
+        this.send(tp.ws, { type: 'invite', from: myName, inviteId, gridSize: msg.gridSize || '4x4', collection });
         // Auto-expire after 30 s
         setTimeout(() => {
           if (!this.pendingInvites.has(inviteId)) return;
@@ -172,12 +189,12 @@ export class GameServer {
         if (!msg.accepted) { this.send(fromP.ws, { type: 'invite_declined', from: myName }); return; }
 
         const roomId = `r${++this.counter}`;
-        const room   = new GameRoom(roomId, inv.from, myName, inv.gridSize);
+        const room   = new GameRoom(roomId, inv.from, myName, inv.gridSize, inv.collection);
         this.rooms.set(roomId, room);
         this.players.get(inv.from).status = 'playing'; this.players.get(inv.from).room = roomId;
         this.players.get(myName).status   = 'playing'; this.players.get(myName).room   = roomId;
 
-        const base = { type: 'game_start', gridSize: inv.gridSize, cards: room.cards, scores: room.scores, firstTurn: room.currentTurn };
+        const base = { type: 'game_start', gridSize: inv.gridSize, collection: room.collection, cards: room.cards, scores: room.scores, firstTurn: room.currentTurn };
         this.send(fromP.ws, { ...base, partner: myName });
         this.send(ws,        { ...base, partner: inv.from });
         this.broadcastLobby();
@@ -246,9 +263,9 @@ export class GameServer {
         const pp = this.players.get(partner);
         if (pp) this.send(pp.ws, { type: 'rematch_offered', by: myName });
         if (room.rematchVotes.size === 2) {
-          const next = new GameRoom(room.id, room.players[0], room.players[1], room.gridSize);
+          const next = new GameRoom(room.id, room.players[0], room.players[1], room.gridSize, room.collection);
           this.rooms.set(room.id, next);
-          const base = { type: 'game_start', gridSize: next.gridSize, cards: next.cards, scores: next.scores, firstTurn: next.currentTurn };
+          const base = { type: 'game_start', gridSize: next.gridSize, collection: next.collection, cards: next.cards, scores: next.scores, firstTurn: next.currentTurn };
           const p0 = this.players.get(next.players[0]);
           const p1 = this.players.get(next.players[1]);
           if (p0) this.send(p0.ws, { ...base, partner: next.players[1] });

@@ -194,6 +194,16 @@ body{background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,san
   background:var(--glass);cursor:pointer;font-size:.82rem;font-weight:700;transition:.18s;}
 .grid-opt.active{background:rgba(124,58,237,.3);border-color:var(--purpleL);color:var(--purpleL);}
 .grid-opt:hover:not(.active){background:var(--glass2);}
+.grid-opt.disabled{opacity:.28;pointer-events:none;}
+.coll-options{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;max-height:188px;overflow-y:auto;padding-right:2px;}
+.coll-opt{display:flex;flex-direction:column;align-items:center;gap:3px;padding:9px 4px;border-radius:11px;
+  border:1px solid var(--border);background:var(--glass);cursor:pointer;transition:.16s;}
+.coll-opt:hover:not(.active){background:var(--glass2);border-color:var(--border2);}
+.coll-opt.active{background:rgba(124,58,237,.28);border-color:var(--purpleL);}
+.coll-opt .coll-ico{font-size:1.4rem;line-height:1;}
+.coll-opt .coll-name{font-size:.64rem;font-weight:700;color:var(--text2);letter-spacing:.2px;text-align:center;}
+.coll-opt.active .coll-name{color:var(--purpleL);}
+.coll-opt .coll-cap{font-size:.55rem;color:var(--text3);}
 
 /* ── INVITE POPUP ── */
 #invite-popup{position:fixed;inset:0;z-index:200;display:flex;align-items:center;justify-content:center;
@@ -348,6 +358,32 @@ body{background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,san
 .bar7.today .bcol{background:linear-gradient(180deg,var(--greenL),var(--green));}
 .daily-head{display:flex;align-items:center;justify-content:space-between;margin:8px 0;}
 .daily-head .dstreak{font-size:.85rem;font-weight:800;color:var(--goldL);}
+
+/* ── MOBILE ── */
+*{-webkit-tap-highlight-color:transparent;}
+.btn,.mode-card,.op-btn,.math-lv,.key,.math-choice,.coll-opt,.grid-opt,.back-btn,.spot-choice{touch-action:manipulation;}
+@media (max-width:600px){
+  /* Menu must scroll from the top — centering clips the hero on tall, stacked lists */
+  #screen-menu{justify-content:flex-start;}
+  .menu-hero{padding:28px 16px 22px;}
+  /* Drop these headers below the fixed back button so it never overlaps them */
+  #lobby-header{margin-top:44px;flex-wrap:wrap;gap:4px;}
+  #lobby-header>div{font-size:1rem;}
+  #math-play{padding-top:50px;}
+  .math-hud{font-size:.78rem;}
+  /* Roomier touch targets / tighter chrome */
+  .op-grid{gap:8px;}
+  .op-btn{padding:11px 4px;}
+  .op-btn .op-sym{font-size:1.3rem;}
+  .coll-options{grid-template-columns:repeat(3,1fr);max-height:172px;}
+  .coll-opt .coll-name{font-size:.6rem;}
+  .math-q{margin:22px 0 14px;}
+}
+@media (max-width:380px){
+  .op-grid{grid-template-columns:repeat(4,1fr);}
+  .op-btn .op-lbl{font-size:.6rem;}
+  .math-lv{width:78px;height:88px;}
+}
 </style>
 </head>
 <body>
@@ -511,7 +547,9 @@ body{background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,san
     <div class="lobby-panel">
       <h3>⚙️ Game Settings</h3>
       <div id="lobby-config">
-        <div style="font-size:.8rem;color:var(--text2);margin-bottom:8px;">Grid size for your invitation:</div>
+        <div style="font-size:.8rem;color:var(--text2);margin-bottom:8px;">Card collection:</div>
+        <div class="coll-options" id="coll-options"></div>
+        <div style="font-size:.8rem;color:var(--text2);margin:14px 0 8px;">Grid size for your invitation:</div>
         <div class="grid-options">
           <div class="grid-opt active" data-grid="2x4" onclick="selectGrid(this)">2×4</div>
           <div class="grid-opt" data-grid="4x4" onclick="selectGrid(this)">4×4</div>
@@ -718,6 +756,31 @@ const OBJECTS = [
   {id:'cat',       name:'Cat',       color:'#ff9800', glow:'rgba(255,152,0,.4)'},
   {id:'tree',      name:'Tree',      color:'#4CAF50', glow:'rgba(76,175,80,.4)'},
 ];
+
+// ═══════════════════════════════════════════════════
+// CARD COLLECTIONS (Pairs Battle)
+// "classic" is drawn on canvas; every other pack is colorful emoji.
+// pool.length = how many distinct cards → caps the largest grid you can pick.
+// Keep this list IN SYNC with worker/GameServer.js COLLECTIONS.
+// ═══════════════════════════════════════════════════
+const COLLECTIONS = [
+  {id:'classic',  name:'Classic',     kind:'canvas', pool:OBJECTS.map(o=>o.id)},
+  {id:'animals',  name:'Animals',     kind:'emoji',  pool:['🐶','🐱','🐭','🐹','🐰','🦊','🐻','🐼','🐨','🐯','🦁','🐮','🐷','🐸','🐵','🐔','🐧','🐦','🦄','🐴','🐗','🐺','🦓','🦒']},
+  {id:'sealife',  name:'Sea Life',    kind:'emoji',  pool:['🐠','🐟','🐡','🦈','🐙','🦑','🦐','🦞','🦀','🐬','🐳','🐋','🐢','🐊','🦭','🐚','🦦','🪼','🦩','🦆','🦢','🐸','🦫','🪸']},
+  {id:'fruits',   name:'Fruits',      kind:'emoji',  pool:['🍎','🍐','🍊','🍋','🍌','🍉','🍇','🍓','🫐','🍈','🍒','🍑','🥭','🍍','🥥','🥝','🍅','🍆','🥑','🥦','🥬','🥒','🌶️','🌽']},
+  {id:'food',     name:'Fast Food',   kind:'emoji',  pool:['🍔','🍟','🍕','🌭','🥪','🌮','🌯','🥙','🧆','🥚','🍳','🥞','🧇','🥓','🍗','🍖','🥨','🧀','🥗','🍝','🍜','🍣','🍱','🍙']},
+  {id:'sweets',   name:'Sweets',      kind:'emoji',  pool:['🍦','🍧','🍨','🍩','🍪','🎂','🍰','🧁','🥧','🍫','🍬','🍭','🍮','🍯','🍡','🥮','🥠','🍢','🧋','🍵','🌰','🥜','🍓','🫐']},
+  {id:'flora',    name:'Flora',       kind:'emoji',  pool:['🌸','🌹','🌺','🌻','🌷','🌼','💐','🏵️','🌳','🌲','🌴','🌵','🌿','🍀','🍁','🍂','🍃','🌱','🪴','🌾','🪷','🍄','🎍','🌰']},
+  {id:'kitchen',  name:'Kitchen',     kind:'emoji',  pool:['🍴','🥄','🔪','🍳','🥘','🫕','🍲','🥣','🥢','🧂','🫖','🍵','☕','🥤','🧋','🍶','🍽️','🧊','🧈','🧇','🍞','🥖','🥡','🧁']},
+  {id:'devices',  name:'Electronics', kind:'emoji',  pool:['💻','🖥️','⌨️','🖱️','🖨️','📱','☎️','📞','📟','📠','📷','📹','🎥','📺','📻','🎙️','⏰','⌚','🔋','🔌','💡','🔦','🧮','🎮']},
+  {id:'transport',name:'Vehicles',    kind:'emoji',  pool:['🚗','🚕','🚙','🚌','🚎','🏎️','🚓','🚑','🚒','🚐','🚚','🚛','🚜','🏍️','🛵','🚲','🛴','✈️','🚀','🚁','⛵','🚤','🚢','🚂']},
+  {id:'sports',   name:'Sports',      kind:'emoji',  pool:['⚽','🏀','🏈','⚾','🥎','🎾','🏐','🏉','🥏','🎱','🏓','🏸','🥅','🏒','🏑','🥍','🏏','⛳','🏹','🎣','🥊','🥋','🎽','⛸️']},
+  {id:'smileys',  name:'Smileys',     kind:'emoji',  pool:['😀','😃','😄','😁','😆','😅','😂','🤣','😊','😇','🙂','🙃','😉','😍','🥰','😘','😗','😋','😜','🤪','😎','🤩','🥳','😏']},
+  {id:'funpoop',  name:'Fun & Poop',  kind:'emoji',  pool:['💩','😈','👿','👹','👺','🤡','👻','💀','☠️','👽','👾','🤖','🎃','😺','😸','😹','😻','😼','😽','🙀','😿','😾','🤓','🥶']},
+  {id:'cats',     name:'Cat Smiles',  kind:'emoji',  pool:['😺','😸','😹','😻','😼','😽','🙀','😿','😾','🐱','🐈','🐈‍⬛','🦁','🐯','🐅','🐆']},
+];
+function collById(id){ return COLLECTIONS.find(c=>c.id===id) || COLLECTIONS[0]; }
+function isEmojiToken(tok){ return !OBJECTS.some(o=>o.id===tok); }
 
 // ═══════════════════════════════════════════════════
 // BACKGROUND PARTICLES
@@ -1590,17 +1653,23 @@ function renderPairsBoard() {
     const front = document.createElement('div');
     front.className = 'card-face card-front';
     const obj = OBJECTS.find(o=>o.id===objId);
-    if (obj) {
-      front.style.setProperty('--card-border', obj.glow.replace('rgba','rgba').replace('.4',pairsState.matched[idx]?'.6':'.35'));
-      front.style.setProperty('--card-glow', obj.glow);
-    }
+    const glow = obj ? obj.glow : 'rgba(255,255,255,.32)';
+    front.style.setProperty('--card-border', glow.replace('.4', pairsState.matched[idx]?'.6':'.35'));
+    front.style.setProperty('--card-glow', glow);
     const c = document.createElement('canvas');
     const s = Math.floor(Math.min(cardW, cardH) * 0.58);
     c.width = s; c.height = s;
+    const ctx = c.getContext('2d');
     if (obj) {
-      const ctx = c.getContext('2d');
-      ctx.save(); ctx.shadowColor = obj.glow; ctx.shadowBlur = s*0.25;
+      ctx.save(); ctx.shadowColor = glow; ctx.shadowBlur = s*0.25;
       drawObject(ctx, objId, s/2, s/2, s*0.82);
+      ctx.restore();
+    } else {
+      // emoji token — draw the character itself
+      ctx.save();
+      ctx.font = `${Math.floor(s*0.74)}px "Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif`;
+      ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.fillText(objId, s/2, s*0.54);
       ctx.restore();
     }
     front.appendChild(c);
@@ -1733,7 +1802,44 @@ function soundLose() {
 let ws = null;
 let pendingInvite = null;
 let selectedGrid = '2x4';
+let selectedCollection = 'classic';
 let pendingFlip = false;
+
+const GRID_OPTS = ['2x4','4x4','4x6','4x8','6x6','6x8'];
+function gridPairs(g){ const [c,r] = g.split('x').map(Number); return c*r/2; }
+
+function renderCollOptions(){
+  const wrap = document.getElementById('coll-options');
+  if(!wrap) return;
+  wrap.innerHTML = '';
+  COLLECTIONS.forEach(c=>{
+    const el = document.createElement('div');
+    el.className = 'coll-opt' + (c.id===selectedCollection ? ' active' : '');
+    el.onclick = () => selectColl(c.id);
+    const ico = c.kind==='emoji' ? c.pool[0] : '✦';
+    el.innerHTML = `<span class="coll-ico">${ico}</span><span class="coll-name">${c.name}</span><span class="coll-cap">${c.pool.length} cards</span>`;
+    wrap.appendChild(el);
+  });
+}
+
+function selectColl(id){
+  selectedCollection = id;
+  renderCollOptions();
+  refreshGridOptions();
+}
+
+// Grey out (and auto-deselect) grids that need more pairs than the collection has.
+function refreshGridOptions(){
+  const cap = collById(selectedCollection).pool.length;
+  document.querySelectorAll('.grid-opt').forEach(el=>{
+    el.classList.toggle('disabled', gridPairs(el.dataset.grid) > cap);
+  });
+  if(gridPairs(selectedGrid) > cap){
+    const fits = GRID_OPTS.filter(g=>gridPairs(g) <= cap);
+    selectedGrid = fits[fits.length-1] || '2x4';
+    document.querySelectorAll('.grid-opt').forEach(el=>el.classList.toggle('active', el.dataset.grid===selectedGrid));
+  }
+}
 
 // On localhost → local dev server; on Cloudflare (or any deployed host) → /ws on same host
 function wsUrl() {
@@ -1750,6 +1856,8 @@ function selectGrid(el) {
 function showLobby() {
   showScreen('screen-lobby');
   document.getElementById('ws-url-hint').textContent = wsUrl();
+  renderCollOptions();
+  refreshGridOptions();
 }
 
 function lobbyConnect() {
@@ -1786,9 +1894,9 @@ function handleWsMsg(msg) {
       renderPlayerList(msg.list);
       break;
     case 'invite':
-      pendingInvite = {from: msg.from, inviteId: msg.inviteId, gridSize: msg.gridSize};
+      pendingInvite = {from: msg.from, inviteId: msg.inviteId, gridSize: msg.gridSize, collection: msg.collection};
       document.getElementById('invite-from-text').textContent = `${msg.from} challenges you!`;
-      document.getElementById('invite-grid-text').textContent = `Grid: ${msg.gridSize}`;
+      document.getElementById('invite-grid-text').textContent = `Grid: ${msg.gridSize} · ${collById(msg.collection||'classic').name}`;
       document.getElementById('invite-popup').classList.add('show');
       break;
     case 'invite_declined':
@@ -1899,7 +2007,7 @@ function renderPlayerList(players) {
 
 function sendInvite(target) {
   if (!ws) return;
-  ws.send(JSON.stringify({type:'invite', target, gridSize: selectedGrid}));
+  ws.send(JSON.stringify({type:'invite', target, gridSize: selectedGrid, collection: selectedCollection}));
   alert(`Invitation sent to ${target}! Waiting for response…`);
 }
 
@@ -2083,6 +2191,7 @@ function renderMathLevels(){
 
 // ── play loop ──
 function mathStartLevel(idx){
+  if(!mathState.ops) selectMathOps('+-');
   mathState.level = idx;
   mathState.taskIdx = 0;
   mathState.score = 0;
