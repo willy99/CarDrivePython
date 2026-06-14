@@ -52,7 +52,20 @@ body{background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,san
 .mode-card.green:hover{box-shadow:0 16px 48px rgba(52,211,153,.25);}
 .mode-card.gold{border-color:rgba(251,191,36,.3);}
 .mode-card.gold:hover{box-shadow:0 16px 48px rgba(251,191,36,.22);}
+.mode-card.cyan{border-color:rgba(34,211,238,.3);}
+.mode-card.cyan:hover{box-shadow:0 16px 48px rgba(34,211,238,.22);}
 .mode-card .icon-svg{width:58px;height:58px;margin:0 auto 14px;display:block;}
+
+/* ── DIAMOND GAME ── */
+#screen-diamond{justify-content:flex-start;}
+#diamond-canvas{cursor:pointer;touch-action:none;border-radius:16px;background:rgba(255,255,255,.02);display:block;}
+#diamond-header{width:100%;padding:14px 20px;display:flex;justify-content:space-between;align-items:center;flex-shrink:0;}
+#diamond-progress-wrap{width:80%;height:4px;background:rgba(255,255,255,.08);border-radius:2px;overflow:hidden;margin:0 auto 6px;flex-shrink:0;}
+#diamond-progress-fill{height:100%;background:linear-gradient(90deg,var(--purpleL),var(--blueL));border-radius:2px;}
+#diamond-hint{margin:8px 16px 4px;font-size:.88rem;color:var(--text2);text-align:center;min-height:1.4em;}
+.dmd-result-overlay{position:fixed;inset:0;background:rgba(0,0,0,.8);backdrop-filter:blur(10px);z-index:80;display:none;align-items:center;justify-content:center;}
+.dmd-result-overlay.show{display:flex;}
+#diamond-result-box{background:var(--bg2);border:1px solid var(--border2);border-radius:22px;padding:28px 24px;max-width:360px;width:90vw;text-align:center;}
 
 /* ── BUTTONS ── */
 .btn{padding:10px 24px;border-radius:11px;border:1px solid var(--border2);background:var(--glass2);
@@ -474,6 +487,22 @@ body{background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,san
   margin:4px 0 10px;text-align:center;line-height:1.45;}
 .math-q.pct-q,.math-q.trick-q{font-size:clamp(1.3rem,5.5vw,2.1rem);}
 
+/* ── INFO POPUP ── */
+#info-popup{position:fixed;inset:0;background:rgba(0,0,0,.65);backdrop-filter:blur(8px);
+  z-index:200;display:none;align-items:center;justify-content:center;}
+#info-popup.show{display:flex;}
+#info-popup-box{background:var(--bg2);border:1px solid var(--border2);border-radius:22px;
+  padding:22px 20px;width:min(400px,90vw);max-height:80vh;overflow-y:auto;}
+.info-btn{width:26px;height:26px;border-radius:50%;border:1.5px solid var(--border2);
+  background:transparent;color:var(--text3);font-size:.78rem;font-weight:900;cursor:pointer;
+  display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;
+  transition:.15s;vertical-align:middle;margin-left:6px;line-height:1;}
+.info-btn:hover{border-color:var(--purpleL);color:var(--purpleL);}
+.info-body-list{list-style:none;padding:0;margin:10px 0 0;}
+.info-body-list li{padding:5px 0 5px 18px;position:relative;border-bottom:1px solid rgba(255,255,255,.05);}
+.info-body-list li:last-child{border-bottom:none;}
+.info-body-list li::before{content:'›';position:absolute;left:0;color:var(--purpleL);}
+
 /* ── XP SYSTEM ── */
 #xp-strip{display:flex;align-items:center;gap:8px;justify-content:center;margin:10px 0 4px;flex-wrap:wrap;}
 .xp-level-badge{background:linear-gradient(135deg,var(--purple),var(--blue));border-radius:20px;
@@ -586,6 +615,18 @@ body{background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,san
   </div>
 </div>
 
+<!-- ══ INFO POPUP ══ -->
+<div id="info-popup" onclick="if(event.target===this)infoPopupClose()">
+  <div id="info-popup-box">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+      <span style="font-size:1rem;font-weight:900;" id="info-popup-title"></span>
+      <button class="btn" onclick="infoPopupClose()" style="padding:4px 11px;font-size:.8rem;">✕</button>
+    </div>
+    <div id="info-popup-body"></div>
+    <button class="btn btn-primary" id="info-popup-ok" onclick="infoPopupOk()" style="width:100%;margin-top:16px;">Got it!</button>
+  </div>
+</div>
+
 <!-- ══ RADAR PANEL ══ -->
 <div id="radar-panel" onclick="if(event.target===this)this.classList.remove('show')">
   <div id="radar-box">
@@ -647,6 +688,11 @@ body{background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,san
       <h2 id="pairs-mode-title">Pairs Battle</h2>
       <p id="pairs-mode-desc">Find matching pairs online — outsmart your opponent</p>
     </div>
+    <div class="mode-card cyan" onclick="showDiamondMenu()">
+      <span class="icon">💎</span>
+      <h2 id="diamond-mode-title">Diamond</h2>
+      <p id="diamond-mode-desc">Memorize the gesture pattern — trace it back from memory</p>
+    </div>
     <div class="mode-card gold" onclick="showMathMenu()">
       <svg class="icon-svg" viewBox="0 0 58 58" fill="none" xmlns="http://www.w3.org/2000/svg">
         <defs>
@@ -682,7 +728,10 @@ body{background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,san
   <button class="back-btn" onclick="goMenu()">← Menu</button>
   <!-- sub: level select -->
   <div id="wm-select" style="text-align:center;padding:20px;width:100%;max-width:680px;margin:0 auto;">
-    <div class="section-title" id="wm-section-title">Word Sequence</div>
+    <div style="display:flex;align-items:center;justify-content:center;gap:6px;">
+      <div class="section-title" id="wm-section-title">Word Sequence</div>
+      <button class="info-btn" onclick="showGameInfo('wm')">ℹ</button>
+    </div>
     <div class="section-sub" id="wm-section-sub">Levels 1–6: pick the words · Levels 7–12: type them from memory</div>
     <div id="wm-diff-lbl" style="font-size:.7rem;color:var(--text3);font-weight:800;letter-spacing:1.5px;margin:16px 0 6px;">WORD LENGTH</div>
     <div id="wm-diff-row" style="display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin:0 0 10px;"></div>
@@ -747,7 +796,10 @@ body{background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,san
   <button class="back-btn" onclick="goMenu()">← Menu</button>
   <!-- sub: level select -->
   <div id="spot-select" style="text-align:center;padding:60px 20px 20px;">
-    <div class="section-title" id="spot-section-title">Object Spotting</div>
+    <div style="display:flex;align-items:center;justify-content:center;gap:6px;">
+      <div class="section-title" id="spot-section-title">Object Spotting</div>
+      <button class="info-btn" onclick="showGameInfo('spot')">ℹ</button>
+    </div>
     <div class="section-sub" id="spot-section-sub">Memorize the scene — spot what's missing</div>
     <div style="font-size:.75rem;color:var(--text2);font-weight:700;letter-spacing:.5px;margin:4px 0 8px;" id="spot-choose-pack-lbl">CHOOSE PACK</div>
     <div id="spot-pack-row"></div>
@@ -790,7 +842,10 @@ body{background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,san
       <span class="status-dot" id="ws-dot"></span>
       <span id="ws-status-label" style="font-size:.85rem;font-weight:700;">Disconnected</span>
     </div>
-    <div style="font-size:1.1rem;font-weight:800;" id="lobby-title">⚔️ Pairs Battle Lobby</div>
+    <div style="display:flex;align-items:center;gap:6px;">
+      <div style="font-size:1.1rem;font-weight:800;" id="lobby-title">⚔️ Pairs Battle Lobby</div>
+      <button class="info-btn" onclick="showGameInfo('pairs')">ℹ</button>
+    </div>
     <div style="font-size:.8rem;color:var(--text2);" id="ws-my-name"></div>
   </div>
   <div id="lobby-body">
@@ -927,7 +982,10 @@ body{background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,san
 
   <!-- sub: setup (operation + level select + daily stats) -->
   <div id="math-setup" class="math-wrap">
-    <div class="section-title" id="math-section-title">Math Drills</div>
+    <div style="display:flex;align-items:center;justify-content:center;gap:6px;">
+      <div class="section-title" id="math-section-title">Math Drills</div>
+      <button class="info-btn" onclick="showGameInfo('math')">ℹ</button>
+    </div>
     <div class="section-sub" id="math-section-sub">Pick your operations &amp; difficulty</div>
 
     <div class="op-grid" id="math-op-grid"></div>
@@ -1004,6 +1062,56 @@ body{background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,san
       <button class="btn" onclick="showMathMenu()">Menu</button>
       <button class="btn" id="math-replay-btn" onclick="mathReplay()">Replay</button>
       <button class="btn btn-gold" id="math-next-btn" onclick="mathNextLevel()">Next Level →</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ DIAMOND ══ -->
+<div id="screen-diamond" class="screen">
+  <button class="back-btn" onclick="goMenu()">← Menu</button>
+
+  <!-- Setup -->
+  <div id="diamond-select" style="text-align:center;padding:60px 20px 20px;width:100%;max-width:500px;margin:0 auto;">
+    <div style="display:flex;align-items:center;justify-content:center;gap:6px;">
+      <div class="section-title" id="diamond-section-title">Diamond</div>
+      <button class="info-btn" onclick="showGameInfo('diamond')">ℹ</button>
+    </div>
+    <div class="section-sub" id="diamond-section-sub">Memorize the gesture — trace it back from memory</div>
+    <div style="display:flex;gap:12px;justify-content:center;margin:24px 0 28px;flex-wrap:wrap;">
+      <div class="stat-box"><div class="sv" id="dmd-level-val">1</div><div class="sl" id="dmd-level-lbl">Level</div></div>
+      <div class="stat-box"><div class="sv" id="dmd-best-val">—</div><div class="sl" id="dmd-best-lbl">Best</div></div>
+      <div class="stat-box"><div class="sv" id="dmd-streak-val">0</div><div class="sl" id="dmd-streak-lbl">Streak</div></div>
+    </div>
+    <button class="btn btn-primary" onclick="diamondStart()" id="diamond-start-btn" style="width:100%;max-width:300px;padding:16px;font-size:1.05rem;font-weight:900;">▶ Start</button>
+    <div style="margin-top:14px;font-size:.78rem;color:var(--text3);" id="diamond-adapt-note">Difficulty adapts to your skill automatically</div>
+  </div>
+
+  <!-- Game area -->
+  <div id="diamond-game" style="display:none;flex-direction:column;align-items:center;width:100%;flex:1;overflow:hidden;">
+    <div id="diamond-header">
+      <span class="tag tag-purple" id="diamond-level-tag">L1</span>
+      <span id="diamond-phase-lbl" style="font-size:.88rem;color:var(--text2);font-weight:700;"></span>
+      <span id="diamond-round-lbl" style="font-size:.82rem;font-weight:800;color:var(--goldL);"></span>
+    </div>
+    <div id="diamond-progress-wrap">
+      <div id="diamond-progress-fill" style="width:100%;transition:width .1s linear;"></div>
+    </div>
+    <canvas id="diamond-canvas"></canvas>
+    <div id="diamond-hint"></div>
+    <button id="diamond-clear-btn" onclick="diamondClearInput()" class="btn" style="display:none;margin:4px 0 12px;" id="diamond-clear-btn"></button>
+  </div>
+
+  <!-- Result overlay -->
+  <div class="dmd-result-overlay" id="diamond-result">
+    <div id="diamond-result-box">
+      <div style="font-size:3rem;margin-bottom:8px;" id="diamond-result-em">💎</div>
+      <div style="font-size:1.35rem;font-weight:900;margin-bottom:6px;" id="diamond-result-title"></div>
+      <div style="font-size:.88rem;color:var(--text2);margin-bottom:18px;" id="diamond-result-sub"></div>
+      <div class="math-stat-grid" id="diamond-result-stats" style="margin-bottom:20px;"></div>
+      <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;">
+        <button class="btn btn-primary" id="diamond-next-btn" onclick="diamondNextRound()"></button>
+        <button class="btn" onclick="diamondGoSelect()"></button>
+      </div>
     </div>
   </div>
 </div>
@@ -1168,6 +1276,43 @@ const STRINGS = {
     workout_awesome:'Awesome!',
     // achievements
     ach_wo_complete:'Daily Warrior', ach_wo_complete_d:'Complete a full Brain Workout session',
+    // info popup
+    info_got_it:'Got it!',
+    info_wm_title:'🧠 Word Sequence',
+    info_wm_body:'<ul class="info-body-list"><li>Words flash one by one — watch carefully</li><li>Recall them <b>in the exact order</b> you saw them</li><li>Levels 1–6: tap from a word pool</li><li>Levels 7–12: type each word yourself</li><li><b>Backwards mode:</b> recall in reverse order</li><li><b>Audio mode:</b> words are read aloud to you</li></ul>',
+    info_spot_title:'👁️ Object Spotting',
+    info_spot_body:'<ul class="info-body-list"><li>Study a grid of objects carefully</li><li>Objects rearrange while you look away</li><li>Find which object <b>disappeared</b></li><li>Higher levels = more objects to track</li><li><b>Intruder mode:</b> spot the NEW object that appeared</li></ul>',
+    info_pairs_title:'⚔️ Pairs Battle',
+    info_pairs_body:'<ul class="info-body-list"><li>Flip cards to find matching pairs</li><li>Remember card positions — accuracy wins</li><li><b>vs AI:</b> offline opponent — Easy / Medium / Hard</li><li><b>Online:</b> challenge another player in real time</li><li>Earn power-ups every 3 pairs you match</li><li>ELO rating tracks your skill over time</li></ul>',
+    info_math_title:'➕ Math Drills',
+    info_math_body:'<ul class="info-body-list"><li>Solve arithmetic as fast as you can</li><li>10 tasks per session — score based on speed</li><li>Choose operations: + − × ÷ and %</li><li><b>Tricks:</b> learn lightning-fast mental shortcuts</li><li><b>Daily Challenge:</b> 5 shared tasks, reset at midnight</li><li><b>Estimate mode:</b> ±10% accepted — think faster!</li></ul>',
+    trick_mul11_instr:'<b>Rule:</b> for a 2-digit number AB, write A·(A+B)·B side by side. If the middle sum exceeds 9, carry 1 left.<br><br><b>53 × 11:</b> A=5, B=3, A+B=8 → <b>583</b><br><b>78 × 11:</b> A+B=15 → carry! → (7+1)·5·8 = <b>858</b>',
+    trick_mul5_instr:'<b>Rule:</b> multiply by 5 = halve the number, then ×10.<br><br><b>48 × 5:</b> 48÷2=24 → ×10 = <b>240</b><br><b>37 × 5:</b> 37÷2=18.5 → ×10 = <b>185</b>',
+    trick_mul25_instr:'<b>Rule:</b> multiply by 25 = divide by 4, then ×100.<br><br><b>36 × 25:</b> 36÷4=9 → ×100 = <b>900</b><br><b>44 × 25:</b> 44÷4=11 → <b>1100</b>',
+    trick_sq5_instr:'<b>Rule:</b> for any number ending in 5 (written as N5):<br>compute N×(N+1), then append 25.<br><br><b>35²:</b> N=3 → 3×4=12 → append 25 → <b>1225</b><br><b>65²:</b> N=6 → 6×7=42 → <b>4225</b>',
+    trick_near100_instr:'<b>Rule:</b> for A×B both near 100:<br>d1=100−A, d2=100−B<br>Left = 100−d1−d2 · Right = d1×d2 (2 digits)<br><br><b>97 × 94:</b> d1=3, d2=6 → left=91, right=18 → <b>9118</b><br><b>98 × 97:</b> d1=2, d2=3 → left=95, right=06 → <b>9506</b>',
+    trick_pct_swap_instr:'<b>Rule:</b> A% of B = B% of A — pick whichever is easier!<br><br><b>4% of 75:</b> flip → 75% of 4 = <b>3</b><br><b>8% of 50:</b> flip → 50% of 8 = <b>4</b>',
+    // diamond
+    diamond_mode_title:'Diamond', diamond_mode_desc:'Memorize the gesture pattern — trace it back from memory',
+    diamond_section_title:'Diamond', diamond_section_sub:'Memorize the gesture — trace it back from memory',
+    diamond_level_lbl:'Level', diamond_best_lbl:'Best Level', diamond_streak_lbl:'Streak',
+    diamond_adapt_note:'Difficulty adapts to your skill automatically',
+    diamond_start:'▶ Start',
+    diamond_phase_show:'Memorize!', diamond_phase_recall:'Trace it back', diamond_phase_ready:'Get ready…',
+    diamond_round:(n)=>`Round ${n}`,
+    diamond_hint_show:'Watch the path carefully', diamond_hint_recall:'Tap the dots in order',
+    diamond_hint_selected:(n,t)=>`${n} / ${t} dots`, diamond_clear:'Clear ↺',
+    diamond_correct:'Pattern Matched! 💎', diamond_wrong:'Not quite…',
+    diamond_correct_sub:(pts)=>`+${pts} XP · Difficulty up!`, diamond_wrong_sub:'Pattern shown — try again',
+    diamond_next:'Next Pattern →', diamond_menu:'Menu',
+    diamond_stat_correct:'Correct', diamond_stat_total:'Total', diamond_stat_level:'Level', diamond_stat_grid:'Grid',
+    // info popup for diamond
+    info_diamond_title:'💎 Diamond',
+    info_diamond_body:'<ul class="info-body-list"><li>A pattern of connected dots is drawn before you</li><li>Memorize the path — then trace it back in order</li><li>Difficulty adapts: 2×2 grid to 5×5 and beyond</li><li>2 correct in a row → level up · 1 wrong → step down</li><li>No time limit during recall — accuracy beats speed</li></ul>',
+    // achievements
+    ach_dmd_first:'Diamond Debut', ach_dmd_first_d:'Complete your first Diamond pattern',
+    ach_dmd_streak5:'Pattern Master', ach_dmd_streak5_d:'Get 5 correct Diamond patterns in a row',
+    ach_dmd_level10:'Gestural Genius', ach_dmd_level10_d:'Reach Diamond level 10',
   },
   uk: {
     app_name:'БОТАНІК', menu_tagline:'Тренуй розум · Розвивай мозок', lang_toggle:'🇬🇧 ENG',
@@ -1323,6 +1468,43 @@ const STRINGS = {
     workout_awesome:'Відмінно!',
     // achievements
     ach_wo_complete:'Щоденний воїн', ach_wo_complete_d:'Завершити повне тренування мозку',
+    // info popup
+    info_got_it:'Зрозуміло!',
+    info_wm_title:'🧠 Ланцюжок слів',
+    info_wm_body:'<ul class="info-body-list"><li>Слова з\'являються одне за одним — уважно стеж</li><li>Відтвори їх <b>у тому самому порядку</b></li><li>Рівні 1–6: вибирай зі списку слів</li><li>Рівні 7–12: вводь кожне слово самостійно</li><li><b>Режим назад:</b> відтворюй у зворотному порядку</li><li><b>Аудіо режим:</b> слова зачитуються вголос</li></ul>',
+    info_spot_title:'👁️ Знайди різницю',
+    info_spot_body:'<ul class="info-body-list"><li>Уважно вивчи сітку об\'єктів</li><li>Поки ти відводиш погляд, об\'єкти переставляються</li><li>Знайди який об\'єкт <b>зник</b></li><li>Вищі рівні = більше об\'єктів для запам\'ятовування</li><li><b>Режим зайвого:</b> знайди НОВИЙ об\'єкт що з\'явився</li></ul>',
+    info_pairs_title:'⚔️ Битва пар',
+    info_pairs_body:'<ul class="info-body-list"><li>Перевертай картки, знаходь однакові пари</li><li>Запам\'ятовуй розташування — точність перемагає</li><li><b>Проти ІІ:</b> офлайн суперник — легко / середнє / важко</li><li><b>Онлайн:</b> виклик живому гравцю в реальному часі</li><li>Заробляй бонуси кожні 3 знайдені пари</li><li>Рейтинг ELO відстежує твій прогрес</li></ul>',
+    info_math_title:'➕ Математика',
+    info_math_body:'<ul class="info-body-list"><li>Розв\'язуй приклади якомога швидше</li><li>10 завдань за сесію — рахунок залежить від швидкості</li><li>Вибирай операції: + − × ÷ та %</li><li><b>Хитрощі:</b> вивчай методи блискавичних обчислень</li><li><b>Виклик дня:</b> 5 спільних завдань, оновлюються опівночі</li><li><b>Режим оцінки:</b> ±10% зараховується — думай швидше!</li></ul>',
+    trick_mul11_instr:'<b>Правило:</b> для 2-значного числа AB пиши A·(A+B)·B поряд. Якщо сума > 9 — перенось 1 вліво.<br><br><b>53 × 11:</b> A=5, B=3, A+B=8 → <b>583</b><br><b>78 × 11:</b> A+B=15 → перенос! → (7+1)·5·8 = <b>858</b>',
+    trick_mul5_instr:'<b>Правило:</b> множення на 5 = поділи навпіл, потім ×10.<br><br><b>48 × 5:</b> 48÷2=24 → ×10 = <b>240</b><br><b>37 × 5:</b> 37÷2=18,5 → ×10 = <b>185</b>',
+    trick_mul25_instr:'<b>Правило:</b> множення на 25 = поділи на 4, потім ×100.<br><br><b>36 × 25:</b> 36÷4=9 → ×100 = <b>900</b><br><b>44 × 25:</b> 44÷4=11 → <b>1100</b>',
+    trick_sq5_instr:'<b>Правило:</b> для числа на 5 (позначимо N5):<br>обчисли N×(N+1), потім допиши 25.<br><br><b>35²:</b> N=3 → 3×4=12 → допиши 25 → <b>1225</b><br><b>65²:</b> N=6 → 6×7=42 → <b>4225</b>',
+    trick_near100_instr:'<b>Правило:</b> для A×B обох близьких до 100:<br>d1=100−A, d2=100−B<br>Ліво = 100−d1−d2 · Право = d1×d2 (2 цифри)<br><br><b>97 × 94:</b> d1=3, d2=6 → ліво=91, право=18 → <b>9118</b><br><b>98 × 97:</b> d1=2, d2=3 → ліво=95, право=06 → <b>9506</b>',
+    trick_pct_swap_instr:'<b>Правило:</b> A% від B = B% від A — бери зручніший напрям!<br><br><b>4% від 75:</b> міняємо → 75% від 4 = <b>3</b><br><b>8% від 50:</b> міняємо → 50% від 8 = <b>4</b>',
+    // diamond
+    diamond_mode_title:'Діамант', diamond_mode_desc:'Запам\'ятай жест — відтвори його по пам\'яті',
+    diamond_section_title:'Діамант', diamond_section_sub:'Запам\'ятай жест — відтвори його по пам\'яті',
+    diamond_level_lbl:'Рівень', diamond_best_lbl:'Кращий рівень', diamond_streak_lbl:'Серія',
+    diamond_adapt_note:'Складність підлаштовується під тебе автоматично',
+    diamond_start:'▶ Старт',
+    diamond_phase_show:'Запам\'ятовуй!', diamond_phase_recall:'Відтвори жест', diamond_phase_ready:'Готуйся…',
+    diamond_round:(n)=>`Раунд ${n}`,
+    diamond_hint_show:'Уважно стеж за маршрутом', diamond_hint_recall:'Натискай точки по порядку',
+    diamond_hint_selected:(n,t)=>`${n} / ${t} точок`, diamond_clear:'Очистити ↺',
+    diamond_correct:'Жест відтворено! 💎', diamond_wrong:'Не зовсім…',
+    diamond_correct_sub:(pts)=>`+${pts} XP · Рівень підвищено!`, diamond_wrong_sub:'Дивись на правильний маршрут',
+    diamond_next:'Наступний →', diamond_menu:'Меню',
+    diamond_stat_correct:'Правильно', diamond_stat_total:'Всього', diamond_stat_level:'Рівень', diamond_stat_grid:'Поле',
+    // info popup for diamond
+    info_diamond_title:'💎 Діамант',
+    info_diamond_body:'<ul class="info-body-list"><li>Послідовність з\'єднаних точок малюється перед тобою</li><li>Запам\'ятай маршрут — відтвори його по порядку</li><li>Складність зростає: від поля 2×2 до 5×5 і далі</li><li>2 правильних підряд → рівень вгору · 1 помилка → крок назад</li><li>Часу нема — важлива точність, а не швидкість</li></ul>',
+    // achievements
+    ach_dmd_first:'Дебют Діаманта', ach_dmd_first_d:'Успішно відтвори перший жест',
+    ach_dmd_streak5:'Майстер жестів', ach_dmd_streak5_d:'5 правильних жестів підряд',
+    ach_dmd_level10:'Жестовий генiй', ach_dmd_level10_d:'Досягнути 10 рівня в Діаманті',
   },
 };
 function t(key, ...args) {
@@ -1926,9 +2108,31 @@ function showScreen(id) {
 function goMenu() {
   document.getElementById('radar-panel').classList.remove('show');
   document.getElementById('workout-result').classList.remove('show');
+  infoPopupClose();
   showScreen('screen-menu');
 }
 
+// ── Info popup ──
+let _infoPopupOkCb = null;
+function showInfoPopup(title, bodyHtml, okCb) {
+  document.getElementById('info-popup-title').innerHTML = title;
+  document.getElementById('info-popup-body').innerHTML = bodyHtml;
+  document.getElementById('info-popup-ok').textContent = t('info_got_it');
+  _infoPopupOkCb = okCb || null;
+  document.getElementById('info-popup').classList.add('show');
+}
+function infoPopupClose() {
+  document.getElementById('info-popup').classList.remove('show');
+  _infoPopupOkCb = null;
+}
+function infoPopupOk() {
+  const cb = _infoPopupOkCb;
+  infoPopupClose();
+  if (cb) cb();
+}
+function showGameInfo(game) {
+  showInfoPopup(t('info_' + game + '_title'), t('info_' + game + '_body'));
+}
 
 // ═══════════════════════════════════════════════════
 // WORD MEMORY MODE
@@ -3651,12 +3855,16 @@ function mathFinish(){
   if(workoutState.active && workoutState.step === 2) workoutStepDone(mathXp);
 }
 
-function mathReplay(){ if(mathState.dailyMode) return; if(mathState.trickDef) mathStartTrick(mathState.trickDef.id); else mathStartLevel(mathState.level); }
+function mathReplay(){ if(mathState.dailyMode) return; if(mathState.trickDef) _mathDoStartTrick(mathState.trickDef); else mathStartLevel(mathState.level); }
 function mathNextLevel(){ if(mathState.level<MATH_LEVELS.length-1) mathStartLevel(mathState.level+1); }
 
 function mathStartTrick(id){
   const trick = MATH_TRICKS.find(tr=>tr.id===id);
   if(!trick) return;
+  const instrKey = 'trick_' + trick.id + '_instr';
+  showInfoPopup(t(trick.key), t(instrKey), () => _mathDoStartTrick(trick));
+}
+function _mathDoStartTrick(trick){
   mathState.trickDef = trick;
   mathState.level = -1;
   mathState.taskIdx = 0; mathState.score = 0; mathState.correct = 0;
@@ -3733,6 +3941,358 @@ function renderMathStats(){
 }
 
 // ═══════════════════════════════════════════════════
+// DIAMOND GAME
+// ═══════════════════════════════════════════════════
+const DIAMOND_LEVELS = [
+  {grid:2,len:3,showMs:3500},{grid:2,len:4,showMs:3500},
+  {grid:3,len:4,showMs:3500},{grid:3,len:5,showMs:3000},{grid:3,len:6,showMs:3000},
+  {grid:3,len:7,showMs:2500},{grid:3,len:8,showMs:2500},{grid:3,len:9,showMs:2000},
+  {grid:4,len:6,showMs:3000},{grid:4,len:8,showMs:2800},{grid:4,len:10,showMs:2500},
+  {grid:4,len:12,showMs:2000},{grid:4,len:14,showMs:1800},{grid:4,len:16,showMs:1600},
+  {grid:5,len:8,showMs:3000},{grid:5,len:12,showMs:2500},{grid:5,len:16,showMs:2000},
+  {grid:5,len:20,showMs:1800},{grid:5,len:25,showMs:1500},
+];
+
+function dmdLoadSave() {
+  try { return JSON.parse(localStorage.getItem('membrain_diamond') || '{}'); } catch { return {}; }
+}
+function dmdSave(o) {
+  const s = Object.assign(dmdLoadSave(), o);
+  localStorage.setItem('membrain_diamond', JSON.stringify(s));
+}
+
+const dmdState = {
+  phase: 'idle', cfg: null, pattern: [], userPat: [],
+  adaptLevel: 0, streak: 0, roundsPlayed: 0, roundsCorrect: 0,
+  showStart: 0, progressTimer: null, animTimer: null,
+};
+
+function dmdCfg(l) { return DIAMOND_LEVELS[Math.min(l, DIAMOND_LEVELS.length - 1)]; }
+
+function dmdPos(idx, grid, cw, ch) {
+  const pad = Math.min(cw, ch) * (grid <= 2 ? 0.18 : grid <= 3 ? 0.14 : 0.11);
+  const usable = Math.min(cw, ch) - pad * 2;
+  const step = grid > 1 ? usable / (grid - 1) : 0;
+  const ox = (cw - usable) / 2;
+  const oy = (ch - usable) / 2;
+  return { x: ox + (idx % grid) * step, y: oy + Math.floor(idx / grid) * step };
+}
+
+function dmdR(grid) { return grid <= 2 ? 22 : grid <= 3 ? 18 : grid <= 4 ? 13 : 10; }
+
+function dmdGenPattern(grid, len) {
+  const total = grid * grid;
+  const visited = new Set();
+  const pat = [];
+  let cur = Math.floor(Math.random() * total);
+  visited.add(cur); pat.push(cur);
+  while (pat.length < Math.min(len, total)) {
+    const avail = [];
+    for (let i = 0; i < total; i++) if (!visited.has(i)) avail.push(i);
+    if (!avail.length) break;
+    const next = avail[Math.floor(Math.random() * avail.length)];
+    visited.add(next); pat.push(next);
+  }
+  return pat;
+}
+
+function dmdDraw(canvas, revealPat, userPat, phase, wrongAt) {
+  const ctx = canvas.getContext('2d');
+  const cw = canvas.width, ch = canvas.height;
+  const grid = dmdState.cfg.grid;
+  const r = dmdR(grid);
+  ctx.clearRect(0, 0, cw, ch);
+
+  const drawPath = (pat, color, alpha, width) => {
+    if (pat.length < 2) return;
+    ctx.save(); ctx.globalAlpha = alpha; ctx.strokeStyle = color;
+    ctx.lineWidth = width; ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+    ctx.beginPath();
+    const p0 = dmdPos(pat[0], grid, cw, ch); ctx.moveTo(p0.x, p0.y);
+    for (let i = 1; i < pat.length; i++) { const p = dmdPos(pat[i], grid, cw, ch); ctx.lineTo(p.x, p.y); }
+    ctx.stroke(); ctx.restore();
+  };
+
+  const total = grid * grid;
+  for (let i = 0; i < total; i++) {
+    const {x, y} = dmdPos(i, grid, cw, ch);
+    const revIdx = revealPat.indexOf(i);
+    const usrIdx = userPat.indexOf(i);
+    const isWrong = wrongAt !== undefined && usrIdx === wrongAt;
+
+    ctx.save();
+    ctx.beginPath(); ctx.arc(x, y, r * 1.7, 0, Math.PI * 2);
+    ctx.fillStyle = revIdx >= 0 ? 'rgba(124,58,237,.12)' : usrIdx >= 0 ? 'rgba(52,211,153,.1)' : 'rgba(255,255,255,.04)';
+    ctx.fill(); ctx.restore();
+
+    ctx.save();
+    ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2);
+    if (isWrong) {
+      ctx.fillStyle = 'rgba(239,68,68,.85)'; ctx.shadowColor = '#ef4444'; ctx.shadowBlur = 14;
+    } else if (revIdx >= 0) {
+      ctx.fillStyle = 'rgba(124,58,237,.85)'; ctx.shadowColor = '#a855f7'; ctx.shadowBlur = 14;
+    } else if (usrIdx >= 0) {
+      ctx.fillStyle = 'rgba(52,211,153,.85)'; ctx.shadowColor = '#34d399'; ctx.shadowBlur = 10;
+    } else {
+      ctx.fillStyle = 'rgba(255,255,255,.18)';
+    }
+    ctx.fill(); ctx.restore();
+
+    if (revIdx >= 0) {
+      ctx.save(); ctx.fillStyle = '#fff';
+      ctx.font = `900 ${Math.max(9, Math.round(r * 0.78))}px system-ui,sans-serif`;
+      ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.fillText(revIdx + 1, x, y); ctx.restore();
+    } else if (usrIdx >= 0 && !isWrong) {
+      ctx.save(); ctx.fillStyle = '#fff';
+      ctx.font = `900 ${Math.max(9, Math.round(r * 0.78))}px system-ui,sans-serif`;
+      ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.fillText(usrIdx + 1, x, y); ctx.restore();
+    }
+  }
+
+  if (revealPat.length > 1) drawPath(revealPat, 'rgba(124,58,237,.65)', 1, r * 0.38);
+  if (userPat.length > 1) drawPath(userPat, wrongAt !== undefined ? 'rgba(239,68,68,.65)' : 'rgba(52,211,153,.65)', 1, r * 0.38);
+}
+
+function showDiamondMenu() {
+  const s = dmdLoadSave();
+  dmdState.adaptLevel = s.level || 0;
+  dmdState.streak = 0;
+  const cfg = dmdCfg(dmdState.adaptLevel);
+  document.getElementById('dmd-level-val').textContent = dmdState.adaptLevel + 1;
+  document.getElementById('dmd-best-val').textContent = s.best !== undefined ? s.best + 1 : '—';
+  document.getElementById('dmd-streak-val').textContent = s.streak || 0;
+  document.getElementById('diamond-start-btn').textContent = t('diamond_start');
+  document.getElementById('diamond-adapt-note').textContent = t('diamond_adapt_note');
+  document.getElementById('dmd-level-lbl').textContent = t('diamond_level_lbl');
+  document.getElementById('dmd-best-lbl').textContent = t('diamond_best_lbl');
+  document.getElementById('dmd-streak-lbl').textContent = t('diamond_streak_lbl');
+  document.getElementById('diamond-game').style.display = 'none';
+  document.getElementById('diamond-select').style.display = '';
+  showScreen('screen-diamond');
+}
+
+function diamondStart() {
+  const s = dmdLoadSave();
+  dmdState.adaptLevel = s.level || 0;
+  dmdState.streak = s.streak || 0;
+  dmdState.roundsPlayed = 0; dmdState.roundsCorrect = 0;
+  dmdState.userPat = [];
+  dmdState.phase = 'show';
+
+  document.getElementById('diamond-select').style.display = 'none';
+  document.getElementById('diamond-game').style.display = 'flex';
+  document.getElementById('diamond-result').classList.remove('show');
+
+  const canvas = document.getElementById('diamond-canvas');
+  const game = document.getElementById('diamond-game');
+  const avail = game.clientWidth;
+  const hdr = document.getElementById('diamond-header').offsetHeight || 52;
+  const hint = 52; const prog = 14; const btnArea = 48;
+  const size = Math.min(avail, window.innerHeight - hdr - hint - prog - btnArea - 20);
+  canvas.width = canvas.height = Math.max(180, size);
+  canvas.style.width = canvas.style.height = canvas.width + 'px';
+
+  canvas.onclick = null; canvas.ontouchstart = null;
+  canvas.addEventListener('click', dmdCanvasClick);
+  canvas.addEventListener('touchstart', dmdCanvasTouchStart, {passive: false});
+
+  diamondNewRound();
+}
+
+function diamondNewRound() {
+  if (dmdState.animTimer) clearTimeout(dmdState.animTimer);
+  if (dmdState.progressTimer) clearInterval(dmdState.progressTimer);
+  const cfg = dmdCfg(dmdState.adaptLevel);
+  dmdState.cfg = cfg;
+  dmdState.pattern = dmdGenPattern(cfg.grid, cfg.len);
+  dmdState.userPat = [];
+  dmdState.phase = 'ready';
+  dmdState.roundsPlayed++;
+
+  const canvas = document.getElementById('diamond-canvas');
+  const levelTag = document.getElementById('diamond-level-tag');
+  const phaseLbl = document.getElementById('diamond-phase-lbl');
+  const roundLbl = document.getElementById('diamond-round-lbl');
+  const hint = document.getElementById('diamond-hint');
+  const clearBtn = document.getElementById('diamond-clear-btn');
+
+  levelTag.textContent = `L${dmdState.adaptLevel + 1} · ${cfg.grid}×${cfg.grid}`;
+  roundLbl.textContent = t('diamond_round', dmdState.roundsPlayed);
+  clearBtn.style.display = 'none';
+  document.getElementById('diamond-clear-btn').textContent = t('diamond_clear');
+
+  // Brief "Get ready" phase
+  phaseLbl.textContent = t('diamond_phase_ready');
+  hint.textContent = '';
+  dmdDraw(canvas, [], [], 'ready');
+
+  dmdState.animTimer = setTimeout(() => {
+    dmdState.phase = 'show';
+    phaseLbl.textContent = t('diamond_phase_show');
+    hint.textContent = t('diamond_hint_show');
+    dmdDraw(canvas, dmdState.pattern, [], 'show');
+    dmdStartProgressBar(cfg.showMs);
+    dmdState.animTimer = setTimeout(diamondRecallPhase, cfg.showMs);
+  }, 700);
+}
+
+function dmdStartProgressBar(durationMs) {
+  if (dmdState.progressTimer) clearInterval(dmdState.progressTimer);
+  const fill = document.getElementById('diamond-progress-fill');
+  fill.style.transition = 'none';
+  fill.style.width = '100%';
+  const start = Date.now();
+  dmdState.progressTimer = setInterval(() => {
+    const elapsed = Date.now() - start;
+    const pct = Math.max(0, 100 - (elapsed / durationMs) * 100);
+    fill.style.width = pct + '%';
+    if (pct <= 0) { clearInterval(dmdState.progressTimer); dmdState.progressTimer = null; }
+  }, 50);
+}
+
+function diamondRecallPhase() {
+  if (dmdState.progressTimer) { clearInterval(dmdState.progressTimer); dmdState.progressTimer = null; }
+  document.getElementById('diamond-progress-fill').style.width = '0%';
+  dmdState.phase = 'recall';
+  dmdState.userPat = [];
+  const canvas = document.getElementById('diamond-canvas');
+  document.getElementById('diamond-phase-lbl').textContent = t('diamond_phase_recall');
+  document.getElementById('diamond-hint').textContent = t('diamond_hint_recall');
+  document.getElementById('diamond-clear-btn').style.display = '';
+  dmdDraw(canvas, [], [], 'recall');
+}
+
+function dmdGetDot(clientX, clientY) {
+  const canvas = document.getElementById('diamond-canvas');
+  const rect = canvas.getBoundingClientRect();
+  const x = (clientX - rect.left) * (canvas.width / rect.width);
+  const y = (clientY - rect.top) * (canvas.height / rect.height);
+  const grid = dmdState.cfg.grid;
+  const r = dmdR(grid) * 1.9;
+  for (let i = 0; i < grid * grid; i++) {
+    const p = dmdPos(i, grid, canvas.width, canvas.height);
+    if (Math.hypot(x - p.x, y - p.y) <= r) return i;
+  }
+  return -1;
+}
+
+function dmdCanvasClick(e) {
+  if (dmdState.phase !== 'recall') return;
+  const dot = dmdGetDot(e.clientX, e.clientY);
+  if (dot < 0 || dmdState.userPat.includes(dot)) return;
+  dmdTapDot(dot);
+}
+
+function dmdCanvasTouchStart(e) {
+  if (dmdState.phase !== 'recall') return;
+  e.preventDefault();
+  const t0 = e.touches[0];
+  const dot = dmdGetDot(t0.clientX, t0.clientY);
+  if (dot < 0 || dmdState.userPat.includes(dot)) return;
+  dmdTapDot(dot);
+}
+
+function dmdTapDot(dot) {
+  dmdState.userPat.push(dot);
+  const canvas = document.getElementById('diamond-canvas');
+  const n = dmdState.userPat.length;
+  const total = dmdState.pattern.length;
+  document.getElementById('diamond-hint').textContent = t('diamond_hint_selected', n, total);
+  dmdDraw(canvas, [], dmdState.userPat, 'recall');
+  if (n === total) {
+    dmdState.phase = 'checking';
+    document.getElementById('diamond-clear-btn').style.display = 'none';
+    setTimeout(diamondCheckResult, 350);
+  }
+}
+
+function diamondClearInput() {
+  if (dmdState.phase !== 'recall') return;
+  dmdState.userPat = [];
+  const canvas = document.getElementById('diamond-canvas');
+  document.getElementById('diamond-hint').textContent = t('diamond_hint_recall');
+  dmdDraw(canvas, [], [], 'recall');
+}
+
+function diamondCheckResult() {
+  const correct = dmdState.pattern.every((d, i) => dmdState.userPat[i] === d);
+  const canvas = document.getElementById('diamond-canvas');
+
+  if (correct) {
+    dmdDraw(canvas, dmdState.pattern, dmdState.userPat, 'correct');
+  } else {
+    // find first wrong index
+    const wrongAt = dmdState.userPat.findIndex((d, i) => d !== dmdState.pattern[i]);
+    dmdDraw(canvas, dmdState.pattern, dmdState.userPat, 'wrong', wrongAt);
+  }
+
+  setTimeout(() => diamondShowResult(correct), 800);
+}
+
+function diamondShowResult(correct) {
+  const cfg = dmdState.cfg;
+
+  if (correct) {
+    dmdState.streak++;
+    dmdState.roundsCorrect++;
+    if (dmdState.streak >= 2) {
+      dmdState.adaptLevel = Math.min(DIAMOND_LEVELS.length - 1, dmdState.adaptLevel + 1);
+      dmdState.streak = 0;
+    }
+  } else {
+    dmdState.streak = 0;
+    dmdState.adaptLevel = Math.max(0, dmdState.adaptLevel - 1);
+  }
+
+  const saved = dmdLoadSave();
+  const newBest = Math.max(saved.best || 0, dmdState.adaptLevel);
+  dmdSave({ level: dmdState.adaptLevel, best: newBest, streak: dmdState.streak });
+
+  const xp = correct ? 8 + dmdState.adaptLevel * 2 : 0;
+  if (correct) addXp(xp, t('diamond_mode_title'));
+
+  const toCheck = ['dmd_first'];
+  if (dmdState.roundsCorrect >= 1) toCheck.push('dmd_first');
+  if (dmdState.streak >= 5 || (saved.streak || 0) >= 5) toCheck.push('dmd_streak5');
+  if (dmdState.adaptLevel >= 9) toCheck.push('dmd_level10');
+  if (correct) checkAchievements(toCheck);
+
+  const overlay = document.getElementById('diamond-result');
+  const em = document.getElementById('diamond-result-em');
+  const title = document.getElementById('diamond-result-title');
+  const sub = document.getElementById('diamond-result-sub');
+  const stats = document.getElementById('diamond-result-stats');
+  const nextBtn = document.getElementById('diamond-next-btn');
+  const menuBtn = overlay.querySelector('.btn:not(.btn-primary)');
+
+  em.textContent = correct ? '💎' : '❌';
+  title.textContent = correct ? t('diamond_correct') : t('diamond_wrong');
+  sub.textContent = correct ? t('diamond_correct_sub', xp) : t('diamond_wrong_sub');
+  nextBtn.textContent = t('diamond_next');
+  if (menuBtn) menuBtn.textContent = t('diamond_menu');
+
+  stats.innerHTML = `
+    <div class="stat-box"><div class="sv">${dmdState.roundsCorrect}</div><div class="sl">${t('diamond_stat_correct')}</div></div>
+    <div class="stat-box"><div class="sv">${dmdState.roundsPlayed}</div><div class="sl">${t('diamond_stat_total')}</div></div>
+    <div class="stat-box"><div class="sv">${dmdState.adaptLevel + 1}</div><div class="sl">${t('diamond_stat_level')}</div></div>
+    <div class="stat-box"><div class="sv">${cfg.grid}×${cfg.grid}</div><div class="sl">${t('diamond_stat_grid')}</div></div>`;
+
+  overlay.classList.add('show');
+}
+
+function diamondNextRound() {
+  document.getElementById('diamond-result').classList.remove('show');
+  diamondNewRound();
+}
+
+function diamondGoSelect() {
+  document.getElementById('diamond-result').classList.remove('show');
+  showDiamondMenu();
+}
+
+// ═══════════════════════════════════════════════════
 // ACHIEVEMENTS
 // ═══════════════════════════════════════════════════
 const ACHIEVEMENTS = [
@@ -3759,6 +4319,9 @@ const ACHIEVEMENTS = [
   {id:'mt_daily',        em:'📅', nk:'ach_mt_daily',        dk:'ach_mt_daily_d'},
   {id:'mt_daily_week',   em:'📆', nk:'ach_mt_daily_week',   dk:'ach_mt_daily_week_d'},
   {id:'wo_complete',     em:'🏋️', nk:'ach_wo_complete',     dk:'ach_wo_complete_d'},
+  {id:'dmd_first',  em:'💎', nk:'ach_dmd_first',  dk:'ach_dmd_first_d'},
+  {id:'dmd_streak5',em:'🔮', nk:'ach_dmd_streak5',dk:'ach_dmd_streak5_d'},
+  {id:'dmd_level10',em:'🧿', nk:'ach_dmd_level10',dk:'ach_dmd_level10_d'},
 ];
 
 function achLoad(){ try{ return JSON.parse(localStorage.getItem('membrain_ach')||'[]'); }catch{ return []; } }
@@ -4480,6 +5043,7 @@ function applyLang() {
   setTxt('spot-mode-title', 'spot_mode_title'); setTxt('spot-mode-desc', 'spot_mode_desc');
   setTxt('pairs-mode-title', 'pairs_mode_title'); setTxt('pairs-mode-desc', 'pairs_mode_desc');
   setTxt('math-mode-title', 'math_mode_title'); setTxt('math-mode-desc', 'math_mode_desc');
+  setTxt('diamond-mode-title', 'diamond_mode_title'); setTxt('diamond-mode-desc', 'diamond_mode_desc');
   // back buttons
   document.querySelectorAll('.back-btn').forEach(b => { b.textContent = t('back_menu'); });
   // word memory static
@@ -4517,7 +5081,7 @@ function applyLang() {
   if (mathHint && mathState.opsId) selectMathOps(mathState.opsId); else if (mathHint) setTxt('math-op-hint', 'math_choose_arith');
   const mathRep = document.getElementById('math-replay-btn'); if (mathRep) mathRep.textContent = t('math_replay');
   // re-render dynamic level grids
-  showWordMenu(); showSpotMenu(); renderMathOps(); renderMathLevels(); renderMathTricks(); renderMathStats(); renderWmStats(); renderMathEstRow(); renderDailyChallenge(); updateXpDisplay(); renderWorkoutBtn();
+  showWordMenu(); showSpotMenu(); showDiamondMenu(); renderMathOps(); renderMathLevels(); renderMathTricks(); renderMathStats(); renderWmStats(); renderMathEstRow(); renderDailyChallenge(); updateXpDisplay(); renderWorkoutBtn();
   setTxt('radar-title','radar_title'); setTxt('workout-lbl','workout_lbl'); setTxt('workout-result-title','workout_complete'); setTxt('workout-result-sub','workout_sub'); setTxt('workout-dismiss-btn','workout_awesome');
   updateAchBadge();
   // return to menu
