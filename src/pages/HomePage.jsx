@@ -36,7 +36,7 @@ export default function HomePage() {
       {/* Header */}
       <header className="w-full max-w-4xl px-6 pt-16 pb-10 text-center">
         <h1 className="text-5xl font-extrabold tracking-tight mb-3">
-          🕹️ <span className="text-blue-400">My</span> Playground
+          🕹️ <span className="text-blue-400">Pashka</span> Games
         </h1>
         <p className="text-gray-400 text-lg">
           Pick a game and start playing

@@ -54,7 +54,34 @@ body{background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,san
 .mode-card.gold:hover{box-shadow:0 16px 48px rgba(251,191,36,.22);}
 .mode-card.cyan{border-color:rgba(34,211,238,.3);}
 .mode-card.cyan:hover{box-shadow:0 16px 48px rgba(34,211,238,.22);}
+.mode-card.rose{border-color:rgba(251,113,133,.3);}
+.mode-card.rose:hover{box-shadow:0 16px 48px rgba(251,113,133,.22);}
 .mode-card .icon-svg{width:58px;height:58px;margin:0 auto 14px;display:block;}
+
+/* ── LONG MEMORY GAME ── */
+#screen-lm{justify-content:flex-start;}
+.lm-panel{width:100%;max-width:500px;margin:0 auto;padding:60px 20px 20px;}
+.lm-hub-card{background:var(--bg2);border:1px solid var(--border2);border-radius:16px;padding:16px;margin-bottom:14px;}
+.lm-hub-card-title{font-size:.72rem;font-weight:900;letter-spacing:.08em;color:var(--text3);text-transform:uppercase;margin-bottom:10px;}
+.lm-tier-badge{display:inline-block;font-size:.65rem;font-weight:900;padding:2px 8px;border-radius:20px;text-transform:uppercase;letter-spacing:.05em;margin-right:6px;}
+.lm-tier-1{background:rgba(134,239,172,.15);color:#86efac;}
+.lm-tier-2{background:rgba(147,197,253,.15);color:#93c5fd;}
+.lm-tier-3{background:rgba(253,186,116,.15);color:#fdba74;}
+.lm-tier-4{background:rgba(240,171,252,.15);color:#f0abfc;}
+.lm-tier-5{background:rgba(252,165,165,.15);color:#fca5a5;}
+.lm-item-text{font-size:.9rem;color:var(--text2);line-height:1.55;margin:8px 0;}
+.lm-diary-row{display:flex;align-items:flex-start;gap:10px;padding:10px 0;border-bottom:1px solid rgba(255,255,255,.05);}
+.lm-diary-row:last-child{border-bottom:none;}
+.lm-diary-content{flex:1;min-width:0;}
+.lm-diary-due{font-size:.72rem;color:var(--text3);}
+.lm-encode-box{background:var(--bg2);border:1px solid var(--purpleL);border-radius:16px;padding:22px;margin:20px 0;text-align:center;}
+.lm-encode-text{font-size:1.1rem;line-height:1.65;color:var(--text1);font-weight:600;}
+.lm-score-ring{width:90px;height:90px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1.5rem;font-weight:900;margin:0 auto 16px;border:3px solid;}
+.lm-keyword-row{display:flex;flex-wrap:wrap;gap:6px;margin:10px 0;}
+.lm-kw-hit{background:rgba(52,211,153,.18);color:#34d399;border:1px solid rgba(52,211,153,.35);border-radius:8px;padding:3px 10px;font-size:.78rem;}
+.lm-kw-miss{background:rgba(248,113,113,.12);color:#f87171;border:1px solid rgba(248,113,113,.3);border-radius:8px;padding:3px 10px;font-size:.78rem;}
+.lm-textarea{width:100%;min-height:120px;background:rgba(255,255,255,.04);border:1px solid var(--border2);border-radius:12px;color:var(--text1);font-size:.92rem;padding:12px;resize:vertical;font-family:inherit;line-height:1.5;box-sizing:border-box;}
+.lm-textarea:focus{outline:none;border-color:var(--purpleL);}
 
 /* ── DIAMOND GAME ── */
 #screen-diamond{justify-content:flex-start;}
@@ -693,6 +720,11 @@ body{background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,san
       <h2 id="diamond-mode-title">Diamond</h2>
       <p id="diamond-mode-desc">Memorize the gesture pattern — trace it back from memory</p>
     </div>
+    <div class="mode-card rose" onclick="showLmMenu()">
+      <span class="icon">🕰️</span>
+      <h2 id="lm-mode-title">Long Memory</h2>
+      <p id="lm-mode-desc">Encode today's item — recall it after 12 hours</p>
+    </div>
     <div class="mode-card gold" onclick="showMathMenu()">
       <svg class="icon-svg" viewBox="0 0 58 58" fill="none" xmlns="http://www.w3.org/2000/svg">
         <defs>
@@ -1116,6 +1148,94 @@ body{background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,san
   </div>
 </div>
 
+<!-- ══ LONG MEMORY ══ -->
+<div id="screen-lm" class="screen">
+  <button class="back-btn" onclick="goMenu()">← Menu</button>
+
+  <!-- Hub -->
+  <div id="lm-hub" class="lm-panel" style="display:none;">
+    <div style="display:flex;align-items:center;justify-content:center;gap:6px;margin-bottom:4px;">
+      <div class="section-title" id="lm-section-title">Long Memory</div>
+      <button class="info-btn" onclick="showGameInfo('lm')">ℹ</button>
+    </div>
+    <div class="section-sub" id="lm-section-sub">Encode · wait · recall</div>
+    <div class="lm-hub-card" id="lm-today-card">
+      <div class="lm-hub-card-title" id="lm-today-lbl">Today's Item</div>
+      <div id="lm-today-body"></div>
+    </div>
+    <div class="lm-hub-card" id="lm-review-card" style="display:none;">
+      <div class="lm-hub-card-title" id="lm-review-lbl">Due for Review</div>
+      <div id="lm-review-body"></div>
+    </div>
+    <div class="lm-hub-card">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+        <div class="lm-hub-card-title" id="lm-diary-lbl">My Memory Diary</div>
+        <button class="btn" style="padding:4px 12px;font-size:.78rem;" onclick="lmShowAdd()" id="lm-add-btn">+ Add</button>
+      </div>
+      <div id="lm-diary-body"></div>
+    </div>
+  </div>
+
+  <!-- Encode -->
+  <div id="lm-encode" class="lm-panel" style="display:none;">
+    <div class="section-title" id="lm-encode-title">Study This</div>
+    <div class="section-sub" id="lm-encode-sub">Read it carefully — then close your eyes</div>
+    <div id="lm-tier-row" style="text-align:center;margin:10px 0;"></div>
+    <div class="lm-encode-box">
+      <div class="lm-encode-text" id="lm-encode-text"></div>
+    </div>
+    <div style="background:var(--bg2);border-radius:12px;padding:14px;margin-bottom:20px;font-size:.82rem;color:var(--text3);line-height:1.7;">
+      <b id="lm-tips-title" style="display:block;margin-bottom:6px;color:var(--text2);">Study tips</b>
+      <span id="lm-tips-body"></span>
+    </div>
+    <button class="btn btn-primary" onclick="lmFinishEncode()" id="lm-memorized-btn" style="width:100%;padding:16px;font-size:1rem;font-weight:900;">✓ I've memorized it!</button>
+    <div style="text-align:center;margin-top:12px;font-size:.78rem;color:var(--text3);" id="lm-encode-note"></div>
+  </div>
+
+  <!-- Recall -->
+  <div id="lm-recall" class="lm-panel" style="display:none;">
+    <div class="section-title" id="lm-recall-title">Recall</div>
+    <div class="section-sub" id="lm-recall-prompt"></div>
+    <div id="lm-recall-tier-row" style="text-align:center;margin:10px 0;"></div>
+    <textarea class="lm-textarea" id="lm-recall-input" placeholder="Write what you remember…"></textarea>
+    <button class="btn btn-primary" onclick="lmSubmitRecall()" id="lm-submit-btn" style="width:100%;margin-top:14px;padding:14px;font-weight:900;">Submit</button>
+    <button class="btn" onclick="lmShowHub()" id="lm-recall-back-btn" style="width:100%;margin-top:8px;">Back</button>
+  </div>
+
+  <!-- Score -->
+  <div id="lm-score-panel" class="lm-panel" style="display:none;">
+    <div class="section-title" id="lm-score-title">Result</div>
+    <div class="lm-score-ring" id="lm-score-ring"></div>
+    <div style="text-align:center;margin-bottom:16px;">
+      <div style="font-size:1.8rem;font-weight:900;" id="lm-score-pct"></div>
+      <div style="font-size:.82rem;color:var(--text3);" id="lm-score-msg"></div>
+    </div>
+    <div class="lm-hub-card">
+      <div class="lm-hub-card-title" id="lm-kw-title">Key elements</div>
+      <div class="lm-keyword-row" id="lm-kw-row"></div>
+    </div>
+    <div class="lm-hub-card" style="margin-top:10px;">
+      <div class="lm-hub-card-title" id="lm-orig-lbl">Original text</div>
+      <div class="lm-item-text" id="lm-score-orig"></div>
+    </div>
+    <div style="text-align:center;margin:16px 0 4px;font-size:.85rem;color:var(--text3);" id="lm-next-review-lbl"></div>
+    <div style="text-align:center;margin-bottom:16px;font-size:.82rem;color:var(--purpleL);font-weight:700;" id="lm-xp-earned"></div>
+    <button class="btn btn-primary" onclick="lmShowHub()" id="lm-score-done-btn" style="width:100%;padding:14px;font-weight:900;">Done</button>
+  </div>
+
+  <!-- Add personal item -->
+  <div id="lm-add" class="lm-panel" style="display:none;">
+    <div class="section-title" id="lm-add-title">Add to Diary</div>
+    <div class="section-sub" id="lm-add-sub">Something you want to remember long-term</div>
+    <textarea class="lm-textarea" id="lm-add-input" style="min-height:100px;margin-top:16px;" placeholder="Enter text to memorize…"></textarea>
+    <div style="margin:12px 0;font-size:.82rem;color:var(--text3);" id="lm-add-note"></div>
+    <div style="display:flex;gap:10px;margin-top:4px;">
+      <button class="btn" onclick="lmShowHub()" style="flex:1;" id="lm-add-cancel">Cancel</button>
+      <button class="btn btn-primary" onclick="lmSaveNewItem()" style="flex:2;" id="lm-add-save">Save & Study →</button>
+    </div>
+  </div>
+</div>
+
 <script>
 // ═══════════════════════════════════════════════════
 // i18n
@@ -1313,6 +1433,40 @@ const STRINGS = {
     ach_dmd_first:'Diamond Debut', ach_dmd_first_d:'Complete your first Diamond pattern',
     ach_dmd_streak5:'Pattern Master', ach_dmd_streak5_d:'Get 5 correct Diamond patterns in a row',
     ach_dmd_level10:'Gestural Genius', ach_dmd_level10_d:'Reach Diamond level 10',
+    // long memory
+    lm_mode_title:'Long Memory', lm_mode_desc:'Encode today\'s item — recall it after 12 hours',
+    lm_section_title:'Long Memory', lm_section_sub:'Encode · wait · recall',
+    lm_today_lbl:'Today\'s Item', lm_review_lbl:'Due for Review', lm_diary_lbl:'My Memory Diary',
+    lm_add_btn:'+ Add',
+    lm_encode_btn:'Study now →', lm_recall_btn:'Recall now →',
+    lm_encoded:'Studied', lm_recalled_today:'Recalled today',
+    lm_recall_opens_in:(h)=>`Recall opens in ${h}h`,
+    lm_due_now:'Due now',
+    lm_next_in:(d)=>`Next review in ${d} day${d===1?'':'s'}`,
+    lm_encode_title:'Study This', lm_encode_sub:'Read it carefully — then close your eyes',
+    lm_memorized_btn:'✓ I\'ve memorized it!',
+    lm_encode_note:'Come back in 12+ hours to recall from memory',
+    lm_tips_title:'Study tips',
+    lm_tips_body:'📖 Read it aloud 3 times &nbsp;·&nbsp; 👁️ Close your eyes, repeat &nbsp;·&nbsp; 🖼️ Visualize what you read',
+    lm_recall_title:'Recall',
+    lm_recall_prompt_1:'What was the word or phrase?',
+    lm_recall_prompt_2:'Describe what you memorized as accurately as possible.',
+    lm_recall_prompt_3:'Write the key facts — include numbers and names.',
+    lm_submit_btn:'Submit', lm_recall_back:'Back',
+    lm_score_title:'Result',
+    lm_kw_title:'Key elements', lm_orig_lbl:'Original text',
+    lm_score_great:'Excellent recall!', lm_score_ok:'Good — a bit more practice needed', lm_score_try:'Keep going — review again tomorrow',
+    lm_done_btn:'Done',
+    lm_add_title:'Add to Diary', lm_add_sub:'Something you want to remember long-term',
+    lm_add_note:'Keywords are extracted automatically for scoring.',
+    lm_add_cancel:'Cancel', lm_add_save:'Save & Study →',
+    lm_diary_empty:'No personal items yet — tap + Add to start',
+    lm_tier_1:'Word', lm_tier_2:'Phrase', lm_tier_3:'Fact', lm_tier_4:'History', lm_tier_5:'Story',
+    info_lm_title:'🕰️ Long Memory',
+    info_lm_body:'<ul class="info-body-list"><li>Each day a new curated item to memorize — from a word to a short story</li><li>Study it now, come back 12+ hours later to write your recall</li><li>Score is based on key words and facts you remember</li><li>≥70% → next review in 3 days → 7 days → 14… · &lt;70% → tomorrow</li><li>Add personal diary items — facts you want to keep forever</li></ul>',
+    ach_lm_first:'Memory Keeper', ach_lm_first_d:'Complete your first Long Memory recall',
+    ach_lm_recall5:'Deep Storage', ach_lm_recall5_d:'Successfully recall 5 Long Memory items',
+    ach_lm_perfect:'Total Recall', ach_lm_perfect_d:'Score 100% on a Long Memory recall',
   },
   uk: {
     app_name:'БОТАНІК', menu_tagline:'Тренуй розум · Розвивай мозок', lang_toggle:'🇬🇧 ENG',
@@ -1505,6 +1659,40 @@ const STRINGS = {
     ach_dmd_first:'Дебют Діаманта', ach_dmd_first_d:'Успішно відтвори перший жест',
     ach_dmd_streak5:'Майстер жестів', ach_dmd_streak5_d:'5 правильних жестів підряд',
     ach_dmd_level10:'Жестовий генiй', ach_dmd_level10_d:'Досягнути 10 рівня в Діаманті',
+    // long memory
+    lm_mode_title:'Довга пам\'ять', lm_mode_desc:'Запам\'ятай сьогодні — відтвори через 12 годин',
+    lm_section_title:'Довга пам\'ять', lm_section_sub:'Запам\'ятай · почекай · відтвори',
+    lm_today_lbl:'Завдання дня', lm_review_lbl:'Час повторити', lm_diary_lbl:'Мій щоденник пам\'яті',
+    lm_add_btn:'+ Додати',
+    lm_encode_btn:'Вивчити →', lm_recall_btn:'Відтворити →',
+    lm_encoded:'Вивчено', lm_recalled_today:'Відтворено сьогодні',
+    lm_recall_opens_in:(h)=>`Відтворення відкриється через ${h} год`,
+    lm_due_now:'Час повторити',
+    lm_next_in:(d)=>`Наступне повторення через ${d} ${d===1?'день':d<5?'дні':'днів'}`,
+    lm_encode_title:'Вивчи це', lm_encode_sub:'Читай уважно — потім закрий очі',
+    lm_memorized_btn:'✓ Я запам\'ятав(ла)!',
+    lm_encode_note:'Повертайся через 12+ годин щоб відтворити по пам\'яті',
+    lm_tips_title:'Поради',
+    lm_tips_body:'📖 Читай вголос 3 рази &nbsp;·&nbsp; 👁️ Закрий очі, повтори &nbsp;·&nbsp; 🖼️ Уяви прочитане',
+    lm_recall_title:'Відтворення',
+    lm_recall_prompt_1:'Яке було слово або фраза?',
+    lm_recall_prompt_2:'Опиши якомога точніше те, що запам\'ятав(ла).',
+    lm_recall_prompt_3:'Запиши ключові факти — включай числа та імена.',
+    lm_submit_btn:'Перевірити', lm_recall_back:'Назад',
+    lm_score_title:'Результат',
+    lm_kw_title:'Ключові елементи', lm_orig_lbl:'Оригінальний текст',
+    lm_score_great:'Чудова пам\'ять!', lm_score_ok:'Непогано — ще трохи практики', lm_score_try:'Продовжуй — повторення завтра',
+    lm_done_btn:'Готово',
+    lm_add_title:'Додати до щоденника', lm_add_sub:'Щось, що хочеш запам\'ятати надовго',
+    lm_add_note:'Ключові слова визначаються автоматично для оцінювання.',
+    lm_add_cancel:'Скасувати', lm_add_save:'Зберегти та вивчити →',
+    lm_diary_empty:'Особистих записів ще немає — натисни + Додати',
+    lm_tier_1:'Слово', lm_tier_2:'Фраза', lm_tier_3:'Факт', lm_tier_4:'Історія', lm_tier_5:'Оповідання',
+    info_lm_title:'🕰️ Довга пам\'ять',
+    info_lm_body:'<ul class="info-body-list"><li>Щодня новий об\'єкт для запам\'ятовування — від слова до оповідання</li><li>Вивчи зараз, повернись через 12+ годин щоб відтворити</li><li>Оцінка базується на ключових словах і фактах, які ти пам\'ятаєш</li><li>≥70% → повторення через 3 дні → 7 → 14… · &lt;70% → завтра</li><li>Додавай особисті записи — факти, які хочеш зберегти назавжди</li></ul>',
+    ach_lm_first:'Охоронець пам\'яті', ach_lm_first_d:'Завершити перше відтворення Довгої пам\'яті',
+    ach_lm_recall5:'Глибоке сховище', ach_lm_recall5_d:'Успішно відтворити 5 об\'єктів Довгої пам\'яті',
+    ach_lm_perfect:'Фотографічна пам\'ять', ach_lm_perfect_d:'Отримати 100% у відтворенні Довгої пам\'яті',
   },
 };
 function t(key, ...args) {
@@ -3964,7 +4152,7 @@ function dmdSave(o) {
 const dmdState = {
   phase: 'idle', cfg: null, pattern: [], userPat: [],
   adaptLevel: 0, streak: 0, roundsPlayed: 0, roundsCorrect: 0,
-  showStart: 0, progressTimer: null, animTimer: null,
+  showStart: 0, progressTimer: null, animTimer: null, animRaf: null,
 };
 
 function dmdCfg(l) { return DIAMOND_LEVELS[Math.min(l, DIAMOND_LEVELS.length - 1)]; }
@@ -3996,7 +4184,7 @@ function dmdGenPattern(grid, len) {
   return pat;
 }
 
-function dmdDraw(canvas, revealPat, userPat, phase, wrongAt) {
+function dmdDraw(canvas, revealPat, userPat, phase, wrongAt, cursorXY) {
   const ctx = canvas.getContext('2d');
   const cw = canvas.width, ch = canvas.height;
   const grid = dmdState.cfg.grid;
@@ -4053,6 +4241,20 @@ function dmdDraw(canvas, revealPat, userPat, phase, wrongAt) {
 
   if (revealPat.length > 1) drawPath(revealPat, 'rgba(124,58,237,.65)', 1, r * 0.38);
   if (userPat.length > 1) drawPath(userPat, wrongAt !== undefined ? 'rgba(239,68,68,.65)' : 'rgba(52,211,153,.65)', 1, r * 0.38);
+  // live drag cursor trail
+  if (cursorXY && userPat.length > 0 && phase === 'recall') {
+    const rect = canvas.getBoundingClientRect();
+    const scX = canvas.width / rect.width, scY = canvas.height / rect.height;
+    const cx = (cursorXY[0] - rect.left) * scX;
+    const cy = (cursorXY[1] - rect.top)  * scY;
+    const lp = dmdPos(userPat[userPat.length - 1], grid, cw, ch);
+    ctx.save();
+    ctx.strokeStyle = 'rgba(52,211,153,.35)';
+    ctx.lineWidth = r * 0.28; ctx.lineCap = 'round';
+    ctx.setLineDash([r * 0.5, r * 0.5]);
+    ctx.beginPath(); ctx.moveTo(lp.x, lp.y); ctx.lineTo(cx, cy);
+    ctx.stroke(); ctx.restore();
+  }
 }
 
 function showDiamondMenu() {
@@ -4095,13 +4297,17 @@ function diamondStart() {
   canvas.style.width = canvas.style.height = canvas.width + 'px';
 
   canvas.onclick = null; canvas.ontouchstart = null;
-  canvas.addEventListener('click', dmdCanvasClick);
-  canvas.addEventListener('touchstart', dmdCanvasTouchStart, {passive: false});
+  canvas.onpointerdown = null; canvas.onpointermove = null; canvas.onpointerup = null;
+  canvas.style.touchAction = 'none';
+  canvas.onpointerdown = dmdPointerDown;
+  canvas.onpointermove = dmdPointerMove;
+  canvas.onpointerup = canvas.onpointercancel = dmdPointerEnd;
 
   diamondNewRound();
 }
 
 function diamondNewRound() {
+  if (dmdState.animRaf) { cancelAnimationFrame(dmdState.animRaf); dmdState.animRaf = null; }
   if (dmdState.animTimer) clearTimeout(dmdState.animTimer);
   if (dmdState.progressTimer) clearInterval(dmdState.progressTimer);
   const cfg = dmdCfg(dmdState.adaptLevel);
@@ -4132,9 +4338,7 @@ function diamondNewRound() {
     dmdState.phase = 'show';
     phaseLbl.textContent = t('diamond_phase_show');
     hint.textContent = t('diamond_hint_show');
-    dmdDraw(canvas, dmdState.pattern, [], 'show');
-    dmdStartProgressBar(cfg.showMs);
-    dmdState.animTimer = setTimeout(diamondRecallPhase, cfg.showMs);
+    dmdAnimateShow(canvas, cfg);
   }, 700);
 }
 
@@ -4178,20 +4382,107 @@ function dmdGetDot(clientX, clientY) {
   return -1;
 }
 
-function dmdCanvasClick(e) {
+function dmdPointerDown(e) {
   if (dmdState.phase !== 'recall') return;
+  this.setPointerCapture(e.pointerId);
   const dot = dmdGetDot(e.clientX, e.clientY);
-  if (dot < 0 || dmdState.userPat.includes(dot)) return;
-  dmdTapDot(dot);
+  if (dot >= 0 && !dmdState.userPat.includes(dot)) dmdTapDot(dot);
+  dmdRedrawRecall(e.clientX, e.clientY);
 }
 
-function dmdCanvasTouchStart(e) {
-  if (dmdState.phase !== 'recall') return;
-  e.preventDefault();
-  const t0 = e.touches[0];
-  const dot = dmdGetDot(t0.clientX, t0.clientY);
-  if (dot < 0 || dmdState.userPat.includes(dot)) return;
-  dmdTapDot(dot);
+function dmdPointerMove(e) {
+  if (dmdState.phase !== 'recall' || !(e.buttons & 1) || e.pressure === 0) return;
+  const dot = dmdGetDot(e.clientX, e.clientY);
+  if (dot >= 0 && !dmdState.userPat.includes(dot)) dmdTapDot(dot);
+  else dmdRedrawRecall(e.clientX, e.clientY);
+}
+
+function dmdPointerEnd(e) {
+  dmdRedrawRecall();
+}
+
+function dmdRedrawRecall(curX, curY) {
+  const canvas = document.getElementById('diamond-canvas');
+  if (!canvas || dmdState.phase !== 'recall') return;
+  dmdDraw(canvas, [], dmdState.userPat, 'recall', undefined,
+          curX !== undefined ? [curX, curY] : null);
+}
+
+function dmdAnimateShow(canvas, cfg) {
+  const pat = dmdState.pattern;
+  const n = pat.length;
+  if (n <= 1) {
+    dmdDraw(canvas, pat, [], 'show');
+    dmdStartProgressBar(cfg.showMs);
+    dmdState.animTimer = setTimeout(diamondRecallPhase, cfg.showMs);
+    return;
+  }
+  // Each segment draws in segMs; total anim capped so longer patterns don't take forever
+  const segMs = Math.min(400, 2600 / (n - 1));
+  const totalMs = segMs * (n - 1);
+  let startTs = null;
+  const tick = (ts) => {
+    if (!startTs) startTs = ts;
+    const elapsed = Math.min(totalMs, ts - startTs);
+    const rawSeg  = elapsed / segMs;
+    const compSegs = Math.min(n - 2, Math.floor(rawSeg));
+    const segProg  = rawSeg - compSegs;
+    const grid = cfg.grid, r = dmdR(grid);
+    const cw = canvas.width, ch = canvas.height;
+    const ctx = canvas.getContext('2d');
+    const total = grid * grid;
+    ctx.clearRect(0, 0, cw, ch);
+    // dots
+    for (let i = 0; i < total; i++) {
+      const {x, y} = dmdPos(i, grid, cw, ch);
+      const pi = pat.indexOf(i);
+      const done = pi >= 0 && pi <= compSegs;
+      const cur  = pi === compSegs + 1;
+      const a = cur ? Math.min(1, segProg * 1.8) : 1;
+      ctx.save();
+      ctx.beginPath(); ctx.arc(x, y, r * 1.7, 0, Math.PI * 2);
+      ctx.globalAlpha = (done || cur) ? a : 1;
+      ctx.fillStyle = done ? 'rgba(124,58,237,.12)' : 'rgba(255,255,255,.04)';
+      ctx.fill();
+      ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2);
+      if (done || cur) { ctx.fillStyle = 'rgba(124,58,237,.85)'; ctx.shadowColor = '#a855f7'; ctx.shadowBlur = 14; }
+      else { ctx.fillStyle = 'rgba(255,255,255,.18)'; }
+      ctx.fill(); ctx.restore();
+      if ((done || cur) && pi >= 0) {
+        ctx.save(); ctx.globalAlpha = cur ? a : 1;
+        ctx.fillStyle = '#fff';
+        ctx.font = `900 ${Math.max(9, Math.round(r * 0.78))}px system-ui,sans-serif`;
+        ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+        ctx.fillText(pi + 1, x, y); ctx.restore();
+      }
+    }
+    // completed segments
+    for (let s = 0; s < compSegs; s++) {
+      const p1 = dmdPos(pat[s], grid, cw, ch), p2 = dmdPos(pat[s+1], grid, cw, ch);
+      ctx.save(); ctx.strokeStyle = 'rgba(124,58,237,.65)';
+      ctx.lineWidth = r * 0.38; ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+      ctx.beginPath(); ctx.moveTo(p1.x, p1.y); ctx.lineTo(p2.x, p2.y); ctx.stroke(); ctx.restore();
+    }
+    // current partial segment (ease-in-out)
+    if (compSegs < n - 1 && segProg > 0) {
+      const p1 = dmdPos(pat[compSegs], grid, cw, ch), p2 = dmdPos(pat[compSegs+1], grid, cw, ch);
+      const ep = segProg < 0.5 ? 2*segProg*segProg : 1 - Math.pow(-2*segProg+2, 2)/2;
+      ctx.save(); ctx.strokeStyle = 'rgba(124,58,237,.65)';
+      ctx.lineWidth = r * 0.38; ctx.lineCap = 'round';
+      ctx.beginPath(); ctx.moveTo(p1.x, p1.y);
+      ctx.lineTo(p1.x + (p2.x-p1.x)*ep, p1.y + (p2.y-p1.y)*ep);
+      ctx.stroke(); ctx.restore();
+    }
+    if (elapsed < totalMs) {
+      dmdState.animRaf = requestAnimationFrame(tick);
+    } else {
+      dmdState.animRaf = null;
+      dmdDraw(canvas, pat, [], 'show');
+      dmdStartProgressBar(cfg.showMs);
+      dmdState.animTimer = setTimeout(diamondRecallPhase, cfg.showMs);
+    }
+  };
+  dmdState.animRaf = requestAnimationFrame(tick);
 }
 
 function dmdTapDot(dot) {
@@ -4293,6 +4584,391 @@ function diamondGoSelect() {
 }
 
 // ═══════════════════════════════════════════════════
+// LONG MEMORY GAME
+// ═══════════════════════════════════════════════════
+const LM_ITEMS = [
+  // Tier 1 — word + definition
+  {tier:1,
+   en:{text:'Petrichor: the scent of earth after rain',check:['petrichor','scent','rain']},
+   uk:{text:'Петрикор: запах землі після дощу',check:['петрикор','запах','дощу']}},
+  {tier:1,
+   en:{text:'Sonder: the realization that every stranger has a life as vivid and complex as your own',check:['sonder','stranger','vivid']},
+   uk:{text:'Зондер: усвідомлення того, що кожен незнайомець має таке ж яскраве внутрішнє життя, як і твоє',check:['зондер','незнайомець','яскраве']}},
+  {tier:1,
+   en:{text:'Hiraeth: a Welsh longing for a home that may never have existed',check:['hiraeth','welsh','longing','home']},
+   uk:{text:'Гіраїт: валлійська туга за домом, якого, можливо, ніколи не існувало',check:['гіраїт','валлійська','туга','домом']}},
+  {tier:1,
+   en:{text:'Phosphene: the light you see when you press your closed eyes',check:['phosphene','light','eyes']},
+   uk:{text:'Фосфен: світло, яке ти бачиш коли натискаєш на заплющені очі',check:['фосфен','світло','очі']}},
+  // Tier 2 — phrases
+  {tier:2,
+   en:{text:'Three cats sat on a cold stone wall at midnight, watching fog drift in from the sea.',check:['three','cats','stone','midnight','fog','sea']},
+   uk:{text:'Три коти сиділи на холодному кам\'яному паркані опівночі, спостерігаючи як туман плив з моря.',check:['три','коти','кам\'яному','опівночі','туман','моря']}},
+  {tier:2,
+   en:{text:'The last train left at 11:47, heading south. It carried exactly one passenger.',check:['train','11:47','south','one passenger']},
+   uk:{text:'Останній потяг відправився о 11:47, на південь. У ньому їхав рівно один пасажир.',check:['потяг','11:47','південь','один пасажир']}},
+  {tier:2,
+   en:{text:'A blue kite got tangled in the oak tree at the corner of Maple and Fifth Street.',check:['blue','kite','oak','maple','fifth']},
+   uk:{text:'Блакитний змій заплутався у дубі на розі вулиць Кленової та П\'ятої.',check:['блакитний','змій','дуб','кленов','п\'ятої']}},
+  {tier:2,
+   en:{text:'She kept a green notebook on the left side of her desk, filled only with Tuesday\'s thoughts.',check:['green','notebook','left','desk','tuesday']},
+   uk:{text:'Вона тримала зелений зошит зліва на столі, заповнений думками по вівторках.',check:['зелений','зошит','зліва','столі','вівторк']}},
+  // Tier 3 — fact with number
+  {tier:3,
+   en:{text:'A blue whale\'s tongue alone weighs 2.7 tonnes — heavier than most family cars.',check:['whale','tongue','2.7','tonnes']},
+   uk:{text:'Тільки язик синього кита важить 2,7 тонни — більше, ніж більшість легкових автомобілів.',check:['кит','язик','2,7','тонни']}},
+  {tier:3,
+   en:{text:'Honey never spoils. Archaeologists found 3,000-year-old honey in Egyptian tombs — and it was still edible.',check:['honey','3,000','egyptian','edible']},
+   uk:{text:'Мед не псується. Археологи знайшли 3000-річний мед у єгипетських гробницях — він досі їстівний.',check:['мед','3000','єгипетськ','їстівн']}},
+  {tier:3,
+   en:{text:'Sunlight takes exactly 8 minutes and 20 seconds to travel from the Sun to Earth.',check:['sunlight','8 minutes','20 seconds']},
+   uk:{text:'Світло від Сонця до Землі летить рівно 8 хвилин і 20 секунд.',check:['8 хвилин','20 секунд']}},
+  {tier:3,
+   en:{text:'Cleopatra lived closer in time to the Moon landing (1969) than to the Great Pyramid\'s construction (2560 BC).',check:['cleopatra','1969','2560']},
+   uk:{text:'Клеопатра жила ближче в часі до висадки на Місяць (1969) ніж до будівництва піраміди Хеопса (2560 до н.е.).',check:['клеопатра','1969','2560']}},
+  // Tier 4 — historical fact with date
+  {tier:4,
+   en:{text:'The Eiffel Tower opened on March 31, 1889, taking 2 years, 2 months, and 5 days to build.',check:['eiffel','march 31','1889','2 years','2 months','5 days']},
+   uk:{text:'Ейфелева вежа відкрилась 31 березня 1889 року. Будівництво тривало 2 роки, 2 місяці та 5 днів.',check:['ейфелева','1889','2 роки','2 місяці','5 днів']}},
+  {tier:4,
+   en:{text:'The first email was sent in 1971 by Ray Tomlinson. The message read: "QWERTYUIOP".',check:['email','1971','tomlinson','qwertyuiop']},
+   uk:{text:'Перший електронний лист надіслав Рей Томлінсон у 1971 році. Текст повідомлення: «QWERTYUIOP».',check:['1971','томлінсон','qwertyuiop']}},
+  {tier:4,
+   en:{text:'The Wright Brothers\' first flight on December 17, 1903 lasted 12 seconds and covered 36 meters.',check:['wright','1903','12 seconds','36 meters']},
+   uk:{text:'Перший політ братів Райт 17 грудня 1903 року тривав 12 секунд і покрив 36 метрів.',check:['райт','1903','12 секунд','36 метрів']}},
+  {tier:4,
+   en:{text:'Mozart composed his first symphony at age 8. He wrote 41 symphonies in total before dying at 35.',check:['mozart','age 8','41 symphonies','35']},
+   uk:{text:'Моцарт написав першу симфонію у 8 років. До смерті у 35 він створив 41 симфонію.',check:['моцарт','8 років','41 симфонію','35']}},
+  // Tier 5 — short story with details
+  {tier:5,
+   en:{text:'Anna left her red umbrella on seat 14B of the 7:30 train to Kyiv. A boy named Mykola kept it for exactly 3 days before returning it to the station lost-and-found.',check:['anna','red','14b','7:30','mykola','3 days']},
+   uk:{text:'Анна забула червону парасольку на місці 14B потяга 7:30 до Києва. Хлопець на ім\'я Микола тримав її рівно 3 дні, а потім здав до бюро знахідок.',check:['анна','червону','14b','7:30','микола','3 дні']}},
+  {tier:5,
+   en:{text:'The café on Franko Street opened in 1967. It serves 43 types of coffee and closes only on Christmas Day. The original espresso machine is still in use.',check:['franko','1967','43','christmas','espresso']},
+   uk:{text:'Кафе на вулиці Франка відкрилося у 1967 році. Воно подає 43 види кави і зачиняється лише на Різдво. Оригінальна кавова машина досі в роботі.',check:['франка','1967','43','різдво','кавова']}},
+  {tier:5,
+   en:{text:'The library had 11,247 books, but only one was checked out every day — the same detective novel, always returned by morning. Nobody knew who took it.',check:['11,247','detective','morning','nobody']},
+   uk:{text:'У бібліотеці було 11 247 книг, але щодня видавалася лише одна — той самий детективний роман, завжди повернений до ранку. Ніхто не знав, хто його брав.',check:['11 247','детективний','ранку','ніхто']}},
+  {tier:5,
+   en:{text:'The message in the bottle was written on a Tuesday in July 1987. It was found 27 years later, 3,400 km away, by a fisherman named Thomas who had never learned to swim.',check:['tuesday','1987','27 years','3,400','thomas','swim']},
+   uk:{text:'Записка у пляшці була написана у вівторок у липні 1987 року. Її знайшли 27 років по тому, за 3 400 км, рибалка на ім\'я Томас, який ніколи не вчився плавати.',check:['вівторок','1987','27 років','3 400','томас','плавати']}},
+];
+
+function lmDailyIdx() {
+  const d = new Date();
+  return (d.getFullYear() * 366 + d.getMonth() * 31 + d.getDate()) % LM_ITEMS.length;
+}
+function lmLoadData() {
+  try { return JSON.parse(localStorage.getItem('membrain_lm') || '{"items":[]}'); } catch { return {items:[]}; }
+}
+function lmSaveData(data) {
+  try { localStorage.setItem('membrain_lm', JSON.stringify(data)); } catch {}
+}
+function lmNow() { return Date.now(); }
+function lmTodayStr() {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+}
+function lmHoursAgo(ts) { return (lmNow() - ts) / 3600000; }
+function lmDaysUntil(tsMs) { const diff = tsMs - lmNow(); return diff <= 0 ? 0 : Math.ceil(diff / 86400000); }
+
+function lmItemText(item) {
+  const src = item.itemIdx !== undefined ? LM_ITEMS[item.itemIdx] : null;
+  if (src) return src[lang]?.text || src.en.text;
+  return item.customText || '';
+}
+function lmItemCheck(item) {
+  const src = item.itemIdx !== undefined ? LM_ITEMS[item.itemIdx] : null;
+  if (src) return src[lang]?.check || src.en.check;
+  return item.customCheck || [];
+}
+function lmItemTier(item) {
+  const src = item.itemIdx !== undefined ? LM_ITEMS[item.itemIdx] : null;
+  return src ? src.tier : (item.tier || 3);
+}
+
+let lmActiveItem = null;
+
+function showLmMenu() { lmShowHub(); showScreen('screen-lm'); }
+
+function lmShowHub() {
+  ['lm-hub','lm-encode','lm-recall','lm-score-panel','lm-add'].forEach(id => {
+    document.getElementById(id).style.display = id === 'lm-hub' ? '' : 'none';
+  });
+  document.getElementById('lm-section-title').textContent = t('lm_section_title');
+  document.getElementById('lm-section-sub').textContent = t('lm_section_sub');
+  document.getElementById('lm-today-lbl').textContent = t('lm_today_lbl');
+  document.getElementById('lm-review-lbl').textContent = t('lm_review_lbl');
+  document.getElementById('lm-diary-lbl').textContent = t('lm_diary_lbl');
+  document.getElementById('lm-add-btn').textContent = t('lm_add_btn');
+  lmRenderToday();
+  lmRenderReview();
+  lmRenderDiary();
+}
+
+function lmTierBadge(tier) {
+  return `<span class="lm-tier-badge lm-tier-${tier}">${t('lm_tier_'+tier)}</span>`;
+}
+
+function lmRenderToday() {
+  const data = lmLoadData();
+  const idx = lmDailyIdx();
+  const item = LM_ITEMS[idx];
+  const text = item[lang]?.text || item.en.text;
+  const rec = data.items.find(it => it.type === 'daily' && it.itemIdx === idx);
+  const el = document.getElementById('lm-today-body');
+  let html = lmTierBadge(item.tier);
+  const preview = text.length > 90 ? text.slice(0,90)+'…' : text;
+  html += `<div class="lm-item-text">${preview}</div>`;
+  if (!rec) {
+    html += `<button class="btn btn-primary" onclick="lmStartEncodeDaily(${idx})" style="width:100%;margin-top:10px;">${t('lm_encode_btn')}</button>`;
+  } else if (rec.encodedAt && !rec.recalled) {
+    const h = lmHoursAgo(rec.encodedAt);
+    if (h < 12) {
+      const rem = Math.ceil(12 - h);
+      html += `<div style="margin-top:8px;font-size:.82rem;color:var(--text3);">✓ ${t('lm_encoded')} · ${t('lm_recall_opens_in', rem)}</div>`;
+    } else {
+      html += `<button class="btn btn-primary" onclick="lmStartRecallById('${rec.id}')" style="width:100%;margin-top:10px;">${t('lm_recall_btn')}</button>`;
+    }
+  } else if (rec.recalled) {
+    const today = lmTodayStr();
+    const sc = rec.history?.length ? Math.round(rec.history[rec.history.length-1].score) : 0;
+    if (rec.lastRecallDate === today) {
+      html += `<div style="margin-top:8px;font-size:.82rem;color:var(--text3);">✓ ${t('lm_recalled_today')} · ${sc}%</div>`;
+    }
+    if (rec.nextReviewAt && lmDaysUntil(rec.nextReviewAt) > 0) {
+      html += `<div style="font-size:.78rem;color:var(--text3);">${t('lm_next_in', lmDaysUntil(rec.nextReviewAt))}</div>`;
+    } else if (rec.nextReviewAt && lmDaysUntil(rec.nextReviewAt) <= 0) {
+      html += `<button class="btn btn-primary" onclick="lmStartRecallById('${rec.id}')" style="width:100%;margin-top:10px;">${t('lm_recall_btn')}</button>`;
+    }
+  }
+  el.innerHTML = html;
+}
+
+function lmRenderReview() {
+  const data = lmLoadData();
+  const now = lmNow();
+  const today = lmTodayStr();
+  const due = data.items.filter(it => it.recalled && it.nextReviewAt && it.nextReviewAt <= now && it.lastRecallDate !== today);
+  const card = document.getElementById('lm-review-card');
+  if (!due.length) { card.style.display = 'none'; return; }
+  card.style.display = '';
+  const el = document.getElementById('lm-review-body');
+  el.innerHTML = due.map(it => {
+    const text = lmItemText(it);
+    const preview = text.length > 60 ? text.slice(0,60)+'…' : text;
+    return `<div class="lm-diary-row">
+      <div class="lm-diary-content">
+        ${lmTierBadge(lmItemTier(it))}<span class="lm-diary-due">${t('lm_due_now')}</span>
+        <div class="lm-item-text" style="margin:4px 0 6px;">${preview}</div>
+        <button class="btn btn-primary" onclick="lmStartRecallById('${it.id}')" style="padding:6px 16px;font-size:.8rem;">${t('lm_recall_btn')}</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function lmRenderDiary() {
+  const data = lmLoadData();
+  const personal = data.items.filter(it => it.type === 'personal');
+  const el = document.getElementById('lm-diary-body');
+  if (!personal.length) {
+    el.innerHTML = `<div style="font-size:.82rem;color:var(--text3);padding:6px 0;">${t('lm_diary_empty')}</div>`;
+    return;
+  }
+  const now = lmNow();
+  el.innerHTML = personal.map(it => {
+    const text = lmItemText(it);
+    const preview = text.length > 60 ? text.slice(0,60)+'…' : text;
+    let statusHtml = '';
+    if (!it.encodedAt) {
+      statusHtml = `<button class="btn" onclick="lmStartEncodeById('${it.id}')" style="padding:4px 12px;font-size:.78rem;">${t('lm_encode_btn')}</button>`;
+    } else if (!it.recalled) {
+      const h = lmHoursAgo(it.encodedAt);
+      if (h < 12) {
+        statusHtml = `<span class="lm-diary-due">${t('lm_recall_opens_in', Math.ceil(12-h))}</span>`;
+      } else {
+        statusHtml = `<button class="btn btn-primary" onclick="lmStartRecallById('${it.id}')" style="padding:4px 12px;font-size:.78rem;">${t('lm_recall_btn')}</button>`;
+      }
+    } else if (it.nextReviewAt && it.nextReviewAt <= now) {
+      statusHtml = `<button class="btn btn-primary" onclick="lmStartRecallById('${it.id}')" style="padding:4px 12px;font-size:.78rem;">${t('lm_recall_btn')}</button>`;
+    } else {
+      const sc = it.history?.length ? Math.round(it.history[it.history.length-1].score) : 0;
+      const d = lmDaysUntil(it.nextReviewAt);
+      statusHtml = `<span class="lm-diary-due">${sc}% · ${t('lm_next_in', d)}</span>`;
+    }
+    return `<div class="lm-diary-row">
+      <div class="lm-diary-content">
+        ${lmTierBadge(lmItemTier(it))}
+        <div class="lm-item-text" style="margin:4px 0 6px;">${preview}</div>
+        ${statusHtml}
+      </div>
+      <button class="btn" onclick="lmDeleteItem('${it.id}')" style="padding:4px 8px;font-size:.75rem;flex-shrink:0;">✕</button>
+    </div>`;
+  }).join('');
+}
+
+function lmStartEncodeDaily(idx) {
+  const data = lmLoadData();
+  let rec = data.items.find(it => it.type === 'daily' && it.itemIdx === idx);
+  if (!rec) {
+    rec = {id:'daily_'+idx, type:'daily', itemIdx:idx, encodedAt:null, recalled:false, nextReviewAt:null, intervalDays:1, history:[]};
+    data.items.push(rec);
+    lmSaveData(data);
+  }
+  lmActiveItem = rec;
+  lmShowEncodeScreen();
+}
+
+function lmStartEncodeById(id) {
+  const data = lmLoadData();
+  lmActiveItem = data.items.find(it => it.id === id) || null;
+  if (lmActiveItem) lmShowEncodeScreen();
+}
+
+function lmShowEncodeScreen() {
+  if (!lmActiveItem) return;
+  ['lm-hub','lm-encode','lm-recall','lm-score-panel','lm-add'].forEach(id => {
+    document.getElementById(id).style.display = id === 'lm-encode' ? '' : 'none';
+  });
+  document.getElementById('lm-encode-title').textContent = t('lm_encode_title');
+  document.getElementById('lm-encode-sub').textContent = t('lm_encode_sub');
+  document.getElementById('lm-tier-row').innerHTML = lmTierBadge(lmItemTier(lmActiveItem));
+  document.getElementById('lm-encode-text').textContent = lmItemText(lmActiveItem);
+  document.getElementById('lm-tips-title').textContent = t('lm_tips_title');
+  document.getElementById('lm-tips-body').innerHTML = t('lm_tips_body');
+  document.getElementById('lm-memorized-btn').textContent = t('lm_memorized_btn');
+  document.getElementById('lm-encode-note').textContent = t('lm_encode_note');
+}
+
+function lmFinishEncode() {
+  if (!lmActiveItem) return;
+  const data = lmLoadData();
+  const rec = data.items.find(it => it.id === lmActiveItem.id);
+  if (rec) rec.encodedAt = lmNow();
+  lmSaveData(data);
+  lmActiveItem = rec;
+  lmShowHub();
+}
+
+function lmStartRecallById(id) {
+  const data = lmLoadData();
+  lmActiveItem = data.items.find(it => it.id === id) || null;
+  if (lmActiveItem) lmShowRecallScreen();
+}
+
+function lmShowRecallScreen() {
+  if (!lmActiveItem) return;
+  const tier = lmItemTier(lmActiveItem);
+  ['lm-hub','lm-encode','lm-recall','lm-score-panel','lm-add'].forEach(id => {
+    document.getElementById(id).style.display = id === 'lm-recall' ? '' : 'none';
+  });
+  document.getElementById('lm-recall-title').textContent = t('lm_recall_title');
+  document.getElementById('lm-recall-prompt').textContent = t('lm_recall_prompt_' + Math.min(tier, 3));
+  document.getElementById('lm-recall-tier-row').innerHTML = lmTierBadge(tier);
+  document.getElementById('lm-recall-input').value = '';
+  document.getElementById('lm-submit-btn').textContent = t('lm_submit_btn');
+  document.getElementById('lm-recall-back-btn').textContent = t('lm_recall_back');
+  setTimeout(() => document.getElementById('lm-recall-input').focus(), 100);
+}
+
+function lmScore(userText, checkWords) {
+  const lower = userText.toLowerCase();
+  let matched = 0;
+  for (const kw of checkWords) { if (lower.includes(kw.toLowerCase())) matched++; }
+  return checkWords.length > 0 ? Math.round(matched / checkWords.length * 100) : 0;
+}
+
+function lmSubmitRecall() {
+  const userText = document.getElementById('lm-recall-input').value.trim();
+  if (!userText || !lmActiveItem) return;
+  const checkWords = lmItemCheck(lmActiveItem);
+  const score = lmScore(userText, checkWords);
+  const data = lmLoadData();
+  const rec = data.items.find(it => it.id === lmActiveItem.id);
+  if (rec) {
+    rec.recalled = true;
+    rec.lastRecallDate = lmTodayStr();
+    if (!rec.history) rec.history = [];
+    rec.history.push({date:lmTodayStr(), score});
+    if (score >= 70) {
+      rec.intervalDays = Math.min(Math.max((rec.intervalDays||1) * 2, 3), 60);
+    } else {
+      rec.intervalDays = 1;
+    }
+    rec.nextReviewAt = lmNow() + rec.intervalDays * 86400000;
+  }
+  lmSaveData(data);
+  lmActiveItem = data.items.find(it => it.id === lmActiveItem.id);
+  const xp = score >= 70 ? 20 : score >= 50 ? 10 : 5;
+  addXp(xp, t('lm_section_title'));
+  const allRecalled = data.items.filter(it => it.recalled);
+  checkAchievements(['lm_first']);
+  if (allRecalled.length >= 5) checkAchievements(['lm_recall5']);
+  if (score === 100) checkAchievements(['lm_perfect']);
+  lmShowScoreScreen(userText, score, checkWords, xp);
+}
+
+function lmShowScoreScreen(userText, score, checkWords, xp) {
+  ['lm-hub','lm-encode','lm-recall','lm-score-panel','lm-add'].forEach(id => {
+    document.getElementById(id).style.display = id === 'lm-score-panel' ? '' : 'none';
+  });
+  document.getElementById('lm-score-title').textContent = t('lm_score_title');
+  document.getElementById('lm-kw-title').textContent = t('lm_kw_title');
+  document.getElementById('lm-orig-lbl').textContent = t('lm_orig_lbl');
+  document.getElementById('lm-score-done-btn').textContent = t('lm_done_btn');
+  document.getElementById('lm-score-orig').textContent = lmItemText(lmActiveItem);
+  const color = score >= 70 ? '#34d399' : score >= 50 ? '#fbbf24' : '#f87171';
+  const ring = document.getElementById('lm-score-ring');
+  ring.style.borderColor = color; ring.style.color = color;
+  ring.textContent = score >= 70 ? '✓' : score >= 50 ? '~' : '✗';
+  document.getElementById('lm-score-pct').textContent = score + '%';
+  document.getElementById('lm-score-msg').textContent = score >= 80 ? t('lm_score_great') : score >= 55 ? t('lm_score_ok') : t('lm_score_try');
+  const lower = userText.toLowerCase();
+  document.getElementById('lm-kw-row').innerHTML = checkWords.map(kw => {
+    const hit = lower.includes(kw.toLowerCase());
+    return `<span class="${hit?'lm-kw-hit':'lm-kw-miss'}">${hit?'✓':'✗'} ${kw}</span>`;
+  }).join('');
+  const days = lmActiveItem?.intervalDays || 1;
+  document.getElementById('lm-next-review-lbl').textContent = t('lm_next_in', days);
+  document.getElementById('lm-xp-earned').textContent = '+' + xp + ' XP';
+}
+
+function lmShowAdd() {
+  ['lm-hub','lm-encode','lm-recall','lm-score-panel','lm-add'].forEach(id => {
+    document.getElementById(id).style.display = id === 'lm-add' ? '' : 'none';
+  });
+  document.getElementById('lm-add-title').textContent = t('lm_add_title');
+  document.getElementById('lm-add-sub').textContent = t('lm_add_sub');
+  document.getElementById('lm-add-note').textContent = t('lm_add_note');
+  document.getElementById('lm-add-cancel').textContent = t('lm_add_cancel');
+  document.getElementById('lm-add-save').textContent = t('lm_add_save');
+  document.getElementById('lm-add-input').value = '';
+  setTimeout(() => document.getElementById('lm-add-input').focus(), 100);
+}
+
+function lmSaveNewItem() {
+  const text = document.getElementById('lm-add-input').value.trim();
+  if (!text) return;
+  const words = text.split(/\s+/).filter(w => w.length > 3);
+  const checkWords = [...new Set(words)].slice(0, 6);
+  const tier = text.length < 30 ? 1 : text.length < 80 ? 2 : text.length < 200 ? 3 : 4;
+  const id = 'personal_' + Date.now();
+  const rec = {id, type:'personal', customText:text, customCheck:checkWords, tier, encodedAt:null, recalled:false, nextReviewAt:null, intervalDays:1, history:[]};
+  const data = lmLoadData();
+  data.items.push(rec);
+  lmSaveData(data);
+  lmActiveItem = rec;
+  lmShowEncodeScreen();
+}
+
+function lmDeleteItem(id) {
+  const data = lmLoadData();
+  data.items = data.items.filter(it => it.id !== id);
+  lmSaveData(data);
+  lmRenderDiary();
+}
+
+// ═══════════════════════════════════════════════════
 // ACHIEVEMENTS
 // ═══════════════════════════════════════════════════
 const ACHIEVEMENTS = [
@@ -4322,6 +4998,9 @@ const ACHIEVEMENTS = [
   {id:'dmd_first',  em:'💎', nk:'ach_dmd_first',  dk:'ach_dmd_first_d'},
   {id:'dmd_streak5',em:'🔮', nk:'ach_dmd_streak5',dk:'ach_dmd_streak5_d'},
   {id:'dmd_level10',em:'🧿', nk:'ach_dmd_level10',dk:'ach_dmd_level10_d'},
+  {id:'lm_first',   em:'🕰️', nk:'ach_lm_first',   dk:'ach_lm_first_d'},
+  {id:'lm_recall5', em:'📚', nk:'ach_lm_recall5',  dk:'ach_lm_recall5_d'},
+  {id:'lm_perfect', em:'🌟', nk:'ach_lm_perfect',  dk:'ach_lm_perfect_d'},
 ];
 
 function achLoad(){ try{ return JSON.parse(localStorage.getItem('membrain_ach')||'[]'); }catch{ return []; } }
@@ -5044,6 +5723,7 @@ function applyLang() {
   setTxt('pairs-mode-title', 'pairs_mode_title'); setTxt('pairs-mode-desc', 'pairs_mode_desc');
   setTxt('math-mode-title', 'math_mode_title'); setTxt('math-mode-desc', 'math_mode_desc');
   setTxt('diamond-mode-title', 'diamond_mode_title'); setTxt('diamond-mode-desc', 'diamond_mode_desc');
+  setTxt('lm-mode-title', 'lm_mode_title'); setTxt('lm-mode-desc', 'lm_mode_desc');
   // back buttons
   document.querySelectorAll('.back-btn').forEach(b => { b.textContent = t('back_menu'); });
   // word memory static
@@ -5081,7 +5761,7 @@ function applyLang() {
   if (mathHint && mathState.opsId) selectMathOps(mathState.opsId); else if (mathHint) setTxt('math-op-hint', 'math_choose_arith');
   const mathRep = document.getElementById('math-replay-btn'); if (mathRep) mathRep.textContent = t('math_replay');
   // re-render dynamic level grids
-  showWordMenu(); showSpotMenu(); showDiamondMenu(); renderMathOps(); renderMathLevels(); renderMathTricks(); renderMathStats(); renderWmStats(); renderMathEstRow(); renderDailyChallenge(); updateXpDisplay(); renderWorkoutBtn();
+  showWordMenu(); showSpotMenu(); showDiamondMenu(); showLmMenu(); renderMathOps(); renderMathLevels(); renderMathTricks(); renderMathStats(); renderWmStats(); renderMathEstRow(); renderDailyChallenge(); updateXpDisplay(); renderWorkoutBtn();
   setTxt('radar-title','radar_title'); setTxt('workout-lbl','workout_lbl'); setTxt('workout-result-title','workout_complete'); setTxt('workout-result-sub','workout_sub'); setTxt('workout-dismiss-btn','workout_awesome');
   updateAchBadge();
   // return to menu

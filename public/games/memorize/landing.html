@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MEMBRAIN — Brain Training App</title>
+  <style>
+    :root {
+      --bg:      #0b0c1a;
+      --bg2:     #12132a;
+      --bg3:     #1a1b35;
+      --purpleL: #a78bfa;
+      --purpleD: #7c3aed;
+      --blueL:   #60a5fa;
+      --green:   #34d399;
+      --text1:   #f1f5f9;
+      --text2:   #cbd5e1;
+      --text3:   #64748b;
+      --border:  rgba(255,255,255,.07);
+      --border2: rgba(255,255,255,.13);
+    }
+    *{box-sizing:border-box;margin:0;padding:0;}
+    html{scroll-behavior:smooth;}
+    body{background:var(--bg);color:var(--text1);font-family:'Segoe UI',system-ui,-apple-system,sans-serif;line-height:1.6;overflow-x:hidden;}
+
+    /* ── NAV ── */
+    nav{position:fixed;top:0;left:0;right:0;background:rgba(11,12,26,.88);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;padding:14px 28px;z-index:100;}
+    .nav-logo{font-size:1.25rem;font-weight:900;background:linear-gradient(135deg,var(--purpleL),var(--blueL));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+    .nav-right{display:flex;gap:10px;align-items:center;}
+    .lang-btn{background:rgba(255,255,255,.06);border:1px solid var(--border2);color:var(--text2);padding:6px 16px;border-radius:20px;cursor:pointer;font-size:.83rem;font-weight:700;transition:.15s;}
+    .lang-btn:hover{background:rgba(167,139,250,.15);border-color:var(--purpleL);color:var(--purpleL);}
+    .nav-play{background:linear-gradient(135deg,var(--purpleD),#6d28d9);color:#fff;border:none;padding:8px 20px;border-radius:10px;font-size:.83rem;font-weight:800;cursor:pointer;text-decoration:none;transition:.15s;}
+    .nav-play:hover{opacity:.88;transform:translateY(-1px);}
+
+    /* ── HERO ── */
+    .hero{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:100px 24px 60px;position:relative;overflow:hidden;}
+    .hero::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse 90% 70% at 50% 40%,rgba(124,58,237,.2) 0%,transparent 65%),radial-gradient(ellipse 55% 45% at 85% 60%,rgba(96,165,250,.12) 0%,transparent 55%),radial-gradient(ellipse 40% 35% at 15% 70%,rgba(52,211,153,.08) 0%,transparent 50%);pointer-events:none;}
+    .hero-badge{display:inline-block;background:rgba(167,139,250,.12);border:1px solid rgba(167,139,250,.3);color:var(--purpleL);font-size:.73rem;font-weight:800;letter-spacing:.12em;text-transform:uppercase;padding:6px 20px;border-radius:20px;margin-bottom:30px;}
+    h1.hero-title{font-size:clamp(3.5rem,11vw,8rem);font-weight:900;letter-spacing:-.03em;line-height:.95;background:linear-gradient(135deg,#fff 30%,var(--purpleL) 65%,var(--blueL));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:14px;}
+    .hero-sub{font-size:clamp(1rem,2.5vw,1.35rem);color:var(--text2);font-weight:500;margin-bottom:20px;letter-spacing:.01em;}
+    .hero-desc{max-width:560px;color:var(--text3);font-size:.97rem;line-height:1.75;margin:0 auto 46px;}
+    .hero-cta{display:flex;gap:12px;flex-wrap:wrap;justify-content:center;}
+    .btn-primary{background:linear-gradient(135deg,var(--purpleD),#5b21b6);color:#fff;border:none;padding:15px 34px;border-radius:12px;font-size:1rem;font-weight:800;cursor:pointer;text-decoration:none;display:inline-block;transition:.2s;box-shadow:0 8px 32px rgba(124,58,237,.4);}
+    .btn-primary:hover{transform:translateY(-2px);box-shadow:0 14px 44px rgba(124,58,237,.55);}
+    .btn-ghost{background:transparent;color:var(--text2);border:1px solid var(--border2);padding:15px 34px;border-radius:12px;font-size:1rem;font-weight:700;cursor:pointer;text-decoration:none;display:inline-block;transition:.2s;}
+    .btn-ghost:hover{border-color:var(--purpleL);color:var(--purpleL);}
+
+    /* ── STATS ── */
+    .stats-row{display:flex;justify-content:center;flex-wrap:wrap;margin-top:64px;border:1px solid var(--border);border-radius:20px;overflow:hidden;max-width:600px;width:100%;}
+    .stat-item{flex:1;min-width:100px;padding:22px 16px;text-align:center;border-right:1px solid var(--border);}
+    .stat-item:last-child{border-right:none;}
+    .stat-num{font-size:1.9rem;font-weight:900;background:linear-gradient(135deg,var(--purpleL),var(--blueL));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+    .stat-label{font-size:.72rem;color:var(--text3);margin-top:2px;font-weight:600;letter-spacing:.04em;}
+
+    /* ── SECTIONS ── */
+    .section-wrap{max-width:1120px;margin:0 auto;padding:88px 24px;}
+    .section-head{margin-bottom:48px;}
+    .section-kicker{font-size:.7rem;font-weight:900;letter-spacing:.16em;text-transform:uppercase;color:var(--purpleL);margin-bottom:12px;}
+    .section-title{font-size:clamp(1.7rem,4vw,2.5rem);font-weight:900;color:var(--text1);line-height:1.15;margin-bottom:14px;}
+    .section-sub{font-size:.97rem;color:var(--text3);max-width:520px;line-height:1.75;}
+    .divider{height:1px;background:var(--border);max-width:1120px;margin:0 auto;}
+
+    /* ── GAME CARDS ── */
+    .games-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(310px,1fr));gap:18px;}
+    .game-card{background:var(--bg2);border:1px solid var(--border);border-radius:20px;padding:28px 26px;transition:.25s;position:relative;overflow:hidden;}
+    .game-card::after{content:'';position:absolute;top:0;left:0;right:0;height:3px;border-radius:3px 3px 0 0;}
+    .game-card.wm::after    {background:linear-gradient(90deg,#a78bfa,#60a5fa);}
+    .game-card.spot::after  {background:linear-gradient(90deg,#34d399,#60a5fa);}
+    .game-card.math::after  {background:linear-gradient(90deg,#fbbf24,#f87171);}
+    .game-card.pairs::after {background:linear-gradient(90deg,#34d399,#a78bfa);}
+    .game-card.diamond::after{background:linear-gradient(90deg,#22d3ee,#a78bfa);}
+    .game-card.lm::after    {background:linear-gradient(90deg,#fb7185,#fbbf24);}
+    .game-card:hover{border-color:rgba(167,139,250,.22);transform:translateY(-4px);box-shadow:0 24px 64px rgba(0,0,0,.45);}
+    .game-icon{font-size:2.2rem;margin-bottom:16px;display:block;line-height:1;}
+    .game-name{font-size:1.1rem;font-weight:900;color:var(--text1);margin-bottom:10px;}
+    .game-desc{font-size:.87rem;color:var(--text2);line-height:1.7;margin-bottom:16px;}
+    .pill-row{display:flex;flex-wrap:wrap;gap:6px;}
+    .pill{font-size:.68rem;font-weight:700;padding:3px 10px;border-radius:20px;background:rgba(255,255,255,.05);color:var(--text3);border:1px solid var(--border);}
+
+    /* ── FEATURES ── */
+    .features-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px;}
+    .feat{display:flex;gap:16px;align-items:flex-start;background:var(--bg2);border:1px solid var(--border);border-radius:16px;padding:22px;}
+    .feat-icon{font-size:1.55rem;flex-shrink:0;line-height:1;}
+    .feat-title{font-size:.93rem;font-weight:800;color:var(--text1);margin-bottom:5px;}
+    .feat-desc{font-size:.82rem;color:var(--text3);line-height:1.6;}
+
+    /* ── CTA ── */
+    .cta-wrap{margin:0 24px 80px;}
+    .cta-box{text-align:center;background:linear-gradient(135deg,rgba(124,58,237,.13),rgba(96,165,250,.07));border:1px solid rgba(167,139,250,.18);border-radius:28px;padding:72px 32px;}
+    .cta-box .section-title{margin-bottom:16px;}
+    .cta-tagline{color:var(--text3);margin-bottom:38px;font-size:.97rem;}
+
+    /* ── FOOTER ── */
+    footer{text-align:center;padding:30px 24px;border-top:1px solid var(--border);color:var(--text3);font-size:.8rem;}
+
+    @media(max-width:600px){
+      nav{padding:12px 16px;}
+      .nav-play{display:none;}
+      .stats-row{border-radius:16px;}
+      .stat-item{padding:16px 10px;}
+      .stat-num{font-size:1.5rem;}
+      .games-grid,.features-grid{grid-template-columns:1fr;}
+    }
+  </style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <div class="nav-logo" id="nav-logo">MEMBRAIN</div>
+  <div class="nav-right">
+    <button class="lang-btn" onclick="toggleLang()" id="lang-btn">🇺🇦 UA</button>
+    <a href="index.html" class="nav-play" id="nav-play">▶ Play</a>
+  </div>
+</nav>
+
+<!-- HERO -->
+<div class="hero">
+  <div class="hero-badge" id="hero-badge">Brain Training App</div>
+  <h1 class="hero-title" id="hero-title">MEMBRAIN</h1>
+  <p class="hero-sub" id="hero-sub">Train Your Brain · Develop Your Mind</p>
+  <p class="hero-desc" id="hero-desc">A science-inspired memory training app with 6 adaptive subgames — each targeting a different cognitive skill. Difficulty adjusts to you automatically. No install, no account.</p>
+  <div class="hero-cta">
+    <a href="index.html" class="btn-primary" id="hero-btn">▶ Play Now — It's Free</a>
+  </div>
+  <div class="stats-row">
+    <div class="stat-item"><div class="stat-num">6</div><div class="stat-label" id="st1">Mini-games</div></div>
+    <div class="stat-item"><div class="stat-num">29</div><div class="stat-label" id="st2">Achievements</div></div>
+    <div class="stat-item"><div class="stat-num">100%</div><div class="stat-label" id="st3">Free</div></div>
+    <div class="stat-item"><div class="stat-num">2</div><div class="stat-label" id="st4">Languages</div></div>
+  </div>
+</div>
+
+<div class="divider"></div>
+
+<!-- GAMES -->
+<div class="section-wrap">
+  <div class="section-head">
+    <div class="section-kicker" id="g-kicker">The Games</div>
+    <h2 class="section-title" id="g-title">6 ways to challenge your mind</h2>
+    <p class="section-sub" id="g-sub">Each subgame trains a distinct cognitive skill. Together they form a complete daily brain workout.</p>
+  </div>
+  <div class="games-grid">
+
+    <div class="game-card wm">
+      <span class="game-icon">🧠</span>
+      <div class="game-name" id="wm-name">Word Sequence</div>
+      <p class="game-desc" id="wm-desc">Words flash one by one. Memorize the exact sequence, then recall it in order. Early levels offer a word pool to pick from — later levels demand you type from pure memory.</p>
+      <div class="pill-row">
+        <span class="pill" id="wm-p1">12 levels</span>
+        <span class="pill" id="wm-p2">Backwards mode</span>
+        <span class="pill" id="wm-p3">Audio mode</span>
+      </div>
+    </div>
+
+    <div class="game-card spot">
+      <span class="game-icon">👁️</span>
+      <div class="game-name" id="spot-name">Object Spotting</div>
+      <p class="game-desc" id="spot-desc">Study a grid of objects carefully. Look away while they rearrange. Find what disappeared — or in Intruder mode, spot the new object that appeared among the familiar ones.</p>
+      <div class="pill-row">
+        <span class="pill" id="spot-p1">Multiple packs</span>
+        <span class="pill" id="spot-p2">Boss levels</span>
+        <span class="pill" id="spot-p3">Intruder mode</span>
+      </div>
+    </div>
+
+    <div class="game-card math">
+      <span class="game-icon">➕</span>
+      <div class="game-name" id="math-name">Math Drills</div>
+      <p class="game-desc" id="math-desc">10 timed arithmetic tasks per session. Includes 6 mental math shortcuts not taught in school, a daily challenge shared globally, and an estimate mode (±10% accepted).</p>
+      <div class="pill-row">
+        <span class="pill" id="math-p1">6 mental tricks</span>
+        <span class="pill" id="math-p2">Daily challenge</span>
+        <span class="pill" id="math-p3">Estimate mode</span>
+      </div>
+    </div>
+
+    <div class="game-card pairs">
+      <span class="game-icon">⚔️</span>
+      <div class="game-name" id="pairs-name">Pairs Battle</div>
+      <p class="game-desc" id="pairs-desc">Classic card-matching with a competitive edge. Challenge the AI at three difficulty levels, or face a real player online. Power-ups and ELO rating make every match matter.</p>
+      <div class="pill-row">
+        <span class="pill" id="pairs-p1">AI opponent</span>
+        <span class="pill" id="pairs-p2">Online multiplayer</span>
+        <span class="pill" id="pairs-p3">ELO rating</span>
+      </div>
+    </div>
+
+    <div class="game-card diamond">
+      <span class="game-icon">💎</span>
+      <div class="game-name" id="diamond-name">Diamond</div>
+      <p class="game-desc" id="diamond-desc">A gesture pattern of connected dots is animated before you, line by line. Memorize the path — then trace it back from memory by dragging your finger across the dot grid.</p>
+      <div class="pill-row">
+        <span class="pill" id="diamond-p1">19 levels</span>
+        <span class="pill" id="diamond-p2">2×2 to 5×5 grid</span>
+        <span class="pill" id="diamond-p3">Drag to draw</span>
+      </div>
+    </div>
+
+    <div class="game-card lm">
+      <span class="game-icon">🕰️</span>
+      <div class="game-name" id="lm-name">Long Memory</div>
+      <p class="game-desc" id="lm-desc">One curated item per day to memorize — from a beautiful word definition to a short story with embedded facts. Return 12+ hours later and write your recall. Spaced repetition schedules reviews automatically.</p>
+      <div class="pill-row">
+        <span class="pill" id="lm-p1">5 content tiers</span>
+        <span class="pill" id="lm-p2">Spaced repetition</span>
+        <span class="pill" id="lm-p3">Personal diary</span>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<div class="divider"></div>
+
+<!-- FEATURES -->
+<div class="section-wrap">
+  <div class="section-head">
+    <div class="section-kicker" id="f-kicker">Features</div>
+    <h2 class="section-title" id="f-title">Built to keep you coming back</h2>
+    <p class="section-sub" id="f-sub">Every detail is designed to make daily training rewarding and effortless.</p>
+  </div>
+  <div class="features-grid">
+    <div class="feat">
+      <div class="feat-icon">🧬</div>
+      <div><div class="feat-title" id="f1t">Adaptive difficulty</div><div class="feat-desc" id="f1d">Every game adjusts to your skill in real time — gets harder when you succeed, gentler when you struggle. No manual settings needed.</div></div>
+    </div>
+    <div class="feat">
+      <div class="feat-icon">📊</div>
+      <div><div class="feat-title" id="f2t">Brain Radar</div><div class="feat-desc" id="f2d">After each session a radar chart visualizes your balance across 5 cognitive dimensions — memory, attention, logic, speed, and long-term retention.</div></div>
+    </div>
+    <div class="feat">
+      <div class="feat-icon">💪</div>
+      <div><div class="feat-title" id="f3t">Daily Workout</div><div class="feat-desc" id="f3d">A guided session that takes you through multiple games in sequence, delivering a complete cognitive workout in 5–10 minutes.</div></div>
+    </div>
+    <div class="feat">
+      <div class="feat-icon">🏆</div>
+      <div><div class="feat-title" id="f4t">29 Achievements</div><div class="feat-desc" id="f4d">Unlock badges across all subgames — from completing your first round to mastering every mental math trick and reaching top ELO.</div></div>
+    </div>
+    <div class="feat">
+      <div class="feat-icon">🌍</div>
+      <div><div class="feat-title" id="f5t">Ukrainian & English</div><div class="feat-desc" id="f5d">Full bilingual support — switch languages in one tap. Word banks, content, and the entire UI update together instantly.</div></div>
+    </div>
+    <div class="feat">
+      <div class="feat-icon">📱</div>
+      <div><div class="feat-title" id="f6t">Works anywhere</div><div class="feat-desc" id="f6d">No install, no account required. Runs in any modern browser on phone, tablet, or desktop. All progress is saved locally on your device.</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- CTA -->
+<div class="cta-wrap">
+  <div class="cta-box">
+    <div class="section-kicker" id="cta-kicker">Ready?</div>
+    <h2 class="section-title" id="cta-title">Start training today</h2>
+    <p class="cta-tagline" id="cta-tagline">Five minutes a day. Six games. One sharper mind.</p>
+    <a href="index.html" class="btn-primary" id="cta-btn">▶ Open MEMBRAIN — Free</a>
+  </div>
+</div>
+
+<footer>
+  <p id="footer-txt">© 2025 MEMBRAIN · Brain Training App · Built with ❤️ for curious minds</p>
+</footer>
+
+<script>
+let lang = 'en';
+
+const C = {
+  en: {
+    navLogo:'MEMBRAIN', langBtn:'🇺🇦 UA', navPlay:'▶ Play',
+    heroBadge:'Brain Training App',
+    heroTitle:'MEMBRAIN',
+    heroSub:'Train Your Brain · Develop Your Mind',
+    heroDesc:'A science-inspired memory training app with 6 adaptive subgames — each targeting a different cognitive skill. Difficulty adjusts to you automatically. No install, no account.',
+    heroBtn:'▶ Play Now — It\'s Free',
+    st1:'Mini-games', st2:'Achievements', st3:'Free', st4:'Languages',
+    gKicker:'The Games',
+    gTitle:'6 ways to challenge your mind',
+    gSub:'Each subgame trains a distinct cognitive skill. Together they form a complete daily brain workout.',
+    wmName:'🧠 Word Sequence',
+    wmDesc:'Words flash one by one. Memorize the exact sequence, then recall it in order. Early levels offer a word pool to pick from — later levels demand you type from pure memory.',
+    wmP1:'12 levels', wmP2:'Backwards mode', wmP3:'Audio mode',
+    spotName:'👁️ Object Spotting',
+    spotDesc:'Study a grid of objects carefully. Look away while they rearrange. Find what disappeared — or in Intruder mode, spot the new object that appeared among the familiar ones.',
+    spotP1:'Multiple packs', spotP2:'Boss levels', spotP3:'Intruder mode',
+    mathName:'➕ Math Drills',
+    mathDesc:'10 timed arithmetic tasks per session. Includes 6 mental math shortcuts not taught in school, a daily challenge shared globally, and an estimate mode (±10% accepted).',
+    mathP1:'6 mental tricks', mathP2:'Daily challenge', mathP3:'Estimate mode',
+    pairsName:'⚔️ Pairs Battle',
+    pairsDesc:'Classic card-matching with a competitive edge. Challenge the AI at three difficulty levels, or face a real player online. Power-ups and ELO rating make every match matter.',
+    pairsP1:'AI opponent', pairsP2:'Online multiplayer', pairsP3:'ELO rating',
+    diamondName:'💎 Diamond',
+    diamondDesc:'A gesture pattern of connected dots is animated before you, line by line. Memorize the path — then trace it back from memory by dragging your finger across the dot grid.',
+    diamondP1:'19 levels', diamondP2:'2×2 to 5×5 grid', diamondP3:'Drag to draw',
+    lmName:'🕰️ Long Memory',
+    lmDesc:'One curated item per day to memorize — from a beautiful word definition to a short story with embedded facts. Return 12+ hours later and write your recall. Spaced repetition schedules reviews automatically.',
+    lmP1:'5 content tiers', lmP2:'Spaced repetition', lmP3:'Personal diary',
+    fKicker:'Features',
+    fTitle:'Built to keep you coming back',
+    fSub:'Every detail is designed to make daily training rewarding and effortless.',
+    f1t:'Adaptive difficulty', f1d:'Every game adjusts to your skill in real time — gets harder when you succeed, gentler when you struggle. No manual settings needed.',
+    f2t:'Brain Radar', f2d:'After each session a radar chart visualizes your balance across 5 cognitive dimensions — memory, attention, logic, speed, and long-term retention.',
+    f3t:'Daily Workout', f3d:'A guided session that takes you through multiple games in sequence, delivering a complete cognitive workout in 5–10 minutes.',
+    f4t:'29 Achievements', f4d:'Unlock badges across all subgames — from completing your first round to mastering every mental math trick and reaching top ELO.',
+    f5t:'Ukrainian & English', f5d:'Full bilingual support — switch languages in one tap. Word banks, content, and the entire UI update together instantly.',
+    f6t:'Works anywhere', f6d:'No install, no account required. Runs in any modern browser on phone, tablet, or desktop. All progress is saved locally on your device.',
+    ctaKicker:'Ready?',
+    ctaTitle:'Start training today',
+    ctaTagline:'Five minutes a day. Six games. One sharper mind.',
+    ctaBtn:'▶ Open MEMBRAIN — Free',
+    footerTxt:'© 2025 MEMBRAIN · Brain Training App · Built with ❤️ for curious minds',
+    docTitle:'MEMBRAIN — Brain Training App',
+  },
+  uk: {
+    navLogo:'БОТАНІК', langBtn:'🇬🇧 EN', navPlay:'▶ Грати',
+    heroBadge:'Тренажер мозку',
+    heroTitle:'БОТАНІК',
+    heroSub:'Тренуй розум · Розвивай мозок',
+    heroDesc:'Браузерний тренажер когнітивних навичок із 6 адаптивними міні-іграми — кожна розвиває окремий аспект пам\'яті та мислення. Складність підлаштовується автоматично.',
+    heroBtn:'▶ Грошей не треба, тільки гарний настрій',
+    st1:'Міні-ігор', st2:'Досягнень', st3:'Безкоштовно', st4:'Мови',
+    gKicker:'Ігри',
+    gTitle:'6 способів кинути виклик розуму',
+    gSub:'Кожна міні-гра тренує окрему когнітивну навичку. Разом вони формують повноцінне щоденне тренування мозку.',
+    wmName:'🧠 Ланцюжок слів',
+    wmDesc:'Слова з\'являються одне за одним. Запам\'ятай точну послідовність і відтвори її в точному порядку. На перших рівнях вибирай слова зі списку, пізніше — вводь самостійно по пам\'яті з клавіатури.',
+    wmP1:'12 рівнів', wmP2:'Режим зворотнього порядку', wmP3:'Аудіорежим',
+    spotName:'👁️ Знайди різницю',
+    spotDesc:'Уважно вивчи сітку об\'єктів. Відведи погляд поки там шахер-махер і хтось краде якийсь обʼєкт (або декілька). Знайди що зникло, або знайди новий об\'єкт що з\'явився.',
+    spotP1:'Кілька наборів', spotP2:'Режим зайвого',
+    mathName:'➕ Математика',
+    mathDesc:'Арифметичні приклади на час за сесію. Включає 6 ментальних хитрощів яких не вчать у школі, щоденний виклик для всіх гравців та режим відповідей з похибкою в ±10%.',
+    mathP1:'6 математичних хитрощів для прискореного обчислювання', mathP2:'Виклик дня', mathP3:'Режим похибки',
+    pairsName:'⚔️ Битва пар',
+    pairsDesc:'Класичний пошук пар на пару з конкурентом. Грати можна і проти ШІ на трьох рівнях складності або з живим гравцем онлайн.',
+    pairsP1:'Суперник ШІ', pairsP2:'Онлайн-гра', pairsP3:'Рейтинг ELO',
+    diamondName:'💎 Діамант',
+    diamondDesc:'Жест із з\'єднаних точок анімовано малюється перед тобою, як на телефоні фігура розблокування екрану — лінія за лінією. Запам\'ятай маршрут і відтвори його по пам\'яті, перетягуючи пальцем по точках.',
+    diamondP1:'Купа рівнів', diamondP2:'Поле від 2×2 до 5×5', diamondP3:'Малювання жестом',
+    lmName:'🕰️ Довга пам\'ять',
+    lmDesc:'Щодня — один об\'єкт для запам\'ятовування: від красивого слова до оповідання з вбудованими фактами. Повернись через 12+ годин і відтвори по пам\'яті. Тренується Постійний Пристрій Пам\'яті',
+    lmP1:'5 рівнів складності', lmP2:'Інтервальні повторення', lmP3:'Особистий щоденник',
+    fKicker:'Можливості',
+    fTitle:'Створено щоб повертатись щодня',
+    fSub:'Кожна деталь розроблена щоб зробити щоденне тренування звичним та приємним.',
+    f1t:'Адаптивна складність', f1d:'Кожна гра підлаштовується під рівень гравця в реальному часі — важче при успіху, простіше при помилках. Налаштовувати нічого не потрібно.',
+    f2t:'Радар мозку', f2d:'Після кожної сесії радарна діаграма показує твій баланс по 5 когнітивних напрямках — пам\'ять, увага, логіка, швидкість, довготривала пам\'ять.',
+    f3t:'Щоденне тренування', f3d:'Керований сеанс проводить через кілька ігор підряд, забезпечуючи повноцінне тренування мозку за 5–10 хвилин.',
+    f4t:'29 досягнень', f4d:'Відкривай значки у всіх іграх — від першої правильної відповіді до майстерного освоєння кожної ментальної хитрощі та топового ELO (відносний рейтінг гравців).',
+    f5t:'Українська та англійська', f5d:'Повна двомовна підтримка — перемикай мову одним дотиком. Словники, контент та весь інтерфейс оновлюються миттєво.',
+    f6t:'Працює всюди. Ну, майже', f6d:'Без установки та реєстрації. Запускається в будь-якому сучасному браузері на телефоні, планшеті або ПК. Прогрес зберігається локально.',
+    ctaKicker:'Готовий?',
+    ctaTitle:'Починай тренуватись сьогодні!',
+    ctaTagline:'П\'ять хвилин на день. Шість ігор. Твій гостріший розум!',
+    ctaBtn:'▶ Відкрити БОТАНІК',
+    footerTxt:'© 2025 БОТАНІК · Тренажер мозку · Створено Пашкінсоном з ❤️ для допитливих умів',
+    docTitle:'БОТАНІК — Тренажер мозку',
+  }
+};
+
+function s(id, val) { const el = document.getElementById(id); if (el) el.textContent = val; }
+
+function applyLang() {
+  const c = C[lang];
+  s('nav-logo', c.navLogo); s('lang-btn', c.langBtn); s('nav-play', c.navPlay);
+  s('hero-badge', c.heroBadge); s('hero-title', c.heroTitle); s('hero-sub', c.heroSub);
+  s('hero-desc', c.heroDesc); s('hero-btn', c.heroBtn);
+  s('st1', c.st1); s('st2', c.st2); s('st3', c.st3); s('st4', c.st4);
+  s('g-kicker', c.gKicker); s('g-title', c.gTitle); s('g-sub', c.gSub);
+  s('wm-name', c.wmName); s('wm-desc', c.wmDesc);
+  s('wm-p1', c.wmP1); s('wm-p2', c.wmP2); s('wm-p3', c.wmP3);
+  s('spot-name', c.spotName); s('spot-desc', c.spotDesc);
+  s('spot-p1', c.spotP1); s('spot-p2', c.spotP2); s('spot-p3', c.spotP3);
+  s('math-name', c.mathName); s('math-desc', c.mathDesc);
+  s('math-p1', c.mathP1); s('math-p2', c.mathP2); s('math-p3', c.mathP3);
+  s('pairs-name', c.pairsName); s('pairs-desc', c.pairsDesc);
+  s('pairs-p1', c.pairsP1); s('pairs-p2', c.pairsP2); s('pairs-p3', c.pairsP3);
+  s('diamond-name', c.diamondName); s('diamond-desc', c.diamondDesc);
+  s('diamond-p1', c.diamondP1); s('diamond-p2', c.diamondP2); s('diamond-p3', c.diamondP3);
+  s('lm-name', c.lmName); s('lm-desc', c.lmDesc);
+  s('lm-p1', c.lmP1); s('lm-p2', c.lmP2); s('lm-p3', c.lmP3);
+  s('f-kicker', c.fKicker); s('f-title', c.fTitle); s('f-sub', c.fSub);
+  s('f1t', c.f1t); s('f1d', c.f1d);
+  s('f2t', c.f2t); s('f2d', c.f2d);
+  s('f3t', c.f3t); s('f3d', c.f3d);
+  s('f4t', c.f4t); s('f4d', c.f4d);
+  s('f5t', c.f5t); s('f5d', c.f5d);
+  s('f6t', c.f6t); s('f6d', c.f6d);
+  s('cta-kicker', c.ctaKicker); s('cta-title', c.ctaTitle);
+  s('cta-tagline', c.ctaTagline); s('cta-btn', c.ctaBtn);
+  s('footer-txt', c.footerTxt);
+  document.title = c.docTitle;
+  document.documentElement.lang = lang;
+}
+
+function toggleLang() { lang = lang === 'en' ? 'uk' : 'en'; applyLang(); }
+
+applyLang();
+</script>
+</body>
+</html>

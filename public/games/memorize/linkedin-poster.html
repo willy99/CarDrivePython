@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>MEMBRAIN — LinkedIn Poster</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: #060711; display: flex; flex-direction: column; gap: 32px; padding: 32px; font-family: 'Segoe UI', system-ui, sans-serif; }
+
+    /* ── CARD BASE ── */
+    .card {
+      width: 1200px;
+      position: relative;
+      overflow: hidden;
+      border-radius: 20px;
+    }
+
+    /* ─────────────────────────────────────────────
+       CARD 1 — HERO (1200 × 628)
+    ───────────────────────────────────────────── */
+    #hero {
+      height: 628px;
+      background: #0b0c1a;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+    }
+    #hero::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background:
+        radial-gradient(ellipse 80% 70% at 50% 45%, rgba(124,58,237,.28) 0%, transparent 60%),
+        radial-gradient(ellipse 50% 40% at 82% 55%, rgba(96,165,250,.15) 0%, transparent 55%),
+        radial-gradient(ellipse 40% 35% at 18% 65%, rgba(52,211,153,.1) 0%, transparent 50%);
+    }
+    .hero-badge {
+      display: inline-block;
+      background: rgba(167,139,250,.15);
+      border: 1px solid rgba(167,139,250,.35);
+      color: #a78bfa;
+      font-size: .7rem;
+      font-weight: 800;
+      letter-spacing: .16em;
+      text-transform: uppercase;
+      padding: 6px 20px;
+      border-radius: 20px;
+      margin-bottom: 28px;
+      position: relative;
+    }
+    .hero-title {
+      font-size: 110px;
+      font-weight: 900;
+      letter-spacing: -.04em;
+      line-height: .9;
+      background: linear-gradient(135deg, #fff 25%, #a78bfa 60%, #60a5fa);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: 18px;
+      position: relative;
+    }
+    .hero-sub {
+      font-size: 1.4rem;
+      color: #cbd5e1;
+      font-weight: 500;
+      margin-bottom: 14px;
+      position: relative;
+      letter-spacing: .01em;
+    }
+    .hero-desc {
+      color: #64748b;
+      font-size: .95rem;
+      max-width: 560px;
+      line-height: 1.7;
+      margin-bottom: 40px;
+      position: relative;
+    }
+    .hero-cta {
+      background: linear-gradient(135deg, #7c3aed, #5b21b6);
+      color: #fff;
+      padding: 14px 40px;
+      border-radius: 12px;
+      font-size: 1rem;
+      font-weight: 800;
+      position: relative;
+      letter-spacing: .01em;
+      box-shadow: 0 8px 32px rgba(124,58,237,.45);
+    }
+    .hero-stats {
+      display: flex;
+      gap: 0;
+      position: absolute;
+      bottom: 36px;
+      left: 50%;
+      transform: translateX(-50%);
+      border: 1px solid rgba(255,255,255,.08);
+      border-radius: 16px;
+      overflow: hidden;
+    }
+    .hs {
+      padding: 14px 36px;
+      text-align: center;
+      border-right: 1px solid rgba(255,255,255,.08);
+    }
+    .hs:last-child { border-right: none; }
+    .hs-num {
+      font-size: 1.7rem;
+      font-weight: 900;
+      background: linear-gradient(135deg, #a78bfa, #60a5fa);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .hs-lbl { font-size: .65rem; color: #475569; font-weight: 700; letter-spacing: .06em; margin-top: 2px; text-transform: uppercase; }
+
+    /* ─────────────────────────────────────────────
+       CARD 2 — 6 GAMES (1200 × 820)
+    ───────────────────────────────────────────── */
+    #games-card {
+      height: 820px;
+      background: #0b0c1a;
+      padding: 48px 48px 40px;
+    }
+    #games-card::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(ellipse 70% 50% at 50% 0%, rgba(124,58,237,.14) 0%, transparent 55%);
+    }
+    .card-head {
+      position: relative;
+      margin-bottom: 32px;
+    }
+    .card-kicker {
+      font-size: .68rem;
+      font-weight: 900;
+      letter-spacing: .18em;
+      text-transform: uppercase;
+      color: #a78bfa;
+      margin-bottom: 8px;
+    }
+    .card-title {
+      font-size: 2rem;
+      font-weight: 900;
+      color: #f1f5f9;
+      line-height: 1.1;
+    }
+    .games-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+      position: relative;
+    }
+    .gc {
+      background: #12132a;
+      border: 1px solid rgba(255,255,255,.07);
+      border-radius: 18px;
+      padding: 22px 20px;
+      position: relative;
+      overflow: hidden;
+    }
+    .gc::after {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 3px;
+      border-radius: 3px 3px 0 0;
+    }
+    .gc.wm::after    { background: linear-gradient(90deg,#a78bfa,#60a5fa); }
+    .gc.spot::after  { background: linear-gradient(90deg,#34d399,#60a5fa); }
+    .gc.math::after  { background: linear-gradient(90deg,#fbbf24,#f87171); }
+    .gc.pairs::after { background: linear-gradient(90deg,#34d399,#a78bfa); }
+    .gc.dmd::after   { background: linear-gradient(90deg,#22d3ee,#a78bfa); }
+    .gc.lm::after    { background: linear-gradient(90deg,#fb7185,#fbbf24); }
+    .gc-icon { font-size: 1.8rem; margin-bottom: 10px; display: block; line-height: 1; }
+    .gc-name { font-size: .95rem; font-weight: 900; color: #f1f5f9; margin-bottom: 7px; }
+    .gc-desc { font-size: .78rem; color: #94a3b8; line-height: 1.6; margin-bottom: 12px; }
+    .gc-pills { display: flex; flex-wrap: wrap; gap: 5px; }
+    .pill {
+      font-size: .62rem;
+      font-weight: 700;
+      padding: 2px 8px;
+      border-radius: 20px;
+      background: rgba(255,255,255,.05);
+      color: #475569;
+      border: 1px solid rgba(255,255,255,.07);
+    }
+
+    /* ─────────────────────────────────────────────
+       CARD 3 — FEATURES (1200 × 500)
+    ───────────────────────────────────────────── */
+    #feat-card {
+      height: 500px;
+      background: #0b0c1a;
+      padding: 48px 48px;
+    }
+    #feat-card::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(ellipse 60% 50% at 50% 100%, rgba(96,165,250,.1) 0%, transparent 60%);
+    }
+    .feat-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 14px;
+      position: relative;
+      margin-top: 30px;
+    }
+    .feat {
+      background: #12132a;
+      border: 1px solid rgba(255,255,255,.07);
+      border-radius: 16px;
+      padding: 20px;
+      display: flex;
+      gap: 14px;
+      align-items: flex-start;
+    }
+    .feat-icon { font-size: 1.4rem; flex-shrink: 0; line-height: 1; }
+    .feat-title { font-size: .88rem; font-weight: 800; color: #f1f5f9; margin-bottom: 5px; }
+    .feat-desc { font-size: .75rem; color: #64748b; line-height: 1.55; }
+
+    /* ─────────────────────────────────────────────
+       PRINT HINT
+    ───────────────────────────────────────────── */
+    .hint {
+      color: #475569;
+      font-size: .82rem;
+      text-align: center;
+      padding: 0 0 16px;
+    }
+    .hint b { color: #a78bfa; }
+
+    /* ── SOLO MODE: ?card=1/2/3 shows only that card ── */
+    body.solo { padding: 0; gap: 0; background: transparent; }
+    body.solo .hint { display: none; }
+    body.solo .card { border-radius: 0; display: none; }
+    body.solo .card.active { display: block; }
+  </style>
+</head>
+<body>
+
+<p class="hint">Open in browser · zoom 100% · screenshot each card · <b>1200px wide</b></p>
+
+<!-- ══ CARD 1: HERO ══ -->
+<div class="card" id="hero">
+  <div class="hero-badge">Brain Training App</div>
+  <div class="hero-title">MEMBRAIN</div>
+  <div class="hero-sub">Train Your Brain · Develop Your Mind</div>
+  <div class="hero-desc">6 adaptive subgames — each targeting a different cognitive skill.<br>Difficulty adjusts to you automatically. No install, no account.</div>
+  <div class="hero-cta">▶ Play Now — It's Free</div>
+  <div class="hero-stats">
+    <div class="hs"><div class="hs-num">6</div><div class="hs-lbl">Mini-games</div></div>
+    <div class="hs"><div class="hs-num">29</div><div class="hs-lbl">Achievements</div></div>
+    <div class="hs"><div class="hs-num">100%</div><div class="hs-lbl">Free</div></div>
+    <div class="hs"><div class="hs-num">2</div><div class="hs-lbl">Languages</div></div>
+  </div>
+</div>
+
+<!-- ══ CARD 2: 6 GAMES ══ -->
+<div class="card" id="games-card">
+  <div class="card-head">
+    <div class="card-kicker">The Games</div>
+    <div class="card-title">6 ways to challenge your mind</div>
+  </div>
+  <div class="games-grid">
+
+    <div class="gc wm">
+      <span class="gc-icon">🧠</span>
+      <div class="gc-name">Word Sequence</div>
+      <p class="gc-desc">Words flash one by one. Recall them in exact order — choose from a pool or type from memory.</p>
+      <div class="gc-pills"><span class="pill">12 levels</span><span class="pill">Backwards mode</span><span class="pill">Audio</span></div>
+    </div>
+
+    <div class="gc spot">
+      <span class="gc-icon">👁️</span>
+      <div class="gc-name">Object Spotting</div>
+      <p class="gc-desc">Study a grid of objects. Find what disappeared — or spot the new intruder that appeared.</p>
+      <div class="gc-pills"><span class="pill">Multiple packs</span><span class="pill">Boss levels</span><span class="pill">Intruder mode</span></div>
+    </div>
+
+    <div class="gc math">
+      <span class="gc-icon">➕</span>
+      <div class="gc-name">Math Drills</div>
+      <p class="gc-desc">10 timed tasks per session. 6 mental math shortcuts + daily challenge shared with all players.</p>
+      <div class="gc-pills"><span class="pill">6 mental tricks</span><span class="pill">Daily challenge</span><span class="pill">Estimate ±10%</span></div>
+    </div>
+
+    <div class="gc pairs">
+      <span class="gc-icon">⚔️</span>
+      <div class="gc-name">Pairs Battle</div>
+      <p class="gc-desc">Card-matching against AI or real players online. ELO rating and power-ups make every match matter.</p>
+      <div class="gc-pills"><span class="pill">AI opponent</span><span class="pill">Online multiplayer</span><span class="pill">ELO rating</span></div>
+    </div>
+
+    <div class="gc dmd">
+      <span class="gc-icon">💎</span>
+      <div class="gc-name">Diamond</div>
+      <p class="gc-desc">A gesture pattern is drawn dot-by-dot before you. Memorize the path — then trace it back from memory.</p>
+      <div class="gc-pills"><span class="pill">19 levels</span><span class="pill">2×2 → 5×5 grid</span><span class="pill">Drag to draw</span></div>
+    </div>
+
+    <div class="gc lm">
+      <span class="gc-icon">🕰️</span>
+      <div class="gc-name">Long Memory</div>
+      <p class="gc-desc">One item per day — word to story. Return 12h later and write your recall. Spaced repetition included.</p>
+      <div class="gc-pills"><span class="pill">5 content tiers</span><span class="pill">Spaced repetition</span><span class="pill">Personal diary</span></div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ══ CARD 3: FEATURES ══ -->
+<div class="card" id="feat-card">
+  <div class="card-head" style="position:relative;">
+    <div class="card-kicker">What makes it different</div>
+    <div class="card-title">Built to keep you coming back</div>
+  </div>
+  <div class="feat-grid">
+    <div class="feat">
+      <div class="feat-icon">🧬</div>
+      <div>
+        <div class="feat-title">Adaptive difficulty</div>
+        <div class="feat-desc">Every game adjusts to your skill in real time. No manual settings — it just gets harder as you improve.</div>
+      </div>
+    </div>
+    <div class="feat">
+      <div class="feat-icon">📊</div>
+      <div>
+        <div class="feat-title">Brain Radar</div>
+        <div class="feat-desc">A radar chart shows your balance across 5 cognitive dimensions after each session.</div>
+      </div>
+    </div>
+    <div class="feat">
+      <div class="feat-icon">💪</div>
+      <div>
+        <div class="feat-title">Daily Workout</div>
+        <div class="feat-desc">Guided session across multiple games — complete cognitive training in 5–10 minutes.</div>
+      </div>
+    </div>
+    <div class="feat">
+      <div class="feat-icon">🏆</div>
+      <div>
+        <div class="feat-title">29 Achievements</div>
+        <div class="feat-desc">Unlock badges across all subgames, from your very first answer to reaching ELO 1400.</div>
+      </div>
+    </div>
+    <div class="feat">
+      <div class="feat-icon">🌍</div>
+      <div>
+        <div class="feat-title">Ukrainian & English</div>
+        <div class="feat-desc">Full bilingual support. One tap switches language — word banks and content update instantly.</div>
+      </div>
+    </div>
+    <div class="feat">
+      <div class="feat-icon">📱</div>
+      <div>
+        <div class="feat-title">Works anywhere</div>
+        <div class="feat-desc">No install, no account. Any browser, any device. Progress saved locally on your device.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<p class="hint">Screenshot each card separately · <b>?card=1</b> · <b>?card=2</b> · <b>?card=3</b> for solo view</p>
+
+<script>
+(function(){
+  const p = new URLSearchParams(location.search).get('card');
+  if (!p) return;
+  const ids = ['hero','games-card','feat-card'];
+  document.body.classList.add('solo');
+  const el = document.getElementById(ids[+p-1]);
+  if (el) { el.classList.add('active'); el.style.display = 'block'; }
+})();
+</script>
+</body>
+</html>
