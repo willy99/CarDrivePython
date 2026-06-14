@@ -782,3 +782,381 @@ wm_word_n_of: (i, n) => `СЛОВО ${i} З ${n}`,  // uk
 Call via `t('wm_word_n_of', 2, 5)` → `"WORD 2 OF 5"` or `"СЛОВО 2 З 5"`.
 
 **Ukrainian plural forms** for streak: `n===1 ? 'день' : n<5 ? 'дні' : 'днів'`.
+
+---
+
+---
+
+# Colombo — Subgame (IMPLEMENTED)
+
+**Status**: ✅ Shipped. The "Eyewitness" concept below was implemented as **Colombo** (detective theme, named after the TV detective). Lives in `public/games/memorize/index.html`. Screen id `screen-colombo`; menu card class `mode-card amber`.
+
+**What shipped (differs from / extends the original spec):**
+- Detective framing: study a **crime scene**, then "crack the case from memory". Results read as a verdict ("Case Solved", "Flawless detective work!").
+- Detailed layered-SVG scenes (viewBox `0 0 800 500`) — not flat figures. Room with wall/floor, window (moon/tree/rain/city/**watcher**), framed painting, wall clock, mirror, door (open/closed), table with drawn objects, detailed people (hair styles, glasses, mustache, tie, held objects), rug, plant, floor lamp with warm glow, cat/dog, night/dusk overlays.
+- **Detective twists** (the "secret" mechanic, toggleable via Options → "Detective Twists"): a **mirror** reflects a hidden suspect / object / clock not otherwise visible; a **watcher** silhouette lurks outside the window (asks coat colour); floor **clues** (footprints / spill / dropped object). Twist questions are flagged `secret:true`, styled gold, labelled "JUST ONE MORE THING", and shown last.
+- 8 cases (`COL_LEVELS`), exposure 11s→3.2s, 4→8 questions. Answer style option: multiple-choice (default) or type-it-out. **Case of the Day** = worldwide shared seed (`colDailySeed()`), fixed mid-level config with twists on.
+- Full EN/UK i18n. localStorage key `membrain_colombo_v1` (`{days, stars, daily}`); options `membrain_col_ans`, `membrain_col_secret`, panel state `membrain_opts_col-opts`.
+
+**Key functions** (all prefixed `col`): `colBuild(seed,cfg)` (scene model), `colRender(model)` (SVG string), `colPerson`/`colObj`/`colWindowView` (draw helpers), `colQuestions(model,cfg)` (answer key + distractors), `showColomboMenu`, `colStart`, `colStartQuiz`, `colSubmit`, `colShowResults`, `colReplayReveal`, `colNextCase`, `colStartDaily`, `colLoadStats`/`colSaveStats`/`colStreak`/`renderColStats`. RNG: `colMulberry`. Colour helper: `colShade`. `'col'` is wired into `backFromGame`.
+
+**TODO — Crypto / Number Shapes subgame** (deferred, not built): the Major-System number↔image cipher game (encode / decode-puzzle / crypto-challenge modes). No menu button exists for it yet — intentionally left out until built.
+
+---
+
+# Eyewitness — original design spec (kept for reference; implemented as Colombo above)
+
+**Concept**: A procedurally generated scene flashes for a few seconds. It disappears. You answer questions about what you saw — from memory. Nothing is pre-drawn or hardcoded. Every scene is built fresh from a seed integer, so the answer key is a byproduct of the same object that rendered the scene.
+
+---
+
+## Core principle: scene graph → SVG + answer key
+
+```
+seed (int32)
+  └─► build(seed) → SceneModel { people[], cups, clockH, clockM, sign, plant, setting }
+        ├─► renderScene(model) → SVG string   (displayed to player)
+        └─► makeQuestions(model) → Question[] (generated from same facts; shown after scene hides)
+```
+
+The player never sees the questions until the scene is gone. Correct answers are read directly from the model — no image recognition, no hardcoded Q&A pairs.
+
+---
+
+## SceneModel schema
+
+```javascript
+{
+  seed: Number,         // uint32 — the whole scene in one integer
+  setting: String,      // 'cafe' | 'street' | 'office' | 'park' | 'kitchen'
+  people: [             // 1–4 people
+    {
+      skin: String,     // hex color
+      hair: [name, hex],// e.g. ['black','#2b2b2b']
+      hairStyle: 0|1|2, // 0=short, 1=long, 2=bald
+      shirt: [name, hex],
+      hat: Boolean,
+      hatColor: [name, hex],
+      glasses: Boolean,
+      position: Number  // 0..n-1, left to right
+    }
+  ],
+  cups: Number,         // 0–5 (on counter/table)
+  clockH: Number,       // 1–12
+  clockM: Number,       // 0, 15, 30, or 45
+  sign: String,         // random word from SIGN_WORDS
+  plant: Boolean,       // potted plant present?
+  animal: String|null,  // 'cat'|'dog'|null (appears ~30% of scenes)
+  weather: String,      // 'clear'|'rain'|'night' (outdoor settings only)
+  vehicleColor: [name,hex]|null, // parked car (street setting only)
+}
+```
+
+---
+
+## Random number generator
+
+Use `mulberry32` (same as the demo widget — already proven):
+
+```javascript
+function mulberry32(seed) {
+  return function() {
+    seed |= 0; seed = seed + 0x6D2B79F5 | 0;
+    var t = Math.imul(seed ^ seed >>> 15, 1 | seed);
+    t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
+    return ((t ^ t >>> 14) >>> 0) / 4294967296;
+  };
+}
+```
+
+`build(seed)` creates one RNG from the seed and calls it in a fixed order. Same seed → identical scene every time.
+
+---
+
+## Settings vocabulary (expand over time)
+
+```javascript
+const EW_SETTINGS = ['cafe', 'street', 'office', 'park', 'kitchen'];
+
+const EW_SHIRTS  = [['red','#d8453f'],['blue','#3f6fd8'],['green','#3aa657'],
+                    ['yellow','#e8c33a'],['purple','#8a4fd8'],['orange','#e0822f'],
+                    ['teal','#2fb3a8'],['pink','#e06fa0'],['white','#f0ede8'],['black','#2b2b2b']];
+
+const EW_HAIR    = [['black','#2b2b2b'],['brown','#6b4326'],['blonde','#d9b25a'],
+                    ['red','#b5552f'],['gray','#9a9a9a'],['white','#e8e8e8']];
+
+const EW_SKIN    = ['#f1c9a5','#e0a878','#c68642','#8d5524','#4a2e1a'];
+
+const EW_HAT_COLORS = EW_SHIRTS;  // reuse shirt palette
+
+const EW_SIGN_WORDS = ['OPEN','EXIT','CAFE','SALE','MENU','WIFI','FRESH','COLD',
+                        'HOT','STOP','SLOW','INFO','HELP','WAIT','PUSH','PULL'];
+
+const EW_VEHICLE_COLORS = [['red','#c0392b'],['blue','#2980b9'],['white','#ecf0f1'],
+                            ['black','#2c3e50'],['yellow','#f1c40f'],['green','#27ae60'],
+                            ['silver','#bdc3c7']];
+```
+
+---
+
+## SVG rendering
+
+**Viewport**: `viewBox="0 0 680 360"`, `width="100%"`.
+
+**Layer order** (back to front):
+1. Background fill (wall/sky color per setting)
+2. Setting-specific props (counter, desks, trees, appliances) — simple rects/ellipses
+3. Clock on wall (circle + computed hour/minute hands)
+4. Sign rectangle + text
+5. People (z-ordered: further back = drawn first if needed; for now all at same depth)
+6. Counter/ground surface
+7. Cups (rects + handles)
+8. Plant / animal / vehicle (per flags)
+
+**People rendering** (per person, centered at computed x):
+```
+hat (rect × 2, if hat)
+hair cap (arc path, fill hair color)
+head (circle, fill skin)
+body/shirt (rounded rect)
+glasses (two small circles + bridge line, if glasses)
+```
+
+Person x-positions: distribute evenly across x=150..530 for the number of people present.
+
+**Clock rendering**:
+```javascript
+// hour hand
+const ha = ((clockH % 12) / 12 + clockM / 720) * 2 * Math.PI - Math.PI / 2;
+// minute hand
+const ma = (clockM / 60) * 2 * Math.PI - Math.PI / 2;
+```
+Draw at fixed position top-left of scene (cx=92, cy=72, r=40).
+
+**Setting backgrounds** (phase 1 — start with café; add others later):
+
+| Setting | Wall fill | Floor fill | Notable prop |
+|---------|-----------|------------|-------------|
+| cafe    | `#cbb89a` | `#7a6048`  | counter rect + stools |
+| street  | `#87CEEB` | `#808080`  | pavement + parked car |
+| office  | `#d0d8e0` | `#b0a090`  | desk grid |
+| park    | `#87CEEB` | `#5a8a3a`  | bench + path |
+| kitchen | `#e8ddd0` | `#c0b090`  | counter + stove outline |
+
+---
+
+## Question generation
+
+`makeQuestions(model)` returns an array of `{q: String, a: String|Number}` objects. Pull **6 questions** per scene (or fewer if the scene lacks the entity — skip rather than ask about absent things).
+
+**Core question bank** (select 6 that apply to this model):
+
+| Question template | Answer source | Always asked? |
+|------------------|--------------|---------------|
+| "How many people were in the scene?" | `people.length` | Yes |
+| "What time did the clock show?" | `clockH + ':' + padded(clockM)` | Yes |
+| "What did the sign say?" | `sign` | Yes |
+| "How many cups were on the counter/table?" | `cups` | Yes |
+| "What color shirt was the [left-most / right-most / only] person wearing?" | `people[0].shirt[0]` | Yes (adapt label to count) |
+| "Was there a plant in the scene?" | `plant ? 'yes' : 'no'` | Yes |
+| "How many people had a hat?" | count of `people[i].hat` | If ≥1 person |
+| "Was anyone wearing glasses?" | any `.glasses` | If ≥2 people |
+| "What color was the [left/right] person's hair?" | `people[i].hair[0]` | If ≥2 people |
+| "Was there an animal? What kind?" | `animal \|\| 'none'` | If animal present |
+| "What color was the parked car?" | `vehicleColor[0]` | Street setting only |
+| "What was the weather like?" | `weather` | Outdoor settings |
+
+For **relational questions** (harder difficulty): "What color was the shirt of the person standing next to the plant?" — only generate when `people.length >= 2` and `plant === true`.
+
+---
+
+## Difficulty levels
+
+10 levels. Each level is a config object:
+
+```javascript
+const EW_LEVELS = [
+  // {len: exposure seconds, people: max people, questions: how many, relational: bool, settings: [...allowed]}
+  { len: 8,  people:[1,2], questions:4, relational:false, settings:['cafe'] },           // 1
+  { len: 7,  people:[1,2], questions:4, relational:false, settings:['cafe'] },           // 2
+  { len: 6,  people:[1,3], questions:5, relational:false, settings:['cafe','kitchen'] }, // 3
+  { len: 5,  people:[1,3], questions:5, relational:false, settings:['cafe','kitchen'] }, // 4
+  { len: 5,  people:[2,3], questions:6, relational:false, settings:['cafe','office'] },  // 5
+  { len: 4,  people:[2,3], questions:6, relational:false, settings:['cafe','office'] },  // 6
+  { len: 4,  people:[2,4], questions:6, relational:true,  settings:['cafe','office','park'] }, // 7
+  { len: 3,  people:[2,4], questions:6, relational:true,  settings:EW_SETTINGS },        // 8
+  { len: 3,  people:[3,4], questions:6, relational:true,  settings:EW_SETTINGS },        // 9
+  { len: 2,  people:[3,4], questions:6, relational:true,  settings:EW_SETTINGS },        // 10
+];
+```
+
+`people` is a `[min, max]` range; pick randomly within it per scene.
+
+---
+
+## Screen flow
+
+```
+screen-ew (new screen ID)
+  └─ #ew-select     level select + stats + options panel
+  └─ #ew-study      scene display (SVG, countdown timer bar)
+  └─ #ew-quiz       blank/cover + question list + answer inputs
+  └─ #ew-results    score, correct answers revealed, streak
+```
+
+HTML structure mirrors Word Sequence (`screen-word`) and Object Spotting (`screen-spot`):
+- Title row: `section-title` + `info-btn` + `close-btn` (✕ → `goMenu()`)
+- `level-grid` for level selection
+- Options collapsible panel (`opts-toggle` / `opts-panel`) — contains: scene duration override (off by default), setting filter
+
+---
+
+## Key JS functions to implement
+
+| Function | Purpose |
+|----------|---------|
+| `ewBuild(seed)` | Generate SceneModel from seed |
+| `ewRenderScene(model)` → String | Return SVG string |
+| `ewMakeQuestions(model, level)` → Array | Return filtered question list |
+| `showEwMenu()` | Populate level grid, restore opts, render stats |
+| `ewStart(lvIdx)` | Init round: build model, render SVG, start countdown |
+| `ewStartQuiz()` | Hide scene, show questions (text inputs or buttons) |
+| `ewSubmit()` | Score answers, save stats, show results |
+| `ewLoadStats()` / `ewSaveStats()` | localStorage |
+| `ewStreak(stats)` → Number | Day streak count |
+| `renderEwStats()` | 7-day bar + streak display in level select |
+| `ewDailyScene()` | Build scene from `ewDailySeed()` for Daily Eyewitness mode |
+| `ewDailySeed()` | `Math.floor(new Date('YYYY-MM-DD').getTime() / 86400000)` — one seed per calendar day |
+
+---
+
+## Scoring
+
+```javascript
+// Per question: 1 point if correct (case-insensitive, trimmed)
+// Numeric answers: exact match OR within ±0 (counts only)
+// Color/word answers: normalized lowercase compare
+
+score = (correctAnswers / totalQuestions) * 100;  // 0–100
+stars = score >= 90 ? 3 : score >= 70 ? 2 : score >= 50 ? 1 : 0;
+```
+
+Show each question's result with green ✓ or red ✗ and the correct answer revealed.
+
+---
+
+## Daily Eyewitness mode
+
+One shared scene per day (same seed worldwide). Button on the level select screen (same pattern as Math's "Today's Challenge").
+
+```javascript
+function ewDailySeed() {
+  // Days since Unix epoch → unique daily int
+  return Math.floor(Date.now() / 86400000);
+}
+function ewStartDaily() {
+  const seed = ewDailySeed();
+  const todayKey = new Date().toISOString().slice(0, 10);
+  // check if already played today → show results instead of starting
+  ewStart(null, seed);  // null lvIdx = use max difficulty (level 10 config)
+}
+```
+
+Badge shows "Done" if played today (same pattern as Math daily badge).
+
+---
+
+## localStorage schema
+
+Key: `membrain_ew_v1`
+
+```json
+{
+  "stars": { "0": 3, "2": 2 },
+  "days": {
+    "2026-06-15": { "scenes": 3, "score": 84, "stars": 3 }
+  },
+  "daily": {
+    "2026-06-15": { "score": 91, "correct": 5, "total": 6 }
+  }
+}
+```
+
+---
+
+## i18n keys needed
+
+Add to both `STRINGS.en` and `STRINGS.uk`:
+
+```javascript
+// Section
+ew_title: 'Eyewitness',
+ew_sub: 'Study the scene — answer from memory',
+
+// Level select
+ew_select_lbl: 'SELECT LEVEL',
+ew_daily_btn: "Today's Scene",
+ew_daily_done: 'Done today',
+
+// Study phase
+ew_study_lbl: (s) => `Memorize… ${s}s`,
+ew_study_ready: "I'm ready",
+
+// Quiz phase
+ew_quiz_lbl: 'Answer from memory',
+ew_quiz_submit: 'Check answers',
+
+// Results
+ew_result_correct: (n, t) => `${n} / ${t} correct`,
+ew_result_scene_seed: (s) => `Scene #${s}`,
+
+// Questions (templates)
+ew_q_people_count: 'How many people were in the scene?',
+ew_q_clock: 'What time did the clock show?',
+ew_q_sign: 'What did the sign say?',
+ew_q_cups: 'How many cups were on the counter?',
+ew_q_shirt_only: "What color was the person's shirt?",
+ew_q_shirt_left: "What color was the left-most person's shirt?",
+ew_q_shirt_right: "What color was the right-most person's shirt?",
+ew_q_plant: 'Was there a plant in the scene? (yes/no)',
+ew_q_hats: 'How many people were wearing a hat?',
+ew_q_glasses: 'Was anyone wearing glasses? (yes/no)',
+ew_q_hair_left: "What color was the left person's hair?",
+ew_q_hair_right: "What color was the right person's hair?",
+ew_q_animal: 'Was there an animal, and if so, what kind?',
+ew_q_car_color: 'What color was the parked car?',
+ew_q_weather: 'What was the weather like?',
+
+// Info popup key
+ew_info: 'ew',
+```
+
+Ukrainian translations follow the same keys with `_uk` values.
+
+---
+
+## Implementation order (for the coding session)
+
+1. **`ewBuild(seed)`** + **`ewRenderScene(model)`** — café setting only, 1–3 people. Verify in browser.
+2. **`ewMakeQuestions(model, lvCfg)`** — core 6 questions (no relational yet).
+3. **Screen HTML** — `#ew-select`, `#ew-study`, `#ew-quiz`, `#ew-results` following existing patterns.
+4. **`showEwMenu()` + `ewStart()` + `ewStartQuiz()` + `ewSubmit()`** — full game loop.
+5. **Stats + streak** — `ewLoadStats()`, `ewSaveStats()`, `renderEwStats()`.
+6. **Daily Eyewitness** — `ewDailySeed()`, `ewStartDaily()`, daily badge.
+7. **i18n** — all keys in both languages.
+8. **Wire into main menu** — add Eyewitness card to `#screen-menu` grid.
+9. **Additional settings** — street, office, park, kitchen backgrounds.
+10. **Relational questions** — "person next to the plant" etc. (levels 7–10).
+
+**Start with step 1.** Get a scene generating and rendering in isolation before wiring UI. Use the demo widget's `build()`/`render()` as a starting skeleton — it's already proven.
+
+---
+
+## Gotchas to watch
+
+- **Seed is the source of truth.** Never store the SVG or the scene object in localStorage — regenerate from seed when needed (e.g. to show the answer key after the fact). Seed fits in a JS integer safely up to 2^31.
+- **Question order must be deterministic per seed** so Daily Eyewitness is consistent for all players. Sort/filter questions in fixed order, not by random selection.
+- **Color names must be i18n-translated.** The answer for "shirt color" is a string like `'red'` — when comparing player input, normalize to lowercase and compare to the i18n-translated color name too (e.g. Ukrainian player types 'червоний'). Store answers in the model as `[en_name, hex]` so you can look up the localized name at quiz time.
+- **Clock display**: `clockM` is always 0/15/30/45. Display as `"4:30"` not `"4:30:00"`. Accept `"4:30"` and `"4h30"` and `"4.30"` as correct (normalize before comparing).
+- **`close-btn` (✕)** must be placed next to `ℹ` in the title row, same as WM/Spot/Math/Diamond. `onclick="goMenu()"` — no leave-confirmation needed (player hasn't started a round yet from level select). During study/quiz phase, use `backFromGame('ew')` to show the leave popup.
+- **`backFromGame`** needs `'ew'` added to its `inGame` map: active when `#ew-study` or `#ew-quiz` is visible.
