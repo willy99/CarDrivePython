@@ -119,6 +119,47 @@ body{background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,san
 .wm-slot .slot-num{font-size:.7rem;color:var(--text3);font-weight:600;}
 #wm-actions{margin-top:20px;display:flex;gap:12px;justify-content:center;}
 
+/* typed recall */
+#wm-type-rows{display:flex;flex-direction:column;gap:8px;max-width:340px;margin:6px auto 0;}
+.wm-type-row{display:flex;align-items:center;gap:10px;}
+.wm-type-row .tn{font-size:.78rem;color:var(--text3);font-weight:800;width:26px;text-align:right;flex-shrink:0;}
+.wm-type-row input{flex:1;padding:10px 14px;border-radius:11px;border:1px solid var(--border2);
+  background:rgba(255,255,255,.06);color:#fff;font-size:1.05rem;font-weight:700;outline:none;
+  text-align:center;letter-spacing:.5px;transition:.15s;}
+.wm-type-row input:focus{border-color:var(--purpleL);background:rgba(168,85,247,.12);box-shadow:0 0 14px rgba(168,85,247,.2);}
+.wm-type-row input.ok{border-color:var(--greenL);color:var(--greenL);}
+.wm-type-row input.bad{border-color:var(--redL);color:var(--redL);}
+
+/* level-card stars + best */
+.level-btn{position:relative;}
+.lv-stars{font-size:.72rem;letter-spacing:2px;height:14px;line-height:1;margin-top:1px;color:var(--goldL);}
+.lv-badge{position:absolute;top:5px;right:6px;font-size:.58rem;}
+.level-btn.type-lv{border-color:rgba(168,85,247,.32);}
+.level-btn.miss-lv{border-color:rgba(248,113,113,.35);}
+.lv-miss-badge{font-size:.6rem;font-weight:900;color:var(--redL);margin-top:1px;}
+/* spot pack selector */
+#spot-pack-row{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;padding:0 16px 16px;max-width:720px;margin:0 auto;}
+.spot-pack-opt{border-radius:12px;border:2px solid var(--border);background:var(--glass);cursor:pointer;
+  padding:7px 12px;font-size:.72rem;font-weight:700;color:var(--text2);transition:.2s;text-align:center;white-space:nowrap;min-width:62px;}
+.spot-pack-opt:hover{border-color:var(--border2);color:#fff;background:var(--glass2);}
+.spot-pack-opt.active{border-color:var(--blueL);background:rgba(96,165,250,.18);color:var(--blueL);}
+.spot-pack-opt .sp-icon{font-size:1.5rem;display:block;margin-bottom:3px;}
+
+/* star reveal + perfect celebration */
+.wm-stars{font-size:2.6rem;letter-spacing:8px;min-height:42px;margin-bottom:2px;}
+.wm-stars span{display:inline-block;opacity:0;transform:scale(0) rotate(-40deg);animation:starPop .45s cubic-bezier(.34,1.56,.64,1) forwards;}
+@keyframes starPop{to{opacity:1;transform:scale(1) rotate(0);}}
+.wm-perfect{font-size:1.5rem;font-weight:900;min-height:0;letter-spacing:1px;margin-bottom:4px;
+  background:linear-gradient(135deg,#fbbf24,#34d399,#60a5fa);-webkit-background-clip:text;
+  -webkit-text-fill-color:transparent;background-clip:text;}
+.wm-perfect.show{animation:perfectPop .6s cubic-bezier(.34,1.56,.64,1);}
+@keyframes perfectPop{0%{transform:scale(.4);opacity:0;}60%{transform:scale(1.15);}100%{transform:scale(1);opacity:1;}}
+.wm-newbest{display:inline-block;font-size:.72rem;font-weight:800;color:var(--bg);background:var(--goldL);
+  padding:2px 10px;border-radius:20px;margin-bottom:8px;letter-spacing:.5px;}
+
+/* memorize countdown */
+#wm-word-display.count{font-size:clamp(3.5rem,16vw,7rem);}
+
 /* ── RESULTS ── */
 #wm-results{width:100%;max-width:680px;padding:20px;}
 .result-hero{font-size:clamp(3rem,10vw,5rem);font-weight:900;
@@ -359,6 +400,33 @@ body{background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,san
 .daily-head{display:flex;align-items:center;justify-content:space-between;margin:8px 0;}
 .daily-head .dstreak{font-size:.85rem;font-weight:800;color:var(--goldL);}
 
+/* ── LANGUAGE TOGGLE ── */
+.lang-btn{padding:6px 14px;border-radius:10px;border:1px solid var(--border2);
+  background:var(--glass);color:var(--text2);font-size:.82rem;font-weight:700;
+  cursor:pointer;transition:.2s;letter-spacing:.3px;margin-top:12px;}
+.lang-btn:hover{background:var(--glass2);color:#fff;}
+
+/* ── WORD DIFF ── */
+.wm-diff-opt{padding:5px 14px;border-radius:8px;border:1px solid var(--border2);
+  background:var(--glass);color:var(--text2);font-size:.8rem;font-weight:700;
+  cursor:pointer;transition:.2s;white-space:nowrap;}
+.wm-diff-opt:hover{background:var(--glass2);color:#fff;}
+.wm-diff-opt.active{border-color:var(--blueL);background:rgba(96,165,250,.18);color:var(--blueL);}
+.wm-diff-rec{color:var(--goldL);font-size:.7rem;margin-left:3px;}
+
+/* ── MATH TRICKS ── */
+.math-tricks-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(138px,1fr));gap:10px;margin:10px 0 0;}
+.trick-card{background:var(--glass);border:1px solid var(--border2);border-radius:14px;
+  padding:13px 11px;cursor:pointer;transition:.2s;text-align:center;}
+.trick-card:hover{background:var(--glass2);border-color:var(--goldL);transform:translateY(-2px);}
+.tc-sym{font-size:1.4rem;font-weight:900;color:var(--goldL);margin-bottom:4px;}
+.tc-name{font-size:.74rem;font-weight:800;color:var(--text1);margin-bottom:3px;}
+.tc-hint{font-size:.62rem;color:var(--text3);line-height:1.35;}
+#math-trick-hint{display:none;background:rgba(250,204,21,.07);border:1px solid rgba(250,204,21,.28);
+  border-radius:10px;padding:9px 14px;font-size:.75rem;color:var(--goldL);
+  margin:4px 0 10px;text-align:center;line-height:1.45;}
+.math-q.pct-q,.math-q.trick-q{font-size:clamp(1.3rem,5.5vw,2.1rem);}
+
 /* ── MOBILE ── */
 *{-webkit-tap-highlight-color:transparent;}
 .btn,.mode-card,.op-btn,.math-lv,.key,.math-choice,.coll-opt,.grid-opt,.back-btn,.spot-choice{touch-action:manipulation;}
@@ -393,24 +461,25 @@ body{background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,san
 <!-- ══ MAIN MENU ══ -->
 <div id="screen-menu" class="screen active">
   <div class="menu-hero anim-fadein">
-    <h1>MEMBRAIN</h1>
-    <p>Train your mind &middot; Challenge your brain</p>
+    <h1 id="menu-title">MEMBRAIN</h1>
+    <p id="menu-tagline">Train your mind &middot; Challenge your brain</p>
+    <button class="lang-btn" id="lang-toggle" onclick="toggleLang()">🇺🇦 УКР</button>
   </div>
   <div class="mode-cards">
     <div class="mode-card purple" onclick="showWordMenu()">
       <span class="icon">🧠</span>
-      <h2>Word Sequence</h2>
-      <p>Watch words flash by, then recall them all — in order</p>
+      <h2 id="wm-mode-title">Word Sequence</h2>
+      <p id="wm-mode-desc">Watch words flash by, then recall them all — in order</p>
     </div>
     <div class="mode-card blue" onclick="showSpotMenu()">
       <span class="icon">👁️</span>
-      <h2>Object Spotting</h2>
-      <p>Memorize a scene, then find which object has vanished</p>
+      <h2 id="spot-mode-title">Object Spotting</h2>
+      <p id="spot-mode-desc">Memorize a scene, then find which object has vanished</p>
     </div>
     <div class="mode-card green" onclick="showLobby()">
       <span class="icon">⚔️</span>
-      <h2>Pairs Battle</h2>
-      <p>Find matching pairs online — outsmart your opponent</p>
+      <h2 id="pairs-mode-title">Pairs Battle</h2>
+      <p id="pairs-mode-desc">Find matching pairs online — outsmart your opponent</p>
     </div>
     <div class="mode-card gold" onclick="showMathMenu()">
       <svg class="icon-svg" viewBox="0 0 58 58" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -436,8 +505,8 @@ body{background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,san
         <circle cx="44" cy="38.5" r="1.9" fill="url(#mIcoG)"/>
         <circle cx="44" cy="49.5" r="1.9" fill="url(#mIcoG)"/>
       </svg>
-      <h2>Math Drills</h2>
-      <p>Solve arithmetic against the clock — beat your brain</p>
+      <h2 id="math-mode-title">Math Drills</h2>
+      <p id="math-mode-desc">Solve arithmetic against the clock — beat your brain</p>
     </div>
   </div>
 </div>
@@ -446,10 +515,20 @@ body{background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,san
 <div id="screen-word" class="screen">
   <button class="back-btn" onclick="goMenu()">← Menu</button>
   <!-- sub: level select -->
-  <div id="wm-select" style="text-align:center;padding:20px;">
-    <div class="section-title">Word Sequence</div>
-    <div class="section-sub">Choose your difficulty</div>
+  <div id="wm-select" style="text-align:center;padding:20px;width:100%;max-width:680px;margin:0 auto;">
+    <div class="section-title" id="wm-section-title">Word Sequence</div>
+    <div class="section-sub" id="wm-section-sub">Levels 1–6: pick the words · Levels 7–12: type them from memory</div>
+    <div id="wm-diff-lbl" style="font-size:.7rem;color:var(--text3);font-weight:800;letter-spacing:1.5px;margin:16px 0 6px;">WORD LENGTH</div>
+    <div id="wm-diff-row" style="display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin:0 0 14px;"></div>
     <div class="level-grid" id="wm-level-grid"></div>
+    <div style="margin-top:26px;border-top:1px solid var(--border);padding-top:14px;">
+      <div class="daily-head">
+        <div style="font-weight:800;font-size:.95rem;" id="wm-training-head">🧠 Your Memory Training</div>
+        <div class="dstreak" id="wm-streak">🔥 0 day streak</div>
+      </div>
+      <div class="bars7" id="wm-bars"></div>
+      <div class="math-stat-grid" id="wm-daily-stats"></div>
+    </div>
   </div>
   <!-- sub: memorize phase -->
   <div id="wm-memorize" style="display:none;width:100%;max-width:700px;padding:30px 20px;text-align:center;">
@@ -460,24 +539,34 @@ body{background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,san
   </div>
   <!-- sub: recall phase -->
   <div id="wm-recall" style="display:none;width:100%;max-width:700px;padding:20px;text-align:center;">
-    <div class="section-title" style="margin-bottom:4px;">What did you see?</div>
-    <div class="section-sub">Click words in the order you remember them</div>
-    <div id="wm-slots"></div>
-    <div id="wm-pool"></div>
+    <div class="section-title" style="margin-bottom:4px;" id="wm-recall-title">What did you see?</div>
+    <div class="section-sub" id="wm-recall-sub">Click words in the order you remember them</div>
+    <!-- pool mode -->
+    <div id="wm-pool-area">
+      <div id="wm-slots"></div>
+      <div id="wm-pool"></div>
+    </div>
+    <!-- type mode -->
+    <div id="wm-type-area" style="display:none;">
+      <div id="wm-type-rows"></div>
+    </div>
     <div id="wm-actions">
-      <button class="btn" onclick="wmClearSlots()">Clear</button>
+      <button class="btn" id="wm-clear-btn" onclick="wmClearSlots()">Clear</button>
       <button class="btn btn-primary" id="wm-submit-btn" onclick="wmSubmit()">Check My Memory</button>
     </div>
   </div>
   <!-- sub: results -->
-  <div id="wm-results" style="display:none;text-align:center;">
+  <div id="wm-results" style="display:none;text-align:center;width:100%;max-width:680px;margin:0 auto;padding:20px;">
+    <div class="wm-stars" id="wm-stars"></div>
+    <div class="wm-perfect" id="wm-perfect"></div>
     <div class="result-hero" id="wm-score-pct"></div>
-    <div class="result-label">Memory Score</div>
+    <div class="result-label" id="wm-result-label">Memory Score</div>
     <div class="stat-row" id="wm-stat-row"></div>
     <div class="compare-grid" id="wm-compare"></div>
-    <div style="margin-top:20px;display:flex;gap:12px;justify-content:center;">
-      <button class="btn" onclick="showWordMenu()">Change Level</button>
-      <button class="btn btn-primary" onclick="wmReplay()">Play Again</button>
+    <div style="margin-top:20px;display:flex;gap:12px;justify-content:center;flex-wrap:wrap;">
+      <button class="btn" id="wm-change-btn" onclick="showWordMenu()">Change Level</button>
+      <button class="btn" id="wm-replay-btn" onclick="wmReplay()">Replay</button>
+      <button class="btn btn-primary" id="wm-next-btn" onclick="wmNextLevel()">Next Level →</button>
     </div>
   </div>
 </div>
@@ -486,9 +575,12 @@ body{background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,san
 <div id="screen-spot" class="screen">
   <button class="back-btn" onclick="goMenu()">← Menu</button>
   <!-- sub: level select -->
-  <div id="spot-select" style="text-align:center;padding:60px 20px;">
-    <div class="section-title">Object Spotting</div>
-    <div class="section-sub">Memorize the scene — spot the missing object</div>
+  <div id="spot-select" style="text-align:center;padding:60px 20px 20px;">
+    <div class="section-title" id="spot-section-title">Object Spotting</div>
+    <div class="section-sub" id="spot-section-sub">Memorize the scene — spot what's missing</div>
+    <div style="font-size:.75rem;color:var(--text2);font-weight:700;letter-spacing:.5px;margin:4px 0 8px;" id="spot-choose-pack-lbl">CHOOSE PACK</div>
+    <div id="spot-pack-row"></div>
+    <div style="font-size:.75rem;color:var(--text2);font-weight:700;letter-spacing:.5px;margin:14px 0 4px;" id="spot-select-level-lbl">SELECT LEVEL</div>
     <div class="level-grid" id="spot-level-grid"></div>
   </div>
   <!-- sub: game -->
@@ -497,7 +589,7 @@ body{background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,san
       <div><span class="tag tag-purple" id="spot-level-tag">Level 1</span></div>
       <div style="font-size:.85rem;color:var(--text2);" id="spot-phase-label">Memorize the objects</div>
       <div style="display:flex;align-items:center;gap:8px;">
-        <span style="font-size:.8rem;color:var(--text2);">Streak</span>
+        <span style="font-size:.8rem;color:var(--text2);" id="spot-streak-lbl">Streak</span>
         <span style="font-weight:800;color:var(--goldL);" id="spot-streak">0</span>
       </div>
     </div>
@@ -521,35 +613,35 @@ body{background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,san
       <span class="status-dot" id="ws-dot"></span>
       <span id="ws-status-label" style="font-size:.85rem;font-weight:700;">Disconnected</span>
     </div>
-    <div style="font-size:1.1rem;font-weight:800;">⚔️ Pairs Battle Lobby</div>
+    <div style="font-size:1.1rem;font-weight:800;" id="lobby-title">⚔️ Pairs Battle Lobby</div>
     <div style="font-size:.8rem;color:var(--text2);" id="ws-my-name"></div>
   </div>
   <div id="lobby-body">
     <!-- Connect panel -->
     <div class="lobby-panel">
-      <h3>🔌 Connection</h3>
+      <h3 id="lobby-conn-title">🔌 Connection</h3>
       <div id="connect-form">
         <input class="inp" id="lobby-username" placeholder="Your name…" maxlength="20"/>
         <button class="btn btn-primary" id="connect-btn" onclick="lobbyConnect()">Connect to Lobby</button>
         <div id="connect-hint" style="font-size:.76rem;color:var(--text3);line-height:1.5;">
-          Connecting to <code id="ws-url-hint" style="color:var(--blueL);"></code>
+          <span id="conn-hint-prefix">Connecting to</span> <code id="ws-url-hint" style="color:var(--blueL);"></code>
         </div>
       </div>
     </div>
     <!-- Players panel -->
     <div class="lobby-panel">
-      <h3>👥 Online Players</h3>
+      <h3 id="lobby-players-title">👥 Online Players</h3>
       <div id="player-list">
         <div style="color:var(--text3);font-size:.85rem;padding:12px 0;">Connect to see online players</div>
       </div>
     </div>
     <!-- Config panel -->
     <div class="lobby-panel">
-      <h3>⚙️ Game Settings</h3>
+      <h3 id="lobby-settings-title">⚙️ Game Settings</h3>
       <div id="lobby-config">
-        <div style="font-size:.8rem;color:var(--text2);margin-bottom:8px;">Card collection:</div>
+        <div style="font-size:.8rem;color:var(--text2);margin-bottom:8px;" id="lobby-coll-label">Card collection:</div>
         <div class="coll-options" id="coll-options"></div>
-        <div style="font-size:.8rem;color:var(--text2);margin:14px 0 8px;">Grid size for your invitation:</div>
+        <div style="font-size:.8rem;color:var(--text2);margin:14px 0 8px;" id="lobby-grid-label">Grid size for your invitation:</div>
         <div class="grid-options">
           <div class="grid-opt active" data-grid="2x4" onclick="selectGrid(this)">2×4</div>
           <div class="grid-opt" data-grid="4x4" onclick="selectGrid(this)">4×4</div>
@@ -558,7 +650,7 @@ body{background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,san
           <div class="grid-opt" data-grid="6x6" onclick="selectGrid(this)">6×6</div>
           <div class="grid-opt" data-grid="6x8" onclick="selectGrid(this)">6×8</div>
         </div>
-        <div style="font-size:.76rem;color:var(--text3);margin-top:10px;line-height:1.6;">
+        <div style="font-size:.76rem;color:var(--text3);margin-top:10px;line-height:1.6;" id="lobby-scoring-body">
           <b style="color:var(--text2);">Scoring:</b><br>
           +10 per pair found · −1 per miss<br>
           Repeat misses cost extra (hole penalty)
@@ -598,8 +690,8 @@ body{background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,san
     <h3 id="invite-from-text">Alice wants to play!</h3>
     <p id="invite-grid-text">Grid: 4×6</p>
     <div class="actions">
-      <button class="btn btn-danger" onclick="respondInvite(false)">Decline</button>
-      <button class="btn btn-success" onclick="respondInvite(true)">Accept!</button>
+      <button class="btn btn-danger" id="invite-decline-btn" onclick="respondInvite(false)">Decline</button>
+      <button class="btn btn-success" id="invite-accept-btn" onclick="respondInvite(true)">Accept!</button>
     </div>
   </div>
 </div>
@@ -612,7 +704,7 @@ body{background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,san
     <div id="gameover-sub"></div>
     <div class="go-scores" id="go-scores"></div>
     <div style="display:flex;gap:12px;justify-content:center;">
-      <button class="btn" onclick="showLobby()">← Lobby</button>
+      <button class="btn" id="lobby-back-btn" onclick="showLobby()">← Lobby</button>
       <button class="btn btn-primary" id="rematch-btn" onclick="requestRematch()">Rematch!</button>
     </div>
   </div>
@@ -626,7 +718,7 @@ body{background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,san
     <div id="spot-result-sub"></div>
     <div class="streak-display" id="spot-result-streak"></div>
     <div style="display:flex;gap:12px;justify-content:center;">
-      <button class="btn" onclick="showSpotMenu()">Change Level</button>
+      <button class="btn" id="spot-change-btn" onclick="showSpotMenu()">Change Level</button>
       <button class="btn btn-primary" id="spot-next-btn" onclick="spotNextLevel()">Next Level →</button>
     </div>
   </div>
@@ -638,19 +730,26 @@ body{background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,san
 
   <!-- sub: setup (operation + level select + daily stats) -->
   <div id="math-setup" class="math-wrap">
-    <div class="section-title">Math Drills</div>
-    <div class="section-sub">Pick your operations &amp; difficulty</div>
+    <div class="section-title" id="math-section-title">Math Drills</div>
+    <div class="section-sub" id="math-section-sub">Pick your operations &amp; difficulty</div>
 
     <div class="op-grid" id="math-op-grid"></div>
     <div class="op-hint" id="math-op-hint">Choose which arithmetic to practice</div>
 
-    <div style="font-size:.8rem;color:var(--text2);text-align:center;margin:22px 0 4px;font-weight:700;letter-spacing:.5px;">SELECT LEVEL · 10 tasks each</div>
+    <div style="font-size:.8rem;color:var(--text2);text-align:center;margin:22px 0 4px;font-weight:700;letter-spacing:.5px;" id="math-select-lbl">SELECT LEVEL · 10 tasks each</div>
     <div class="math-levels" id="math-level-grid"></div>
+
+    <!-- tricks section -->
+    <div style="margin-top:24px;border-top:1px solid var(--border);padding-top:16px;">
+      <div style="font-size:.7rem;color:var(--text3);font-weight:800;letter-spacing:1.5px;margin:0 0 4px;text-align:center;" id="math-tricks-lbl">⚡ MATH TRICKS</div>
+      <div style="font-size:.76rem;color:var(--text2);text-align:center;margin:0 0 10px;" id="math-tricks-sub">Secret shortcuts schools don't teach</div>
+      <div class="math-tricks-grid" id="math-tricks-grid"></div>
+    </div>
 
     <!-- daily statistics -->
     <div style="margin-top:30px;border-top:1px solid var(--border);padding-top:14px;">
       <div class="daily-head">
-        <div style="font-weight:800;font-size:.95rem;">📊 Daily Brain Training</div>
+        <div style="font-weight:800;font-size:.95rem;" id="math-daily-head">📊 Daily Brain Training</div>
         <div class="dstreak" id="math-streak">🔥 0 day streak</div>
       </div>
       <div class="bars7" id="math-bars"></div>
@@ -666,6 +765,7 @@ body{background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,san
       <span class="mh-score" id="math-score">0 pts</span>
     </div>
     <div id="math-timer"><div id="math-timer-fill"></div></div>
+    <div id="math-trick-hint"></div>
     <div class="math-q" id="math-question">&nbsp;</div>
     <div id="math-choices" class="math-choices" style="display:none;"></div>
     <div id="math-input" class="math-input-box" style="display:none;">
@@ -702,31 +802,277 @@ body{background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,san
 
 <script>
 // ═══════════════════════════════════════════════════
+// i18n
+// ═══════════════════════════════════════════════════
+let lang = localStorage.getItem('membrain_lang') || 'en';
+const STRINGS = {
+  en: {
+    app_name:'MEMBRAIN', menu_tagline:'Train your mind · Challenge your brain', lang_toggle:'🇺🇦 УКР',
+    wm_mode_title:'Word Sequence', wm_mode_desc:'Watch words flash by, then recall them all — in order',
+    spot_mode_title:'Object Spotting', spot_mode_desc:'Memorize a scene, then find which object has vanished',
+    pairs_mode_title:'Pairs Battle', pairs_mode_desc:'Find matching pairs online — outsmart your opponent',
+    math_mode_title:'Math Drills', math_mode_desc:'Solve arithmetic against the clock — beat your brain',
+    back_menu:'← Menu',
+    wm_section_title:'Word Sequence', wm_section_sub:'Levels 1–6: pick the words · Levels 7–12: type them from memory',
+    wm_training_head:'🧠 Your Memory Training',
+    wm_get_ready:'GET READY', wm_type_ready:'Get ready to TYPE them back!',
+    wm_now_recall:'NOW RECALL!',
+    wm_word_n_of:(i,n)=>`WORD ${i} OF ${n}`,
+    wm_more_to_go:(n)=>`${n} more to go`,
+    wm_what_did_you_see:'What did you see?',
+    wm_recall_sub_pool:'Click the words in the order you saw them',
+    wm_type_recall_title:'Type what you saw',
+    wm_type_recall_sub:'Type each word in order — spelling counts! (Enter = next)',
+    wm_clear:'Clear', wm_check:'Check My Memory',
+    wm_perfect:'✨ PERFECT RECALL! ✨', wm_sharp:'Sharp memory!', wm_keep:'Keep training!', wm_try:'Shake it off — try again!',
+    wm_score_label:'Memory Score', wm_new_best:'NEW BEST!',
+    wm_words_lbl:'words', wm_time_lbl:'s each',
+    wm_day_streak:(n)=>`🔥 ${n} day streak`,
+    wm_today:'Today', wm_recalled:'Recalled', wm_in_order:'In Order', wm_best_streak:'Best Streak',
+    wm_wrong:'Wrong', wm_false_picks:'False Picks',
+    wm_shown:'Shown sequence', wm_your_ans:'Your answer', wm_nothing:'Nothing entered',
+    wm_type_intro:'Type the words yourself',
+    wm_diff_lbl:'WORD LENGTH', wm_diff_short:'🟢 Short', wm_diff_medium:'🟡 Medium', wm_diff_long:'🔴 Long', wm_diff_all:'⚪ All',
+    dow:['S','M','T','W','T','F','S'],
+    spot_section_title:'Object Spotting', spot_section_sub:'Memorize the scene — spot what\'s missing',
+    spot_choose_pack:'CHOOSE PACK', spot_select_level:'SELECT LEVEL',
+    spot_streak_lbl:'Streak', spot_change_level:'Change Level', spot_next_level:'Next Level →',
+    spot_objects:'objects',
+    spot_memorize_one:'Memorize the objects!', spot_memorize_multi:(n)=>`Memorize — find the ${n} missing!`,
+    spot_eyes_closed:'Eyes closed!', spot_rearranging:'Objects are rearranging…',
+    spot_find_one:'Which object is missing?', spot_find_many:(n)=>`Which ${n} objects are missing?`,
+    spot_select_n:(n)=>`Select ${n} missing object${n!==1?'s':''}`,
+    spot_checking:'Checking…',
+    spot_correct:'Correct!', spot_wrong:'Not quite…',
+    spot_missing_was:(labels)=>`The ${labels[0]} was missing!`,
+    spot_missing_were:(labels)=>`Missing: ${labels.join('  ')}`,
+    spot_find_label:(n)=>`find ${n}`,
+    spot_intro_two:'Find TWO missing objects!', spot_intro_three:'Find THREE missing objects!',
+    spot_intro_four:'👑 BOSS — Find FOUR missing!',
+    pairs_lobby:'⚔️ Pairs Battle Lobby',
+    pairs_conn:'🔌 Connection', pairs_players:'👥 Online Players', pairs_settings:'⚙️ Game Settings',
+    pairs_coll_label:'Card collection:', pairs_grid_label:'Grid size for your invitation:',
+    pairs_scoring:'<b style="color:var(--text2);">Scoring:</b><br>+10 per pair found · −1 per miss<br>Repeat misses cost extra (hole penalty)',
+    pairs_your_name:'Your name…', pairs_connect_btn:'Connect to Lobby',
+    pairs_conn_hint:'Connecting to',
+    pairs_connected:'Connected', pairs_connecting:'Connecting…', pairs_disconnected:'Disconnected',
+    pairs_challenges:(name)=>`${name} challenges you!`,
+    pairs_grid_coll:(g,c)=>`Grid: ${g} · ${c}`,
+    pairs_declined:(from)=>`${from} declined your invite.`,
+    pairs_sent:(target)=>`Invitation sent to ${target}! Waiting for response…`,
+    pairs_no_other:'No other players online',
+    pairs_in_lobby:'In lobby', pairs_in_game:'In game', pairs_invite_btn:'Invite',
+    pairs_gameover_tie:'It\'s a Tie!', pairs_gameover_win:'You Win! 🎉',
+    pairs_gameover_lose:(winner)=>`${winner} Wins!`,
+    pairs_tie_sub:'Great minds think alike!', pairs_win_sub:'Excellent memory!', pairs_lose_sub:'Better luck next time!',
+    pairs_holes:'holes:', pairs_turn:'TURN', pairs_your_turn:'Your Turn', pairs_their_turn:(name)=>`${name}'s Turn`,
+    pairs_decline:'Decline', pairs_accept:'Accept!',
+    pairs_lobby_btn:'← Lobby', pairs_rematch:'Rematch!', pairs_waiting:'Waiting…', pairs_accept_rematch:'Accept Rematch',
+    math_section_title:'Math Drills', math_section_sub:'Pick your operations &amp; difficulty',
+    math_select_lbl:'SELECT LEVEL · 10 tasks each', math_daily_head:'📊 Daily Brain Training',
+    math_choose_arith:'Choose which arithmetic to practice',
+    math_op_add:'Add', math_op_sub:'Subtract', math_op_mul:'Multiply', math_op_div:'Divide',
+    math_op_addsub:'Add·Sub', math_op_addmul:'Add·Mul', math_op_mixed:'Mixed', math_op_all:'All Ops',
+    math_task_counter:(n)=>`Task ${n} / 10`, math_score_pts:(s)=>`${s} pts`,
+    math_brilliant:'Brilliant!', math_complete:'Level Complete', math_keep:'Keep Training',
+    math_stat_correct:'Correct', math_stat_score:'Score', math_stat_level:'Level',
+    math_need_6:'Need 6/10 →', math_next_level:'Next Level →',
+    math_today:'Today', math_alltime:'All-time Tasks', math_accuracy:'Accuracy',
+    math_intro_input:'Type the answer yourself', math_intro_equation:'Solve for X',
+    math_intro_three:'Three numbers now', math_intro_eq3:'Solve X · 3 terms',
+    math_sub_eq:'solve X', math_sub_plain:(n)=>`${n} nums`,
+    math_practicing:(ops)=>`Practicing: ${ops}`,
+    math_menu:'Menu', math_replay:'Replay',
+    math_day_streak:(n)=>`🔥 ${n} day streak`,
+    math_op_pct:'Percent',
+    math_pct_type1:'P% of N', math_pct_type12:'Mixed %', math_pct_type123:'All % types',
+    math_tricks_lbl:'⚡ MATH TRICKS', math_tricks_sub:'Secret shortcuts schools don\'t teach',
+    trick_mul11:'× 11 Trick',    trick_mul11_hint:'A,(A+B),B side by side — 53×11=583',
+    trick_mul5:'× 5 Trick',      trick_mul5_hint:'(N÷2)×10 — halve it, shift — 48×5=240',
+    trick_mul25:'× 25 Trick',    trick_mul25_hint:'(N÷4)×100 — quarter, add zeros — 36×25=900',
+    trick_sq5:'Square of N5',    trick_sq5_hint:'N×(N+1) then |25 — 35²=3×4=12|25=1225',
+    trick_near100:'Near 100 ×',  trick_near100_hint:'defs d1,d2: left=100−d1−d2, right=d1×d2',
+    trick_pct_swap:'% Swap Rule',trick_pct_swap_hint:'A% of B = B% of A — pick the easier one!',
+  },
+  uk: {
+    app_name:'БОТАНІК', menu_tagline:'Тренуй розум · Розвивай мозок', lang_toggle:'🇬🇧 ENG',
+    wm_mode_title:'Ланцюжок слів', wm_mode_desc:'Запам\'ятай слова що з\'являються, потім відтвори їх по порядку',
+    spot_mode_title:'Знайди різницю', spot_mode_desc:'Запам\'ятай картину, знайди що зникло',
+    pairs_mode_title:'Битва пар', pairs_mode_desc:'Знаходь пари онлайн — обіграй суперника',
+    math_mode_title:'Математика', math_mode_desc:'Розв\'язуй приклади на час — перевір розум',
+    back_menu:'← Меню',
+    wm_section_title:'Ланцюжок слів', wm_section_sub:'Рівні 1–6: вибирай слова · Рівні 7–12: друкуй по пам\'яті',
+    wm_training_head:'🧠 Тренування пам\'яті',
+    wm_get_ready:'ГОТУЙСЯ', wm_type_ready:'Готуйся ПИСАТИ їх назад!',
+    wm_now_recall:'ВІДТВОРЮЙ!',
+    wm_word_n_of:(i,n)=>`СЛОВО ${i} З ${n}`,
+    wm_more_to_go:(n)=>`Ще ${n} слів`,
+    wm_what_did_you_see:'Що ти бачив(ла)?',
+    wm_recall_sub_pool:'Клікни слова в тому порядку, в якому запам\'ятав(ла)',
+    wm_type_recall_title:'Введи що пам\'ятаєш',
+    wm_type_recall_sub:'Вводь слова по порядку — правопис важливий! (Enter = далі)',
+    wm_clear:'Очистити', wm_check:'Перевірити пам\'ять',
+    wm_perfect:'✨ ІДЕАЛЬНО! ✨', wm_sharp:'Чудово!', wm_keep:'Продовжуй тренуватись!', wm_try:'Спробуй ще раз!',
+    wm_score_label:'Результат пам\'яті', wm_new_best:'НОВИЙ РЕКОРД!',
+    wm_words_lbl:'слів', wm_time_lbl:'с кожне',
+    wm_day_streak:(n)=>`🔥 ${n} ${n===1?'день':n<5?'дні':'днів'} поспіль`,
+    wm_today:'Сьогодні', wm_recalled:'Відтворено', wm_in_order:'По порядку', wm_best_streak:'Найкраща серія',
+    wm_wrong:'Помилки', wm_false_picks:'Зайві слова',
+    wm_shown:'Показана послідовність', wm_your_ans:'Твоя відповідь', wm_nothing:'Нічого не введено',
+    wm_type_intro:'Введи слова самостійно',
+    wm_diff_lbl:'ДОВЖИНА СЛІВ', wm_diff_short:'🟢 Короткі', wm_diff_medium:'🟡 Середні', wm_diff_long:'🔴 Довгі', wm_diff_all:'⚪ Всі',
+    dow:['Нд','Пн','Вт','Ср','Чт','Пт','Сб'],
+    spot_section_title:'Знайди різницю', spot_section_sub:'Запам\'ятай сцену — знайди що зникло',
+    spot_choose_pack:'ВИБЕРИ НАБІР', spot_select_level:'ВИБЕРИ РІВЕНЬ',
+    spot_streak_lbl:'Серія', spot_change_level:'Змінити рівень', spot_next_level:'Наступний →',
+    spot_objects:'об\'єктів',
+    spot_memorize_one:'Запам\'ятай об\'єкти!', spot_memorize_multi:(n)=>`Запам\'ятай — знайди ${n} зниклих!`,
+    spot_eyes_closed:'Заплющ очі!', spot_rearranging:'Переставляємо…',
+    spot_find_one:'Який об\'єкт зник?', spot_find_many:(n)=>`Які ${n} об\'єктів зникли?`,
+    spot_select_n:(n)=>`Вибери ще ${n} об\'єкт${n===1?'':'ів'}`,
+    spot_checking:'Перевіряємо…',
+    spot_correct:'Правильно!', spot_wrong:'Не зовсім…',
+    spot_missing_was:(labels)=>`Зник: ${labels[0]}`,
+    spot_missing_were:(labels)=>`Зникли: ${labels.join('  ')}`,
+    spot_find_label:(n)=>`знайди ${n}`,
+    spot_intro_two:'Знайди ДВА зниклих об\'єкти!', spot_intro_three:'Знайди ТРИ зниклих об\'єкти!',
+    spot_intro_four:'👑 БОС — Знайди ЧОТИРИ зниклих!',
+    pairs_lobby:'⚔️ Лобі Битви Пар',
+    pairs_conn:'🔌 З\'єднання', pairs_players:'👥 Гравці онлайн', pairs_settings:'⚙️ Налаштування',
+    pairs_coll_label:'Набір карток:', pairs_grid_label:'Розмір поля для запрошення:',
+    pairs_scoring:'<b style="color:var(--text2);">Рахунок:</b><br>+10 за пару · −1 за помилку<br>Повторні помилки штрафуються',
+    pairs_your_name:'Твоє ім\'я…', pairs_connect_btn:'Підключитись',
+    pairs_conn_hint:'Підключення до',
+    pairs_connected:'Підключено', pairs_connecting:'Підключення…', pairs_disconnected:'Відключено',
+    pairs_challenges:(name)=>`${name} кидає виклик!`,
+    pairs_grid_coll:(g,c)=>`Поле: ${g} · ${c}`,
+    pairs_declined:(from)=>`${from} відхилив(ла) ваше запрошення.`,
+    pairs_sent:(target)=>`Запрошення надіслано ${target}!`,
+    pairs_no_other:'Підключіться, щоб бачити гравців',
+    pairs_in_lobby:'В лобі', pairs_in_game:'У грі', pairs_invite_btn:'Запросити',
+    pairs_gameover_tie:'Нічия!', pairs_gameover_win:'Ти виграв(ла)! 🎉',
+    pairs_gameover_lose:(winner)=>`${winner} переміг(ла)!`,
+    pairs_tie_sub:'Рівні за силою!', pairs_win_sub:'Чудова пам\'ять!', pairs_lose_sub:'Наступного разу пощастить!',
+    pairs_holes:'пмлк:', pairs_turn:'ХІД', pairs_your_turn:'Твій хід', pairs_their_turn:(name)=>`Хід ${name}`,
+    pairs_decline:'Відхилити', pairs_accept:'Прийняти!',
+    pairs_lobby_btn:'← Лобі', pairs_rematch:'Реванш!', pairs_waiting:'Зачекайте…', pairs_accept_rematch:'Прийняти реванш',
+    math_section_title:'Математика', math_section_sub:'Вибери операції та складність',
+    math_select_lbl:'ВИБЕРИ РІВЕНЬ · 10 завдань', math_daily_head:'📊 Щоденне тренування',
+    math_choose_arith:'Вибери арифметику для практики',
+    math_op_add:'Дод', math_op_sub:'Від', math_op_mul:'Мнж', math_op_div:'Діл',
+    math_op_addsub:'Дод·Від', math_op_addmul:'Дод·Мнж', math_op_mixed:'Мікс', math_op_all:'Всі',
+    math_task_counter:(n)=>`Завдання ${n} / 10`, math_score_pts:(s)=>`${s} б`,
+    math_brilliant:'Блискуче!', math_complete:'Рівень пройдено', math_keep:'Продовжуй тренуватись',
+    math_stat_correct:'Правильних', math_stat_score:'Бали', math_stat_level:'Рівень',
+    math_need_6:'Потрібно 6/10 →', math_next_level:'Наступний →',
+    math_today:'Сьогодні', math_alltime:'Всього завдань', math_accuracy:'Точність',
+    math_intro_input:'Введи відповідь самостійно', math_intro_equation:'Знайди X',
+    math_intro_three:'Тепер три числа', math_intro_eq3:'Знайди X · 3 члени',
+    math_sub_eq:'знайди X', math_sub_plain:(n)=>`${n} числ`,
+    math_practicing:(ops)=>`Практика: ${ops}`,
+    math_menu:'Меню', math_replay:'Повтор',
+    math_day_streak:(n)=>`🔥 ${n} ${n===1?'день':n<5?'дні':'днів'} поспіль`,
+    math_op_pct:'Відсотки',
+    math_pct_type1:'P% від N', math_pct_type12:'Змішано %', math_pct_type123:'Всі типи %',
+    math_tricks_lbl:'⚡ МАТЕМАТИЧНІ ХИТРОЩІ', math_tricks_sub:'Секретні методи, яких не вчать у школі',
+    trick_mul11:'Хитрість × 11',   trick_mul11_hint:'A,(A+B),B підряд — 53×11=583',
+    trick_mul5:'Хитрість × 5',     trick_mul5_hint:'(N÷2)×10 — поділи навпіл, додай нуль — 48×5=240',
+    trick_mul25:'Хитрість × 25',   trick_mul25_hint:'(N÷4)×100 — чверть, два нулі — 36×25=900',
+    trick_sq5:'Квадрат числа N5',  trick_sq5_hint:'N×(N+1) потім |25 — 35²=3×4=12|25=1225',
+    trick_near100:'Множення ~100', trick_near100_hint:'деф. d1,d2: ліво=100−d1−d2, право=d1×d2',
+    trick_pct_swap:'Правило % обміну', trick_pct_swap_hint:'A% від B = B% від A — бери зручніше!',
+  },
+};
+function t(key, ...args) {
+  const s = STRINGS[lang] || STRINGS.en;
+  const v = s[key] !== undefined ? s[key] : (STRINGS.en[key] !== undefined ? STRINGS.en[key] : key);
+  return typeof v === 'function' ? v(...args) : v;
+}
+function setLang(l) { lang = l; localStorage.setItem('membrain_lang', l); applyLang(); }
+function toggleLang() { setLang(lang === 'en' ? 'uk' : 'en'); }
+
+// ═══════════════════════════════════════════════════
 // CONSTANTS
 // ═══════════════════════════════════════════════════
 const WORD_BANKS = {
   animals:['cat','dog','bird','fish','lion','bear','wolf','deer','frog','snake','fox','owl','crab','duck','moth','hawk'],
   colors: ['red','blue','green','gold','pink','cyan','gray','lime','navy','teal','rose','jade','ivory','amber','coral'],
   food:   ['apple','bread','cake','milk','rice','soup','corn','plum','mango','lemon','cherry','grape','melon','basil'],
-  nature: ['tree','rock','lake','rain','wind','snow','fire','moon','star','leaf','cloud','storm','river','stone','forest'],
+  nature: ['tree','rock','lake','rain','wind','snow','fire','leaf','cloud','storm','river','stone','forest','hill'],
   objects:['book','door','lamp','ring','shoe','bell','coin','desk','mirror','key','clock','phone','pen','hat','chain'],
+  space:  ['comet','orbit','rocket','galaxy','planet','meteor','cosmos','nebula','lunar','solar','venus','mars'],
+  music:  ['drum','flute','piano','violin','tempo','chord','melody','banjo','cello','organ','harp','tuba'],
+};
+const WM_ALL_CATS = Object.keys(WORD_BANKS);
+
+const WORD_BANKS_UK = {
+  animals:['кіт','пес','птах','риба','лев','ведмідь','вовк','олень','жаба','змія','лис','сова','краб','качка','метелик','яструб'],
+  colors: ['червоний','синій','зелений','золотий','рожевий','блакитний','сірий','жовтий','білий','чорний','бузковий','брунатний','коричневий','бежевий','малиновий'],
+  food:   ['яблуко','хліб','торт','молоко','рис','суп','слива','манго','лимон','вишня','виноград','диня','базилік','пшениця'],
+  nature: ['дерево','камінь','озеро','дощ','вітер','сніг','вогонь','листок','хмара','буря','річка','скеля','ліс','пагорб'],
+  objects:['книга','двері','лампа','перстень','черевик','дзвін','монета','стіл','дзеркало','ключ','годинник','телефон','ручка','капелюх','ланцюг'],
+  space:  ['комета','орбіта','ракета','галактика','планета','метеор','космос','туманність','місяць','сонце','венера','марс'],
+  music:  ['барабан','флейта','піано','скрипка','темп','акорд','мелодія','банджо','віолончель','орган','арфа','туба'],
 };
 
+// 12 levels. 1–6 = click words from a pool (easier). 7–12 = TYPE each word
+// from memory with the keyboard (no pool to lean on → much harder).
 const WM_LEVELS = [
-  {words:3,  time:4000, cats:['animals']},
-  {words:5,  time:3500, cats:['animals','colors']},
-  {words:7,  time:3000, cats:['animals','colors','food']},
-  {words:9,  time:2500, cats:['nature','objects','food']},
-  {words:12, time:2000, cats:['animals','colors','food','nature']},
-  {words:16, time:1500, cats:Object.keys(WORD_BANKS)},
+  {words:3,  time:3500, mode:'pool', cats:['animals']},
+  {words:4,  time:3200, mode:'pool', cats:['animals','colors']},
+  {words:5,  time:2900, mode:'pool', cats:['animals','colors','food']},
+  {words:6,  time:2600, mode:'pool', cats:['colors','food','nature']},
+  {words:8,  time:2200, mode:'pool', cats:['animals','food','nature','objects']},
+  {words:10, time:1900, mode:'pool', cats:WM_ALL_CATS},
+  {words:4,  time:3000, mode:'type', cats:['animals','colors'],            introKey:'wm_type_intro'},
+  {words:5,  time:2600, mode:'type', cats:['animals','colors','food']},
+  {words:6,  time:2300, mode:'type', cats:['food','nature','objects']},
+  {words:7,  time:2000, mode:'type', cats:['nature','objects','space']},
+  {words:8,  time:1700, mode:'type', cats:WM_ALL_CATS},
+  {words:10, time:1400, mode:'type', cats:WM_ALL_CATS},
+];
+
+const WM_DIFF_DEFS = [
+  { id:'short',  filter: w => w.length <= 4 },
+  { id:'medium', filter: w => w.length >= 4 && w.length <= 6 },
+  { id:'long',   filter: w => w.length >= 5 },
+  { id:'all',    filter: () => true },
 ];
 
 const SPOT_LEVELS = [
-  {count:5,  memorize:10000, blackout:3000},
-  {count:7,  memorize:8000,  blackout:3000},
-  {count:9,  memorize:6000,  blackout:3000},
-  {count:11, memorize:5000,  blackout:3000},
-  {count:14, memorize:5000,  blackout:2500},
+  // warmup — 1 missing
+  {count:5,  memorize:10000, blackout:2500, missing:1},
+  {count:7,  memorize:8000,  blackout:2500, missing:1},
+  {count:9,  memorize:7000,  blackout:2000, missing:1},
+  {count:12, memorize:6000,  blackout:2000, missing:1},
+  {count:15, memorize:5500,  blackout:2000, missing:1},
+  // medium — bigger grids
+  {count:8,  memorize:8000,  blackout:2500, missing:1},
+  {count:10, memorize:6500,  blackout:2000, missing:1},
+  {count:12, memorize:6000,  blackout:2000, missing:1},
+  {count:14, memorize:5500,  blackout:2000, missing:1},
+  {count:16, memorize:5500,  blackout:1800, missing:1},
+  // harder — less time
+  {count:10, memorize:5000,  blackout:1800, missing:1},
+  {count:14, memorize:5000,  blackout:1800, missing:1},
+  {count:16, memorize:4500,  blackout:1800, missing:1},
+  {count:18, memorize:4500,  blackout:1500, missing:1},
+  {count:20, memorize:5000,  blackout:1500, missing:1},
+  // expert — fast rounds
+  {count:14, memorize:3500,  blackout:1500, missing:1},
+  {count:16, memorize:3500,  blackout:1500, missing:1},
+  {count:18, memorize:4000,  blackout:1500, missing:1},
+  {count:20, memorize:4000,  blackout:1500, missing:1},
+  {count:22, memorize:4500,  blackout:1500, missing:1},
+  // multi-missing: find 2
+  {count:10, memorize:9000,  blackout:2500, missing:2, introKey:'spot_intro_two'},
+  {count:12, memorize:8000,  blackout:2500, missing:2},
+  {count:16, memorize:7500,  blackout:2000, missing:2},
+  // multi-missing: find 3
+  {count:12, memorize:9000,  blackout:2500, missing:3, introKey:'spot_intro_three'},
+  {count:16, memorize:8000,  blackout:2500, missing:3},
+  // boss: find 4
+  {count:14, memorize:10000, blackout:2500, missing:4, introKey:'spot_intro_four'},
 ];
 
 // Object definitions for spotting & pairs
@@ -1241,44 +1587,103 @@ function goMenu() { showScreen('screen-menu'); }
 // ═══════════════════════════════════════════════════
 // WORD MEMORY MODE
 // ═══════════════════════════════════════════════════
-let wmLevel = 0, wmSequence = [], wmPool = [], wmSelected = [], wmTimers = [];
+let wmLevel = 0, wmSequence = [], wmPool = [], wmSelected = [], wmTimers = [], wmMode = 'pool';
+let wordDiff = localStorage.getItem('membrain_wm_diff') || 'all';
+
+// Center the screen vertically only for the brief flash phase; for the tall
+// level-select / recall / results lists, anchor to top so nothing clips on mobile.
+function setWordAlign(center) {
+  document.getElementById('screen-word').style.justifyContent = center ? 'center' : 'flex-start';
+}
 
 function showWordMenu() {
   showScreen('screen-word');
+  setWordAlign(false);
   document.getElementById('wm-select').style.display = 'block';
   document.getElementById('wm-memorize').style.display = 'none';
   document.getElementById('wm-recall').style.display = 'none';
   document.getElementById('wm-results').style.display = 'none';
+  const stats = wmLoadStats();
   const grid = document.getElementById('wm-level-grid');
   grid.innerHTML = '';
+
+  // Difficulty selector
+  const diffLbl = document.getElementById('wm-diff-lbl');
+  const diffRow = document.getElementById('wm-diff-row');
+  if (diffLbl) diffLbl.textContent = t('wm_diff_lbl');
+  if (diffRow) {
+    diffRow.innerHTML = '';
+    const recDiff = wmGetRecommendedDiff();
+    WM_DIFF_DEFS.forEach(d => {
+      const b = document.createElement('div');
+      b.className = 'wm-diff-opt' + (d.id === wordDiff ? ' active' : '');
+      b.innerHTML = t('wm_diff_' + d.id) + (d.id === recDiff ? ' <span class="wm-diff-rec">★</span>' : '');
+      b.onclick = () => { wordDiff = d.id; localStorage.setItem('membrain_wm_diff', d.id); showWordMenu(); };
+      diffRow.appendChild(b);
+    });
+  }
+
   WM_LEVELS.forEach((lv, i) => {
+    const stars = stats.stars?.[i] || 0;
     const b = document.createElement('div');
-    b.className = 'level-btn';
-    b.innerHTML = `<span class="lv-num">${i+1}</span><span class="lv-sub">${lv.words} words<br>${(lv.time/1000).toFixed(1)}s each</span>`;
+    b.className = 'level-btn' + (lv.mode === 'type' ? ' type-lv' : '');
     b.onclick = () => wmStart(i);
+    let starStr = '';
+    for (let k = 0; k < 3; k++) starStr += `<span style="opacity:${k<stars?1:.25}">★</span>`;
+    b.innerHTML = `${lv.mode==='type'?'<span class="lv-badge">⌨️</span>':''}` +
+      `<span class="lv-num">${i+1}</span>` +
+      `<span class="lv-sub">${lv.words} ${t('wm_words_lbl')}<br>${(lv.time/1000).toFixed(1)} ${t('wm_time_lbl')}</span>` +
+      `<span class="lv-stars">${starStr}</span>`;
     grid.appendChild(b);
   });
+  renderWmStats();
 }
 
 function wmStart(lvIdx) {
   wmLevel = lvIdx;
   wmTimers.forEach(clearTimeout); wmTimers = [];
   const lv = WM_LEVELS[lvIdx];
-  // Build sequence
-  const allWords = lv.cats.flatMap(c => WORD_BANKS[c]);
-  const shuffled = allWords.sort(() => Math.random()-0.5);
-  wmSequence = shuffled.slice(0, lv.words);
-  // Build pool (sequence + distractors)
-  const distractors = shuffled.slice(lv.words, lv.words + Math.max(4, Math.floor(lv.words*0.6)));
+  wmMode = lv.mode;
+  // distinct words across the chosen categories (avoids duplicate sequence entries)
+  const banks = lang === 'uk' ? WORD_BANKS_UK : WORD_BANKS;
+  const allWords = [...new Set(lv.cats.flatMap(c => (banks[c] || WORD_BANKS[c])))].sort(() => Math.random()-0.5);
+  const diff = WM_DIFF_DEFS.find(d => d.id === wordDiff) || WM_DIFF_DEFS[WM_DIFF_DEFS.length - 1];
+  const filtered = allWords.filter(diff.filter);
+  const wordPool = filtered.length >= lv.words ? filtered : allWords;
+  wmSequence = wordPool.slice(0, lv.words);
+  const distractors = wordPool.slice(lv.words, lv.words + Math.max(4, Math.floor(lv.words*0.6)));
   wmPool = [...wmSequence, ...distractors].sort(() => Math.random()-0.5);
   wmSelected = [];
 
+  setWordAlign(true);
   document.getElementById('wm-select').style.display = 'none';
   document.getElementById('wm-memorize').style.display = 'block';
   document.getElementById('wm-recall').style.display = 'none';
   document.getElementById('wm-results').style.display = 'none';
 
-  wmRunMemorize(0, lv);
+  wmCountdown(() => wmRunMemorize(0, lv));
+}
+
+// Tension-building 3·2·1·GO! before the words flash
+function wmCountdown(done) {
+  const display = document.getElementById('wm-word-display');
+  const title = document.getElementById('wm-title');
+  document.getElementById('wm-progress-bar').style.width = '0%';
+  document.getElementById('wm-counter').textContent = wmMode === 'type' ? t('wm_type_ready') : '';
+  title.textContent = t('wm_get_ready');
+  display.classList.add('count');
+  const seq = ['3','2','1','GO!'];
+  let i = 0;
+  const step = () => {
+    display.style.opacity = 1;
+    display.textContent = seq[i];
+    display.classList.remove('anim-wordpop'); void display.offsetWidth; display.classList.add('anim-wordpop');
+    playTone(i < 3 ? 400 : 720, 'sine', 0.18, 0.13);
+    i++;
+    if (i < seq.length) wmTimers.push(setTimeout(step, 620));
+    else wmTimers.push(setTimeout(() => { display.classList.remove('count'); done(); }, 520));
+  };
+  step();
 }
 
 function wmRunMemorize(idx, lv) {
@@ -1288,18 +1693,19 @@ function wmRunMemorize(idx, lv) {
   const title = document.getElementById('wm-title');
 
   if (idx >= wmSequence.length) {
-    title.textContent = 'NOW RECALL!';
+    title.textContent = t('wm_now_recall');
     display.style.opacity = 0;
     bar.style.width = '100%';
-    wmTimers.push(setTimeout(wmShowRecall, 800));
+    wmTimers.push(setTimeout(wmShowRecall, 700));
     return;
   }
-  title.textContent = `WORD ${idx+1} OF ${wmSequence.length}`;
+  title.textContent = t('wm_word_n_of', idx+1, wmSequence.length);
   display.textContent = wmSequence[idx].toUpperCase();
   display.style.opacity = 1;
   display.classList.remove('anim-wordpop'); void display.offsetWidth; display.classList.add('anim-wordpop');
   bar.style.width = ((idx+1)/wmSequence.length*100)+'%';
-  counter.textContent = `${wmSequence.length - idx - 1} more to go`;
+  counter.textContent = t('wm_more_to_go', wmSequence.length - idx - 1);
+  playTone(500 + idx*12, 'sine', 0.13, 0.07);
 
   const halfTime = lv.time * 0.7;
   wmTimers.push(setTimeout(() => { display.style.opacity = 0; }, halfTime));
@@ -1307,13 +1713,27 @@ function wmRunMemorize(idx, lv) {
 }
 
 function wmShowRecall() {
+  setWordAlign(false);
   document.getElementById('wm-memorize').style.display = 'none';
   document.getElementById('wm-recall').style.display = 'block';
-  wmSelected = [];
-  renderWmSlots();
-  renderWmPool();
+  const poolArea = document.getElementById('wm-pool-area');
+  const typeArea = document.getElementById('wm-type-area');
+  const clearBtn = document.getElementById('wm-clear-btn');
+  if (wmMode === 'pool') {
+    poolArea.style.display = ''; typeArea.style.display = 'none'; clearBtn.style.display = '';
+    document.getElementById('wm-recall-title').textContent = t('wm_what_did_you_see');
+    document.getElementById('wm-recall-sub').textContent = t('wm_recall_sub_pool');
+    wmSelected = [];
+    renderWmSlots(); renderWmPool();
+  } else {
+    poolArea.style.display = 'none'; typeArea.style.display = ''; clearBtn.style.display = 'none';
+    document.getElementById('wm-recall-title').textContent = t('wm_type_recall_title');
+    document.getElementById('wm-recall-sub').textContent = t('wm_type_recall_sub');
+    renderWmTypeRows();
+  }
 }
 
+// ── pool (click) recall ──
 function renderWmSlots() {
   const el = document.getElementById('wm-slots');
   el.innerHTML = '';
@@ -1328,7 +1748,6 @@ function renderWmSlots() {
     el.innerHTML = '<div style="color:var(--text3);font-size:.8rem;padding:8px 0;">Click words below in the order you remember them</div>';
   }
 }
-
 function renderWmPool() {
   const el = document.getElementById('wm-pool');
   el.innerHTML = '';
@@ -1340,80 +1759,232 @@ function renderWmPool() {
     el.appendChild(c);
   });
 }
-
 function wmToggleWord(w) {
-  if (wmSelected.includes(w)) {
-    wmSelected = wmSelected.filter(x => x !== w);
-  } else {
-    wmSelected.push(w);
+  if (wmSelected.includes(w)) wmSelected = wmSelected.filter(x => x !== w);
+  else { wmSelected.push(w); playTone(560, 'sine', 0.1, 0.05); }
+  renderWmSlots(); renderWmPool();
+}
+function wmRemoveSlot(i) { wmSelected.splice(i, 1); renderWmSlots(); renderWmPool(); }
+function wmClearSlots() { wmSelected = []; renderWmSlots(); renderWmPool(); }
+
+// ── type (keyboard) recall ──
+function renderWmTypeRows() {
+  const el = document.getElementById('wm-type-rows');
+  el.innerHTML = '';
+  for (let i = 0; i < wmSequence.length; i++) {
+    const row = document.createElement('div');
+    row.className = 'wm-type-row';
+    row.innerHTML = `<span class="tn">#${i+1}</span>`;
+    const inp = document.createElement('input');
+    inp.type = 'text'; inp.autocomplete = 'off'; inp.autocapitalize = 'none'; inp.spellcheck = false;
+    inp.dataset.i = i;
+    inp.addEventListener('keydown', e => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        const next = el.querySelector(`input[data-i="${i+1}"]`);
+        if (next) next.focus(); else wmSubmit();
+      }
+    });
+    row.appendChild(inp);
+    el.appendChild(row);
   }
-  renderWmSlots(); renderWmPool();
-}
-
-function wmRemoveSlot(i) {
-  wmSelected.splice(i, 1);
-  renderWmSlots(); renderWmPool();
-}
-
-function wmClearSlots() {
-  wmSelected = []; renderWmSlots(); renderWmPool();
+  const first = el.querySelector('input');
+  if (first) setTimeout(() => first.focus(), 60);
 }
 
 function wmSubmit() {
+  // gather the player's answer for either mode
+  let answer;
+  if (wmMode === 'pool') answer = wmSelected.map(w => w.toLowerCase());
+  else answer = [...document.querySelectorAll('#wm-type-rows input')].map(x => x.value.trim().toLowerCase()).filter(x => x);
+
+  setWordAlign(false);
   document.getElementById('wm-recall').style.display = 'none';
   document.getElementById('wm-results').style.display = 'block';
-  // Scoring
-  const seqSet = new Set(wmSequence);
-  const selSet = new Set(wmSelected);
-  const hits = wmSelected.filter(w => seqSet.has(w));
-  const falsePos = wmSelected.filter(w => !seqSet.has(w));
-  const missed = wmSequence.filter(w => !selSet.has(w));
-  let orderCorrect = 0;
-  hits.forEach((w, i) => { if (wmSequence[i] === w) orderCorrect++; });
-  const recall = hits.length / wmSequence.length;
-  const precision = wmSelected.length > 0 ? hits.length / wmSelected.length : 0;
-  const order = hits.length > 0 ? orderCorrect / wmSequence.length : 0;
-  const score = Math.round((recall * 0.5 + precision * 0.25 + order * 0.25) * 100);
+
+  const seq = wmSequence.map(w => w.toLowerCase());
+  const seqSet = new Set(seq), ansSet = new Set(answer);
+  const hits = answer.filter(w => seqSet.has(w));
+  const falsePos = answer.filter(w => !seqSet.has(w));
+  let orderCorrect = 0, streak = 0, bestStreak = 0;
+  for (let i = 0; i < seq.length; i++) {
+    if (answer[i] === seq[i]) { orderCorrect++; streak++; bestStreak = Math.max(bestStreak, streak); }
+    else streak = 0;
+  }
+  const recall = hits.length / seq.length;
+  const precision = answer.length > 0 ? hits.length / answer.length : 0;
+  const order = orderCorrect / seq.length;
+  let score = Math.round((recall * 0.5 + precision * 0.2 + order * 0.3) * 100);
+  if (wmMode === 'type') score = Math.min(100, Math.round(score * 1.05)); // typing is harder
+  const perfect = hits.length === seq.length && orderCorrect === seq.length && falsePos.length === 0;
+  if (perfect) score = 100;
+  const stars = score >= 90 ? 3 : score >= 70 ? 2 : score >= 50 ? 1 : 0;
+
+  // persist stats + best + stars
+  const stats = wmLoadStats();
+  stats.days = stats.days || {}; stats.best = stats.best || {}; stats.stars = stats.stars || {};
+  const prevBest = stats.best[wmLevel] ?? -1;
+  const isNewBest = score > prevBest && prevBest >= 0;
+  const k = mathTodayKey();
+  const day = stats.days[k] || { sessions: 0, words: 0, recalled: 0, bestScore: 0 };
+  day.sessions++; day.words += seq.length; day.recalled += hits.length; day.bestScore = Math.max(day.bestScore, score);
+  stats.days[k] = day;
+  stats.best[wmLevel] = Math.max(stats.best[wmLevel] ?? 0, score);
+  stats.stars[wmLevel] = Math.max(stats.stars[wmLevel] || 0, stars);
+  wmSaveStats(stats);
+  wmSaveDiffScore(score);
+
+  // ── render results ──
+  const starsEl = document.getElementById('wm-stars');
+  starsEl.innerHTML = '';
+  for (let i = 0; i < 3; i++) {
+    const s = document.createElement('span');
+    s.textContent = '★';
+    s.style.color = i < stars ? 'var(--goldL)' : 'var(--text3)';
+    s.style.animationDelay = (0.15 + i * 0.18) + 's';
+    starsEl.appendChild(s);
+  }
+  const pf = document.getElementById('wm-perfect');
+  pf.classList.remove('show'); void pf.offsetWidth;
+  pf.textContent = perfect ? t('wm_perfect') : score >= 70 ? t('wm_sharp') : score >= 40 ? t('wm_keep') : t('wm_try');
+  pf.classList.add('show');
 
   document.getElementById('wm-score-pct').textContent = score + '%';
+  document.getElementById('wm-result-label').innerHTML = t('wm_score_label') + (isNewBest ? ` &nbsp;<span class="wm-newbest">${t('wm_new_best')}</span>` : '');
   document.getElementById('wm-stat-row').innerHTML = `
-    <div class="stat-box"><div class="sv">${hits.length}/${wmSequence.length}</div><div class="sl">Recalled</div></div>
-    <div class="stat-box"><div class="sv">${orderCorrect}</div><div class="sl">In Order</div></div>
-    <div class="stat-box"><div class="sv">${falsePos.length}</div><div class="sl">False Picks</div></div>
-    <div class="stat-box"><div class="sv" style="color:${score>=80?'var(--greenL)':score>=50?'var(--goldL)':'var(--redL)'}">${score>=80?'🌟':score>=50?'👍':'💪'}</div><div class="sl">Rating</div></div>
+    <div class="stat-box"><div class="sv">${hits.length}/${seq.length}</div><div class="sl">${t('wm_recalled')}</div></div>
+    <div class="stat-box"><div class="sv">${orderCorrect}</div><div class="sl">${t('wm_in_order')}</div></div>
+    <div class="stat-box"><div class="sv">×${bestStreak}</div><div class="sl">${t('wm_best_streak')}</div></div>
+    <div class="stat-box"><div class="sv">${falsePos.length}</div><div class="sl">${wmMode==='type'?t('wm_wrong'):t('wm_false_picks')}</div></div>
   `;
-  // Compare grid
   const compare = document.getElementById('wm-compare');
   compare.innerHTML = `
     <div>
-      <h4>Shown sequence</h4>
-      ${wmSequence.map((w,i)=>`<div class="compare-word ${selSet.has(w)?'hit':'miss'} ${wmSelected[i]===w?'order-ok':'order-bad'}">#${i+1} ${w}</div>`).join('')}
+      <h4>${t('wm_shown')}</h4>
+      ${seq.map((w,i)=>`<div class="compare-word ${ansSet.has(w)?'hit':'miss'} ${answer[i]===w?'order-ok':'order-bad'}">#${i+1} ${w}</div>`).join('')}
     </div>
     <div>
-      <h4>Your answer</h4>
-      ${wmSelected.map((w,i)=>`<div class="compare-word ${seqSet.has(w)?'hit':'extra'}">#${i+1} ${w}</div>`).join('')}
-      ${wmSelected.length===0?'<div style="color:var(--text3);font-size:.82rem;">Nothing selected</div>':''}
+      <h4>${t('wm_your_ans')}</h4>
+      ${answer.length ? answer.map((w,i)=>`<div class="compare-word ${seqSet.has(w)?'hit':'extra'} ${seq[i]===w?'order-ok':'order-bad'}">#${i+1} ${w}</div>`).join('')
+        : `<div style="color:var(--text3);font-size:.82rem;">${t('wm_nothing')}</div>`}
     </div>
   `;
+  const nextBtn = document.getElementById('wm-next-btn');
+  nextBtn.style.display = wmLevel < WM_LEVELS.length-1 ? '' : 'none';
+
+  if (perfect) soundWin(); else if (score >= 50) soundPairFound(); else soundNoMatch();
 }
 
 function wmReplay() { wmStart(wmLevel); }
+function wmNextLevel() { if (wmLevel < WM_LEVELS.length-1) wmStart(wmLevel+1); }
+
+// ── word-mode local stats ──
+function wmLoadStats() { try { return JSON.parse(localStorage.getItem('membrain_word_v1')) || {}; } catch { return {}; } }
+function wmSaveStats(s) { try { localStorage.setItem('membrain_word_v1', JSON.stringify(s)); } catch {} }
+function wmSaveDiffScore(score) {
+  try {
+    const d = JSON.parse(localStorage.getItem('membrain_wm_diff_hist') || '{}');
+    if (!d[wordDiff]) d[wordDiff] = [];
+    d[wordDiff].push(score);
+    if (d[wordDiff].length > 5) d[wordDiff].shift();
+    localStorage.setItem('membrain_wm_diff_hist', JSON.stringify(d));
+  } catch {}
+}
+function wmGetRecommendedDiff() {
+  try {
+    const d = JSON.parse(localStorage.getItem('membrain_wm_diff_hist') || '{}');
+    const order = ['short', 'medium', 'long'];
+    if (!Object.values(d).flat().length) return 'short';
+    for (let i = 0; i < order.length; i++) {
+      const hist = d[order[i]] || [];
+      if (hist.length >= 3) {
+        const avg = hist.reduce((a, b) => a + b, 0) / hist.length;
+        if (avg >= 75 && i + 1 < order.length) return order[i + 1];
+      }
+    }
+  } catch {}
+  return null;
+}
+function wmStreak(stats) {
+  let n = 0; const d = new Date();
+  const has = () => { const day = stats.days?.[mathDayKey(d)]; return day && day.words > 0; };
+  if (!has()) d.setDate(d.getDate()-1);
+  while (has()) { n++; d.setDate(d.getDate()-1); }
+  return n;
+}
+function renderWmStats() {
+  const s = wmLoadStats(); s.days = s.days || {};
+  document.getElementById('wm-streak').textContent = t('wm_day_streak', wmStreak(s));
+  const bars = document.getElementById('wm-bars'); bars.innerHTML = '';
+  const days = []; const base = new Date();
+  for (let i = 6; i >= 0; i--) { const dd = new Date(base); dd.setDate(base.getDate()-i); days.push(dd); }
+  const counts = days.map(dd => s.days[mathDayKey(dd)]?.words || 0);
+  const maxT = Math.max(20, ...counts);
+  const tk = mathTodayKey(); const dow = t('dow');
+  days.forEach((dd, i) => {
+    const t = counts[i];
+    const el = document.createElement('div');
+    el.className = 'bar7' + (mathDayKey(dd)===tk ? ' today' : '');
+    el.innerHTML = `<div class="bval">${t||''}</div><div class="bcol" style="height:${Math.round(t/maxT*100)}%"></div><div class="bday">${dow[dd.getDay()]}</div>`;
+    bars.appendChild(el);
+  });
+  const allWords = Object.values(s.days).reduce((a,x)=>a+(x.words||0),0);
+  const allRecalled = Object.values(s.days).reduce((a,x)=>a+(x.recalled||0),0);
+  const acc = allWords ? Math.round(allRecalled/allWords*100) : 0;
+  const totalStars = Object.values(s.stars||{}).reduce((a,x)=>a+x,0);
+  document.getElementById('wm-daily-stats').innerHTML = `
+    <div class="stat-box"><div class="sv">${s.days[tk]?.words||0}</div><div class="sl">${t('wm_today')}</div></div>
+    <div class="stat-box"><div class="sv">${allRecalled}</div><div class="sl">${t('wm_recalled')}</div></div>
+    <div class="stat-box"><div class="sv">${acc}%</div><div class="sl">${t('math_accuracy')}</div></div>
+    <div class="stat-box"><div class="sv">${totalStars}/36</div><div class="sl">⭐ Stars</div></div>`;
+}
 
 // ═══════════════════════════════════════════════════
 // OBJECT SPOTTING MODE
 // ═══════════════════════════════════════════════════
-let spotLevel = 0, spotScene = [], spotMissing = null, spotStreak = 0, spotPhase = 'idle', spotTimer = null;
+let spotLevel = 0, spotScene = [], spotMissings = [], spotSelected = [],
+    spotStreak = 0, spotPhase = 'idle', spotTimer = null, spotCollection = 'classic';
+
+const SPOT_PACK_ICONS = {
+  classic:'🎯', animals:'🦁', sealife:'🐬', fruits:'🍓', food:'🍕',
+  sweets:'🍭', flora:'🌸', kitchen:'🍳', devices:'💻', transport:'🚀',
+  sports:'⚽', smileys:'😎', funpoop:'💩', cats:'😺',
+};
 
 function showSpotMenu() {
   showScreen('screen-spot');
+  document.getElementById('spot-result-overlay').classList.remove('show');
   document.getElementById('spot-select').style.display = 'block';
   document.getElementById('spot-game').style.display = 'none';
+  // Pack selector
+  const packRow = document.getElementById('spot-pack-row');
+  packRow.innerHTML = '';
+  COLLECTIONS.forEach(c => {
+    const btn = document.createElement('div');
+    btn.className = 'spot-pack-opt' + (c.id === spotCollection ? ' active' : '');
+    btn.innerHTML = `<span class="sp-icon">${SPOT_PACK_ICONS[c.id] || '📦'}</span>${c.name}`;
+    btn.onclick = () => {
+      spotCollection = c.id;
+      packRow.querySelectorAll('.spot-pack-opt').forEach(el => el.classList.remove('active'));
+      btn.classList.add('active');
+      refreshSpotLevels();
+    };
+    packRow.appendChild(btn);
+  });
+  refreshSpotLevels();
+}
+
+function refreshSpotLevels() {
+  const pool = collById(spotCollection).pool;
   const grid = document.getElementById('spot-level-grid');
   grid.innerHTML = '';
   SPOT_LEVELS.forEach((lv, i) => {
+    const count = Math.min(lv.count, pool.length - (lv.missing || 1));
     const b = document.createElement('div');
-    b.className = 'level-btn';
-    b.innerHTML = `<span class="lv-num">${i+1}</span><span class="lv-sub">${lv.count} objects<br>${lv.memorize/1000}s memory</span>`;
+    const isMulti = (lv.missing || 1) > 1;
+    b.className = 'level-btn' + (isMulti ? ' miss-lv' : '');
+    const missTag = isMulti ? `<span class="lv-miss-badge">${t('spot_find_label', lv.missing)}</span>` : '';
+    b.innerHTML = `<span class="lv-num">${i+1}</span><span class="lv-sub">${count} ${t('spot_objects')}<br>${lv.memorize/1000}s</span>${missTag}`;
     b.onclick = () => spotStart(i);
     grid.appendChild(b);
   });
@@ -1421,73 +1992,89 @@ function showSpotMenu() {
 
 function spotStart(lvIdx) {
   spotLevel = lvIdx;
+  spotSelected = [];
   document.getElementById('spot-select').style.display = 'none';
   document.getElementById('spot-game').style.display = 'flex';
-  document.getElementById('spot-level-tag').textContent = `Level ${lvIdx+1}`;
+  document.getElementById('spot-level-tag').textContent = `${lang==='uk'?'Рівень':'Level'} ${lvIdx+1}`;
   document.getElementById('spot-streak').textContent = spotStreak;
   spotRunRound();
 }
 
 function spotRunRound() {
   const lv = SPOT_LEVELS[spotLevel];
-  // Pick objects
-  const shuffled = [...OBJECTS].sort(() => Math.random()-0.5);
-  const chosen = shuffled.slice(0, lv.count);
-  spotMissing = chosen[Math.floor(Math.random()*chosen.length)];
-  // Assign positions for memorize phase
+  const coll = collById(spotCollection);
+  const pool = coll.pool;
+  const numMissing = Math.min(lv.missing || 1, pool.length - 1);
+  const count = Math.min(lv.count, pool.length);
+
+  // Pick tokens
+  const shuffled = [...pool].sort(() => Math.random()-0.5);
+  const chosen = shuffled.slice(0, count);
+
+  // Pick which are missing
+  const shuffledChosen = [...chosen].sort(() => Math.random()-0.5);
+  spotMissings = shuffledChosen.slice(0, numMissing).map(token => {
+    const obj = OBJECTS.find(o => o.id === token);
+    return { id: token, name: obj ? obj.name : token, glow: obj ? obj.glow : 'rgba(255,255,255,.2)', kind: coll.kind };
+  });
+  spotSelected = [];
+
   const canvas = document.getElementById('spot-canvas');
   const wrap = document.getElementById('spot-canvas-wrap');
   const W = Math.min(wrap.clientWidth - 24, 780);
   const H = Math.min(wrap.clientHeight - 24, 500);
   canvas.width = W; canvas.height = H;
-  const objSize = Math.max(50, Math.min(70, W / (lv.count * 0.7)));
-  const positions = placePacked(lv.count, W, H, objSize);
-  spotScene = chosen.map((obj, i) => ({ ...obj, x: positions[i].x, y: positions[i].y }));
-  document.getElementById('spot-phase-label').textContent = 'Memorize the objects!';
+  const objSize = Math.max(44, Math.min(70, W / (count * 0.7)));
+  const positions = placePacked(count, W, H, objSize);
+
+  spotScene = chosen.map((token, i) => {
+    const obj = OBJECTS.find(o => o.id === token);
+    return { id: token, name: obj ? obj.name : token, glow: obj ? obj.glow : 'rgba(255,255,255,.2)', kind: coll.kind, x: positions[i].x, y: positions[i].y };
+  });
+
+  const label = lv.introKey ? t(lv.introKey) : (numMissing > 1 ? t('spot_memorize_multi', numMissing) : t('spot_memorize_one'));
+  document.getElementById('spot-phase-label').textContent = label;
   document.getElementById('spot-choices').innerHTML = '';
   spotPhase = 'memorize';
-  // Draw
-  renderSpotScene(canvas, objSize, false);
-  // Overlay: show countdown
+  renderSpotScene(canvas, objSize, []);
+
   const overlay = document.getElementById('spot-overlay');
   overlay.classList.remove('hidden');
   document.getElementById('spot-overlay-text').textContent = '';
-  document.getElementById('spot-overlay-sub').textContent = '';
+  document.getElementById('spot-overlay-sub').textContent = lv.intro ? '' : '';
   const fill = document.getElementById('spot-timer-fill');
   fill.style.width = '100%';
-  let elapsed = 0;
-  const tick = 100;
+  let elapsed = 0; const tick = 100;
   clearInterval(spotTimer);
   spotTimer = setInterval(() => {
     elapsed += tick;
-    const frac = 1 - elapsed / lv.memorize;
-    fill.style.width = Math.max(0, frac*100)+'%';
-    const remaining = Math.ceil((lv.memorize - elapsed)/1000);
-    document.getElementById('spot-overlay-text').textContent = remaining > 0 ? remaining : '';
-    if (elapsed >= lv.memorize) {
-      clearInterval(spotTimer);
-      spotStartBlackout(canvas, objSize, lv.blackout);
-    }
+    fill.style.width = Math.max(0,(1-elapsed/lv.memorize)*100)+'%';
+    const rem = Math.ceil((lv.memorize-elapsed)/1000);
+    document.getElementById('spot-overlay-text').textContent = rem > 0 ? rem : '';
+    if (elapsed >= lv.memorize) { clearInterval(spotTimer); spotStartBlackout(canvas, objSize, lv.blackout); }
   }, tick);
 }
 
-function renderSpotScene(canvas, objSize, hideOne) {
+function renderSpotScene(canvas, objSize, hideIds) {
   const ctx = canvas.getContext('2d');
   ctx.clearRect(0, 0, canvas.width, canvas.height);
-  // Background gradient
   const bg = ctx.createLinearGradient(0,0,0,canvas.height);
   bg.addColorStop(0,'#0d0d30'); bg.addColorStop(1,'#080818');
   ctx.fillStyle = bg; ctx.fillRect(0,0,canvas.width,canvas.height);
-  // Subtle grid
   ctx.strokeStyle = 'rgba(255,255,255,0.03)'; ctx.lineWidth = 1;
   for (let x=0;x<canvas.width;x+=40){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,canvas.height);ctx.stroke();}
   for (let y=0;y<canvas.height;y+=40){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(canvas.width,y);ctx.stroke();}
-  // Objects
   for (const obj of spotScene) {
-    if (hideOne && obj.id === spotMissing.id) continue;
+    if (hideIds.includes(obj.id)) continue;
     ctx.save();
-    ctx.shadowColor = obj.glow; ctx.shadowBlur = 18;
-    drawObject(ctx, obj.id, obj.x, obj.y, objSize);
+    if (obj.kind === 'emoji') {
+      ctx.font = `${Math.floor(objSize*0.85)}px "Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif`;
+      ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.fillText(obj.id, obj.x, obj.y + objSize * 0.04);
+    } else {
+      ctx.shadowColor = obj.glow; ctx.shadowBlur = 18;
+      drawObject(ctx, obj.id, obj.x, obj.y, objSize);
+    }
     ctx.restore();
   }
 }
@@ -1497,11 +2084,10 @@ function spotStartBlackout(canvas, objSize, duration) {
   const overlay = document.getElementById('spot-overlay');
   overlay.classList.remove('hidden');
   overlay.style.background = 'rgba(8,8,24,0.92)';
-  document.getElementById('spot-overlay-text').textContent = 'Eyes closed!';
-  document.getElementById('spot-overlay-sub').textContent = 'Objects are rearranging…';
+  document.getElementById('spot-overlay-text').textContent = t('spot_eyes_closed');
+  document.getElementById('spot-overlay-sub').textContent = t('spot_rearranging');
   document.getElementById('spot-timer-fill').style.width = '100%';
-  let elapsed = 0;
-  const tick = 100;
+  let elapsed = 0; const tick = 100;
   clearInterval(spotTimer);
   spotTimer = setInterval(() => {
     elapsed += tick;
@@ -1516,66 +2102,123 @@ function spotStartBlackout(canvas, objSize, duration) {
 
 function spotStartFind(canvas, objSize) {
   spotPhase = 'find';
-  document.getElementById('spot-phase-label').textContent = 'Which object is missing?';
-  // Rearrange positions for remaining objects
   const lv = SPOT_LEVELS[spotLevel];
-  const W = canvas.width; const H = canvas.height;
-  const remaining = spotScene.filter(o => o.id !== spotMissing.id);
-  const positions = placePacked(remaining.length, W, H, objSize);
+  const numMissing = lv.missing || 1;
+  const missingIds = spotMissings.map(o => o.id);
+  document.getElementById('spot-phase-label').textContent =
+    numMissing > 1 ? t('spot_find_many', numMissing) : t('spot_find_one');
+
+  // Rearrange remaining objects
+  const remaining = spotScene.filter(o => !missingIds.includes(o.id));
+  const positions = placePacked(remaining.length, canvas.width, canvas.height, objSize);
   remaining.forEach((obj, i) => { obj.x = positions[i].x; obj.y = positions[i].y; });
 
-  const overlay = document.getElementById('spot-overlay');
-  overlay.classList.add('hidden');
-  renderSpotScene(canvas, objSize, true);
+  document.getElementById('spot-overlay').classList.add('hidden');
+  renderSpotScene(canvas, objSize, missingIds);
 
-  // Choices row (all lv.count objects, shuffled)
-  const choiceObjects = [...spotScene].sort(() => Math.random()-0.5);
+  // Build choices row
   const choices = document.getElementById('spot-choices');
   choices.innerHTML = '';
-  choiceObjects.forEach(obj => {
-    const wrap = document.createElement('div');
-    wrap.className = 'spot-choice';
-    const c = document.createElement('canvas');
-    c.width = 48; c.height = 48;
-    const ctx2 = c.getContext('2d');
-    ctx2.save(); ctx2.shadowColor = obj.glow; ctx2.shadowBlur = 8;
-    drawObject(ctx2, obj.id, 24, 24, 38);
-    ctx2.restore();
-    wrap.appendChild(c);
-    const lbl = document.createElement('div');
-    lbl.style.cssText = 'font-size:.6rem;color:var(--text2);text-align:center;margin-top:2px;';
-    lbl.textContent = obj.name;
-    wrap.appendChild(lbl);
-    wrap.onclick = () => spotGuess(obj.id);
-    choices.appendChild(wrap);
+
+  if (numMissing > 1) {
+    const ctr = document.createElement('div');
+    ctr.id = 'spot-find-counter';
+    ctr.style.cssText = 'width:100%;text-align:center;font-size:.88rem;font-weight:800;color:var(--goldL);padding:4px 0 6px;';
+    ctr.textContent = t('spot_select_n', numMissing);
+    choices.appendChild(ctr);
+  }
+
+  const row = document.createElement('div');
+  row.style.cssText = 'display:flex;gap:10px;justify-content:center;flex-wrap:wrap;';
+  const coll = collById(spotCollection);
+  const sceneIds = new Set(spotScene.map(o => o.id));
+  const distractorTokens = coll.pool.filter(id => !sceneIds.has(id));
+  const numDistractors = Math.min(Math.max(3, Math.ceil(spotScene.length * 0.5)), distractorTokens.length);
+  const extraTokens = [...distractorTokens].sort(() => Math.random()-0.5).slice(0, numDistractors);
+  const extraObjs = extraTokens.map(token => {
+    const obj = OBJECTS.find(o => o.id === token);
+    return { id: token, name: obj ? obj.name : token, glow: obj ? obj.glow : 'rgba(255,255,255,.2)', kind: coll.kind };
   });
+  const shuffled = [...spotScene, ...extraObjs].sort(() => Math.random()-0.5);
+  shuffled.forEach(obj => {
+    const el = document.createElement('div');
+    el.className = 'spot-choice';
+    el.dataset.id = obj.id;
+    if (obj.kind === 'emoji') {
+      el.style.cssText = 'font-size:2rem;flex-direction:column;gap:0;';
+      el.textContent = obj.id;
+    } else {
+      const c = document.createElement('canvas');
+      c.width = 48; c.height = 48;
+      const ctx2 = c.getContext('2d');
+      ctx2.save(); ctx2.shadowColor = obj.glow; ctx2.shadowBlur = 8;
+      drawObject(ctx2, obj.id, 24, 24, 38);
+      ctx2.restore();
+      el.appendChild(c);
+      const lbl = document.createElement('div');
+      lbl.style.cssText = 'font-size:.6rem;color:var(--text2);text-align:center;margin-top:2px;';
+      lbl.textContent = obj.name;
+      el.appendChild(lbl);
+    }
+    el.onclick = () => spotGuess(obj.id);
+    row.appendChild(el);
+  });
+  choices.appendChild(row);
 }
 
 function spotGuess(id) {
   if (spotPhase !== 'find') return;
-  spotPhase = 'result';
-  const correct = id === spotMissing.id;
-  if (correct) spotStreak++; else spotStreak = 0;
-  document.getElementById('spot-streak').textContent = spotStreak;
-  // Highlight choice
-  document.querySelectorAll('.spot-choice').forEach(el => {
-    const cvs = el.querySelector('canvas');
-    if (!cvs) return;
-    el.onclick = null;
-  });
+  const lv = SPOT_LEVELS[spotLevel];
+  const numMissing = lv.missing || 1;
+  const missingIds = spotMissings.map(o => o.id);
+
+  if (numMissing === 1) {
+    spotPhase = 'result';
+    const correct = id === missingIds[0];
+    if (correct) spotStreak++; else spotStreak = 0;
+    document.getElementById('spot-streak').textContent = spotStreak;
+    document.querySelectorAll('.spot-choice').forEach(el => el.onclick = null);
+    showSpotResult(correct);
+    return;
+  }
+
+  // Multi-select: toggle
+  const idx = spotSelected.indexOf(id);
+  const el = document.querySelector(`.spot-choice[data-id="${CSS.escape(id)}"]`);
+  if (idx >= 0) {
+    spotSelected.splice(idx, 1);
+    if (el) el.classList.remove('selected');
+  } else if (spotSelected.length < numMissing) {
+    spotSelected.push(id);
+    if (el) el.classList.add('selected');
+  }
+  const left = numMissing - spotSelected.length;
+  const ctr = document.getElementById('spot-find-counter');
+  if (ctr) ctr.textContent = left > 0 ? t('spot_select_n', left) : t('spot_checking');
+
+  if (spotSelected.length === numMissing) {
+    spotPhase = 'result';
+    document.querySelectorAll('.spot-choice').forEach(el => el.onclick = null);
+    const correct = spotSelected.every(sid => missingIds.includes(sid));
+    if (correct) spotStreak++; else spotStreak = 0;
+    document.getElementById('spot-streak').textContent = spotStreak;
+    setTimeout(() => showSpotResult(correct), 350);
+  }
+}
+
+function showSpotResult(correct) {
   const overlay = document.getElementById('spot-result-overlay');
   document.getElementById('spot-result-emoji').textContent = correct ? '🎉' : '😅';
-  document.getElementById('spot-result-title').textContent = correct ? 'Correct!' : 'Not quite…';
+  document.getElementById('spot-result-title').textContent = correct ? t('spot_correct') : t('spot_wrong');
+  const labels = spotMissings.map(o => o.kind === 'emoji' ? o.id : o.name);
   document.getElementById('spot-result-sub').textContent = correct
-    ? `The ${spotMissing.name} was missing!`
-    : `The missing object was the ${spotMissing.name}.`;
+    ? (spotMissings.length > 1 ? t('spot_missing_were', labels) : t('spot_missing_was', labels))
+    : t('spot_missing_were', labels);
   document.getElementById('spot-result-streak').textContent = spotStreak > 1 ? `🔥 Streak: ${spotStreak}` : '';
   const nextBtn = document.getElementById('spot-next-btn');
   if (spotLevel < SPOT_LEVELS.length - 1 && correct) {
-    nextBtn.textContent = 'Next Level →'; nextBtn.style.display = '';
-  } else {
-    nextBtn.style.display = 'none';
-  }
+    nextBtn.textContent = t('spot_next_level'); nextBtn.style.display = '';
+  } else { nextBtn.style.display = 'none'; }
   overlay.classList.add('show');
 }
 
@@ -1620,10 +2263,13 @@ function renderPairsBoard() {
   const gs = pairsState.gridSize;
   if (!gs) return;
   const [cols, rows] = gs.split('x').map(Number);
-  // Calculate card size to fill available space while keeping aspect ratio
+  // Calculate card size to fill available space while keeping aspect ratio.
+  // Use visualViewport.height (excludes mobile browser chrome) so bottom cards never get clipped.
   const wrap = document.getElementById('pairs-board-wrap');
+  const headerH = document.getElementById('pairs-header').offsetHeight;
+  const vvh = window.visualViewport ? window.visualViewport.height : window.innerHeight;
   const maxW = wrap.clientWidth - 24;
-  const maxH = wrap.clientHeight - 24;
+  const maxH = vvh - headerH - 28;
   const gap = 8;
   const cardW = Math.floor(Math.min((maxW - (cols-1)*gap) / cols, (maxH - (rows-1)*gap) / rows / 1.38));
   const cardH = Math.floor(cardW * 1.38);
@@ -1710,9 +2356,9 @@ function updatePairsScores() {
   document.getElementById('p2-name').textContent = p2;
   document.getElementById('p1-pairs').textContent = scores[p1]?.pairs ?? 0;
   document.getElementById('p2-pairs').textContent = scores[p2]?.pairs ?? 0;
-  document.getElementById('p1-holes').textContent = `holes: ${scores[p1]?.holes ?? 0}`;
-  document.getElementById('p2-holes').textContent = `holes: ${scores[p2]?.holes ?? 0}`;
-  document.getElementById('turn-name').textContent = myTurn ? 'Your Turn' : `${partner}'s Turn`;
+  document.getElementById('p1-holes').textContent = `${t('pairs_holes')} ${scores[p1]?.holes ?? 0}`;
+  document.getElementById('p2-holes').textContent = `${t('pairs_holes')} ${scores[p2]?.holes ?? 0}`;
+  document.getElementById('turn-name').textContent = myTurn ? t('pairs_your_turn') : t('pairs_their_turn', partner);
   document.getElementById('turn-name').style.color = myTurn ? 'var(--greenL)' : 'var(--text2)';
 }
 
@@ -1722,8 +2368,8 @@ function showGameOver(scores, winner) {
   const isWinner = winner === myName;
   const isTie = winner === null;
   document.getElementById('gameover-emoji').textContent = isTie ? '🤝' : isWinner ? '🏆' : '😞';
-  document.getElementById('gameover-title').textContent = isTie ? "It's a Tie!" : isWinner ? 'You Win!' : `${winner} Wins!`;
-  document.getElementById('gameover-sub').textContent = isTie ? 'Great minds think alike!' : isWinner ? 'Excellent memory!' : 'Better luck next time!';
+  document.getElementById('gameover-title').textContent = isTie ? t('pairs_gameover_tie') : isWinner ? t('pairs_gameover_win') : t('pairs_gameover_lose', winner);
+  document.getElementById('gameover-sub').textContent = isTie ? t('pairs_tie_sub') : isWinner ? t('pairs_win_sub') : t('pairs_lose_sub');
   const p1s = scores[myName], p2s = scores[partner];
   document.getElementById('go-scores').innerHTML = `
     <div class="go-score">
@@ -1895,12 +2541,12 @@ function handleWsMsg(msg) {
       break;
     case 'invite':
       pendingInvite = {from: msg.from, inviteId: msg.inviteId, gridSize: msg.gridSize, collection: msg.collection};
-      document.getElementById('invite-from-text').textContent = `${msg.from} challenges you!`;
-      document.getElementById('invite-grid-text').textContent = `Grid: ${msg.gridSize} · ${collById(msg.collection||'classic').name}`;
+      document.getElementById('invite-from-text').textContent = t('pairs_challenges', msg.from);
+      document.getElementById('invite-grid-text').textContent = t('pairs_grid_coll', msg.gridSize, collById(msg.collection||'classic').name);
       document.getElementById('invite-popup').classList.add('show');
       break;
     case 'invite_declined':
-      alert(`${msg.from} declined your invite.`);
+      alert(t('pairs_declined', msg.from));
       break;
     case 'invite_expired':
       document.getElementById('invite-popup').classList.remove('show');
@@ -1984,7 +2630,7 @@ function startPairsGame(msg) {
 function renderPlayerList(players) {
   const el = document.getElementById('player-list');
   if (!players.length) {
-    el.innerHTML = '<div style="color:var(--text3);font-size:.85rem;padding:12px 0;">No other players online</div>';
+    el.innerHTML = `<div style="color:var(--text3);font-size:.85rem;padding:12px 0;">${t('pairs_no_other')}</div>`;
     return;
   }
   const colors = ['#7c3aed','#2563eb','#059669','#d97706','#dc2626','#0891b2'];
@@ -1997,9 +2643,9 @@ function renderPlayerList(players) {
       <div class="player-avatar" style="background:${color}22;color:${color};border:1px solid ${color}44;">${p.name[0].toUpperCase()}</div>
       <div>
         <div class="player-name">${p.name}</div>
-        <div class="player-status">${p.status === 'lobby' ? '🟢 In lobby' : '🎮 In game'}</div>
+        <div class="player-status">${p.status === 'lobby' ? '🟢 ' + t('pairs_in_lobby') : '🎮 ' + t('pairs_in_game')}</div>
       </div>
-      <button class="invite-btn" ${p.status!=='lobby'?'disabled':''} onclick="sendInvite('${p.name}')">Invite</button>
+      <button class="invite-btn" ${p.status!=='lobby'?'disabled':''} onclick="sendInvite('${p.name}')">${t('pairs_invite_btn')}</button>
     `;
     el.appendChild(row);
   });
@@ -2008,7 +2654,7 @@ function renderPlayerList(players) {
 function sendInvite(target) {
   if (!ws) return;
   ws.send(JSON.stringify({type:'invite', target, gridSize: selectedGrid, collection: selectedCollection}));
-  alert(`Invitation sent to ${target}! Waiting for response…`);
+  alert(t('pairs_sent', target));
 }
 
 function respondInvite(accepted) {
@@ -2022,21 +2668,37 @@ function setWsStatus(status) {
   const dot = document.getElementById('ws-dot');
   const label = document.getElementById('ws-status-label');
   dot.className = 'status-dot ' + status;
-  label.textContent = status === 'online' ? 'Connected' : status === 'connecting' ? 'Connecting…' : 'Disconnected';
+  label.textContent = status === 'online' ? t('pairs_connected') : status === 'connecting' ? t('pairs_connecting') : t('pairs_disconnected');
 }
 
 // ═══════════════════════════════════════════════════
 // MATH DRILLS MODE
 // ═══════════════════════════════════════════════════
 const MATH_PRESETS = [
-  {id:'+',    ops:['+'],             sym:'+',   lbl:'Add'},
-  {id:'-',    ops:['-'],             sym:'−',   lbl:'Subtract'},
-  {id:'*',    ops:['*'],             sym:'×',   lbl:'Multiply'},
-  {id:'/',    ops:['/'],             sym:'÷',   lbl:'Divide'},
-  {id:'+-',   ops:['+','-'],         sym:'±',   lbl:'Add·Sub'},
-  {id:'+*',   ops:['+','*'],         sym:'+×',  lbl:'Add·Mul'},
-  {id:'+-*',  ops:['+','-','*'],     sym:'+−×', lbl:'Mixed'},
-  {id:'all',  ops:['+','-','*','/'], sym:'∀',   lbl:'All Ops'},
+  {id:'+',    ops:['+'],             sym:'+',   key:'math_op_add'},
+  {id:'-',    ops:['-'],             sym:'−',   key:'math_op_sub'},
+  {id:'*',    ops:['*'],             sym:'×',   key:'math_op_mul'},
+  {id:'/',    ops:['/'],             sym:'÷',   key:'math_op_div'},
+  {id:'+-',   ops:['+','-'],         sym:'±',   key:'math_op_addsub'},
+  {id:'+*',   ops:['+','*'],         sym:'+×',  key:'math_op_addmul'},
+  {id:'+-*',  ops:['+','-','*'],     sym:'+−×', key:'math_op_mixed'},
+  {id:'all',  ops:['+','-','*','/'], sym:'∀',   key:'math_op_all'},
+  {id:'%',    ops:['%'],            sym:'%',   key:'math_op_pct'},
+];
+
+const MATH_TRICKS = [
+  {id:'mul11',    sym:'×11',  key:'trick_mul11',    hintKey:'trick_mul11_hint',    time:20,
+    gen:()=>{ const a=mRand(12,89); return {trickQ:`${a} × 11 = ?`, answer:a*11, target:a*11}; }},
+  {id:'mul5',     sym:'×5',   key:'trick_mul5',     hintKey:'trick_mul5_hint',     time:14,
+    gen:()=>{ const a=mRand(11,199)*2; return {trickQ:`${a} × 5 = ?`, answer:a*5, target:a*5}; }},
+  {id:'mul25',    sym:'×25',  key:'trick_mul25',    hintKey:'trick_mul25_hint',    time:16,
+    gen:()=>{ const a=mRand(1,20)*4; return {trickQ:`${a} × 25 = ?`, answer:a*25, target:a*25}; }},
+  {id:'sq5',      sym:'N5²',  key:'trick_sq5',      hintKey:'trick_sq5_hint',      time:18,
+    gen:()=>{ const b=mPick([15,25,35,45,55,65,75,85,95]); return {trickQ:`${b}² = ?`, answer:b*b, target:b*b}; }},
+  {id:'near100',  sym:'~100', key:'trick_near100',  hintKey:'trick_near100_hint',  time:25,
+    gen:()=>{ const a=mRand(88,99),b=mRand(88,99); return {trickQ:`${a} × ${b} = ?`, answer:a*b, target:a*b}; }},
+  {id:'pct_swap', sym:'A%B',  key:'trick_pct_swap', hintKey:'trick_pct_swap_hint', time:16,
+    gen:()=>{ const p=mPick([4,8,12,16,24,32,48]); const n=mPick([25,50,75,100,125,150,200]); const ans=Math.round(p*n/100); return {trickQ:`${p}% of ${n} = ?`, answer:ans, target:ans}; }},
 ];
 
 // 12 levels. Difficulty climbs; "intro" levels add a new mechanic with MORE time,
@@ -2045,14 +2707,14 @@ const MATH_LEVELS = [
   {operands:2, max:100, time:25, mode:'choice', kind:'plain'},
   {operands:2, max:100, time:22, mode:'choice', kind:'plain'},
   {operands:2, max:300, time:22, mode:'choice', kind:'plain'},
-  {operands:2, max:999, time:26, mode:'input',  kind:'plain',    intro:'Type the answer yourself'},
+  {operands:2, max:999, time:26, mode:'input',  kind:'plain',    introKey:'math_intro_input'},
   {operands:2, max:999, time:18, mode:'input',  kind:'plain'},
-  {operands:2, max:99,  time:28, mode:'input',  kind:'equation', intro:'Solve for X'},
+  {operands:2, max:99,  time:28, mode:'input',  kind:'equation', introKey:'math_intro_equation'},
   {operands:2, max:300, time:18, mode:'input',  kind:'equation'},
-  {operands:3, max:50,  time:30, mode:'input',  kind:'plain',    intro:'Three numbers now'},
+  {operands:3, max:50,  time:30, mode:'input',  kind:'plain',    introKey:'math_intro_three'},
   {operands:3, max:300, time:22, mode:'input',  kind:'plain'},
   {operands:3, max:999, time:16, mode:'input',  kind:'plain'},
-  {operands:3, max:99,  time:30, mode:'input',  kind:'equation', intro:'Solve X · 3 terms'},
+  {operands:3, max:99,  time:30, mode:'input',  kind:'equation', introKey:'math_intro_eq3'},
   {operands:3, max:300, time:15, mode:'input',  kind:'equation'},
 ];
 
@@ -2062,6 +2724,7 @@ const MATH_SYM = {'+':'+','-':'−','*':'×','/':'÷'};
 const mathState = {
   opsId: null, ops: null, level: 0, taskIdx: 0, score: 0, correct: 0,
   task: null, target: 0, timer: null, deadline: 0, dur: 0, answered: false,
+  trickDef: null,
 };
 
 function mRand(min,max){ return Math.floor(Math.random()*(max-min+1))+min; }
@@ -2100,7 +2763,20 @@ function mBuildExpr(level, ops){
   return {vals, operators, answer: cur};
 }
 
+const PCT_NICE = [5,10,20,25,50,75];
+function mGenPercentTask(){
+  const pct   = mPick(PCT_NICE);
+  const whole = mPick([20,40,50,60,80,100,120,150,200,400]);
+  const part  = Math.round(pct*whole/100);
+  const lvIdx = mathState.level;
+  const roll  = lvIdx < 4 ? 1 : lvIdx < 8 ? (Math.random()<0.6?1:2) : mPick([1,1,2,3]);
+  if(roll===1) return {percentQ:`${pct}% of ${whole} = ?`,      answer:part,  target:part,  isPercent:true};
+  if(roll===2) return {percentQ:`${part} is what % of ${whole}?`, answer:pct, target:pct,   isPercent:true};
+  return             {percentQ:`${part} = ${pct}% of ?`,        answer:whole, target:whole, isPercent:true};
+}
+
 function mGenTask(level, ops){
+  if(ops.includes('%')) return mGenPercentTask();
   let expr;
   // Sometimes craft a satisfying round-number answer (simple additive tasks).
   if(level.operands===2 && ops.includes('+') && Math.random()<0.3){
@@ -2152,6 +2828,7 @@ function showMathMenu(){
   if(!mathState.opsId) selectMathOps('+-');
   renderMathOps();
   renderMathLevels();
+  renderMathTricks();
   renderMathStats();
 }
 
@@ -2162,7 +2839,7 @@ function renderMathOps(){
     const el = document.createElement('div');
     el.className = 'op-btn' + (mathState.opsId===p.id ? ' active' : '');
     el.onclick = () => { selectMathOps(p.id); renderMathOps(); };
-    el.innerHTML = `<span class="op-sym">${p.sym}</span><span class="op-lbl">${p.lbl}</span>`;
+    el.innerHTML = `<span class="op-sym">${p.sym}</span><span class="op-lbl">${t(p.key)}</span>`;
     grid.appendChild(el);
   });
 }
@@ -2171,20 +2848,22 @@ function selectMathOps(id){
   const p = MATH_PRESETS.find(x=>x.id===id);
   mathState.opsId = p.id; mathState.ops = p.ops;
   const hint = document.getElementById('math-op-hint');
-  if(hint) hint.textContent = `Practicing: ${p.ops.map(o=>MATH_SYM[o]).join('  ')}`;
+  if(hint) hint.textContent = t('math_practicing', p.ops.map(o=>MATH_SYM[o]).join('  '));
 }
 
 function renderMathLevels(){
   const grid = document.getElementById('math-level-grid');
   grid.innerHTML = '';
+  const isPct = mathState.ops && mathState.ops.includes('%');
   MATH_LEVELS.forEach((lv, i)=>{
     const el = document.createElement('div');
-    el.className = 'math-lv' + (lv.intro ? ' new-lv' : '');
+    el.className = 'math-lv' + (lv.introKey ? ' new-lv' : '');
     el.onclick = () => mathStartLevel(i);
     let sub;
-    if(lv.kind==='equation') sub = `solve X<br>≤${lv.max}`;
-    else sub = `${lv.operands} nums<br>≤${lv.max}`;
-    el.innerHTML = `${lv.intro?'<span class="mlv-badge">🆕</span>':''}<span class="mlv-num">${i+1}</span><span class="mlv-sub">${sub}<br>${lv.time}s</span>`;
+    if(isPct) sub = i<4 ? t('math_pct_type1') : i<8 ? t('math_pct_type12') : t('math_pct_type123');
+    else if(lv.kind==='equation') sub = `${t('math_sub_eq')}<br>≤${lv.max}`;
+    else sub = `${t('math_sub_plain', lv.operands)}<br>≤${lv.max}`;
+    el.innerHTML = `${lv.introKey?'<span class="mlv-badge">🆕</span>':''}<span class="mlv-num">${i+1}</span><span class="mlv-sub">${sub}<br>${lv.time}s</span>`;
     grid.appendChild(el);
   });
 }
@@ -2192,6 +2871,7 @@ function renderMathLevels(){
 // ── play loop ──
 function mathStartLevel(idx){
   if(!mathState.ops) selectMathOps('+-');
+  mathState.trickDef = null;
   mathState.level = idx;
   mathState.taskIdx = 0;
   mathState.score = 0;
@@ -2200,27 +2880,46 @@ function mathStartLevel(idx){
   document.getElementById('math-result').style.display = 'none';
   document.getElementById('math-play').style.display = 'block';
   const lv = MATH_LEVELS[idx];
-  document.getElementById('math-level-tag').textContent = `Level ${idx+1}` + (lv.intro ? ' · NEW' : '');
+  document.getElementById('math-level-tag').textContent = `${lang==='uk'?'Рівень':'Level'} ${idx+1}` + (lv.introKey ? ' · 🆕' : '');
   mathNextTask();
 }
 
 function mathNextTask(){
-  const lv = MATH_LEVELS[mathState.level];
   if(mathState.taskIdx >= 10){ mathFinish(); return; }
   mathState.answered = false;
-  mathState.task = mGenTask(lv, mathState.ops);
-  mathState.target = mathState.task.target;
 
-  document.getElementById('math-task-counter').textContent = `Task ${mathState.taskIdx+1} / 10`;
-  document.getElementById('math-score').textContent = `${mathState.score} pts`;
-
+  const hintCard = document.getElementById('math-trick-hint');
   const q = document.getElementById('math-question');
-  q.className = 'math-q';
-  if(lv.kind==='equation') q.innerHTML = mExprHtml(mathState.task, mathState.task.equation.idx) + ' = ' + mathState.task.answer;
-  else q.innerHTML = mExprHtml(mathState.task, -1) + ' = ?';
-
   const choicesEl = document.getElementById('math-choices');
   const inputEl   = document.getElementById('math-input');
+
+  if(mathState.trickDef){
+    mathState.task   = mathState.trickDef.gen();
+    mathState.target = mathState.task.target;
+    document.getElementById('math-task-counter').textContent = t('math_task_counter', mathState.taskIdx+1);
+    document.getElementById('math-score').textContent = t('math_score_pts', mathState.score);
+    q.className = 'math-q trick-q';
+    q.innerHTML = mathState.task.trickQ;
+    if(hintCard){ hintCard.style.display='block'; hintCard.textContent='💡 '+t(mathState.trickDef.hintKey); }
+    choicesEl.style.display = 'none';
+    inputEl.style.display = 'block';
+    const ans = document.getElementById('math-answer'); ans.value=''; ans.className='';
+    mathStartTimer(mathState.trickDef.time);
+    return;
+  }
+
+  const lv = MATH_LEVELS[mathState.level];
+  mathState.task   = mGenTask(lv, mathState.ops);
+  mathState.target = mathState.task.target;
+  document.getElementById('math-task-counter').textContent = t('math_task_counter', mathState.taskIdx+1);
+  document.getElementById('math-score').textContent = t('math_score_pts', mathState.score);
+  if(hintCard) hintCard.style.display = 'none';
+
+  q.className = 'math-q' + (mathState.task.isPercent ? ' pct-q' : '');
+  if(mathState.task.isPercent) q.innerHTML = mathState.task.percentQ;
+  else if(lv.kind==='equation') q.innerHTML = mExprHtml(mathState.task, mathState.task.equation.idx) + ' = ' + mathState.task.answer;
+  else q.innerHTML = mExprHtml(mathState.task, -1) + ' = ?';
+
   if(lv.mode==='choice'){
     inputEl.style.display = 'none';
     choicesEl.style.display = 'grid';
@@ -2277,16 +2976,22 @@ function mathAnswer(value, btnEl){
     if(btnEl) btnEl.classList.add('bad');
     else { const a=document.getElementById('math-answer'); if(a.offsetParent){ a.classList.add('bad'); a.value = a.value || '—'; } }
     // reveal the correct answer briefly
-    q.innerHTML = mExprHtml(mathState.task, -1) + ' = ' + mathState.task.answer
-      + (MATH_LEVELS[mathState.level].kind==='equation' ? `  (X=${mathState.target})` : '');
+    if(mathState.trickDef){
+      q.innerHTML = mathState.task.trickQ.replace(' = ?', ' = <b>'+mathState.task.answer+'</b>');
+    } else if(mathState.task.isPercent){
+      q.innerHTML = mathState.task.percentQ.replace(' = ?','').replace(' of ?','') + ' = <b>'+mathState.task.answer+'</b>';
+    } else {
+      q.innerHTML = mExprHtml(mathState.task, -1) + ' = ' + mathState.task.answer
+        + (MATH_LEVELS[mathState.level].kind==='equation' ? `  (X=${mathState.target})` : '');
+    }
   }
-  document.getElementById('math-score').textContent = `${mathState.score} pts`;
+  document.getElementById('math-score').textContent = t('math_score_pts', mathState.score);
   setTimeout(()=>{ mathState.taskIdx++; mathNextTask(); }, correct ? 700 : 1300);
 }
 
 // keypad + physical keyboard
 function mathKey(k){
-  const lv = MATH_LEVELS[mathState.level];
+  const lv = mathState.trickDef ? {mode:'input'} : MATH_LEVELS[mathState.level];
   if(!lv || lv.mode!=='input') return;
   const ans = document.getElementById('math-answer');
   if(mathState.answered) return;
@@ -2313,20 +3018,51 @@ function mathFinish(){
   document.getElementById('math-result').style.display = 'block';
   document.getElementById('math-result-pct').textContent = pct + '%';
   document.getElementById('math-result-label').textContent =
-    pct>=90 ? 'Brilliant!' : pct>=60 ? 'Level Complete' : 'Keep Training';
+    pct>=90 ? t('math_brilliant') : pct>=60 ? t('math_complete') : t('math_keep');
   document.getElementById('math-result-stats').innerHTML = `
-    <div class="stat-box"><div class="sv">${correct}/${total}</div><div class="sl">Correct</div></div>
-    <div class="stat-box"><div class="sv">${mathState.score}</div><div class="sl">Score</div></div>
-    <div class="stat-box"><div class="sv">L${mathState.level+1}</div><div class="sl">Level</div></div>`;
+    <div class="stat-box"><div class="sv">${correct}/${total}</div><div class="sl">${t('math_stat_correct')}</div></div>
+    <div class="stat-box"><div class="sv">${mathState.score}</div><div class="sl">${t('math_stat_score')}</div></div>
+    <div class="stat-box"><div class="sv">L${mathState.level+1}</div><div class="sl">${t('math_stat_level')}</div></div>`;
   const nextBtn = document.getElementById('math-next-btn');
-  if(mathState.level < MATH_LEVELS.length-1){ nextBtn.style.display=''; nextBtn.disabled = correct<6;
-    nextBtn.textContent = correct<6 ? 'Need 6/10 →' : 'Next Level →';
+  if(mathState.trickDef){ nextBtn.style.display='none'; }
+  else if(mathState.level < MATH_LEVELS.length-1){ nextBtn.style.display=''; nextBtn.disabled = correct<6;
+    nextBtn.textContent = correct<6 ? t('math_need_6') : t('math_next_level');
   } else nextBtn.style.display='none';
   if(pct>=60) soundWin(); else soundNoMatch();
 }
 
-function mathReplay(){ mathStartLevel(mathState.level); }
+function mathReplay(){ if(mathState.trickDef) mathStartTrick(mathState.trickDef.id); else mathStartLevel(mathState.level); }
 function mathNextLevel(){ if(mathState.level<MATH_LEVELS.length-1) mathStartLevel(mathState.level+1); }
+
+function mathStartTrick(id){
+  const trick = MATH_TRICKS.find(tr=>tr.id===id);
+  if(!trick) return;
+  mathState.trickDef = trick;
+  mathState.level = -1;
+  mathState.taskIdx = 0; mathState.score = 0; mathState.correct = 0;
+  document.getElementById('math-setup').style.display = 'none';
+  document.getElementById('math-result').style.display = 'none';
+  document.getElementById('math-play').style.display = 'block';
+  document.getElementById('math-level-tag').textContent = t(trick.key);
+  mathNextTask();
+}
+
+function renderMathTricks(){
+  const lbl = document.getElementById('math-tricks-lbl');
+  const sub = document.getElementById('math-tricks-sub');
+  if(lbl) lbl.textContent = t('math_tricks_lbl');
+  if(sub) sub.textContent = t('math_tricks_sub');
+  const grid = document.getElementById('math-tricks-grid');
+  if(!grid) return;
+  grid.innerHTML = '';
+  MATH_TRICKS.forEach(tr=>{
+    const card = document.createElement('div');
+    card.className = 'trick-card';
+    card.innerHTML = `<div class="tc-sym">${tr.sym}</div><div class="tc-name">${t(tr.key)}</div><div class="tc-hint">${t(tr.hintKey)}</div>`;
+    card.onclick = () => mathStartTrick(tr.id);
+    grid.appendChild(card);
+  });
+}
 
 function mathTodayKey(){ const d=new Date(); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; }
 function mathDayKey(d){ return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; }
@@ -2346,14 +3082,14 @@ function mathStreak(s){
 }
 function renderMathStats(){
   const s = mathLoadStats();
-  document.getElementById('math-streak').textContent = `🔥 ${mathStreak(s)} day streak`;
+  document.getElementById('math-streak').textContent = t('math_day_streak', mathStreak(s));
   const bars = document.getElementById('math-bars'); bars.innerHTML = '';
   const days = []; const base = new Date();
   for(let i=6;i>=0;i--){ const dd=new Date(base); dd.setDate(base.getDate()-i); days.push(dd); }
   const counts = days.map(dd => s.days[mathDayKey(dd)]?.tasks || 0);
   const maxT = Math.max(10, ...counts);
   const tk = mathTodayKey();
-  const dow = ['S','M','T','W','T','F','S'];
+  const dow = t('dow');
   days.forEach((dd, i)=>{
     const t = counts[i];
     const el = document.createElement('div');
@@ -2366,17 +3102,69 @@ function renderMathStats(){
   const today = s.days[tk] || {tasks:0};
   const acc = allTasks ? Math.round(allCorrect/allTasks*100) : 0;
   document.getElementById('math-daily-stats').innerHTML = `
-    <div class="stat-box"><div class="sv">${today.tasks}</div><div class="sl">Today</div></div>
-    <div class="stat-box"><div class="sv">${allTasks}</div><div class="sl">All-time Tasks</div></div>
-    <div class="stat-box"><div class="sv">${acc}%</div><div class="sl">Accuracy</div></div>`;
+    <div class="stat-box"><div class="sv">${today.tasks}</div><div class="sl">${t('math_today')}</div></div>
+    <div class="stat-box"><div class="sv">${allTasks}</div><div class="sl">${t('math_alltime')}</div></div>
+    <div class="stat-box"><div class="sv">${acc}%</div><div class="sl">${t('math_accuracy')}</div></div>`;
+}
+
+// ═══════════════════════════════════════════════════
+// applyLang — update all static DOM + re-render dynamic sections
+// ═══════════════════════════════════════════════════
+function applyLang() {
+  const setTxt = (id, key) => { const el = document.getElementById(id); if (el) el.textContent = t(key); };
+  const setHtml = (id, key) => { const el = document.getElementById(id); if (el) el.innerHTML = t(key); };
+  // menu
+  setTxt('menu-title', 'app_name');
+  setTxt('menu-tagline', 'menu_tagline');
+  const lt = document.getElementById('lang-toggle'); if (lt) lt.textContent = t('lang_toggle');
+  // mode cards
+  setTxt('wm-mode-title', 'wm_mode_title'); setTxt('wm-mode-desc', 'wm_mode_desc');
+  setTxt('spot-mode-title', 'spot_mode_title'); setTxt('spot-mode-desc', 'spot_mode_desc');
+  setTxt('pairs-mode-title', 'pairs_mode_title'); setTxt('pairs-mode-desc', 'pairs_mode_desc');
+  setTxt('math-mode-title', 'math_mode_title'); setTxt('math-mode-desc', 'math_mode_desc');
+  // back buttons
+  document.querySelectorAll('.back-btn').forEach(b => { b.textContent = t('back_menu'); });
+  // word memory static
+  setTxt('wm-section-title', 'wm_section_title'); setTxt('wm-section-sub', 'wm_section_sub');
+  setTxt('wm-training-head', 'wm_training_head');
+  const wmChg = document.getElementById('wm-change-btn'); if (wmChg) wmChg.textContent = t('change_level');
+  const wmRep = document.getElementById('wm-replay-btn'); if (wmRep) wmRep.textContent = t('math_replay');
+  const wmNxt = document.getElementById('wm-next-btn'); if (wmNxt) wmNxt.textContent = t('math_next_level');
+  const wmClr = document.getElementById('wm-clear-btn'); if (wmClr) wmClr.textContent = t('wm_clear');
+  const wmSub = document.getElementById('wm-submit-btn'); if (wmSub) wmSub.textContent = t('wm_check');
+  // spot static
+  setTxt('spot-section-title', 'spot_section_title'); setTxt('spot-section-sub', 'spot_section_sub');
+  setTxt('spot-choose-pack-lbl', 'spot_choose_pack'); setTxt('spot-select-level-lbl', 'spot_select_level');
+  setTxt('spot-streak-lbl', 'spot_streak_lbl');
+  const spChg = document.getElementById('spot-change-btn'); if (spChg) spChg.textContent = t('spot_change_level');
+  // lobby static
+  setTxt('lobby-title', 'pairs_lobby'); setTxt('lobby-conn-title', 'pairs_conn');
+  setTxt('lobby-players-title', 'pairs_players'); setTxt('lobby-settings-title', 'pairs_settings');
+  setTxt('lobby-coll-label', 'pairs_coll_label'); setTxt('lobby-grid-label', 'pairs_grid_label');
+  setHtml('lobby-scoring-body', 'pairs_scoring');
+  setTxt('conn-hint-prefix', 'pairs_conn_hint');
+  const connBtn = document.getElementById('connect-btn'); if (connBtn) connBtn.textContent = t('pairs_connect_btn');
+  const uname = document.getElementById('lobby-username'); if (uname) uname.placeholder = t('pairs_your_name');
+  setTxt('invite-decline-btn', 'pairs_decline'); setTxt('invite-accept-btn', 'pairs_accept');
+  setTxt('lobby-back-btn', 'pairs_lobby_btn');
+  const remBtn = document.getElementById('rematch-btn'); if (remBtn && !remBtn.disabled) remBtn.textContent = t('pairs_rematch');
+  // math static
+  setTxt('math-section-title', 'math_section_title'); setTxt('math-section-sub', 'math_section_sub');
+  setTxt('math-select-lbl', 'math_select_lbl'); setTxt('math-daily-head', 'math_daily_head');
+  const mathHint = document.getElementById('math-op-hint');
+  if (mathHint && mathState.opsId) selectMathOps(mathState.opsId); else if (mathHint) setTxt('math-op-hint', 'math_choose_arith');
+  const mathRep = document.getElementById('math-replay-btn'); if (mathRep) mathRep.textContent = t('math_replay');
+  // re-render dynamic level grids
+  showWordMenu(); showSpotMenu(); renderMathOps(); renderMathLevels(); renderMathTricks(); renderMathStats(); renderWmStats();
+  // return to menu
+  goMenu();
 }
 
 // ═══════════════════════════════════════════════════
 // INIT
 // ═══════════════════════════════════════════════════
-// Build level grids on page load (they'll be rebuilt on show, but init them now)
 showWordMenu(); showSpotMenu();
-goMenu(); // Start at main menu
+applyLang(); // applies lang, re-renders grids, calls goMenu()
 </script>
 </body>
 </html>

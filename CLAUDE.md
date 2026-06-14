@@ -366,3 +366,419 @@ Type `godmode` during play to toggle god mode: no damage, no violations, fuel st
 ```
 
 WASM bundle is self-contained; requires a browser with SharedArrayBuffer (served with COOP/COEP headers).
+
+---
+
+---
+
+# MemBrain — Developer Reference
+
+Browser-native brain-training game with four independent modes. **Zero build step for the game itself** — everything lives in a single self-contained HTML file.
+
+---
+
+## File locations
+
+```
+public/games/memorize/index.html   ← entire game (HTML + inline CSS + inline JS, ~2600 lines)
+worker/GameServer.js               ← Cloudflare Durable Object: Pairs Battle WebSocket server
+worker/index.js                    ← Cloudflare Worker entry point (routes /ws + static assets)
+src/pages/HomePage.jsx             ← React home screen card (title "MemBrain", route id "memorize")
+src/pages/GamePage.jsx             ← React wrapper that iframes the game
+```
+
+The game is served as a plain static file. The React wrapper just iframes it; there is no React code inside the game. To edit the game, edit only `public/games/memorize/index.html`.
+
+---
+
+## Local development / preview
+
+The game can be previewed without any build step:
+
+```bash
+python3 -m http.server 8099 --directory /Users/pzhelnov/work/CarDrivePython/public
+# then open http://localhost:8099/games/memorize/index.html
+```
+
+For the **full stack** (React home + Cloudflare Worker multiplayer):
+
+```bash
+npm run dev          # Vite dev server at http://localhost:5173
+# WebSocket server requires wrangler (see deploy section)
+```
+
+WebSocket URL auto-detection (line ~2055 in index.html):
+- `localhost` → `ws://localhost:8080`
+- Production → `wss://<hostname>/ws`
+
+---
+
+## Build & deploy
+
+### Frontend (React + static game)
+
+```bash
+npm run build        # Vite → dist/
+```
+
+Deploy targets (pick one):
+
+| Platform | Command | Config file |
+|----------|---------|-------------|
+| **Cloudflare** | `npx wrangler deploy` | `wrangler.toml` |
+| Netlify | push to git | `netlify.toml` |
+| Vercel | push to git | `vercel.json` |
+
+Cloudflare is the **primary** deploy target because it also runs the Durable Object WebSocket server for Pairs Battle multiplayer.
+
+### Cloudflare Worker + Durable Object
+
+```bash
+npm run build && npx wrangler deploy
+```
+
+`wrangler.toml` key points:
+- `main = "worker/index.js"` — Worker entry
+- `[assets] directory = "./dist"` — serves Vite build output
+- `new_sqlite_classes = ["GameServer"]` — **must be `new_sqlite_classes`**, not `new_classes` (free plan requirement)
+
+`worker/index.js` routes:
+- `GET /ws` (with `Upgrade: websocket`) → forwards to `GameServer` Durable Object instance `"global-lobby"`
+- Everything else → static asset from `dist/`, injected with COOP/COEP headers
+
+---
+
+## Architecture: four game modes
+
+All modes live inside `public/games/memorize/index.html`. Screen routing uses `showScreen(id)` which sets `.active` on the target `<div class="screen">`.
+
+Screen IDs:
+```
+screen-menu       Main menu (4 mode cards)
+screen-word       Word Sequence (level select → memorize → recall → results)
+screen-spot       Object Spotting (level select → round → results)
+screen-pairs      Pairs Battle (lobby → game → results)
+screen-math       Math Drills (level select → task → results)
+```
+
+---
+
+## Mode 1 — Word Sequence
+
+**Goal**: memorize a sequence of words flashed briefly, then recall them.
+
+### Levels (12 total, defined in `WM_LEVELS` array, line ~770)
+
+| Levels | Words | Flash time | Mechanic |
+|--------|-------|-----------|---------|
+| 1–6 | 3–10 | 3500–1900 ms | Click words from a pool |
+| 7–12 | 4–10 | 3000–1400 ms | **Type** words from memory (no pool) |
+
+Levels 7, 9, 11 have an `intro` banner for the mechanic change.
+
+### Word banks (`WORD_BANKS`, line ~757)
+
+8 categories: `animals`, `colors`, `food`, `nature`, `objects`, `space`, `music`, `body`. Each level uses a subset (`cats` array in its config). `wmStart()` de-duplicates with `new Set(...)`.
+
+### Key functions
+
+| Function | Line | Purpose |
+|----------|------|---------|
+| `showWordMenu()` | ~1313 | Level select + daily stats |
+| `wmStart(lvIdx)` | ~1339 | Initializes round, calls countdown |
+| `wmCountdown(done)` | ~1361 | 3·2·1·GO! animation with tones |
+| `wmRunMemorize(idx, lv)` | ~1382 | Flashes each word with per-word tone |
+| `wmShowRecall()` | ~1408 | Switches to pool-click or typed-input UI |
+| `renderWmTypeRows()` | called by wmShowRecall | Renders one `<input>` per word; Enter advances |
+| `wmSubmit()` | ~1488 | Scores recall, saves stats, shows results |
+| `wmNextLevel()` | ~1571 | Advances to next level without going to menu |
+| `setWordAlign(center)` | ~1312 | Sets `#screen-word` justify-content; call `false` for lists, `true` for flash phase |
+| `wmLoadStats()` / `wmSaveStats()` | ~1574 | localStorage key: `membrain_word_v1` |
+| `wmStreak(stats)` | ~1576 | Counts consecutive days with activity |
+| `renderWmStats()` | ~1589 | 7-day bar chart + streak in level select |
+
+### Scoring formula
+
+```
+score = (recall×0.5 + precision×0.2 + order×0.3) × 100
+```
+- `recall` = fraction of target words the player identified
+- `precision` = fraction of player's answers that were correct (no wrong words)
+- `order` = longest in-order prefix ÷ total words
+- Type mode gets ×1.05 bonus (harder mechanic)
+- Stars: ≥90 → ⭐⭐⭐, ≥70 → ⭐⭐, ≥50 → ⭐, else 0
+
+### localStorage schema
+
+```json
+{
+  "days": {
+    "2026-06-13": { "words": 5, "score": 87, "stars": 3 }
+  },
+  "stars": { "0": 3, "1": 2 }
+}
+```
+
+---
+
+## Mode 2 — Object Spotting
+
+**Goal**: memorize a grid of canvas-drawn objects briefly, then spot the one that changed (or appeared/disappeared).
+
+### Key functions
+
+| Function | Line | Purpose |
+|----------|------|---------|
+| `showSpotMenu()` | ~1615 | Level select |
+| `spotStart(lvIdx)` | ~1630 | Initializes round |
+| `spotRunRound()` | ~1639 | Shows grid, runs blackout, shows find phase |
+| `spotStartBlackout(canvas, …)` | ~1703 | Covers grid for memorization period |
+| `spotStartFind(canvas, …)` | ~1725 | Player clicks the changed object |
+| `spotGuess(id)` | ~1762 | Checks guess, scores |
+
+Uses the same `OBJECTS` array and `drawObject()` canvas function as Pairs Battle classic mode.
+
+---
+
+## Mode 3 — Pairs Battle (multiplayer)
+
+**Goal**: flip card pairs faster than your opponent. Real-time 2-player via WebSocket.
+
+### Client state (`pairsState`, line ~1818)
+
+```javascript
+let pairsState = {
+  gridSize, cards, revealed[], matched[], holeCount[],
+  scores, myName, partner, myTurn, waitingFlipBack
+};
+let selectedGrid = '2x4';        // active grid selection
+let selectedCollection = 'classic'; // active card collection
+let pendingFlip = false;          // prevents double-click race
+let ws = null;                    // active WebSocket
+```
+
+### Grid convention — CRITICAL
+
+**`"CxR"` = cols × rows (width × height)**. Both client and server parse:
+```javascript
+const [cols, rows] = gridSize.split('x').map(Number);
+```
+Getting this backwards flips the board 90°. Never change this.
+
+Available grids and their pair counts:
+```
+2x4=4  3x4=6  4x4=8  4x6=12  6x6=18  6x8=24
+```
+
+### Card collections — CRITICAL SYNC INVARIANT
+
+`COLLECTIONS` is defined in **both** files and **must be identical**:
+- `public/games/memorize/index.html` (line ~827) — array of `{id, name, kind, pool}`
+- `worker/GameServer.js` (line ~7) — plain `{id: [tokens]}` object
+
+14 collections: `classic` (canvas-drawn token IDs), then 13 emoji packs. `classic` pool has 24 tokens; `cats` has 16 (minimum for the 2x4 grid with 4 pairs). All others have 24.
+
+If you add a collection, add it to **both files**. Run a Node.js cross-check if unsure:
+```bash
+node -e "
+const a = require('./public/games/memorize/index.html'); // grep manually
+const b = require('./worker/GameServer.js');              // then compare pools
+"
+```
+
+### Canvas drawing
+
+`drawObject(ctx, id, cx, cy, size)` — switch on `id` string, 24 objects. Called for `kind:'canvas'` cards.
+
+Emoji cards rendered via:
+```javascript
+ctx.font = `${Math.floor(s*0.74)}px "Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif`;
+ctx.fillText(emoji, s/2, s*0.54); // 0.54 not 0.5 — compensates for emoji visual center
+```
+
+### Capacity-aware grid selector
+
+`refreshGridOptions()` (line ~2040): disables grid sizes that need more pairs than the collection has tokens. If `selectedGrid` is disabled, it auto-snaps down.
+
+### WebSocket protocol (client ↔ server)
+
+**Client → server:**
+```
+{ type: 'join',            name }
+{ type: 'invite',          to, gridSize, collection }
+{ type: 'invite_response', accepted, to, gridSize, collection }
+{ type: 'flip',            index }
+{ type: 'hide_cards' }
+{ type: 'rematch' }
+{ type: 'leave_room' }
+```
+
+**Server → client:**
+```
+{ type: 'game_start',   partner, gridSize, collection, cards[], yourTurn }
+{ type: 'card_revealed', index, object, by }    ← sent BEFORE pair_found/no_match
+{ type: 'pair_found',   indices[], by, scores, nextTurn, gameOver }
+{ type: 'no_match',     indices[], by, scores }
+{ type: 'game_over',    scores, winner }
+{ type: 'rematch_ready', gridSize, collection, cards[], yourTurn }
+```
+
+**Important**: server broadcasts `card_revealed` first so both players see the second card before the match/no-match result.
+
+### Server architecture (`GameServer.js`)
+
+One global Durable Object instance (`"global-lobby"`) handles all rooms in memory.
+
+```
+GameServer (DO)
+├── players: Map<name, WebSocket>
+├── pendingInvites: Map<from, {to, gridSize, collection}>
+└── rooms: Map<roomId, GameRoom>
+    └── GameRoom
+        ├── players[p1, p2]
+        ├── gridSize, collection
+        ├── cards[] (dealt from shuffled COLLECTIONS[collection])
+        ├── revealed[], matched[], holeCount[]
+        ├── scores { pairs, holes, holePenalty }
+        ├── currentTurn
+        ├── flipBuffer (max 2 indices)
+        └── rematchVotes Set
+```
+
+`flipCard(by, index)` returns the result object; `GameServer.fetch()` broadcasts it to both players.
+
+---
+
+## Mode 4 — Math Drills
+
+**Goal**: solve arithmetic problems as fast as possible. 10 tasks per round.
+
+### Levels (12 total, `MATH_LEVELS`, line ~2252)
+
+| Levels | Operands | Max value | Time | Mode | Kind |
+|--------|---------|-----------|------|------|------|
+| 1–3 | 2 | 100–999 | 25–22s | choice (4 options) | plain |
+| 4–5 | 2 | 999 | 26–18s | input (keyboard) | plain |
+| 6 | 2 | 99 | 28s | input | equation (solve X) |
+| 7 | 2 | 300 | 18s | input | equation |
+| 8–10 | 3 | 50–999 | 30–16s | input | plain |
+| 11 | 3 | 99 | 30s | input | equation |
+| 12 | 3 | 300 | 15s | input | equation |
+
+Levels 4, 6, 8, 11 have `intro` banners for mechanic changes.
+
+### Operation presets (8, shown on setup screen)
+
+`+-`, `+×`, `-÷`, `×÷`, `+-×`, `+-÷`, `+-×÷`, `×` — user selects one before starting a level.
+
+### Expression builder (`mBuildExpr`, line ~2415 region)
+
+- Left-to-right evaluation (no PEMDAS — result is `((a op b) op c)`)
+- Division: `b` is chosen to divide `cur` evenly; result stays integer
+- Subtraction: `b` capped at `cur` (never goes below 0), and if `cur < 1` the op flips to `+`
+- Equation mode: picks a random operand position as X, generates the question from the filled-in result
+
+### Key functions
+
+| Function | Line | Purpose |
+|----------|------|---------|
+| `showMathMenu()` | ~2355 | Level select, op-preset grid, daily stats |
+| `mathStartLevel(idx)` | ~2401 | Initializes round; falls back to `+-` if ops null |
+| `mathNextTask()` | ~2415 | Generates task; choice or input mode |
+| `mathAnswer(value, btnEl)` | ~2468 | Scores answer, advances |
+| `mathKey(k)` | ~2496 | Keyboard input handler |
+| `mathFinish()` | ~2515 | Round summary + daily stats update |
+| `mathTodayKey()` | ~2539 | Returns `"YYYY-MM-DD"` for today |
+| `mathDayKey(d)` | ~2540 | Same for any Date object (shared with Word mode) |
+| `mathLoadStats()` / `mathSaveStats()` | ~2541 | localStorage key: `membrain_stats_v1` |
+| `mathRecordSession(tasks, correct, score)` | ~2543 | Merges today's session into stats |
+| `mathStreak(s)` | ~2549 | Day-streak count |
+
+### localStorage schema
+
+```json
+{
+  "days": {
+    "2026-06-13": { "tasks": 10, "correct": 8, "score": 74 }
+  }
+}
+```
+
+---
+
+## Shared utilities
+
+### Sound (Web Audio API, no external files)
+
+```javascript
+playTone(freq, type, gain, dur, delay=0)  // base oscillator
+soundCardFlip()    // single soft sine
+soundPairFound()   // ascending triangle arpeggio
+soundNoMatch()     // falling sawtooth
+soundWin()         // 5-note ascending chime
+soundLose()        // descending sawtooth
+```
+
+AudioContext is created lazily on first user gesture to satisfy browser autoplay policy.
+
+### Background particles
+
+`#bg-canvas` is a `<canvas>` running a floating-particle animation loop. Drawn at z-index 0; all screen content sits at z-index 1.
+
+### Responsive breakpoints
+
+```css
+@media (max-width:600px) { /* mobile layout adjustments */ }
+@media (max-width:380px) { /* small phone overrides */ }
+```
+
+Key mobile fixes applied:
+- `#screen-menu { justify-content: flex-start }` — prevents top cards being hidden on long lists
+- `#lobby-header { margin-top: 44px }` — clears the fixed ← Menu button
+- `#math-play { padding-top: 50px }` — clears HUD behind back button
+- `setWordAlign(false)` called for level select, recall, results (only `true` during flash phase)
+
+---
+
+## Known invariants / gotchas
+
+1. **Grid string is CxR (cols × rows)**, not RxC. Parse with `[cols, rows] = gridSize.split('x').map(Number)`.
+2. **COLLECTIONS must be identical in both files.** If they drift, the server deals cards the client doesn't know how to render.
+3. **`mathDayKey` is reused by Word mode** (`wmStreak` calls it). If you rename it, update both callers.
+4. **`mathStartLevel()` guards null ops**: `if(!mathState.ops) selectMathOps('+-')` — needed when jumping directly to a level without going through the setup screen.
+5. **Emoji canvas baseline**: use `s*0.54` not `s*0.5` for `fillText` y-coordinate — emoji glyphs sit visually above their mathematical center.
+6. **DO free-plan**: `wrangler.toml` must use `new_sqlite_classes`, not `new_classes`.
+7. **COOP/COEP headers are required** for CarDrive WASM (SharedArrayBuffer). The Cloudflare Worker injects them on every response; Netlify/Vercel configs mirror this.
+8. **i18n uses `introKey:` not `intro:`** in `WM_LEVELS`, `SPOT_LEVELS`, `MATH_LEVELS`. The value is a key into `STRINGS` (e.g. `introKey:'spot_intro_two'`). Never put raw English strings in `intro:` — those are gone.
+9. **`MATH_PRESETS` use `key:` not `lbl:`**. Each entry has `key:'math_op_add'` etc. pointing to `STRINGS`. `renderMathOps()` calls `t(p.key)`.
+
+---
+
+## i18n system
+
+Language is stored in `localStorage.membrain_lang` (`'en'` default, `'uk'` for Ukrainian).
+
+```javascript
+// Core API
+let lang = 'en';
+const STRINGS = { en: {...}, uk: {...} };  // 100+ keys; function values for templates
+function t(key, ...args) { ... }           // lookup + call if function
+function setLang(l) { ... }               // set + persist + applyLang()
+function toggleLang() { ... }             // en ↔ uk
+function applyLang() { ... }              // updates all DOM, re-renders grids, calls goMenu()
+```
+
+**Language toggle button** is in the main menu hero (`id="lang-toggle"`). Shows `🇺🇦 УКР` in English mode, `🇬🇧 ENG` in Ukrainian mode.
+
+**MEMBRAIN → БОТАНІК** when Ukrainian is active.
+
+**Word banks**: `WORD_BANKS` (English) and `WORD_BANKS_UK` (Ukrainian). `wmStart()` picks based on `lang === 'uk'`.
+
+**Template strings** in STRINGS are function values:
+```javascript
+wm_word_n_of: (i, n) => `WORD ${i} OF ${n}`,  // en
+wm_word_n_of: (i, n) => `СЛОВО ${i} З ${n}`,  // uk
+```
+Call via `t('wm_word_n_of', 2, 5)` → `"WORD 2 OF 5"` or `"СЛОВО 2 З 5"`.
+
+**Ukrainian plural forms** for streak: `n===1 ? 'день' : n<5 ? 'дні' : 'днів'`.
