@@ -373,21 +373,42 @@ WASM bundle is self-contained; requires a browser with SharedArrayBuffer (served
 
 # MemBrain — Developer Reference
 
-Browser-native brain-training game with four independent modes. **Zero build step for the game itself** — everything lives in a single self-contained HTML file.
+Browser-native brain-training game with seven independent subgames. **Zero build step for the game itself** — split across plain CSS + JS files (no bundler, no modules) loaded via `<link>`/`<script src>` tags.
 
 ---
 
 ## File locations
 
 ```
-public/games/memorize/index.html   ← entire game (HTML + inline CSS + inline JS, ~2600 lines)
+public/games/memorize/
+  index.html        ← markup only (HTML) + <link>/<script src> tags. ~785 lines
+  css/  base.css        ← :root vars, reset, screens, particles, menu, buttons, card, LM/diamond menu
+        components.css   ← level select, word, results, spot, lobby, invite, pairs, gameover, animations
+        games.css        ← math, lang, achievements, share, opts, colombo, info, xp, radar, workout, ai, mobile
+  js/   i18n.js          ← STRINGS (en/uk) + t / setLang / toggleLang        [loads 1st]
+        constants.js     ← WM_LEVELS, MATH_LEVELS, COLLECTIONS, GRID_OPTS… + background particles (auto-starts)
+        objects.js       ← drawObject() canvas art (24 objects) + emoji draw
+        core.js          ← showScreen, goMenu, toggleOpts/restoreOpts, backFromGame, info popup
+        word.js spot.js pairs.js math.js diamond.js longmemory.js   ← one subgame each
+        systems.js       ← achievements, XP/level, brain radar, daily workout
+        pairs-ai.js      ← Pairs vs AI (startAiGame)
+        math-extra.js    ← math estimation, trick mastery, daily ladder, share card
+        colombo.js       ← Colombo detective subgame (procedural SVG scenes)
+        init.js          ← applyLang() + bootstrap (showWordMenu/showSpotMenu/applyLang)  [loads LAST]
 worker/GameServer.js               ← Cloudflare Durable Object: Pairs Battle WebSocket server
 worker/index.js                    ← Cloudflare Worker entry point (routes /ws + static assets)
 src/pages/HomePage.jsx             ← React home screen card (title "MemBrain", route id "memorize")
 src/pages/GamePage.jsx             ← React wrapper that iframes the game
 ```
 
-The game is served as a plain static file. The React wrapper just iframes it; there is no React code inside the game. To edit the game, edit only `public/games/memorize/index.html`.
+The game is served as plain static files; the React wrapper just iframes it; there is no React code inside the game.
+
+**CRITICAL — the split uses classic (non-module) scripts, NOT ES modules:**
+- All JS files share ONE global scope. Every function and top-level `let`/`const` is global to every other file. This is *why* inline `onclick="showColomboMenu()"` handlers in index.html work — do NOT convert to `<script type="module">` or you break every handler.
+- **Load order matters** (set by the `<script src>` order in index.html): `i18n.js` first (STRINGS/t used everywhere), `init.js` LAST (its bootstrap calls into every subgame). A file's *top-level immediate code* may only call functions defined in an earlier-loaded file. The only auto-running top-level code is the particle init in `constants.js` (self-contained) and the bootstrap in `init.js` (last). Everything else runs on user interaction, after all files are loaded.
+- To add a new subgame: drop a `js/<game>.js`, add its `<script src>` BEFORE `init.js`, add styles to `games.css`, wire it into `applyLang()` (init.js) and `backFromGame()` (core.js).
+- CSS is split by source position (cascade order = `<link>` order); the base/components/games names are loose groupings, not strict layers.
+- `COLLECTIONS` lives in `js/constants.js` and must still stay identical to `worker/GameServer.js` (see Pairs section).
 
 ---
 
@@ -407,9 +428,11 @@ npm run dev          # Vite dev server at http://localhost:5173
 # WebSocket server requires wrangler (see deploy section)
 ```
 
-WebSocket URL auto-detection (line ~2055 in index.html):
+WebSocket URL auto-detection (`wsUrl()` in `js/pairs.js`):
 - `localhost` → `ws://localhost:8080`
 - Production → `wss://<hostname>/ws`
+
+> **Note:** the function tables below list the `js/` file each function lives in (one file per subgame). They no longer carry line numbers — grep within the named file to locate a function.
 
 ---
 
@@ -448,17 +471,21 @@ npm run build && npx wrangler deploy
 
 ---
 
-## Architecture: four game modes
+## Architecture: seven subgames
 
-All modes live inside `public/games/memorize/index.html`. Screen routing uses `showScreen(id)` which sets `.active` on the target `<div class="screen">`.
+Screen markup lives in `index.html`; each subgame's logic lives in its own `js/<subgame>.js` file (see File locations). Screen routing uses `showScreen(id)` (in `js/core.js`) which sets `.active` on the target `<div class="screen">`.
 
 Screen IDs:
 ```
-screen-menu       Main menu (4 mode cards)
-screen-word       Word Sequence (level select → memorize → recall → results)
-screen-spot       Object Spotting (level select → round → results)
-screen-pairs      Pairs Battle (lobby → game → results)
-screen-math       Math Drills (level select → task → results)
+screen-menu       Main menu (7 mode cards)
+screen-word       Word Sequence    (js/word.js)        level select → memorize → recall → results
+screen-spot       Object Spotting  (js/spot.js)        level select → round → results
+screen-lobby      Pairs Battle lobby (js/pairs.js, js/pairs-ai.js)
+screen-pairs      Pairs Battle game  (js/pairs.js)     lobby → game → results
+screen-math       Math Drills      (js/math.js)        level select → task → results
+screen-diamond    Diamond          (js/diamond.js)     gesture memorize → trace
+screen-lm         Long Memory      (js/longmemory.js)  encode → recall after delay
+screen-colombo    Colombo          (js/colombo.js)     study scene → quiz → verdict
 ```
 
 ---
@@ -467,7 +494,7 @@ screen-math       Math Drills (level select → task → results)
 
 **Goal**: memorize a sequence of words flashed briefly, then recall them.
 
-### Levels (12 total, defined in `WM_LEVELS` array, line ~770)
+### Levels (12 total, defined in `WM_LEVELS`, `js/constants.js`)
 
 | Levels | Words | Flash time | Mechanic |
 |--------|-------|-----------|---------|
@@ -476,26 +503,26 @@ screen-math       Math Drills (level select → task → results)
 
 Levels 7, 9, 11 have an `intro` banner for the mechanic change.
 
-### Word banks (`WORD_BANKS`, line ~757)
+### Word banks (`WORD_BANKS`, `js/constants.js`)
 
 8 categories: `animals`, `colors`, `food`, `nature`, `objects`, `space`, `music`, `body`. Each level uses a subset (`cats` array in its config). `wmStart()` de-duplicates with `new Set(...)`.
 
 ### Key functions
 
-| Function | Line | Purpose |
+| Function | File | Purpose |
 |----------|------|---------|
-| `showWordMenu()` | ~1313 | Level select + daily stats |
-| `wmStart(lvIdx)` | ~1339 | Initializes round, calls countdown |
-| `wmCountdown(done)` | ~1361 | 3·2·1·GO! animation with tones |
-| `wmRunMemorize(idx, lv)` | ~1382 | Flashes each word with per-word tone |
-| `wmShowRecall()` | ~1408 | Switches to pool-click or typed-input UI |
-| `renderWmTypeRows()` | called by wmShowRecall | Renders one `<input>` per word; Enter advances |
-| `wmSubmit()` | ~1488 | Scores recall, saves stats, shows results |
-| `wmNextLevel()` | ~1571 | Advances to next level without going to menu |
-| `setWordAlign(center)` | ~1312 | Sets `#screen-word` justify-content; call `false` for lists, `true` for flash phase |
-| `wmLoadStats()` / `wmSaveStats()` | ~1574 | localStorage key: `membrain_word_v1` |
-| `wmStreak(stats)` | ~1576 | Counts consecutive days with activity |
-| `renderWmStats()` | ~1589 | 7-day bar chart + streak in level select |
+| `showWordMenu()` | `js/word.js` | Level select + daily stats |
+| `wmStart(lvIdx)` | `js/word.js` | Initializes round, calls countdown |
+| `wmCountdown(done)` | `js/word.js` | 3·2·1·GO! animation with tones |
+| `wmRunMemorize(idx, lv)` | `js/word.js` | Flashes each word with per-word tone |
+| `wmShowRecall()` | `js/word.js` | Switches to pool-click or typed-input UI |
+| `renderWmTypeRows()` | `js/word.js` | Renders one `<input>` per word (called by `wmShowRecall`); Enter advances |
+| `wmSubmit()` | `js/word.js` | Scores recall, saves stats, shows results |
+| `wmNextLevel()` | `js/word.js` | Advances to next level without going to menu |
+| `setWordAlign(center)` | `js/word.js` | Sets `#screen-word` justify-content; call `false` for lists, `true` for flash phase |
+| `wmLoadStats()` / `wmSaveStats()` | `js/word.js` | localStorage key: `membrain_word_v1` |
+| `wmStreak(stats)` | `js/word.js` | Counts consecutive days with activity |
+| `renderWmStats()` | `js/word.js` | 7-day bar chart + streak in level select |
 
 ### Scoring formula
 
@@ -527,14 +554,14 @@ score = (recall×0.5 + precision×0.2 + order×0.3) × 100
 
 ### Key functions
 
-| Function | Line | Purpose |
+| Function | File | Purpose |
 |----------|------|---------|
-| `showSpotMenu()` | ~1615 | Level select |
-| `spotStart(lvIdx)` | ~1630 | Initializes round |
-| `spotRunRound()` | ~1639 | Shows grid, runs blackout, shows find phase |
-| `spotStartBlackout(canvas, …)` | ~1703 | Covers grid for memorization period |
-| `spotStartFind(canvas, …)` | ~1725 | Player clicks the changed object |
-| `spotGuess(id)` | ~1762 | Checks guess, scores |
+| `showSpotMenu()` | `js/spot.js` | Level select |
+| `spotStart(lvIdx)` | `js/spot.js` | Initializes round |
+| `spotRunRound()` | `js/spot.js` | Shows grid, runs blackout, shows find phase |
+| `spotStartBlackout(canvas, …)` | `js/spot.js` | Covers grid for memorization period |
+| `spotStartFind(canvas, …)` | `js/spot.js` | Player clicks the changed object |
+| `spotGuess(id)` | `js/spot.js` | Checks guess, scores |
 
 Uses the same `OBJECTS` array and `drawObject()` canvas function as Pairs Battle classic mode.
 
@@ -544,7 +571,7 @@ Uses the same `OBJECTS` array and `drawObject()` canvas function as Pairs Battle
 
 **Goal**: flip card pairs faster than your opponent. Real-time 2-player via WebSocket.
 
-### Client state (`pairsState`, line ~1818)
+### Client state (`pairsState`, `js/pairs.js`)
 
 ```javascript
 let pairsState = {
@@ -573,17 +600,15 @@ Available grids and their pair counts:
 ### Card collections — CRITICAL SYNC INVARIANT
 
 `COLLECTIONS` is defined in **both** files and **must be identical**:
-- `public/games/memorize/index.html` (line ~827) — array of `{id, name, kind, pool}`
+- `public/games/memorize/js/constants.js` — array of `{id, name, kind, pool}`
 - `worker/GameServer.js` (line ~7) — plain `{id: [tokens]}` object
 
 14 collections: `classic` (canvas-drawn token IDs), then 13 emoji packs. `classic` pool has 24 tokens; `cats` has 16 (minimum for the 2x4 grid with 4 pairs). All others have 24.
 
-If you add a collection, add it to **both files**. Run a Node.js cross-check if unsure:
+If you add a collection, add it to **both files**: `js/constants.js` (client) and `worker/GameServer.js` (server). Cross-check the ids match:
 ```bash
-node -e "
-const a = require('./public/games/memorize/index.html'); // grep manually
-const b = require('./worker/GameServer.js');              // then compare pools
-"
+grep -oE "id: *'[a-z]+'" public/games/memorize/js/constants.js   # client collection ids
+grep -oE "^  [a-z]+:" worker/GameServer.js                        # server collection ids
 ```
 
 ### Canvas drawing
@@ -598,7 +623,7 @@ ctx.fillText(emoji, s/2, s*0.54); // 0.54 not 0.5 — compensates for emoji visu
 
 ### Capacity-aware grid selector
 
-`refreshGridOptions()` (line ~2040): disables grid sizes that need more pairs than the collection has tokens. If `selectedGrid` is disabled, it auto-snaps down.
+`refreshGridOptions()` (`js/pairs.js`): all grid sizes are always enabled; `startAiGame` cycles the pool when a grid needs more pairs than the collection has (see Colombo-era fix).
 
 ### WebSocket protocol (client ↔ server)
 
@@ -653,7 +678,7 @@ GameServer (DO)
 
 **Goal**: solve arithmetic problems as fast as possible. 10 tasks per round.
 
-### Levels (12 total, `MATH_LEVELS`, line ~2252)
+### Levels (12 total, `MATH_LEVELS`, `js/math.js`)
 
 | Levels | Operands | Max value | Time | Mode | Kind |
 |--------|---------|-----------|------|------|------|
@@ -671,7 +696,7 @@ Levels 4, 6, 8, 11 have `intro` banners for mechanic changes.
 
 `+-`, `+×`, `-÷`, `×÷`, `+-×`, `+-÷`, `+-×÷`, `×` — user selects one before starting a level.
 
-### Expression builder (`mBuildExpr`, line ~2415 region)
+### Expression builder (`mBuildExpr`, `js/math.js`)
 
 - Left-to-right evaluation (no PEMDAS — result is `((a op b) op c)`)
 - Division: `b` is chosen to divide `cur` evenly; result stays integer
@@ -680,19 +705,19 @@ Levels 4, 6, 8, 11 have `intro` banners for mechanic changes.
 
 ### Key functions
 
-| Function | Line | Purpose |
+| Function | File | Purpose |
 |----------|------|---------|
-| `showMathMenu()` | ~2355 | Level select, op-preset grid, daily stats |
-| `mathStartLevel(idx)` | ~2401 | Initializes round; falls back to `+-` if ops null |
-| `mathNextTask()` | ~2415 | Generates task; choice or input mode |
-| `mathAnswer(value, btnEl)` | ~2468 | Scores answer, advances |
-| `mathKey(k)` | ~2496 | Keyboard input handler |
-| `mathFinish()` | ~2515 | Round summary + daily stats update |
-| `mathTodayKey()` | ~2539 | Returns `"YYYY-MM-DD"` for today |
-| `mathDayKey(d)` | ~2540 | Same for any Date object (shared with Word mode) |
-| `mathLoadStats()` / `mathSaveStats()` | ~2541 | localStorage key: `membrain_stats_v1` |
-| `mathRecordSession(tasks, correct, score)` | ~2543 | Merges today's session into stats |
-| `mathStreak(s)` | ~2549 | Day-streak count |
+| `showMathMenu()` | `js/math.js` | Level select, op-preset grid, daily stats |
+| `mathStartLevel(idx)` | `js/math.js` | Initializes round; falls back to `+-` if ops null |
+| `mathNextTask()` | `js/math.js` | Generates task; choice or input mode |
+| `mathAnswer(value, btnEl)` | `js/math.js` | Scores answer, advances |
+| `mathKey(k)` | `js/math.js` | Keyboard input handler |
+| `mathFinish()` | `js/math.js` | Round summary + daily stats update |
+| `mathTodayKey()` | `js/math.js` | Returns `"YYYY-MM-DD"` for today |
+| `mathDayKey(d)` | `js/math.js` | Same for any Date object (shared with Word mode) |
+| `mathLoadStats()` / `mathSaveStats()` | `js/math.js` | localStorage key: `membrain_stats_v1` |
+| `mathRecordSession(tasks, correct, score)` | `js/math.js` | Merges today's session into stats |
+| `mathStreak(s)` | `js/math.js` | Day-streak count |
 
 ### localStorage schema
 
@@ -789,7 +814,7 @@ Call via `t('wm_word_n_of', 2, 5)` → `"WORD 2 OF 5"` or `"СЛОВО 2 З 5"`.
 
 # Colombo — Subgame (IMPLEMENTED)
 
-**Status**: ✅ Shipped. The "Eyewitness" concept below was implemented as **Colombo** (detective theme, named after the TV detective). Lives in `public/games/memorize/index.html`. Screen id `screen-colombo`; menu card class `mode-card amber`.
+**Status**: ✅ Shipped. The "Eyewitness" concept below was implemented as **Colombo** (detective theme, named after the TV detective). Logic in `public/games/memorize/js/colombo.js`; screen markup in `index.html`. Screen id `screen-colombo`; menu card class `mode-card amber`.
 
 **What shipped (differs from / extends the original spec):**
 - Detective framing: study a **crime scene**, then "crack the case from memory". Results read as a verdict ("Case Solved", "Flawless detective work!").
