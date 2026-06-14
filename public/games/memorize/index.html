@@ -23,7 +23,7 @@ body{background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,san
 #bg-canvas{position:fixed;inset:0;z-index:0;pointer-events:none;}
 .screen>*{position:relative;z-index:1;}
 
-/* ── BACK BTN ── */
+/* ── BACK BTN (lobby/lm — legacy small) ── */
 .back-btn{position:fixed;top:14px;left:14px;z-index:100;padding:7px 16px;border-radius:10px;
   border:1px solid var(--border2);background:rgba(0,0,0,0.55);backdrop-filter:blur(12px);
   color:var(--text2);font-size:13px;font-weight:600;cursor:pointer;transition:.2s;}
@@ -501,6 +501,31 @@ body{background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,san
 .spot-ctrl-btn:hover{background:var(--glass2);color:#fff;}
 .spot-ctrl-btn.active{border-color:rgba(167,139,250,.8);background:rgba(167,139,250,.18);color:#c4b5fd;}
 
+/* ── OPTIONS PANEL ── */
+.opts-toggle{display:flex;justify-content:space-between;align-items:center;cursor:pointer;
+  padding:13px 0;border-top:1px solid var(--border);width:100%;margin-top:16px;
+  color:var(--text2);font-size:.8rem;font-weight:800;letter-spacing:.04em;transition:.18s;}
+.opts-toggle:hover{color:var(--text);}
+.opts-toggle-inner{display:flex;align-items:center;gap:7px;}
+.opts-arrow{display:inline-block;transition:transform .22s;font-size:.75rem;}
+.opts-panel{max-height:0;overflow:hidden;transition:max-height .35s ease;}
+.opts-panel.open{max-height:700px;}
+.opts-inner{padding:4px 0 12px;}
+
+/* ── CLOSE BUTTON (× near ℹ) ── */
+.close-btn{width:26px;height:26px;border-radius:50%;border:1.5px solid var(--border2);
+  background:transparent;color:var(--text3);font-size:.82rem;font-weight:900;cursor:pointer;
+  display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;
+  transition:.15s;vertical-align:middle;margin-left:6px;line-height:1;}
+.close-btn:hover{border-color:var(--redL);color:var(--redL);background:rgba(220,38,38,.12);}
+
+/* ── LEAVE CONFIRM POPUP ── */
+#leave-popup{position:fixed;inset:0;background:rgba(0,0,0,.7);backdrop-filter:blur(10px);
+  z-index:400;display:none;align-items:center;justify-content:center;}
+#leave-popup.show{display:flex;}
+#leave-box{background:var(--bg2);border:1px solid var(--border2);border-radius:20px;
+  padding:28px 24px;max-width:300px;width:88vw;text-align:center;}
+
 /* ── MATH TRICKS ── */
 .math-tricks-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(138px,1fr));gap:10px;margin:10px 0 0;}
 .trick-card{background:var(--glass);border:1px solid var(--border2);border-radius:14px;
@@ -642,6 +667,19 @@ body{background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,san
   </div>
 </div>
 
+<!-- ══ LEAVE CONFIRM POPUP ══ -->
+<div id="leave-popup" onclick="if(event.target===this)leaveCancel()">
+  <div id="leave-box">
+    <div style="font-size:2rem;margin-bottom:10px;">🚪</div>
+    <div style="font-size:1rem;font-weight:900;margin-bottom:6px;" id="leave-title">Leave game?</div>
+    <div style="font-size:.84rem;color:var(--text2);margin-bottom:20px;" id="leave-sub">Your progress in this round will be lost.</div>
+    <div style="display:flex;gap:10px;justify-content:center;">
+      <button class="btn" onclick="leaveCancel()" id="leave-stay-btn">Stay</button>
+      <button class="btn btn-danger" onclick="leaveConfirm()" id="leave-leave-btn">Leave</button>
+    </div>
+  </div>
+</div>
+
 <!-- ══ INFO POPUP ══ -->
 <div id="info-popup" onclick="if(event.target===this)infoPopupClose()">
   <div id="info-popup-box">
@@ -757,21 +795,32 @@ body{background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,san
 
 <!-- ══ WORD MEMORY ══ -->
 <div id="screen-word" class="screen">
-  <button class="back-btn" onclick="goMenu()">← Menu</button>
   <!-- sub: level select -->
   <div id="wm-select" style="text-align:center;padding:20px;width:100%;max-width:680px;margin:0 auto;">
     <div style="display:flex;align-items:center;justify-content:center;gap:6px;">
       <div class="section-title" id="wm-section-title">Word Sequence</div>
       <button class="info-btn" onclick="showGameInfo('wm')">ℹ</button>
+      <button class="close-btn" onclick="goMenu()" title="← MemBrain">✕</button>
     </div>
     <div class="section-sub" id="wm-section-sub">Levels 1–6: pick the words · Levels 7–12: type them from memory</div>
-    <div id="wm-diff-lbl" style="font-size:.7rem;color:var(--text3);font-weight:800;letter-spacing:1.5px;margin:16px 0 6px;">WORD LENGTH</div>
-    <div id="wm-diff-row" style="display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin:0 0 10px;"></div>
-    <div id="wm-mode-lbl" style="font-size:.7rem;color:var(--text3);font-weight:800;letter-spacing:1.5px;margin:6px 0 6px;">RECALL MODE</div>
-    <div class="wm-mode-row" id="wm-recall-row"></div>
-    <div id="wm-audio-lbl" style="font-size:.7rem;color:var(--text3);font-weight:800;letter-spacing:1.5px;margin:0 0 6px;">LISTEN MODE</div>
-    <div class="wm-mode-row" id="wm-audio-row"></div>
     <div class="level-grid" id="wm-level-grid"></div>
+    <!-- Options toggle -->
+    <div class="opts-toggle" onclick="toggleOpts('wm-opts')" id="wm-opts-toggle">
+      <div class="opts-toggle-inner"><span>⚙️</span><span id="wm-opts-label">Options</span></div>
+      <span class="opts-arrow" id="wm-opts-arrow">▼</span>
+    </div>
+    <div class="opts-panel" id="wm-opts">
+      <div class="opts-inner">
+        <div id="wm-diff-lbl" style="font-size:.7rem;color:var(--text3);font-weight:800;letter-spacing:1.5px;margin:0 0 6px;">WORD LENGTH</div>
+        <div id="wm-diff-row" style="display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin:0 0 12px;"></div>
+        <div id="wm-mode-lbl" style="font-size:.7rem;color:var(--text3);font-weight:800;letter-spacing:1.5px;margin:0 0 6px;">RECALL MODE</div>
+        <div class="wm-mode-row" id="wm-recall-row"></div>
+        <div id="wm-speed-lbl" style="font-size:.7rem;color:var(--text3);font-weight:800;letter-spacing:1.5px;margin:10px 0 6px;">FLASH SPEED</div>
+        <div class="spot-ctrl-row" id="wm-speed-row"></div>
+        <div id="wm-audio-lbl" style="font-size:.7rem;color:var(--text3);font-weight:800;letter-spacing:1.5px;margin:10px 0 6px;">LISTEN MODE</div>
+        <div class="wm-mode-row" id="wm-audio-row"></div>
+      </div>
+    </div>
     <div style="margin-top:26px;border-top:1px solid var(--border);padding-top:14px;">
       <div class="daily-head">
         <div style="font-weight:800;font-size:.95rem;" id="wm-training-head">🧠 Your Memory Training</div>
@@ -825,23 +874,30 @@ body{background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,san
 
 <!-- ══ OBJECT SPOTTING ══ -->
 <div id="screen-spot" class="screen">
-  <button class="back-btn" onclick="goMenu()">← Menu</button>
   <!-- sub: level select -->
-  <div id="spot-select" style="text-align:center;padding:60px 20px 20px;">
+  <div id="spot-select" style="text-align:center;padding:60px 20px 20px;max-width:680px;width:100%;margin:0 auto;">
     <div style="display:flex;align-items:center;justify-content:center;gap:6px;">
       <div class="section-title" id="spot-section-title">Object Spotting</div>
       <button class="info-btn" onclick="showGameInfo('spot')">ℹ</button>
+      <button class="close-btn" onclick="goMenu()" title="← MemBrain">✕</button>
     </div>
     <div class="section-sub" id="spot-section-sub">Memorize the scene — spot what's missing</div>
     <div style="font-size:.75rem;color:var(--text2);font-weight:700;letter-spacing:.5px;margin:4px 0 8px;" id="spot-choose-pack-lbl">CHOOSE PACK</div>
     <div id="spot-pack-row"></div>
     <div style="font-size:.75rem;color:var(--text2);font-weight:700;letter-spacing:.5px;margin:14px 0 4px;" id="spot-select-level-lbl">SELECT LEVEL</div>
     <div class="level-grid" id="spot-level-grid"></div>
-    <div style="margin-top:16px;border-top:1px solid var(--border);padding-top:12px;">
-      <div style="font-size:.7rem;color:var(--text3);font-weight:800;letter-spacing:1.5px;margin:0 0 6px;text-align:center;" id="spot-mode-lbl">SPOT MODE</div>
-      <div class="spot-ctrl-row" id="spot-mode-row"></div>
-      <div style="font-size:.7rem;color:var(--text3);font-weight:800;letter-spacing:1.5px;margin:12px 0 6px;text-align:center;" id="spot-diff-lbl">MEMORIZE TIME</div>
-      <div class="spot-ctrl-row" id="spot-diff-row"></div>
+    <!-- Options toggle -->
+    <div class="opts-toggle" onclick="toggleOpts('spot-opts')" id="spot-opts-toggle">
+      <div class="opts-toggle-inner"><span>⚙️</span><span id="spot-opts-label">Options</span></div>
+      <span class="opts-arrow" id="spot-opts-arrow">▼</span>
+    </div>
+    <div class="opts-panel" id="spot-opts">
+      <div class="opts-inner">
+        <div style="font-size:.7rem;color:var(--text3);font-weight:800;letter-spacing:1.5px;margin:0 0 6px;text-align:center;" id="spot-mode-lbl">SPOT MODE</div>
+        <div class="spot-ctrl-row" id="spot-mode-row"></div>
+        <div style="font-size:.7rem;color:var(--text3);font-weight:800;letter-spacing:1.5px;margin:12px 0 6px;text-align:center;" id="spot-diff-lbl">MEMORIZE TIME</div>
+        <div class="spot-ctrl-row" id="spot-diff-row"></div>
+      </div>
     </div>
   </div>
   <!-- sub: game -->
@@ -868,7 +924,7 @@ body{background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,san
 
 <!-- ══ LOBBY ══ -->
 <div id="screen-lobby" class="screen">
-  <button class="back-btn" onclick="goMenu()">← Menu</button>
+  <button class="back-btn" onclick="goMenu()">← MemBrain</button>
   <div id="lobby-header">
     <div style="display:flex;align-items:center;gap:8px;">
       <span class="status-dot" id="ws-dot"></span>
@@ -914,7 +970,11 @@ body{background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,san
     </div>
     <!-- Config panel -->
     <div class="lobby-panel">
-      <h3 id="lobby-settings-title">⚙️ Game Settings</h3>
+      <div style="display:flex;justify-content:space-between;align-items:center;cursor:pointer;" onclick="toggleOpts('lobby-opts')">
+        <h3 id="lobby-settings-title">⚙️ Game Settings</h3>
+        <span class="opts-arrow" id="lobby-opts-arrow" style="font-size:.9rem;">▼</span>
+      </div>
+      <div class="opts-panel open" id="lobby-opts">
       <div id="lobby-config">
         <div style="font-size:.8rem;color:var(--text2);margin-bottom:8px;" id="lobby-coll-label">Card collection:</div>
         <div class="coll-options" id="coll-options"></div>
@@ -926,6 +986,7 @@ body{background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,san
           <div class="grid-opt" data-grid="4x8" onclick="selectGrid(this)">4×8</div>
           <div class="grid-opt" data-grid="6x6" onclick="selectGrid(this)">6×6</div>
           <div class="grid-opt" data-grid="6x8" onclick="selectGrid(this)">6×8</div>
+          <div class="grid-opt" data-grid="8x8" onclick="selectGrid(this)">8×8</div>
         </div>
         <div style="font-size:.76rem;color:var(--text3);margin-top:10px;line-height:1.6;" id="lobby-scoring-body">
           <b style="color:var(--text2);">Scoring:</b><br>
@@ -933,12 +994,14 @@ body{background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,san
           Repeat misses cost extra (hole penalty)
         </div>
       </div>
+      </div><!-- /opts-panel -->
     </div>
   </div>
 </div>
 
 <!-- ══ PAIRS GAME ROOM ══ -->
 <div id="screen-pairs" class="screen">
+  <button class="back-btn" onclick="backFromGame('pairs')">← Menu</button>
   <div id="pairs-header">
     <div class="score-block" id="score-p1">
       <div class="sb-name" id="p1-name">Player 1</div>
@@ -1010,21 +1073,17 @@ body{background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,san
 
 <!-- ══ MATH DRILLS ══ -->
 <div id="screen-math" class="screen">
-  <button class="back-btn" onclick="goMenu()">← Menu</button>
-
   <!-- sub: setup (operation + level select + daily stats) -->
   <div id="math-setup" class="math-wrap">
     <div style="display:flex;align-items:center;justify-content:center;gap:6px;">
       <div class="section-title" id="math-section-title">Math Drills</div>
       <button class="info-btn" onclick="showGameInfo('math')">ℹ</button>
+      <button class="close-btn" onclick="goMenu()" title="← MemBrain">✕</button>
     </div>
     <div class="section-sub" id="math-section-sub">Pick your operations &amp; difficulty</div>
 
     <div class="op-grid" id="math-op-grid"></div>
     <div class="op-hint" id="math-op-hint">Choose which arithmetic to practice</div>
-
-    <div style="font-size:.7rem;color:var(--text3);font-weight:800;letter-spacing:.8px;margin:14px 0 5px;text-align:center;" id="math-est-lbl">PRECISION MODE</div>
-    <div class="wm-mode-row" id="math-est-row"></div>
 
     <div style="font-size:.8rem;color:var(--text2);text-align:center;margin:14px 0 4px;font-weight:700;letter-spacing:.5px;" id="math-select-lbl">SELECT LEVEL · 10 tasks each</div>
     <div class="math-levels" id="math-level-grid"></div>
@@ -1037,21 +1096,31 @@ body{background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,san
       </button>
     </div>
 
-    <!-- tricks section -->
-    <div style="margin-top:18px;border-top:1px solid var(--border);padding-top:16px;">
-      <div style="font-size:.7rem;color:var(--text3);font-weight:800;letter-spacing:1.5px;margin:0 0 4px;text-align:center;" id="math-tricks-lbl">⚡ MATH TRICKS</div>
-      <div style="font-size:.76rem;color:var(--text2);text-align:center;margin:0 0 10px;" id="math-tricks-sub">Secret shortcuts schools don't teach</div>
-      <div class="math-tricks-grid" id="math-tricks-grid"></div>
+    <!-- Options dropdown: precision + tricks + report -->
+    <div class="opts-toggle" onclick="toggleOpts('math-opts')" id="math-opts-toggle">
+      <div class="opts-toggle-inner"><span>⚙️</span><span id="math-opts-label">Options</span></div>
+      <span class="opts-arrow" id="math-opts-arrow">▼</span>
     </div>
+    <div class="opts-panel" id="math-opts">
+      <div class="opts-inner">
+        <div style="font-size:.7rem;color:var(--text3);font-weight:800;letter-spacing:.8px;margin:0 0 5px;text-align:center;" id="math-est-lbl">PRECISION MODE</div>
+        <div class="wm-mode-row" id="math-est-row"></div>
 
-    <!-- daily statistics -->
-    <div style="margin-top:30px;border-top:1px solid var(--border);padding-top:14px;">
-      <div class="daily-head">
-        <div style="font-weight:800;font-size:.95rem;" id="math-daily-head">📊 Daily Brain Training</div>
-        <div class="dstreak" id="math-streak">🔥 0 day streak</div>
+        <div style="margin-top:16px;border-top:1px solid var(--border);padding-top:14px;">
+          <div style="font-size:.7rem;color:var(--text3);font-weight:800;letter-spacing:1.5px;margin:0 0 4px;text-align:center;" id="math-tricks-lbl">⚡ MATH TRICKS</div>
+          <div style="font-size:.76rem;color:var(--text2);text-align:center;margin:0 0 10px;" id="math-tricks-sub">Secret shortcuts schools don't teach</div>
+          <div class="math-tricks-grid" id="math-tricks-grid"></div>
+        </div>
+
+        <div style="margin-top:16px;border-top:1px solid var(--border);padding-top:14px;">
+          <div class="daily-head">
+            <div style="font-weight:800;font-size:.95rem;" id="math-daily-head">📊 Daily Brain Training</div>
+            <div class="dstreak" id="math-streak">🔥 0 day streak</div>
+          </div>
+          <div class="bars7" id="math-bars"></div>
+          <div class="math-stat-grid" id="math-daily-stats"></div>
+        </div>
       </div>
-      <div class="bars7" id="math-bars"></div>
-      <div class="math-stat-grid" id="math-daily-stats"></div>
     </div>
   </div>
 
@@ -1100,13 +1169,13 @@ body{background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,san
 
 <!-- ══ DIAMOND ══ -->
 <div id="screen-diamond" class="screen">
-  <button class="back-btn" onclick="goMenu()">← Menu</button>
 
   <!-- Setup -->
   <div id="diamond-select" style="text-align:center;padding:60px 20px 20px;width:100%;max-width:500px;margin:0 auto;">
     <div style="display:flex;align-items:center;justify-content:center;gap:6px;">
       <div class="section-title" id="diamond-section-title">Diamond</div>
       <button class="info-btn" onclick="showGameInfo('diamond')">ℹ</button>
+      <button class="close-btn" onclick="goMenu()" title="← MemBrain">✕</button>
     </div>
     <div class="section-sub" id="diamond-section-sub">Memorize the gesture — trace it back from memory</div>
     <div style="display:flex;gap:12px;justify-content:center;margin:24px 0 28px;flex-wrap:wrap;">
@@ -1150,7 +1219,7 @@ body{background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,san
 
 <!-- ══ LONG MEMORY ══ -->
 <div id="screen-lm" class="screen">
-  <button class="back-btn" onclick="goMenu()">← Menu</button>
+  <button class="back-btn" onclick="goMenu()">← MemBrain</button>
 
   <!-- Hub -->
   <div id="lm-hub" class="lm-panel" style="display:none;">
@@ -1248,7 +1317,12 @@ const STRINGS = {
     spot_mode_title:'Object Spotting', spot_mode_desc:'Memorize a scene, then find which object has vanished',
     pairs_mode_title:'Pairs Battle', pairs_mode_desc:'Find matching pairs online — outsmart your opponent',
     math_mode_title:'Math Drills', math_mode_desc:'Solve arithmetic against the clock — beat your brain',
-    back_menu:'← Menu',
+    back_menu:'← MemBrain',
+    opts_label:'Options', opts_open:'▲', opts_closed:'▼',
+    leave_title:'Leave game?', leave_sub:'Progress in this round will be lost.',
+    leave_stay:'Stay', leave_leave:'Leave',
+    wm_speed_lbl:'FLASH SPEED',
+    wm_speed_fast:'⚡ Fast', wm_speed_normal:'⏱ Normal', wm_speed_slow:'🐢 Slow',
     wm_section_title:'Word Sequence', wm_section_sub:'Levels 1–6: pick the words · Levels 7–12: type them from memory',
     wm_training_head:'🧠 Your Memory Training',
     wm_get_ready:'GET READY', wm_type_ready:'Get ready to TYPE them back!',
@@ -1474,7 +1548,12 @@ const STRINGS = {
     spot_mode_title:'Знайди різницю', spot_mode_desc:'Запам\'ятай картину, знайди що зникло',
     pairs_mode_title:'Битва пар', pairs_mode_desc:'Знаходь пари онлайн — обіграй суперника',
     math_mode_title:'Математика', math_mode_desc:'Розв\'язуй приклади на час — перевір розум',
-    back_menu:'← Меню',
+    back_menu:'← MemBrain',
+    opts_label:'Налаштування', opts_open:'▲', opts_closed:'▼',
+    leave_title:'Покинути гру?', leave_sub:'Прогрес у цьому раунді буде втрачено.',
+    leave_stay:'Залишитись', leave_leave:'Вийти',
+    wm_speed_lbl:'ШВИДКІСТЬ ПОКАЗУ',
+    wm_speed_fast:'⚡ Швидко', wm_speed_normal:'⏱ Нормально', wm_speed_slow:'🐢 Повільно',
     wm_section_title:'Ланцюжок слів', wm_section_sub:'Рівні 1–6: вибирай слова · Рівні 7–12: друкуй по пам\'яті',
     wm_training_head:'🧠 Тренування пам\'яті',
     wm_get_ready:'ГОТУЙСЯ', wm_type_ready:'Готуйся ПИСАТИ їх назад!',
@@ -2300,6 +2379,63 @@ function goMenu() {
   showScreen('screen-menu');
 }
 
+// ── Options panel toggle ──
+function toggleOpts(panelId) {
+  const panel = document.getElementById(panelId);
+  const arrow = document.getElementById(panelId + '-arrow');
+  if (!panel) return;
+  const opening = !panel.classList.contains('open');
+  panel.classList.toggle('open', opening);
+  if (arrow) arrow.textContent = opening ? '▲' : '▼';
+  localStorage.setItem('membrain_opts_' + panelId, opening ? '1' : '0');
+}
+function restoreOpts(panelId) {
+  const saved = localStorage.getItem('membrain_opts_' + panelId);
+  const panel = document.getElementById(panelId);
+  const arrow = document.getElementById(panelId + '-arrow');
+  if (!panel) return;
+  const open = saved === '1';
+  panel.classList.toggle('open', open);
+  if (arrow) arrow.textContent = open ? '▲' : '▼';
+}
+
+// ── Leave game confirmation ──
+let _leaveCb = null;
+function backFromGame(game) {
+  const inGame = {
+    wm:      () => document.getElementById('wm-memorize').style.display !== 'none' ||
+                   document.getElementById('wm-recall').style.display !== 'none',
+    spot:    () => document.getElementById('spot-game').style.display !== 'none',
+    math:    () => document.getElementById('math-play').style.display !== 'none',
+    diamond: () => document.getElementById('diamond-game').style.display !== 'none',
+    pairs:   () => true,
+  };
+  const check = inGame[game];
+  if (check && check()) {
+    _leaveCb = () => {
+      if (game === 'wm') { wmTimers.forEach(clearTimeout); wmTimers = []; }
+      if (game === 'pairs') { document.getElementById('gameover-overlay').classList.remove('show'); }
+      goMenu();
+    };
+    document.getElementById('leave-title').textContent = t('leave_title');
+    document.getElementById('leave-sub').textContent = t('leave_sub');
+    document.getElementById('leave-stay-btn').textContent = t('leave_stay');
+    document.getElementById('leave-leave-btn').textContent = t('leave_leave');
+    document.getElementById('leave-popup').classList.add('show');
+  } else {
+    goMenu();
+  }
+}
+function leaveCancel() {
+  document.getElementById('leave-popup').classList.remove('show');
+  _leaveCb = null;
+}
+function leaveConfirm() {
+  document.getElementById('leave-popup').classList.remove('show');
+  const cb = _leaveCb; _leaveCb = null;
+  if (cb) cb();
+}
+
 // ── Info popup ──
 let _infoPopupOkCb = null;
 function showInfoPopup(title, bodyHtml, okCb) {
@@ -2329,6 +2465,7 @@ let wmLevel = 0, wmSequence = [], wmPool = [], wmSelected = [], wmTimers = [], w
 let wordDiff = localStorage.getItem('membrain_wm_diff') || 'all';
 let wmRecallMode = localStorage.getItem('membrain_wm_recall') || 'normal';
 let wmAudioMode  = localStorage.getItem('membrain_wm_audio')  === 'on';
+let wmSpeedMult  = parseFloat(localStorage.getItem('membrain_wm_speed') || '1.0');
 
 // Center the screen vertically only for the brief flash phase; for the tall
 // level-select / recall / results lists, anchor to top so nothing clips on mobile.
@@ -2378,6 +2515,21 @@ function showWordMenu() {
     });
   }
 
+  // Speed selector
+  const speedLbl = document.getElementById('wm-speed-lbl');
+  const speedRow = document.getElementById('wm-speed-row');
+  if (speedLbl) speedLbl.textContent = t('wm_speed_lbl');
+  if (speedRow) {
+    speedRow.innerHTML = '';
+    [[0.5,'wm_speed_fast'],[1.0,'wm_speed_normal'],[1.5,'wm_speed_slow']].forEach(([mult,key]) => {
+      const b = document.createElement('div');
+      b.className = 'spot-ctrl-btn' + (wmSpeedMult === mult ? ' active' : '');
+      b.textContent = t(key);
+      b.onclick = () => { wmSpeedMult = mult; localStorage.setItem('membrain_wm_speed', String(mult)); showWordMenu(); };
+      speedRow.appendChild(b);
+    });
+  }
+
   // Audio mode toggle
   const audioLbl = document.getElementById('wm-audio-lbl');
   const audioRow = document.getElementById('wm-audio-row');
@@ -2392,6 +2544,9 @@ function showWordMenu() {
       audioRow.appendChild(b);
     });
   }
+
+  // Restore options panel open/close state
+  restoreOpts('wm-opts');
 
   WM_LEVELS.forEach((lv, i) => {
     const stars = stats.stars?.[i] || 0;
@@ -2485,9 +2640,10 @@ function wmRunMemorize(idx, lv) {
   counter.textContent = t('wm_more_to_go', wmSequence.length - idx - 1);
   playTone(500 + idx*12, 'sine', 0.13, 0.07);
 
-  const halfTime = lv.time * 0.7;
+  const flashTime = Math.round(lv.time * wmSpeedMult);
+  const halfTime = flashTime * 0.7;
   wmTimers.push(setTimeout(() => { display.style.opacity = 0; }, halfTime));
-  wmTimers.push(setTimeout(() => wmRunMemorize(idx+1, lv), lv.time));
+  wmTimers.push(setTimeout(() => wmRunMemorize(idx+1, lv), flashTime));
 }
 
 function wmShowRecall() {
@@ -2797,6 +2953,7 @@ function showSpotMenu() {
       diffRow.appendChild(b);
     });
   }
+  restoreOpts('spot-opts');
 }
 
 function refreshSpotLevels() {
@@ -3383,7 +3540,7 @@ let selectedGrid = '2x4';
 let selectedCollection = 'classic';
 let pendingFlip = false;
 
-const GRID_OPTS = ['2x4','4x4','4x6','4x8','6x6','6x8'];
+const GRID_OPTS = ['2x4','4x4','4x6','4x8','6x6','6x8','8x8'];
 function gridPairs(g){ const [c,r] = g.split('x').map(Number); return c*r/2; }
 
 function renderCollOptions(){
@@ -3406,17 +3563,11 @@ function selectColl(id){
   refreshGridOptions();
 }
 
-// Grey out (and auto-deselect) grids that need more pairs than the collection has.
+// All grid sizes are always available (pool cycles when needed > pool.length).
 function refreshGridOptions(){
-  const cap = collById(selectedCollection).pool.length;
   document.querySelectorAll('.grid-opt').forEach(el=>{
-    el.classList.toggle('disabled', gridPairs(el.dataset.grid) > cap);
+    el.classList.remove('disabled');
   });
-  if(gridPairs(selectedGrid) > cap){
-    const fits = GRID_OPTS.filter(g=>gridPairs(g) <= cap);
-    selectedGrid = fits[fits.length-1] || '2x4';
-    document.querySelectorAll('.grid-opt').forEach(el=>el.classList.toggle('active', el.dataset.grid===selectedGrid));
-  }
 }
 
 // On localhost → local dev server; on Cloudflare (or any deployed host) → /ws on same host
@@ -3440,6 +3591,7 @@ function showLobby() {
   // Sync AI diff buttons with saved state
   const saved = localStorage.getItem('membrain_ai_diff') || 'medium';
   document.querySelectorAll('.ai-diff-btn').forEach(b => b.classList.toggle('active', b.dataset.diff === saved));
+  restoreOpts('lobby-opts');
 }
 
 function lobbyConnect() {
@@ -3776,6 +3928,8 @@ function showMathMenu(){
   renderMathStats();
   renderMathEstRow();
   renderDailyChallenge();
+  restoreOpts('math-opts');
+  restoreOpts('lobby-opts');
 }
 
 function renderMathOps(){
@@ -4168,6 +4322,19 @@ function dmdPos(idx, grid, cw, ch) {
 
 function dmdR(grid) { return grid <= 2 ? 22 : grid <= 3 ? 18 : grid <= 4 ? 13 : 10; }
 
+function dmdGcd(a, b) { return b === 0 ? Math.abs(a) : dmdGcd(b, a % b); }
+function dmdBetween(a, b, grid) {
+  const ax = a % grid, ay = Math.floor(a / grid);
+  const bx = b % grid, by = Math.floor(b / grid);
+  const dx = bx - ax, dy = by - ay;
+  if (dx === 0 && dy === 0) return [];
+  const g = dmdGcd(Math.abs(dx), Math.abs(dy));
+  if (g <= 1) return [];
+  const sx = dx / g, sy = dy / g;
+  const res = [];
+  for (let s = 1; s < g; s++) res.push((ay + sy * s) * grid + (ax + sx * s));
+  return res;
+}
 function dmdGenPattern(grid, len) {
   const total = grid * grid;
   const visited = new Set();
@@ -4176,10 +4343,16 @@ function dmdGenPattern(grid, len) {
   visited.add(cur); pat.push(cur);
   while (pat.length < Math.min(len, total)) {
     const avail = [];
-    for (let i = 0; i < total; i++) if (!visited.has(i)) avail.push(i);
+    for (let i = 0; i < total; i++) {
+      if (!visited.has(i)) avail.push(i);
+    }
     if (!avail.length) break;
     const next = avail[Math.floor(Math.random() * avail.length)];
+    // Auto-insert any collinear intermediate dots so the finger naturally hits them
+    const between = dmdBetween(cur, next, grid).filter(m => !visited.has(m));
+    for (const m of between) { visited.add(m); pat.push(m); }
     visited.add(next); pat.push(next);
+    cur = next;
   }
   return pat;
 }
@@ -4368,13 +4541,13 @@ function diamondRecallPhase() {
   dmdDraw(canvas, [], [], 'recall');
 }
 
-function dmdGetDot(clientX, clientY) {
+function dmdGetDot(clientX, clientY, radiusMult) {
   const canvas = document.getElementById('diamond-canvas');
   const rect = canvas.getBoundingClientRect();
   const x = (clientX - rect.left) * (canvas.width / rect.width);
   const y = (clientY - rect.top) * (canvas.height / rect.height);
   const grid = dmdState.cfg.grid;
-  const r = dmdR(grid) * 1.9;
+  const r = dmdR(grid) * (radiusMult !== undefined ? radiusMult : 1.9);
   for (let i = 0; i < grid * grid; i++) {
     const p = dmdPos(i, grid, canvas.width, canvas.height);
     if (Math.hypot(x - p.x, y - p.y) <= r) return i;
@@ -4392,7 +4565,7 @@ function dmdPointerDown(e) {
 
 function dmdPointerMove(e) {
   if (dmdState.phase !== 'recall' || !(e.buttons & 1) || e.pressure === 0) return;
-  const dot = dmdGetDot(e.clientX, e.clientY);
+  const dot = dmdGetDot(e.clientX, e.clientY, 1.2);
   if (dot >= 0 && !dmdState.userPat.includes(dot)) dmdTapDot(dot);
   else dmdRedrawRecall(e.clientX, e.clientY);
 }
@@ -5310,7 +5483,9 @@ function startAiGame() {
   const coll = collById(selectedCollection);
   const [cols, rows] = selectedGrid.split('x').map(Number);
   const needed = cols * rows / 2;
-  const pool = [...coll.pool].sort(() => Math.random() - .5).slice(0, needed);
+  let pool = [...coll.pool].sort(() => Math.random() - .5);
+  while (pool.length < needed) pool.push(...[...coll.pool].sort(() => Math.random() - .5));
+  pool = pool.slice(0, needed);
   const cards = [...pool, ...pool].sort(() => Math.random() - .5);
 
   pairsState.myName = t('ai_player_name');
@@ -5726,6 +5901,8 @@ function applyLang() {
   setTxt('lm-mode-title', 'lm_mode_title'); setTxt('lm-mode-desc', 'lm_mode_desc');
   // back buttons
   document.querySelectorAll('.back-btn').forEach(b => { b.textContent = t('back_menu'); });
+  // options toggle labels
+  ['wm-opts-label','spot-opts-label','math-opts-label'].forEach(id => setTxt(id, 'opts_label'));
   // word memory static
   setTxt('wm-section-title', 'wm_section_title'); setTxt('wm-section-sub', 'wm_section_sub');
   setTxt('wm-training-head', 'wm_training_head');
