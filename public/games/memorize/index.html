@@ -414,6 +414,53 @@ body{background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,san
 .wm-diff-opt.active{border-color:var(--blueL);background:rgba(96,165,250,.18);color:var(--blueL);}
 .wm-diff-rec{color:var(--goldL);font-size:.7rem;margin-left:3px;}
 
+/* ── ACHIEVEMENTS ── */
+#ach-toast{position:fixed;bottom:80px;left:50%;transform:translateX(-50%) translateY(20px);
+  opacity:0;transition:.35s cubic-bezier(.34,1.56,.64,1);z-index:200;pointer-events:none;
+  background:rgba(251,191,36,.14);border:1px solid rgba(251,191,36,.7);
+  border-radius:14px;padding:11px 20px;display:flex;align-items:center;gap:10px;
+  backdrop-filter:blur(12px);}
+#ach-toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+.ach-toast-em{font-size:1.5rem;}
+.ach-toast-text{color:#fff;font-size:.82rem;font-weight:800;white-space:nowrap;}
+.ach-toast-sub{color:var(--goldL);font-size:.68rem;white-space:nowrap;}
+#ach-panel{position:fixed;inset:0;z-index:180;display:flex;align-items:center;justify-content:center;
+  background:rgba(0,0,0,.78);backdrop-filter:blur(8px);opacity:0;pointer-events:none;transition:.28s;}
+#ach-panel.show{opacity:1;pointer-events:all;}
+#ach-box{background:var(--bg2);border:1px solid var(--border);border-radius:20px;
+  width:min(520px,93vw);max-height:82vh;overflow-y:auto;padding:22px 18px;}
+.ach-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(128px,1fr));gap:10px;margin-top:12px;}
+.ach-item{border-radius:12px;border:1px solid var(--border);background:var(--glass);
+  padding:12px 8px;text-align:center;}
+.ach-item.earned{border-color:var(--goldL);background:rgba(251,191,36,.09);}
+.ach-item.locked{opacity:.32;}
+.ach-em{font-size:1.5rem;margin-bottom:4px;}
+.ach-name{font-size:.7rem;font-weight:800;color:var(--text1);}
+.ach-desc{font-size:.6rem;color:var(--text3);margin-top:2px;line-height:1.3;}
+
+/* ── SHARE CARD ── */
+.share-btn{background:rgba(167,139,250,.14);border:1px solid rgba(167,139,250,.5);
+  color:#c4b5fd;font-size:.8rem;font-weight:700;padding:9px 18px;
+  border-radius:10px;cursor:pointer;transition:.18s;}
+.share-btn:hover{background:rgba(167,139,250,.28);}
+#share-canvas{display:none;}
+
+/* ── WM MODES ── */
+.wm-mode-row{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin:6px 0 12px;}
+.wm-mode-btn{padding:5px 14px;border-radius:8px;border:1px solid var(--border2);
+  background:var(--glass);color:var(--text2);font-size:.78rem;font-weight:700;
+  cursor:pointer;transition:.2s;white-space:nowrap;}
+.wm-mode-btn:hover{background:var(--glass2);color:#fff;}
+.wm-mode-btn.active{border-color:var(--blueL);background:rgba(96,165,250,.18);color:var(--blueL);}
+
+/* ── SPOT CONTROLS ── */
+.spot-ctrl-row{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin:10px 0 0;}
+.spot-ctrl-btn{padding:5px 12px;border-radius:8px;border:1px solid var(--border2);
+  background:var(--glass);color:var(--text2);font-size:.76rem;font-weight:700;
+  cursor:pointer;transition:.2s;white-space:nowrap;}
+.spot-ctrl-btn:hover{background:var(--glass2);color:#fff;}
+.spot-ctrl-btn.active{border-color:rgba(167,139,250,.8);background:rgba(167,139,250,.18);color:#c4b5fd;}
+
 /* ── MATH TRICKS ── */
 .math-tricks-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(138px,1fr));gap:10px;margin:10px 0 0;}
 .trick-card{background:var(--glass);border:1px solid var(--border2);border-radius:14px;
@@ -427,6 +474,69 @@ body{background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,san
   margin:4px 0 10px;text-align:center;line-height:1.45;}
 .math-q.pct-q,.math-q.trick-q{font-size:clamp(1.3rem,5.5vw,2.1rem);}
 
+/* ── XP SYSTEM ── */
+#xp-strip{display:flex;align-items:center;gap:8px;justify-content:center;margin:10px 0 4px;flex-wrap:wrap;}
+.xp-level-badge{background:linear-gradient(135deg,var(--purple),var(--blue));border-radius:20px;
+  padding:4px 13px;font-size:.75rem;font-weight:900;color:#fff;letter-spacing:.5px;cursor:pointer;
+  transition:.2s;}
+.xp-level-badge:hover{opacity:.85;}
+.xp-bar-wrap{width:100px;height:5px;background:rgba(255,255,255,.1);border-radius:3px;overflow:hidden;}
+.xp-bar-fill{height:100%;background:linear-gradient(90deg,var(--purple),var(--blueL));border-radius:3px;transition:width .5s ease;}
+#xp-label{font-size:.65rem;color:var(--text3);font-weight:700;}
+/* ── RADAR CHART ── */
+#radar-panel{position:fixed;inset:0;background:rgba(0,0,0,.65);backdrop-filter:blur(8px);
+  z-index:150;display:none;align-items:center;justify-content:center;}
+#radar-panel.show{display:flex;}
+#radar-box{background:var(--bg2);border:1px solid var(--border2);border-radius:22px;
+  padding:20px 22px;width:min(420px,92vw);max-height:90vh;overflow-y:auto;}
+/* ── WORKOUT ── */
+#workout-banner{position:fixed;bottom:0;left:0;right:0;z-index:120;
+  background:rgba(8,8,24,.95);backdrop-filter:blur(14px);border-top:1px solid rgba(124,58,237,.4);
+  padding:10px 16px;display:none;align-items:center;justify-content:space-between;gap:8px;}
+#workout-banner.visible{display:flex;}
+.wo-steps{display:flex;gap:6px;align-items:center;}
+.wo-step{width:26px;height:26px;border-radius:50%;border:2px solid var(--border);
+  display:flex;align-items:center;justify-content:center;font-size:.72rem;font-weight:900;color:var(--text3);}
+.wo-step.done{border-color:var(--greenL);background:rgba(52,211,153,.18);color:var(--greenL);}
+.wo-step.active{border-color:var(--purpleL);background:rgba(124,58,237,.22);color:var(--purpleL);animation:pulse 1.4s ease-in-out infinite;}
+.wo-next-btn{padding:6px 15px;border-radius:10px;background:linear-gradient(135deg,var(--purple),var(--blue));
+  color:#fff;font-size:.78rem;font-weight:800;cursor:pointer;border:none;transition:.2s;}
+.wo-next-btn:hover{opacity:.85;}
+#workout-result{position:fixed;inset:0;background:rgba(0,0,0,.82);backdrop-filter:blur(12px);
+  z-index:160;display:none;align-items:center;justify-content:center;}
+#workout-result.show{display:flex;}
+#workout-result-box{background:var(--bg2);border:1px solid rgba(124,58,237,.45);border-radius:22px;
+  padding:28px 26px;text-align:center;max-width:360px;width:90vw;}
+/* ── AI PAIRS ── */
+.ai-game-section{padding:14px 16px;border:1px solid rgba(124,58,237,.3);border-radius:16px;margin-bottom:16px;background:rgba(124,58,237,.07);}
+.ai-diff-row{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin:8px 0;}
+.ai-diff-btn{padding:6px 14px;border-radius:9px;border:1px solid var(--border2);background:var(--glass);
+  font-size:.78rem;font-weight:700;cursor:pointer;transition:.15s;color:var(--text2);}
+.ai-diff-btn.active{border-color:var(--purpleL);color:var(--purpleL);background:rgba(124,58,237,.18);}
+#pairs-elo-badge{display:inline-block;font-size:.75rem;color:var(--goldL);font-weight:800;padding:4px 11px;
+  background:rgba(251,191,36,.1);border-radius:8px;border:1px solid rgba(251,191,36,.3);margin:6px 0;}
+/* ── POWER-UPS ── */
+#pairs-powerup-bar{display:none;gap:10px;justify-content:center;align-items:center;padding:7px 14px;
+  border-bottom:1px solid var(--border);background:rgba(0,0,0,.3);}
+#pairs-powerup-bar.visible{display:flex;}
+.pu-btn{position:relative;padding:5px 13px;border-radius:9px;border:1px solid var(--border2);
+  background:var(--glass);font-size:.78rem;font-weight:700;cursor:pointer;transition:.15s;color:var(--text);}
+.pu-btn:not(:disabled):hover{background:var(--glass2);}
+.pu-btn:disabled{opacity:.35;cursor:not-allowed;}
+.pu-count{position:absolute;top:-6px;right:-6px;background:var(--purple);color:#fff;
+  border-radius:50%;width:17px;height:17px;font-size:10px;font-weight:900;
+  display:flex;align-items:center;justify-content:center;}
+/* ── TRICK MASTERY ── */
+.tc-mastery{font-size:.62rem;color:var(--goldL);margin-top:5px;letter-spacing:.5px;}
+.trick-card.mastered{border-color:rgba(251,191,36,.5);background:rgba(251,191,36,.06);}
+/* ── DAILY CHALLENGE ── */
+.daily-challenge-btn{width:100%;padding:13px 16px;border-radius:13px;border:1px solid rgba(251,191,36,.4);
+  background:linear-gradient(135deg,rgba(217,119,6,.15),rgba(180,83,9,.08));
+  color:var(--text);font-weight:800;font-size:.9rem;cursor:pointer;transition:.2s;
+  display:flex;align-items:center;justify-content:space-between;margin-bottom:0;}
+.daily-challenge-btn:hover{border-color:rgba(251,191,36,.7);background:linear-gradient(135deg,rgba(217,119,6,.28),rgba(180,83,9,.18));}
+.dc-badge{background:rgba(251,191,36,.18);border:1px solid rgba(251,191,36,.4);border-radius:8px;
+  padding:3px 10px;font-size:.75rem;font-weight:800;}
 /* ── MOBILE ── */
 *{-webkit-tap-highlight-color:transparent;}
 .btn,.mode-card,.op-btn,.math-lv,.key,.math-choice,.coll-opt,.grid-opt,.back-btn,.spot-choice{touch-action:manipulation;}
@@ -457,13 +567,69 @@ body{background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,san
 <body>
 
 <canvas id="bg-canvas"></canvas>
+<canvas id="share-canvas"></canvas>
+
+<!-- ══ ACHIEVEMENT TOAST ══ -->
+<div id="ach-toast">
+  <span class="ach-toast-em" id="ach-toast-em">🏆</span>
+  <div><div class="ach-toast-text" id="ach-toast-text">Achievement</div><div class="ach-toast-sub" id="ach-toast-sub">Unlocked!</div></div>
+</div>
+
+<!-- ══ ACHIEVEMENT PANEL ══ -->
+<div id="ach-panel" onclick="if(event.target===this)this.classList.remove('show')">
+  <div id="ach-box">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+      <span style="font-size:.95rem;font-weight:900;" id="ach-panel-title">🏆 Achievements</span>
+      <button class="btn" style="padding:4px 12px;font-size:.8rem;" onclick="document.getElementById('ach-panel').classList.remove('show')">✕</button>
+    </div>
+    <div class="ach-grid" id="ach-grid"></div>
+  </div>
+</div>
+
+<!-- ══ RADAR PANEL ══ -->
+<div id="radar-panel" onclick="if(event.target===this)this.classList.remove('show')">
+  <div id="radar-box">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+      <span style="font-size:.95rem;font-weight:900;" id="radar-title">🧠 Brain Radar</span>
+      <button class="btn" onclick="document.getElementById('radar-panel').classList.remove('show')" style="padding:5px 12px;">✕</button>
+    </div>
+    <svg id="radar-svg" viewBox="0 0 360 300" overflow="visible" style="width:100%;max-width:320px;display:block;margin:16px auto;padding:0 20px;"></svg>
+    <div id="radar-stats" style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px;"></div>
+  </div>
+</div>
+
+<!-- ══ WORKOUT OVERLAY ══ -->
+<div id="workout-banner">
+  <div style="font-size:.78rem;font-weight:800;color:var(--purpleL);" id="workout-lbl">🏋️ Brain Workout</div>
+  <div class="wo-steps" id="wo-steps"></div>
+  <button class="wo-next-btn" id="wo-next-btn" onclick="workoutNext()" style="display:none">Next →</button>
+</div>
+<div id="workout-result">
+  <div id="workout-result-box">
+    <div style="font-size:3rem;margin-bottom:8px;">🏋️</div>
+    <div style="font-size:1.4rem;font-weight:900;margin-bottom:6px;" id="workout-result-title">Workout Complete!</div>
+    <div style="font-size:.85rem;color:var(--text2);margin-bottom:14px;" id="workout-result-sub">You trained all three skills today</div>
+    <div class="math-stat-grid" id="workout-result-stats" style="margin-bottom:18px;"></div>
+    <button class="btn btn-primary" onclick="workoutDismiss()" id="workout-dismiss-btn">Awesome!</button>
+  </div>
+</div>
 
 <!-- ══ MAIN MENU ══ -->
 <div id="screen-menu" class="screen active">
   <div class="menu-hero anim-fadein">
     <h1 id="menu-title">MEMBRAIN</h1>
     <p id="menu-tagline">Train your mind &middot; Challenge your brain</p>
-    <button class="lang-btn" id="lang-toggle" onclick="toggleLang()">🇺🇦 УКР</button>
+    <div style="display:flex;gap:8px;justify-content:center;margin-top:12px;">
+      <button class="lang-btn" id="lang-toggle" onclick="toggleLang()">🇺🇦 УКР</button>
+      <button class="lang-btn" onclick="showAchievements()" id="ach-menu-btn" style="letter-spacing:0;">🏆 <span id="ach-count-badge">0</span></button>
+    </div>
+    <div id="xp-strip">
+      <span class="xp-level-badge" id="xp-level-badge" onclick="showRadarPanel()">Lv.1</span>
+      <div class="xp-bar-wrap"><div class="xp-bar-fill" id="xp-bar-fill" style="width:0%"></div></div>
+      <span id="xp-label">0/150 XP</span>
+      <button class="lang-btn" onclick="showRadarPanel()" style="padding:4px 10px;font-size:.78rem;" id="radar-btn">📊</button>
+      <button class="lang-btn" onclick="startWorkout()" style="padding:4px 10px;font-size:.78rem;" id="workout-btn">🏋️</button>
+    </div>
   </div>
   <div class="mode-cards">
     <div class="mode-card purple" onclick="showWordMenu()">
@@ -519,7 +685,11 @@ body{background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,san
     <div class="section-title" id="wm-section-title">Word Sequence</div>
     <div class="section-sub" id="wm-section-sub">Levels 1–6: pick the words · Levels 7–12: type them from memory</div>
     <div id="wm-diff-lbl" style="font-size:.7rem;color:var(--text3);font-weight:800;letter-spacing:1.5px;margin:16px 0 6px;">WORD LENGTH</div>
-    <div id="wm-diff-row" style="display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin:0 0 14px;"></div>
+    <div id="wm-diff-row" style="display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin:0 0 10px;"></div>
+    <div id="wm-mode-lbl" style="font-size:.7rem;color:var(--text3);font-weight:800;letter-spacing:1.5px;margin:6px 0 6px;">RECALL MODE</div>
+    <div class="wm-mode-row" id="wm-recall-row"></div>
+    <div id="wm-audio-lbl" style="font-size:.7rem;color:var(--text3);font-weight:800;letter-spacing:1.5px;margin:0 0 6px;">LISTEN MODE</div>
+    <div class="wm-mode-row" id="wm-audio-row"></div>
     <div class="level-grid" id="wm-level-grid"></div>
     <div style="margin-top:26px;border-top:1px solid var(--border);padding-top:14px;">
       <div class="daily-head">
@@ -567,6 +737,7 @@ body{background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,san
       <button class="btn" id="wm-change-btn" onclick="showWordMenu()">Change Level</button>
       <button class="btn" id="wm-replay-btn" onclick="wmReplay()">Replay</button>
       <button class="btn btn-primary" id="wm-next-btn" onclick="wmNextLevel()">Next Level →</button>
+      <button class="share-btn" id="wm-share-btn" onclick="wmShareCard()">📤 Share</button>
     </div>
   </div>
 </div>
@@ -582,6 +753,12 @@ body{background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,san
     <div id="spot-pack-row"></div>
     <div style="font-size:.75rem;color:var(--text2);font-weight:700;letter-spacing:.5px;margin:14px 0 4px;" id="spot-select-level-lbl">SELECT LEVEL</div>
     <div class="level-grid" id="spot-level-grid"></div>
+    <div style="margin-top:16px;border-top:1px solid var(--border);padding-top:12px;">
+      <div style="font-size:.7rem;color:var(--text3);font-weight:800;letter-spacing:1.5px;margin:0 0 6px;text-align:center;" id="spot-mode-lbl">SPOT MODE</div>
+      <div class="spot-ctrl-row" id="spot-mode-row"></div>
+      <div style="font-size:.7rem;color:var(--text3);font-weight:800;letter-spacing:1.5px;margin:12px 0 6px;text-align:center;" id="spot-diff-lbl">MEMORIZE TIME</div>
+      <div class="spot-ctrl-row" id="spot-diff-row"></div>
+    </div>
   </div>
   <!-- sub: game -->
   <div id="spot-game" style="display:none;flex-direction:column;align-items:center;width:100%;height:100vh;">
@@ -627,6 +804,19 @@ body{background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,san
           <span id="conn-hint-prefix">Connecting to</span> <code id="ws-url-hint" style="color:var(--blueL);"></code>
         </div>
       </div>
+    </div>
+    <!-- VS AI panel -->
+    <div class="lobby-panel ai-game-section">
+      <h3 id="ai-game-title">🤖 vs AI</h3>
+      <div style="font-size:.82rem;color:var(--text2);margin:4px 0 10px;" id="ai-game-sub">Play offline · No connection needed</div>
+      <div style="font-size:.7rem;color:var(--text3);font-weight:800;letter-spacing:.8px;margin-bottom:6px;text-align:center;" id="ai-diff-lbl">DIFFICULTY</div>
+      <div class="ai-diff-row" id="ai-diff-row">
+        <div class="ai-diff-btn active" data-diff="easy" onclick="selectAiDiff(this)">😊 Easy</div>
+        <div class="ai-diff-btn" data-diff="medium" onclick="selectAiDiff(this)">🧠 Medium</div>
+        <div class="ai-diff-btn" data-diff="hard" onclick="selectAiDiff(this)">🔥 Hard</div>
+      </div>
+      <div style="text-align:center;"><span id="pairs-elo-badge">ELO: 1200</span></div>
+      <button class="btn btn-primary" style="width:100%;margin-top:10px;" onclick="startAiGame()" id="ai-start-btn">⚔️ Play vs AI</button>
     </div>
     <!-- Players panel -->
     <div class="lobby-panel">
@@ -678,6 +868,11 @@ body{background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,san
       <div class="sb-holes" id="p2-holes">holes: 0</div>
     </div>
   </div>
+  <div id="pairs-powerup-bar">
+    <button class="pu-btn" id="pu-peek"   onclick="usePowerup('peek')"   disabled>👁 Peek<span class="pu-count" id="pu-peek-ct">0</span></button>
+    <button class="pu-btn" id="pu-freeze" onclick="usePowerup('freeze')" disabled>❄️ Freeze<span class="pu-count" id="pu-freeze-ct">0</span></button>
+    <button class="pu-btn" id="pu-hint"   onclick="usePowerup('hint')"   disabled>💡 Hint<span class="pu-count" id="pu-hint-ct">0</span></button>
+  </div>
   <div id="pairs-board-wrap">
     <div id="pairs-board"></div>
   </div>
@@ -703,6 +898,7 @@ body{background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,san
     <div id="gameover-title">Game Over</div>
     <div id="gameover-sub"></div>
     <div class="go-scores" id="go-scores"></div>
+    <div id="go-elo-change" style="display:none;text-align:center;margin:6px 0 2px;font-size:.85rem;font-weight:800;"></div>
     <div style="display:flex;gap:12px;justify-content:center;">
       <button class="btn" id="lobby-back-btn" onclick="showLobby()">← Lobby</button>
       <button class="btn btn-primary" id="rematch-btn" onclick="requestRematch()">Rematch!</button>
@@ -717,9 +913,10 @@ body{background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,san
     <div id="spot-result-title"></div>
     <div id="spot-result-sub"></div>
     <div class="streak-display" id="spot-result-streak"></div>
-    <div style="display:flex;gap:12px;justify-content:center;">
+    <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap;">
       <button class="btn" id="spot-change-btn" onclick="showSpotMenu()">Change Level</button>
       <button class="btn btn-primary" id="spot-next-btn" onclick="spotNextLevel()">Next Level →</button>
+      <button class="share-btn" id="spot-share-btn" onclick="spotShareCard()">📤 Share</button>
     </div>
   </div>
 </div>
@@ -736,11 +933,22 @@ body{background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,san
     <div class="op-grid" id="math-op-grid"></div>
     <div class="op-hint" id="math-op-hint">Choose which arithmetic to practice</div>
 
-    <div style="font-size:.8rem;color:var(--text2);text-align:center;margin:22px 0 4px;font-weight:700;letter-spacing:.5px;" id="math-select-lbl">SELECT LEVEL · 10 tasks each</div>
+    <div style="font-size:.7rem;color:var(--text3);font-weight:800;letter-spacing:.8px;margin:14px 0 5px;text-align:center;" id="math-est-lbl">PRECISION MODE</div>
+    <div class="wm-mode-row" id="math-est-row"></div>
+
+    <div style="font-size:.8rem;color:var(--text2);text-align:center;margin:14px 0 4px;font-weight:700;letter-spacing:.5px;" id="math-select-lbl">SELECT LEVEL · 10 tasks each</div>
     <div class="math-levels" id="math-level-grid"></div>
 
+    <!-- daily challenge -->
+    <div id="math-daily-challenge-wrap" style="margin-top:18px;border-top:1px solid var(--border);padding-top:14px;">
+      <button class="daily-challenge-btn" id="math-daily-btn" onclick="startDailyChallenge()">
+        <span>📅 <span id="math-daily-btn-lbl">Today's Challenge</span></span>
+        <span class="dc-badge" id="math-daily-badge">Go!</span>
+      </button>
+    </div>
+
     <!-- tricks section -->
-    <div style="margin-top:24px;border-top:1px solid var(--border);padding-top:16px;">
+    <div style="margin-top:18px;border-top:1px solid var(--border);padding-top:16px;">
       <div style="font-size:.7rem;color:var(--text3);font-weight:800;letter-spacing:1.5px;margin:0 0 4px;text-align:center;" id="math-tricks-lbl">⚡ MATH TRICKS</div>
       <div style="font-size:.76rem;color:var(--text2);text-align:center;margin:0 0 10px;" id="math-tricks-sub">Secret shortcuts schools don't teach</div>
       <div class="math-tricks-grid" id="math-tricks-grid"></div>
@@ -884,6 +1092,44 @@ const STRINGS = {
     math_practicing:(ops)=>`Practicing: ${ops}`,
     math_menu:'Menu', math_replay:'Replay',
     math_day_streak:(n)=>`🔥 ${n} day streak`,
+    // achievements
+    ach_panel_title:'🏆 Achievements',
+    ach_wm_first:'First Recall',      ach_wm_first_d:'Complete your first Word Sequence round',
+    ach_wm_perfect:'Perfect Memory',  ach_wm_perfect_d:'Score 100% in Word Sequence',
+    ach_wm_sharp:'Sharp Mind',        ach_wm_sharp_d:'Score 80%+ in Word Sequence',
+    ach_wm_back:'Reverse Gear',       ach_wm_back_d:'Complete a Backwards Recall round',
+    ach_wm_audio:'Ears First',        ach_wm_audio_d:'Complete a round in Audio mode',
+    ach_sp_first:'Eagle Eye',         ach_sp_first_d:'Complete your first Object Spotting round',
+    ach_sp_boss:'Boss Slayer',        ach_sp_boss_d:'Find all 4 missing objects on the Boss level',
+    ach_sp_streak5:'On Fire!',        ach_sp_streak5_d:'Reach a 5-round spotting streak',
+    ach_sp_appeared:'Spy Mode',       ach_sp_appeared_d:'Spot the intruder in Appeared mode',
+    ach_mt_first:'Math Starter',      ach_mt_first_d:'Complete your first Math Drills round',
+    ach_mt_perfect:'Perfect Score',   ach_mt_perfect_d:'Answer all 10 tasks correctly',
+    ach_mt_trick:'Trick Master',      ach_mt_trick_d:'Complete a Math Tricks session',
+    ach_mt_pct:'Percent Pro',         ach_mt_pct_d:'Complete a Percent Drills round',
+    ach_all_games:'All-Rounder',      ach_all_games_d:'Play Word Sequence, Spotting and Math',
+    ach_streak3:'Dedicated',          ach_streak3_d:'Train 3 days in a row',
+    // Pairs vs AI achievements
+    ach_pb_first:'Robot Beater',      ach_pb_first_d:'Play your first game vs AI',
+    ach_pb_win:'Victor',              ach_pb_win_d:'Beat the AI opponent',
+    ach_pb_hard:'Genius',             ach_pb_hard_d:'Defeat the Hard AI',
+    ach_pb_elo1400:'Rating Star',     ach_pb_elo1400_d:'Reach ELO 1400',
+    // Math achievements
+    ach_mt_trick_master:'Trick Legend',  ach_mt_trick_master_d:'Get 3 perfect sessions on one trick',
+    ach_mt_daily:'Daily Challenger',     ach_mt_daily_d:'Complete a Daily Challenge',
+    ach_mt_daily_week:'Week Warrior',    ach_mt_daily_week_d:'Complete 7 Daily Challenges in a row',
+    // WM modes
+    wm_mode_lbl:'RECALL MODE', wm_audio_lbl:'LISTEN MODE',
+    wm_mode_normal:'→ Forward', wm_mode_backwards:'← Backwards',
+    wm_audio_off:'👁 Visual', wm_audio_on:'🎧 Audio',
+    // spot controls
+    spot_mode_lbl:'SPOT MODE', spot_diff_lbl:'MEMORIZE TIME',
+    spot_mode_missing:'❌ Find Missing', spot_mode_appeared:'🕵️ Find Intruder',
+    spot_diff_fast:'⚡ Fast ×0.5', spot_diff_normal:'⏱ Normal', spot_diff_slow:'🐢 Slow ×1.5', spot_diff_relaxed:'😌 Easy ×2',
+    spot_find_intruder:'Which object APPEARED?',
+    spot_intruder_was:(labels)=>`The intruder was: ${labels[0]}`,
+    // share
+    share_btn:'📤 Share',
     math_op_pct:'Percent',
     math_pct_type1:'P% of N', math_pct_type12:'Mixed %', math_pct_type123:'All % types',
     math_tricks_lbl:'⚡ MATH TRICKS', math_tricks_sub:'Secret shortcuts schools don\'t teach',
@@ -893,6 +1139,35 @@ const STRINGS = {
     trick_sq5:'Square of N5',    trick_sq5_hint:'N×(N+1) then |25 — 35²=3×4=12|25=1225',
     trick_near100:'Near 100 ×',  trick_near100_hint:'defs d1,d2: left=100−d1−d2, right=d1×d2',
     trick_pct_swap:'% Swap Rule',trick_pct_swap_hint:'A% of B = B% of A — pick the easier one!',
+    trick_mastered:'🥇 Mastered',
+    // AI Pairs
+    ai_game_title:'🤖 vs AI', ai_game_sub:'Play offline · No connection needed',
+    ai_diff_lbl:'DIFFICULTY',
+    ai_diff_easy:'😊 Easy', ai_diff_medium:'🧠 Medium', ai_diff_hard:'🔥 Hard',
+    ai_player_name:'You', ai_name_easy:'Easy AI', ai_name_medium:'AI', ai_name_hard:'Hard AI',
+    ai_start_btn:'⚔️ Play vs AI',
+    // math estimation
+    math_est_lbl:'ANSWER MODE',
+    math_est_off:'🎯 Exact', math_est_on:'≈ Estimate ±10%',
+    // daily challenge
+    math_daily_challenge:"📅 Today's Challenge",
+    math_daily_done:'Already completed today',
+    math_daily_go:'Go!',
+    math_streak_lbl:'Daily Streak',
+    math_daily_task_counter:(n)=>`Task ${n} / 5`,
+    // radar
+    radar_title:'🧠 Brain Radar',
+    radar_wm:'Memory', radar_spot:'Spotting', radar_math:'Math', radar_pairs:'Pairs', radar_daily:'Daily',
+    // workout
+    workout_lbl:'🏋️ Brain Workout',
+    workout_next:'Next →', workout_finish:'Finish!',
+    workout_complete:'Workout Complete! 🎉',
+    workout_sub:'You trained all three skills today',
+    workout_steps:'Games', workout_earned:'XP Earned',
+    workout_bonus_src:'Workout bonus',
+    workout_awesome:'Awesome!',
+    // achievements
+    ach_wo_complete:'Daily Warrior', ach_wo_complete_d:'Complete a full Brain Workout session',
   },
   uk: {
     app_name:'БОТАНІК', menu_tagline:'Тренуй розум · Розвивай мозок', lang_toggle:'🇬🇧 ENG',
@@ -972,6 +1247,44 @@ const STRINGS = {
     math_practicing:(ops)=>`Практика: ${ops}`,
     math_menu:'Меню', math_replay:'Повтор',
     math_day_streak:(n)=>`🔥 ${n} ${n===1?'день':n<5?'дні':'днів'} поспіль`,
+    // achievements
+    ach_panel_title:'🏆 Досягнення',
+    ach_wm_first:'Перше відтворення',  ach_wm_first_d:'Завершити перший раунд Ланцюжка слів',
+    ach_wm_perfect:'Ідеальна пам\'ять',ach_wm_perfect_d:'Набрати 100% у Ланцюжку слів',
+    ach_wm_sharp:'Гострий розум',     ach_wm_sharp_d:'Набрати 80%+ у Ланцюжку слів',
+    ach_wm_back:'Реверс',             ach_wm_back_d:'Завершити раунд у режимі Назад',
+    ach_wm_audio:'Спочатку вуха',     ach_wm_audio_d:'Завершити раунд в Аудіо режимі',
+    ach_sp_first:'Орлиний погляд',    ach_sp_first_d:'Завершити перший раунд Знайди різницю',
+    ach_sp_boss:'Переможець боса',    ach_sp_boss_d:'Знайти всі 4 зниклих об\'єкти на рівні Бос',
+    ach_sp_streak5:'В ударі!',        ach_sp_streak5_d:'Досягти серії з 5 раундів у Знайди різницю',
+    ach_sp_appeared:'Режим шпигуна',  ach_sp_appeared_d:'Знайти зайвий об\'єкт у режимі Інтрудер',
+    ach_mt_first:'Математичний старт',ach_mt_first_d:'Завершити перший раунд Математики',
+    ach_mt_perfect:'Ідеальний рахунок',ach_mt_perfect_d:'Правильно відповісти на всі 10 завдань',
+    ach_mt_trick:'Майстер хитрощів', ach_mt_trick_d:'Завершити сесію Математичних хитрощів',
+    ach_mt_pct:'Профі відсотків',    ach_mt_pct_d:'Завершити раунд Відсотків',
+    ach_all_games:'Різнобічний',      ach_all_games_d:'Зіграти в Ланцюжок слів, Знайди різницю і Математику',
+    ach_streak3:'Відданість',         ach_streak3_d:'Тренуватись 3 дні поспіль',
+    // Pairs vs AI achievements
+    ach_pb_first:'Переможець роботів', ach_pb_first_d:'Зіграти перший матч проти ІІ',
+    ach_pb_win:'Переможець',           ach_pb_win_d:'Перемогти суперника-ІІ',
+    ach_pb_hard:'Геній',               ach_pb_hard_d:'Перемогти Важкий ІІ',
+    ach_pb_elo1400:'Зірка рейтингу',   ach_pb_elo1400_d:'Досягти рейтингу ELO 1400',
+    // Math achievements
+    ach_mt_trick_master:'Легенда хитрощів', ach_mt_trick_master_d:'3 ідеальні сесії однієї хитрощі',
+    ach_mt_daily:'Щоденний виклик',         ach_mt_daily_d:'Завершити Щоденний виклик',
+    ach_mt_daily_week:'Тижневий воїн',      ach_mt_daily_week_d:'7 Щоденних викликів поспіль',
+    // WM modes
+    wm_mode_lbl:'РЕЖИМ ВІДТВОРЕННЯ', wm_audio_lbl:'РЕЖИМ ПРОСЛУХОВУВАННЯ',
+    wm_mode_normal:'→ Вперед', wm_mode_backwards:'← Назад',
+    wm_audio_off:'👁 Візуально', wm_audio_on:'🎧 Аудіо',
+    // spot controls
+    spot_mode_lbl:'РЕЖИМ ГРИ', spot_diff_lbl:'ЧАС ЗАПАМ\'ЯТОВУВАННЯ',
+    spot_mode_missing:'❌ Знайди зниклий', spot_mode_appeared:'🕵️ Знайди зайвий',
+    spot_diff_fast:'⚡ Швидко ×0.5', spot_diff_normal:'⏱ Нормально', spot_diff_slow:'🐢 Повільно ×1.5', spot_diff_relaxed:'😌 Легко ×2',
+    spot_find_intruder:'Який об\'єкт З\'ЯВИВСЯ?',
+    spot_intruder_was:(labels)=>`Зайвий: ${labels[0]}`,
+    // share
+    share_btn:'📤 Поділитись',
     math_op_pct:'Відсотки',
     math_pct_type1:'P% від N', math_pct_type12:'Змішано %', math_pct_type123:'Всі типи %',
     math_tricks_lbl:'⚡ МАТЕМАТИЧНІ ХИТРОЩІ', math_tricks_sub:'Секретні методи, яких не вчать у школі',
@@ -981,6 +1294,35 @@ const STRINGS = {
     trick_sq5:'Квадрат числа N5',  trick_sq5_hint:'N×(N+1) потім |25 — 35²=3×4=12|25=1225',
     trick_near100:'Множення ~100', trick_near100_hint:'деф. d1,d2: ліво=100−d1−d2, право=d1×d2',
     trick_pct_swap:'Правило % обміну', trick_pct_swap_hint:'A% від B = B% від A — бери зручніше!',
+    trick_mastered:'🥇 Опановано',
+    // AI Pairs
+    ai_game_title:'🤖 проти ІІ', ai_game_sub:'Грай офлайн · Не потрібне з\'єднання',
+    ai_diff_lbl:'СКЛАДНІСТЬ',
+    ai_diff_easy:'😊 Легко', ai_diff_medium:'🧠 Середнє', ai_diff_hard:'🔥 Важко',
+    ai_player_name:'Ти', ai_name_easy:'Легкий ІІ', ai_name_medium:'ІІ', ai_name_hard:'Важкий ІІ',
+    ai_start_btn:'⚔️ Грати проти ІІ',
+    // math estimation
+    math_est_lbl:'РЕЖИМ ВІДПОВІДІ',
+    math_est_off:'🎯 Точно', math_est_on:'≈ Приблизно ±10%',
+    // daily challenge
+    math_daily_challenge:'📅 Виклик дня',
+    math_daily_done:'Вже завершено сьогодні',
+    math_daily_go:'Вперед!',
+    math_streak_lbl:'Серія днів',
+    math_daily_task_counter:(n)=>`Завдання ${n} / 5`,
+    // radar
+    radar_title:'🧠 Радар мозку',
+    radar_wm:'Пам\'ять', radar_spot:'Спостереж.', radar_math:'Математика', radar_pairs:'Пари', radar_daily:'Щоденне',
+    // workout
+    workout_lbl:'🏋️ Тренування',
+    workout_next:'Далі →', workout_finish:'Завершити!',
+    workout_complete:'Тренування завершено! 🎉',
+    workout_sub:'Ти сьогодні натренував усі три навички',
+    workout_steps:'Ігор', workout_earned:'XP зароблено',
+    workout_bonus_src:'Бонус тренування',
+    workout_awesome:'Відмінно!',
+    // achievements
+    ach_wo_complete:'Щоденний воїн', ach_wo_complete_d:'Завершити повне тренування мозку',
   },
 };
 function t(key, ...args) {
@@ -1581,7 +1923,11 @@ function showScreen(id) {
   document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
   document.getElementById(id).classList.add('active');
 }
-function goMenu() { showScreen('screen-menu'); }
+function goMenu() {
+  document.getElementById('radar-panel').classList.remove('show');
+  document.getElementById('workout-result').classList.remove('show');
+  showScreen('screen-menu');
+}
 
 
 // ═══════════════════════════════════════════════════
@@ -1589,6 +1935,8 @@ function goMenu() { showScreen('screen-menu'); }
 // ═══════════════════════════════════════════════════
 let wmLevel = 0, wmSequence = [], wmPool = [], wmSelected = [], wmTimers = [], wmMode = 'pool';
 let wordDiff = localStorage.getItem('membrain_wm_diff') || 'all';
+let wmRecallMode = localStorage.getItem('membrain_wm_recall') || 'normal';
+let wmAudioMode  = localStorage.getItem('membrain_wm_audio')  === 'on';
 
 // Center the screen vertically only for the brief flash phase; for the tall
 // level-select / recall / results lists, anchor to top so nothing clips on mobile.
@@ -1620,6 +1968,36 @@ function showWordMenu() {
       b.innerHTML = t('wm_diff_' + d.id) + (d.id === recDiff ? ' <span class="wm-diff-rec">★</span>' : '');
       b.onclick = () => { wordDiff = d.id; localStorage.setItem('membrain_wm_diff', d.id); showWordMenu(); };
       diffRow.appendChild(b);
+    });
+  }
+
+  // Recall mode toggle
+  const modeLbl = document.getElementById('wm-mode-lbl');
+  const modeRow = document.getElementById('wm-recall-row');
+  if (modeLbl) modeLbl.textContent = t('wm_mode_lbl');
+  if (modeRow) {
+    modeRow.innerHTML = '';
+    [['normal', 'wm_mode_normal'], ['backwards', 'wm_mode_backwards']].forEach(([id, key]) => {
+      const b = document.createElement('div');
+      b.className = 'wm-mode-btn' + (wmRecallMode === id ? ' active' : '');
+      b.textContent = t(key);
+      b.onclick = () => { wmRecallMode = id; localStorage.setItem('membrain_wm_recall', id); showWordMenu(); };
+      modeRow.appendChild(b);
+    });
+  }
+
+  // Audio mode toggle
+  const audioLbl = document.getElementById('wm-audio-lbl');
+  const audioRow = document.getElementById('wm-audio-row');
+  if (audioLbl) audioLbl.textContent = t('wm_audio_lbl');
+  if (audioRow) {
+    audioRow.innerHTML = '';
+    [[false, 'wm_audio_off'], [true, 'wm_audio_on']].forEach(([val, key]) => {
+      const b = document.createElement('div');
+      b.className = 'wm-mode-btn' + (wmAudioMode === val ? ' active' : '');
+      b.textContent = t(key);
+      b.onclick = () => { wmAudioMode = val; localStorage.setItem('membrain_wm_audio', val ? 'on' : 'off'); showWordMenu(); };
+      audioRow.appendChild(b);
     });
   }
 
@@ -1700,8 +2078,16 @@ function wmRunMemorize(idx, lv) {
     return;
   }
   title.textContent = t('wm_word_n_of', idx+1, wmSequence.length);
-  display.textContent = wmSequence[idx].toUpperCase();
+  const curWord = wmSequence[idx];
+  display.textContent = wmAudioMode ? '🎧' : curWord.toUpperCase();
   display.style.opacity = 1;
+  if (wmAudioMode && 'speechSynthesis' in window) {
+    const utt = new SpeechSynthesisUtterance(curWord);
+    utt.lang = lang === 'uk' ? 'uk-UA' : 'en-US';
+    utt.rate = 0.9;
+    speechSynthesis.cancel();
+    speechSynthesis.speak(utt);
+  }
   display.classList.remove('anim-wordpop'); void display.offsetWidth; display.classList.add('anim-wordpop');
   bar.style.width = ((idx+1)/wmSequence.length*100)+'%';
   counter.textContent = t('wm_more_to_go', wmSequence.length - idx - 1);
@@ -1803,12 +2189,14 @@ function wmSubmit() {
   document.getElementById('wm-results').style.display = 'block';
 
   const seq = wmSequence.map(w => w.toLowerCase());
+  // backwards mode: order is scored against reversed sequence
+  const seqForOrder = wmRecallMode === 'backwards' ? [...seq].reverse() : seq;
   const seqSet = new Set(seq), ansSet = new Set(answer);
   const hits = answer.filter(w => seqSet.has(w));
   const falsePos = answer.filter(w => !seqSet.has(w));
   let orderCorrect = 0, streak = 0, bestStreak = 0;
-  for (let i = 0; i < seq.length; i++) {
-    if (answer[i] === seq[i]) { orderCorrect++; streak++; bestStreak = Math.max(bestStreak, streak); }
+  for (let i = 0; i < seqForOrder.length; i++) {
+    if (answer[i] === seqForOrder[i]) { orderCorrect++; streak++; bestStreak = Math.max(bestStreak, streak); }
     else streak = 0;
   }
   const recall = hits.length / seq.length;
@@ -1873,6 +2261,19 @@ function wmSubmit() {
   nextBtn.style.display = wmLevel < WM_LEVELS.length-1 ? '' : 'none';
 
   if (perfect) soundWin(); else if (score >= 50) soundPairFound(); else soundNoMatch();
+
+  // achievements
+  const toEarn = ['wm_first'];
+  if (score >= 100) toEarn.push('wm_perfect');
+  if (score >= 80)  toEarn.push('wm_sharp');
+  if (wmRecallMode === 'backwards') toEarn.push('wm_back');
+  if (wmAudioMode) toEarn.push('wm_audio');
+  const played = metaTrackGame('wm');
+  if (played.length >= 3) toEarn.push('all_games');
+  checkAchievements(toEarn);
+  const wmXp = Math.max(5, Math.round(score * 0.5));
+  addXp(wmXp, t('wm_mode_title'));
+  if (workoutState.active && workoutState.step === 0) workoutStepDone(wmXp);
 }
 
 function wmReplay() { wmStart(wmLevel); }
@@ -1944,6 +2345,8 @@ function renderWmStats() {
 // ═══════════════════════════════════════════════════
 let spotLevel = 0, spotScene = [], spotMissings = [], spotSelected = [],
     spotStreak = 0, spotPhase = 'idle', spotTimer = null, spotCollection = 'classic';
+let spotMode     = localStorage.getItem('membrain_spot_mode') || 'missing';
+let spotDiffMult = parseFloat(localStorage.getItem('membrain_spot_diff') || '1.0');
 
 const SPOT_PACK_ICONS = {
   classic:'🎯', animals:'🦁', sealife:'🐬', fruits:'🍓', food:'🍕',
@@ -1972,6 +2375,36 @@ function showSpotMenu() {
     packRow.appendChild(btn);
   });
   refreshSpotLevels();
+
+  // Mode toggle
+  const modeLbl = document.getElementById('spot-mode-lbl');
+  const modeRow = document.getElementById('spot-mode-row');
+  if (modeLbl) modeLbl.textContent = t('spot_mode_lbl');
+  if (modeRow) {
+    modeRow.innerHTML = '';
+    [['missing','spot_mode_missing'],['appeared','spot_mode_appeared']].forEach(([id,key])=>{
+      const b = document.createElement('div');
+      b.className = 'spot-ctrl-btn' + (spotMode===id?' active':'');
+      b.textContent = t(key);
+      b.onclick = () => { spotMode=id; localStorage.setItem('membrain_spot_mode',id); showSpotMenu(); };
+      modeRow.appendChild(b);
+    });
+  }
+
+  // Difficulty (memorize time multiplier)
+  const diffLbl = document.getElementById('spot-diff-lbl');
+  const diffRow = document.getElementById('spot-diff-row');
+  if (diffLbl) diffLbl.textContent = t('spot_diff_lbl');
+  if (diffRow) {
+    diffRow.innerHTML = '';
+    [[0.5,'spot_diff_fast'],[1.0,'spot_diff_normal'],[1.5,'spot_diff_slow'],[2.0,'spot_diff_relaxed']].forEach(([mult,key])=>{
+      const b = document.createElement('div');
+      b.className = 'spot-ctrl-btn' + (spotDiffMult===mult?' active':'');
+      b.textContent = t(key);
+      b.onclick = () => { spotDiffMult=mult; localStorage.setItem('membrain_spot_diff',String(mult)); showSpotMenu(); };
+      diffRow.appendChild(b);
+    });
+  }
 }
 
 function refreshSpotLevels() {
@@ -2011,12 +2444,21 @@ function spotRunRound() {
   const shuffled = [...pool].sort(() => Math.random()-0.5);
   const chosen = shuffled.slice(0, count);
 
-  // Pick which are missing
-  const shuffledChosen = [...chosen].sort(() => Math.random()-0.5);
-  spotMissings = shuffledChosen.slice(0, numMissing).map(token => {
-    const obj = OBJECTS.find(o => o.id === token);
-    return { id: token, name: obj ? obj.name : token, glow: obj ? obj.glow : 'rgba(255,255,255,.2)', kind: coll.kind };
-  });
+  // Pick missing objects or intruder depending on mode
+  if (spotMode === 'appeared') {
+    // Appeared mode: pick an intruder from pool tokens NOT in the scene
+    const sceneIds = new Set(chosen);
+    const candidates = pool.filter(id => !sceneIds.has(id));
+    const intruderToken = candidates[Math.floor(Math.random()*candidates.length)] || pool[0];
+    const obj = OBJECTS.find(o => o.id === intruderToken);
+    spotMissings = [{ id: intruderToken, name: obj ? obj.name : intruderToken, glow: obj ? obj.glow : 'rgba(255,255,255,.2)', kind: coll.kind }];
+  } else {
+    const shuffledChosen = [...chosen].sort(() => Math.random()-0.5);
+    spotMissings = shuffledChosen.slice(0, numMissing).map(token => {
+      const obj = OBJECTS.find(o => o.id === token);
+      return { id: token, name: obj ? obj.name : token, glow: obj ? obj.glow : 'rgba(255,255,255,.2)', kind: coll.kind };
+    });
+  }
   spotSelected = [];
 
   const canvas = document.getElementById('spot-canvas');
@@ -2044,14 +2486,15 @@ function spotRunRound() {
   document.getElementById('spot-overlay-sub').textContent = lv.intro ? '' : '';
   const fill = document.getElementById('spot-timer-fill');
   fill.style.width = '100%';
+  const memorizeMs = Math.round(lv.memorize * spotDiffMult);
   let elapsed = 0; const tick = 100;
   clearInterval(spotTimer);
   spotTimer = setInterval(() => {
     elapsed += tick;
-    fill.style.width = Math.max(0,(1-elapsed/lv.memorize)*100)+'%';
-    const rem = Math.ceil((lv.memorize-elapsed)/1000);
+    fill.style.width = Math.max(0,(1-elapsed/memorizeMs)*100)+'%';
+    const rem = Math.ceil((memorizeMs-elapsed)/1000);
     document.getElementById('spot-overlay-text').textContent = rem > 0 ? rem : '';
-    if (elapsed >= lv.memorize) { clearInterval(spotTimer); spotStartBlackout(canvas, objSize, lv.blackout); }
+    if (elapsed >= memorizeMs) { clearInterval(spotTimer); spotStartBlackout(canvas, objSize, lv.blackout); }
   }, tick);
 }
 
@@ -2105,16 +2548,26 @@ function spotStartFind(canvas, objSize) {
   const lv = SPOT_LEVELS[spotLevel];
   const numMissing = lv.missing || 1;
   const missingIds = spotMissings.map(o => o.id);
-  document.getElementById('spot-phase-label').textContent =
-    numMissing > 1 ? t('spot_find_many', numMissing) : t('spot_find_one');
 
-  // Rearrange remaining objects
-  const remaining = spotScene.filter(o => !missingIds.includes(o.id));
-  const positions = placePacked(remaining.length, canvas.width, canvas.height, objSize);
-  remaining.forEach((obj, i) => { obj.x = positions[i].x; obj.y = positions[i].y; });
-
-  document.getElementById('spot-overlay').classList.add('hidden');
-  renderSpotScene(canvas, objSize, missingIds);
+  if (spotMode === 'appeared') {
+    // Appeared mode: add intruder to scene, render everything
+    document.getElementById('spot-phase-label').textContent = t('spot_find_intruder');
+    const intruder = spotMissings[0];
+    const allPositions = placePacked(spotScene.length + 1, canvas.width, canvas.height, objSize);
+    spotScene.forEach((obj, i) => { obj.x = allPositions[i].x; obj.y = allPositions[i].y; });
+    const ipos = allPositions[spotScene.length];
+    spotScene.push({ ...intruder, x: ipos.x, y: ipos.y });
+    document.getElementById('spot-overlay').classList.add('hidden');
+    renderSpotScene(canvas, objSize, []);
+  } else {
+    document.getElementById('spot-phase-label').textContent =
+      numMissing > 1 ? t('spot_find_many', numMissing) : t('spot_find_one');
+    const remaining = spotScene.filter(o => !missingIds.includes(o.id));
+    const positions = placePacked(remaining.length, canvas.width, canvas.height, objSize);
+    remaining.forEach((obj, i) => { obj.x = positions[i].x; obj.y = positions[i].y; });
+    document.getElementById('spot-overlay').classList.add('hidden');
+    renderSpotScene(canvas, objSize, missingIds);
+  }
 
   // Build choices row
   const choices = document.getElementById('spot-choices');
@@ -2132,14 +2585,28 @@ function spotStartFind(canvas, objSize) {
   row.style.cssText = 'display:flex;gap:10px;justify-content:center;flex-wrap:wrap;';
   const coll = collById(spotCollection);
   const sceneIds = new Set(spotScene.map(o => o.id));
-  const distractorTokens = coll.pool.filter(id => !sceneIds.has(id));
-  const numDistractors = Math.min(Math.max(3, Math.ceil(spotScene.length * 0.5)), distractorTokens.length);
-  const extraTokens = [...distractorTokens].sort(() => Math.random()-0.5).slice(0, numDistractors);
-  const extraObjs = extraTokens.map(token => {
-    const obj = OBJECTS.find(o => o.id === token);
-    return { id: token, name: obj ? obj.name : token, glow: obj ? obj.glow : 'rgba(255,255,255,.2)', kind: coll.kind };
-  });
-  const shuffled = [...spotScene, ...extraObjs].sort(() => Math.random()-0.5);
+  let choicePool;
+  if (spotMode === 'appeared') {
+    // In appeared mode: choices = original scene objects (without intruder) + intruder (already in sceneIds now)
+    // sceneIds includes the intruder we pushed, so distractors exclude it — exactly what we want
+    const distractorTokens = coll.pool.filter(id => !sceneIds.has(id));
+    const numDist = Math.min(Math.max(2, Math.ceil((spotScene.length-1)*0.4)), distractorTokens.length);
+    const extras = [...distractorTokens].sort(()=>Math.random()-0.5).slice(0,numDist).map(token=>{
+      const obj=OBJECTS.find(o=>o.id===token);
+      return {id:token,name:obj?obj.name:token,glow:obj?obj.glow:'rgba(255,255,255,.2)',kind:coll.kind};
+    });
+    choicePool = [...spotScene, ...extras];
+  } else {
+    const distractorTokens = coll.pool.filter(id => !sceneIds.has(id));
+    const numDistractors = Math.min(Math.max(3, Math.ceil(spotScene.length * 0.5)), distractorTokens.length);
+    const extraTokens = [...distractorTokens].sort(() => Math.random()-0.5).slice(0, numDistractors);
+    const extraObjs = extraTokens.map(token => {
+      const obj = OBJECTS.find(o => o.id === token);
+      return { id: token, name: obj ? obj.name : token, glow: obj ? obj.glow : 'rgba(255,255,255,.2)', kind: coll.kind };
+    });
+    choicePool = [...spotScene, ...extraObjs];
+  }
+  const shuffled = choicePool.sort(() => Math.random()-0.5);
   shuffled.forEach(obj => {
     const el = document.createElement('div');
     el.className = 'spot-choice';
@@ -2169,7 +2636,7 @@ function spotStartFind(canvas, objSize) {
 function spotGuess(id) {
   if (spotPhase !== 'find') return;
   const lv = SPOT_LEVELS[spotLevel];
-  const numMissing = lv.missing || 1;
+  const numMissing = spotMode === 'appeared' ? 1 : (lv.missing || 1);
   const missingIds = spotMissings.map(o => o.id);
 
   if (numMissing === 1) {
@@ -2211,15 +2678,37 @@ function showSpotResult(correct) {
   document.getElementById('spot-result-emoji').textContent = correct ? '🎉' : '😅';
   document.getElementById('spot-result-title').textContent = correct ? t('spot_correct') : t('spot_wrong');
   const labels = spotMissings.map(o => o.kind === 'emoji' ? o.id : o.name);
-  document.getElementById('spot-result-sub').textContent = correct
-    ? (spotMissings.length > 1 ? t('spot_missing_were', labels) : t('spot_missing_was', labels))
-    : t('spot_missing_were', labels);
+  if (spotMode === 'appeared') {
+    document.getElementById('spot-result-sub').textContent = correct
+      ? t('spot_intruder_was', labels) : t('spot_intruder_was', labels);
+  } else {
+    document.getElementById('spot-result-sub').textContent = correct
+      ? (spotMissings.length > 1 ? t('spot_missing_were', labels) : t('spot_missing_was', labels))
+      : t('spot_missing_were', labels);
+  }
   document.getElementById('spot-result-streak').textContent = spotStreak > 1 ? `🔥 Streak: ${spotStreak}` : '';
   const nextBtn = document.getElementById('spot-next-btn');
   if (spotLevel < SPOT_LEVELS.length - 1 && correct) {
     nextBtn.textContent = t('spot_next_level'); nextBtn.style.display = '';
   } else { nextBtn.style.display = 'none'; }
   overlay.classList.add('show');
+
+  // achievements
+  const toEarn = ['sp_first'];
+  if (correct && SPOT_LEVELS[spotLevel].missing === 4) toEarn.push('sp_boss');
+  if (correct && spotStreak >= 5) toEarn.push('sp_streak5');
+  if (correct && spotMode === 'appeared') toEarn.push('sp_appeared');
+  const played = metaTrackGame('spot');
+  if (played.length >= 3) toEarn.push('all_games');
+  checkAchievements(toEarn);
+  // save best level for radar
+  if (correct) {
+    const best = parseInt(localStorage.getItem('membrain_spot_best') || '0');
+    if (spotLevel > best) localStorage.setItem('membrain_spot_best', String(spotLevel));
+  }
+  const spotXp = correct ? 15 + Math.min(spotStreak, 5) * 3 : 5;
+  addXp(spotXp, t('spot_mode_title'));
+  if (workoutState.active && workoutState.step === 1) workoutStepDone(spotXp);
 }
 
 function spotNextLevel() {
@@ -2255,6 +2744,9 @@ let pairsState = {
   cards: [], revealed: [], matched: [], holeCount: [],
   scores: {}, myTurn: false, flipBuffer: [],
   waitingFlipBack: false,
+  // AI mode extras
+  aiMode: false, aiDiff: 'medium', aiMemory: [],
+  aiFreeze: 0, powerups: {peek:1,freeze:1,hint:1}, pairsMatchedByPlayer: 0,
 };
 
 function renderPairsBoard() {
@@ -2344,6 +2836,54 @@ function pairsCardClick(idx) {
   if (pairsState.matched[idx]) return;
   if (pairsState.revealed[idx]) return;
   if (pairsState.flipBuffer.length >= 2) return;
+
+  if (pairsState.aiMode) {
+    pairsState.revealed[idx] = true;
+    pairsState.flipBuffer.push(idx);
+    soundCardFlip();
+    renderPairsBoard();
+
+    if (pairsState.flipBuffer.length === 2) {
+      const [i1, i2] = pairsState.flipBuffer;
+      const id1 = pairsState.cards[i1], id2 = pairsState.cards[i2];
+      pairsState.myTurn = false;
+      renderPowerupBar(true);
+
+      if (id1 === id2) {
+        setTimeout(() => {
+          pairsState.matched[i1] = pairsState.matched[i2] = true;
+          pairsState.revealed[i1] = pairsState.revealed[i2] = true;
+          pairsState.flipBuffer = [];
+          pairsState.scores[pairsState.myName].pairs++;
+          pairsState.pairsMatchedByPlayer++;
+          if (pairsState.pairsMatchedByPlayer % 3 === 0) earnPowerup();
+          soundPairFound();
+          renderPairsBoard();
+          if (checkAiGameOver()) return;
+          pairsState.myTurn = true;
+          updatePairsScores();
+          renderPowerupBar(true);
+        }, 400);
+      } else {
+        setTimeout(() => {
+          pairsState.scores[pairsState.myName].holes = (pairsState.scores[pairsState.myName].holes || 0) + 1;
+          soundNoMatch();
+          updatePairsScores();
+          pairsState.waitingFlipBack = true;
+          renderPairsBoard();
+          setTimeout(() => {
+            pairsState.revealed[i1] = pairsState.revealed[i2] = false;
+            pairsState.flipBuffer = [];
+            pairsState.waitingFlipBack = false;
+            renderPairsBoard();
+            setTimeout(() => aiTakeTurn(), 300);
+          }, 900);
+        }, 400);
+      }
+    }
+    return;
+  }
+
   if (pendingFlip) return;
   pendingFlip = true;
   ws?.send(JSON.stringify({type:'card_flip', index:idx}));
@@ -2504,6 +3044,10 @@ function showLobby() {
   document.getElementById('ws-url-hint').textContent = wsUrl();
   renderCollOptions();
   refreshGridOptions();
+  updateEloDisplay();
+  // Sync AI diff buttons with saved state
+  const saved = localStorage.getItem('membrain_ai_diff') || 'medium';
+  document.querySelectorAll('.ai-diff-btn').forEach(b => b.classList.toggle('active', b.dataset.diff === saved));
 }
 
 function lobbyConnect() {
@@ -2620,9 +3164,15 @@ function startPairsGame(msg) {
   pairsState.myTurn = msg.firstTurn === pairsState.myName;
   pairsState.flipBuffer = [];
   pairsState.waitingFlipBack = false;
+  pairsState.aiMode = false;
+  renderPowerupBar(false);
+  document.getElementById('lobby-back-btn').textContent = t('pairs_lobby_btn');
+  document.getElementById('lobby-back-btn').onclick = showLobby;
+  const eloEl = document.getElementById('go-elo-change');
+  if (eloEl) eloEl.style.display = 'none';
   showScreen('screen-pairs');
   requestAnimationFrame(() => { renderPairsBoard(); updatePairsScores(); });
-  document.getElementById('rematch-btn').textContent = 'Rematch!';
+  document.getElementById('rematch-btn').textContent = t('pairs_rematch');
   document.getElementById('rematch-btn').disabled = false;
   document.getElementById('rematch-btn').onclick = requestRematch;
 }
@@ -2721,10 +3271,12 @@ const MATH_LEVELS = [
 const ROUND_TARGETS = [100, 200, 500, 750, 1000, 1350, 1500];
 const MATH_SYM = {'+':'+','-':'−','*':'×','/':'÷'};
 
+let mathEstMode = localStorage.getItem('membrain_math_est') === 'on';
+
 const mathState = {
   opsId: null, ops: null, level: 0, taskIdx: 0, score: 0, correct: 0,
   task: null, target: 0, timer: null, deadline: 0, dur: 0, answered: false,
-  trickDef: null,
+  trickDef: null, dailyMode: false, dailyTasks: null,
 };
 
 function mRand(min,max){ return Math.floor(Math.random()*(max-min+1))+min; }
@@ -2830,6 +3382,8 @@ function showMathMenu(){
   renderMathLevels();
   renderMathTricks();
   renderMathStats();
+  renderMathEstRow();
+  renderDailyChallenge();
 }
 
 function renderMathOps(){
@@ -2885,13 +3439,30 @@ function mathStartLevel(idx){
 }
 
 function mathNextTask(){
-  if(mathState.taskIdx >= 10){ mathFinish(); return; }
+  const totalTasks = mathState.dailyMode ? 5 : 10;
+  if(mathState.taskIdx >= totalTasks){ mathFinish(); return; }
   mathState.answered = false;
 
   const hintCard = document.getElementById('math-trick-hint');
   const q = document.getElementById('math-question');
   const choicesEl = document.getElementById('math-choices');
   const inputEl   = document.getElementById('math-input');
+
+  if(mathState.dailyMode){
+    const dt = mathState.dailyTasks[mathState.taskIdx];
+    mathState.target = dt.target;
+    mathState.task = {q: dt.q, answer: dt.target, target: dt.target};
+    document.getElementById('math-task-counter').textContent = t('math_daily_task_counter', mathState.taskIdx+1);
+    document.getElementById('math-score').textContent = t('math_score_pts', mathState.score);
+    if(hintCard) hintCard.style.display = 'none';
+    q.className = 'math-q trick-q';
+    q.innerHTML = dt.q;
+    choicesEl.style.display = 'none';
+    inputEl.style.display = 'block';
+    const ans = document.getElementById('math-answer'); ans.value = ''; ans.className = '';
+    mathStartTimer(22);
+    return;
+  }
 
   if(mathState.trickDef){
     mathState.task   = mathState.trickDef.gen();
@@ -2960,7 +3531,13 @@ function mathAnswer(value, btnEl){
   if(mathState.answered) return;
   mathState.answered = true;
   clearInterval(mathState.timer);
-  const correct = value!==null && Number(value)===mathState.target;
+  const numVal = Number(value);
+  const useEst = mathEstMode && !mathState.trickDef && !mathState.dailyMode;
+  const correct = value !== null && (
+    useEst
+      ? Math.abs(numVal - mathState.target) / Math.max(1, Math.abs(mathState.target)) <= 0.10
+      : numVal === mathState.target
+  );
   const q = document.getElementById('math-question');
 
   if(correct){
@@ -3011,6 +3588,30 @@ document.addEventListener('keydown', e=>{
 // ── finish + stats ──
 function mathFinish(){
   clearInterval(mathState.timer);
+
+  if(mathState.dailyMode){
+    mathState.dailyMode = false;
+    const correct = mathState.correct, total = 5;
+    const streak = saveDailyResult(mathState.score, correct);
+    const pct = Math.round(correct/total*100);
+    document.getElementById('math-play').style.display = 'none';
+    document.getElementById('math-result').style.display = 'block';
+    document.getElementById('math-result-pct').textContent = pct + '%';
+    document.getElementById('math-result-label').textContent = pct>=80 ? t('math_brilliant') : pct>=60 ? t('math_complete') : t('math_keep');
+    document.getElementById('math-result-stats').innerHTML = `
+      <div class="stat-box"><div class="sv">${correct}/${total}</div><div class="sl">${t('math_stat_correct')}</div></div>
+      <div class="stat-box"><div class="sv">${mathState.score}</div><div class="sl">${t('math_stat_score')}</div></div>
+      <div class="stat-box"><div class="sv">🔥${streak}</div><div class="sl">${t('math_streak_lbl')}</div></div>`;
+    document.getElementById('math-next-btn').style.display = 'none';
+    if(pct>=60) soundWin(); else soundNoMatch();
+    const toEarn = ['mt_first','mt_daily'];
+    if(streak >= 7) toEarn.push('mt_daily_week');
+    checkAchievements(toEarn);
+    addXp(40, t('math_daily_challenge'));
+    renderDailyChallenge();
+    return;
+  }
+
   const correct = mathState.correct, total = 10;
   mathRecordSession(total, correct, mathState.score);
   const pct = Math.round(correct/total*100);
@@ -3029,9 +3630,28 @@ function mathFinish(){
     nextBtn.textContent = correct<6 ? t('math_need_6') : t('math_next_level');
   } else nextBtn.style.display='none';
   if(pct>=60) soundWin(); else soundNoMatch();
+
+  // trick mastery
+  if(mathState.trickDef && mathState.correct >= 10){
+    const newMastery = trickMasteryIncrement(mathState.trickDef.id);
+    if(newMastery >= 3) checkAchievements(['mt_trick_master']);
+    renderMathTricks();
+  }
+
+  // achievements
+  const toEarn = ['mt_first'];
+  if(mathState.correct >= 10) toEarn.push('mt_perfect');
+  if(mathState.trickDef) toEarn.push('mt_trick');
+  if(mathState.opsId === '%') toEarn.push('mt_pct');
+  const played = metaTrackGame('math');
+  if(played.length >= 3) toEarn.push('all_games');
+  checkAchievements(toEarn);
+  const mathXp = Math.max(5, Math.round(mathState.score * 0.03));
+  addXp(mathXp, t('math_section_title'));
+  if(workoutState.active && workoutState.step === 2) workoutStepDone(mathXp);
 }
 
-function mathReplay(){ if(mathState.trickDef) mathStartTrick(mathState.trickDef.id); else mathStartLevel(mathState.level); }
+function mathReplay(){ if(mathState.dailyMode) return; if(mathState.trickDef) mathStartTrick(mathState.trickDef.id); else mathStartLevel(mathState.level); }
 function mathNextLevel(){ if(mathState.level<MATH_LEVELS.length-1) mathStartLevel(mathState.level+1); }
 
 function mathStartTrick(id){
@@ -3055,10 +3675,15 @@ function renderMathTricks(){
   const grid = document.getElementById('math-tricks-grid');
   if(!grid) return;
   grid.innerHTML = '';
+  const mastery = trickMasteryLoad();
   MATH_TRICKS.forEach(tr=>{
+    const m = mastery[tr.id] || 0;
     const card = document.createElement('div');
-    card.className = 'trick-card';
-    card.innerHTML = `<div class="tc-sym">${tr.sym}</div><div class="tc-name">${t(tr.key)}</div><div class="tc-hint">${t(tr.hintKey)}</div>`;
+    card.className = 'trick-card' + (m >= 3 ? ' mastered' : '');
+    const masteryHtml = m >= 3
+      ? `<div class="tc-mastery">${t('trick_mastered')}</div>`
+      : `<div class="tc-mastery">${'⭐'.repeat(m)}${'☆'.repeat(3-m)}</div>`;
+    card.innerHTML = `<div class="tc-sym">${tr.sym}</div><div class="tc-name">${t(tr.key)}</div><div class="tc-hint">${t(tr.hintKey)}</div>${masteryHtml}`;
     card.onclick = () => mathStartTrick(tr.id);
     grid.appendChild(card);
   });
@@ -3108,6 +3733,739 @@ function renderMathStats(){
 }
 
 // ═══════════════════════════════════════════════════
+// ACHIEVEMENTS
+// ═══════════════════════════════════════════════════
+const ACHIEVEMENTS = [
+  {id:'wm_first',    em:'🧠', nk:'ach_wm_first',    dk:'ach_wm_first_d'},
+  {id:'wm_perfect',  em:'✨', nk:'ach_wm_perfect',  dk:'ach_wm_perfect_d'},
+  {id:'wm_sharp',    em:'⚡', nk:'ach_wm_sharp',    dk:'ach_wm_sharp_d'},
+  {id:'wm_back',     em:'🔄', nk:'ach_wm_back',     dk:'ach_wm_back_d'},
+  {id:'wm_audio',    em:'🎧', nk:'ach_wm_audio',    dk:'ach_wm_audio_d'},
+  {id:'sp_first',    em:'👁️', nk:'ach_sp_first',   dk:'ach_sp_first_d'},
+  {id:'sp_boss',     em:'👑', nk:'ach_sp_boss',     dk:'ach_sp_boss_d'},
+  {id:'sp_streak5',  em:'🔥', nk:'ach_sp_streak5',  dk:'ach_sp_streak5_d'},
+  {id:'sp_appeared', em:'🕵️', nk:'ach_sp_appeared', dk:'ach_sp_appeared_d'},
+  {id:'mt_first',    em:'➕', nk:'ach_mt_first',    dk:'ach_mt_first_d'},
+  {id:'mt_perfect',  em:'💯', nk:'ach_mt_perfect',  dk:'ach_mt_perfect_d'},
+  {id:'mt_trick',    em:'🪄', nk:'ach_mt_trick',    dk:'ach_mt_trick_d'},
+  {id:'mt_pct',      em:'%',  nk:'ach_mt_pct',      dk:'ach_mt_pct_d'},
+  {id:'all_games',       em:'🌟', nk:'ach_all_games',       dk:'ach_all_games_d'},
+  {id:'streak3',         em:'🏆', nk:'ach_streak3',         dk:'ach_streak3_d'},
+  {id:'pb_first',        em:'🤖', nk:'ach_pb_first',        dk:'ach_pb_first_d'},
+  {id:'pb_win',          em:'🏅', nk:'ach_pb_win',          dk:'ach_pb_win_d'},
+  {id:'pb_hard',         em:'💪', nk:'ach_pb_hard',         dk:'ach_pb_hard_d'},
+  {id:'pb_elo1400',      em:'⭐', nk:'ach_pb_elo1400',      dk:'ach_pb_elo1400_d'},
+  {id:'mt_trick_master', em:'🥇', nk:'ach_mt_trick_master', dk:'ach_mt_trick_master_d'},
+  {id:'mt_daily',        em:'📅', nk:'ach_mt_daily',        dk:'ach_mt_daily_d'},
+  {id:'mt_daily_week',   em:'📆', nk:'ach_mt_daily_week',   dk:'ach_mt_daily_week_d'},
+  {id:'wo_complete',     em:'🏋️', nk:'ach_wo_complete',     dk:'ach_wo_complete_d'},
+];
+
+function achLoad(){ try{ return JSON.parse(localStorage.getItem('membrain_ach')||'[]'); }catch{ return []; } }
+function achSave(arr){ try{ localStorage.setItem('membrain_ach', JSON.stringify(arr)); }catch{} }
+
+function checkAchievements(ids){
+  const earned = achLoad();
+  const newOnes = [];
+  for(const id of (Array.isArray(ids)?ids:[ids])){
+    if(!earned.includes(id)){ earned.push(id); newOnes.push(id); }
+  }
+  if(newOnes.length){ achSave(earned); newOnes.forEach(showAchievementToast); updateAchBadge(); }
+}
+
+let achToastTimer = null;
+function showAchievementToast(id){
+  const ach = ACHIEVEMENTS.find(a=>a.id===id); if(!ach) return;
+  const toast = document.getElementById('ach-toast');
+  document.getElementById('ach-toast-em').textContent  = ach.em;
+  document.getElementById('ach-toast-text').textContent = t(ach.nk);
+  document.getElementById('ach-toast-sub').textContent  = t(ach.dk);
+  toast.classList.add('show');
+  clearTimeout(achToastTimer);
+  achToastTimer = setTimeout(()=>toast.classList.remove('show'), 3500);
+}
+
+function updateAchBadge(){
+  const badge = document.getElementById('ach-count-badge');
+  if(badge) badge.textContent = achLoad().length + '/' + ACHIEVEMENTS.length;
+}
+
+function showAchievements(){
+  document.getElementById('ach-panel-title').textContent = t('ach_panel_title');
+  const grid = document.getElementById('ach-grid');
+  const earned = achLoad();
+  grid.innerHTML = '';
+  ACHIEVEMENTS.forEach(a=>{
+    const el = document.createElement('div');
+    el.className = 'ach-item' + (earned.includes(a.id)?' earned':' locked');
+    el.innerHTML = `<div class="ach-em">${a.em}</div><div class="ach-name">${t(a.nk)}</div><div class="ach-desc">${t(a.dk)}</div>`;
+    grid.appendChild(el);
+  });
+  document.getElementById('ach-panel').classList.add('show');
+}
+
+function metaTrackGame(game){
+  try{
+    const played = JSON.parse(localStorage.getItem('membrain_played')||'[]');
+    if(!played.includes(game)){ played.push(game); localStorage.setItem('membrain_played',JSON.stringify(played)); }
+    return played;
+  }catch{ return []; }
+}
+
+// ═══════════════════════════════════════════════════
+// XP + LEVEL SYSTEM
+// ═══════════════════════════════════════════════════
+function xpForLevel(n){ return n <= 0 ? 0 : n * 150 + n * (n - 1) * 25; }
+function levelFromXp(xp){ let l = 0; while (xpForLevel(l + 1) <= xp) l++; return l; }
+function loadXp(){ return parseInt(localStorage.getItem('membrain_xp') || '0'); }
+function saveXp(v){ localStorage.setItem('membrain_xp', String(Math.max(0, v))); }
+
+function addXp(amount, source) {
+  const old = loadXp();
+  const oldLv = levelFromXp(old);
+  saveXp(old + amount);
+  const newLv = levelFromXp(old + amount);
+  updateXpDisplay();
+  if (newLv > oldLv) showAchievementToast('_xp_levelup_' + newLv);
+  flashXpBadge('+' + amount + ' XP');
+}
+
+let xpFlashTimer = null;
+function flashXpBadge(text) {
+  const badge = document.getElementById('xp-level-badge');
+  if (!badge) return;
+  const orig = badge.textContent;
+  badge.textContent = text;
+  badge.style.background = 'linear-gradient(135deg,var(--gold),var(--goldL))';
+  clearTimeout(xpFlashTimer);
+  xpFlashTimer = setTimeout(() => {
+    badge.style.background = '';
+    updateXpDisplay();
+  }, 1400);
+}
+
+function updateXpDisplay() {
+  const xp = loadXp();
+  const lv = levelFromXp(xp);
+  const thisXp = xpForLevel(lv);
+  const nextXp = xpForLevel(lv + 1);
+  const pct = Math.round((xp - thisXp) / (nextXp - thisXp) * 100);
+  const badge = document.getElementById('xp-level-badge');
+  const fill  = document.getElementById('xp-bar-fill');
+  const lbl   = document.getElementById('xp-label');
+  if (badge) badge.textContent = `Lv.${lv}`;
+  if (fill)  fill.style.width = pct + '%';
+  if (lbl)   lbl.textContent  = `${xp - thisXp}/${nextXp - thisXp} XP`;
+}
+
+// ═══════════════════════════════════════════════════
+// BRAIN RADAR CHART
+// ═══════════════════════════════════════════════════
+function brainScores() {
+  const wmS = wmLoadStats();
+  const wmWords = Object.values(wmS.days || {}).reduce((a, x) => a + (x.words || 0), 0);
+  const wmRec   = Object.values(wmS.days || {}).reduce((a, x) => a + (x.recalled || 0), 0);
+  const wmScore = wmWords > 0 ? Math.round(wmRec / wmWords * 100) : 0;
+
+  const spotBest = parseInt(localStorage.getItem('membrain_spot_best') || '0');
+  const spotScore = Math.min(100, Math.round(spotBest / (SPOT_LEVELS.length - 1) * 100));
+
+  const mS = mathLoadStats();
+  const mTotal   = Object.values(mS.days || {}).reduce((a, x) => a + x.tasks, 0);
+  const mCorrect = Object.values(mS.days || {}).reduce((a, x) => a + x.correct, 0);
+  const mathScore = mTotal > 0 ? Math.round(mCorrect / mTotal * 100) : 0;
+
+  const pairsScore = Math.min(100, Math.max(0, Math.round((loadElo() - 600) / 12)));
+
+  const dStreak = dailyStreak();
+  const dailyScore = Math.min(100, Math.round(dStreak / 14 * 100));
+
+  return [
+    { label: t('radar_wm'),    score: wmScore,    color: 'rgba(168,85,247,.85)' },
+    { label: t('radar_spot'),  score: spotScore,  color: 'rgba(96,165,250,.85)' },
+    { label: t('radar_math'),  score: mathScore,  color: 'rgba(52,211,153,.85)' },
+    { label: t('radar_pairs'), score: pairsScore, color: 'rgba(251,191,36,.85)' },
+    { label: t('radar_daily'), score: dailyScore, color: 'rgba(248,113,113,.85)' },
+  ];
+}
+
+function renderRadarChart() {
+  const svg = document.getElementById('radar-svg');
+  const statsEl = document.getElementById('radar-stats');
+  const titleEl = document.getElementById('radar-title');
+  if (titleEl) titleEl.textContent = t('radar_title');
+  if (!svg) return;
+
+  const scores = brainScores();
+  const n = scores.length;
+  const cx = 175, cy = 155, R = 100;
+  const off = -Math.PI / 2;
+  const pt = (i, f) => {
+    const a = off + 2 * Math.PI * i / n;
+    return [cx + R * f * Math.cos(a), cy + R * f * Math.sin(a)];
+  };
+
+  let html = '';
+  [0.25, 0.5, 0.75, 1].forEach(f => {
+    const pts = Array.from({ length: n }, (_, i) => pt(i, f).join(',')).join(' ');
+    html += `<polygon points="${pts}" fill="none" stroke="rgba(255,255,255,${f === 1 ? '.14' : '.06'})" stroke-width="1"/>`;
+  });
+  Array.from({ length: n }, (_, i) => {
+    const [x, y] = pt(i, 1);
+    html += `<line x1="${cx}" y1="${cy}" x2="${x}" y2="${y}" stroke="rgba(255,255,255,.08)" stroke-width="1"/>`;
+  });
+  const skillPts = Array.from({ length: n }, (_, i) => pt(i, scores[i].score / 100).join(',')).join(' ');
+  html += `<polygon points="${skillPts}" fill="rgba(124,58,237,.18)" stroke="rgba(167,139,250,.65)" stroke-width="2"/>`;
+  Array.from({ length: n }, (_, i) => {
+    const [x, y] = pt(i, scores[i].score / 100);
+    html += `<circle cx="${x}" cy="${y}" r="5" fill="${scores[i].color}" stroke="rgba(255,255,255,.25)" stroke-width="1"/>`;
+    const [lx, ly] = pt(i, 1.28);
+    const anchor = lx < cx - 8 ? 'end' : lx > cx + 8 ? 'start' : 'middle';
+    html += `<text x="${lx}" y="${ly}" text-anchor="${anchor}" fill="rgba(255,255,255,.75)" font-size="11" font-weight="700" font-family="system-ui,sans-serif">${scores[i].label}</text>`;
+    html += `<text x="${lx}" y="${ly + 13}" text-anchor="${anchor}" fill="${scores[i].color}" font-size="10" font-family="system-ui,sans-serif">${scores[i].score}%</text>`;
+  });
+  svg.innerHTML = html;
+
+  if (statsEl) {
+    statsEl.innerHTML = scores.map(s => `
+      <div style="background:var(--glass);border:1px solid var(--border);border-radius:10px;padding:8px 10px;display:flex;align-items:center;gap:8px;">
+        <div style="width:6px;height:28px;border-radius:3px;background:${s.color};flex-shrink:0;"></div>
+        <div><div style="font-size:.7rem;font-weight:800;">${s.label}</div>
+             <div style="font-size:1.05rem;font-weight:900;color:${s.color};">${s.score}%</div></div>
+      </div>`).join('');
+  }
+}
+
+function showRadarPanel() {
+  renderRadarChart();
+  document.getElementById('radar-panel').classList.add('show');
+}
+
+// ═══════════════════════════════════════════════════
+// DAILY BRAIN WORKOUT
+// ═══════════════════════════════════════════════════
+const WORKOUT_STEPS_DEF = [
+  { em: '🧠', go: () => { showWordMenu(); setTimeout(() => { const lvs = document.querySelectorAll('#wm-level-grid .level-btn'); if (lvs[2]) lvs[2].click(); }, 350); } },
+  { em: '👁️', go: () => { showSpotMenu(); setTimeout(() => spotStart(4), 350); } },
+  { em: '➕', go: () => { showMathMenu(); setTimeout(() => { selectMathOps('+-'); mathStartLevel(2); }, 350); } },
+];
+
+let workoutState = { active: false, step: 0, stepDone: false, results: [], xpEarned: 0 };
+
+function workoutDoneToday() {
+  try { return !!JSON.parse(localStorage.getItem('membrain_workout') || '{}')[mathTodayKey()]; } catch { return false; }
+}
+function saveWorkoutDone(xp) {
+  try { const d = JSON.parse(localStorage.getItem('membrain_workout') || '{}'); d[mathTodayKey()] = { xp, done: true }; localStorage.setItem('membrain_workout', JSON.stringify(d)); } catch {}
+}
+
+function startWorkout() {
+  workoutState = { active: true, step: 0, stepDone: false, results: [], xpEarned: 0 };
+  renderWorkoutBanner();
+  WORKOUT_STEPS_DEF[0].go();
+}
+
+function renderWorkoutBanner() {
+  const banner = document.getElementById('workout-banner');
+  const stepsEl = document.getElementById('wo-steps');
+  const nextBtn = document.getElementById('wo-next-btn');
+  const lbl = document.getElementById('workout-lbl');
+  if (!banner) return;
+  if (lbl) lbl.textContent = t('workout_lbl');
+  if (!workoutState.active) { banner.classList.remove('visible'); return; }
+  banner.classList.add('visible');
+  stepsEl.innerHTML = '';
+  WORKOUT_STEPS_DEF.forEach((s, i) => {
+    const div = document.createElement('div');
+    div.className = 'wo-step' + (i < workoutState.step ? ' done' : i === workoutState.step ? ' active' : '');
+    div.textContent = i < workoutState.step ? '✓' : s.em;
+    stepsEl.appendChild(div);
+    if (i < WORKOUT_STEPS_DEF.length - 1) {
+      const sep = document.createElement('div');
+      sep.style.cssText = 'width:14px;height:2px;background:var(--border);border-radius:1px;';
+      stepsEl.appendChild(sep);
+    }
+  });
+  if (nextBtn) {
+    nextBtn.style.display = workoutState.stepDone ? '' : 'none';
+    nextBtn.textContent = workoutState.step < WORKOUT_STEPS_DEF.length - 1 ? t('workout_next') : t('workout_finish');
+  }
+}
+
+function workoutStepDone(xpGained) {
+  if (!workoutState.active || workoutState.stepDone) return;
+  workoutState.xpEarned += xpGained;
+  workoutState.results.push(xpGained);
+  workoutState.stepDone = true;
+  renderWorkoutBanner();
+}
+
+function workoutNext() {
+  if (!workoutState.active) return;
+  workoutState.step++;
+  workoutState.stepDone = false;
+  if (workoutState.step >= WORKOUT_STEPS_DEF.length) { workoutFinish(); return; }
+  WORKOUT_STEPS_DEF[workoutState.step].go();
+  renderWorkoutBanner();
+}
+
+function workoutFinish() {
+  workoutState.active = false;
+  renderWorkoutBanner();
+  const bonus = 75;
+  addXp(bonus, t('workout_bonus_src'));
+  saveWorkoutDone(workoutState.xpEarned + bonus);
+  renderWorkoutBtn();
+  const overlay = document.getElementById('workout-result');
+  const titleEl = document.getElementById('workout-result-title');
+  const subEl   = document.getElementById('workout-result-sub');
+  const statsEl = document.getElementById('workout-result-stats');
+  const dismissEl = document.getElementById('workout-dismiss-btn');
+  if (titleEl) titleEl.textContent = t('workout_complete');
+  if (subEl)   subEl.textContent   = t('workout_sub');
+  if (dismissEl) dismissEl.textContent = t('workout_awesome');
+  const total = workoutState.xpEarned + bonus;
+  if (statsEl) statsEl.innerHTML = `
+    <div class="stat-box"><div class="sv">${WORKOUT_STEPS_DEF.length}</div><div class="sl">${t('workout_steps')}</div></div>
+    <div class="stat-box"><div class="sv">${total}</div><div class="sl">${t('workout_earned')}</div></div>`;
+  if (overlay) overlay.classList.add('show');
+  checkAchievements(['wo_complete']);
+}
+
+function workoutDismiss() {
+  const overlay = document.getElementById('workout-result');
+  if (overlay) overlay.classList.remove('show');
+  goMenu();
+}
+
+function renderWorkoutBtn() {
+  const btn = document.getElementById('workout-btn');
+  if (!btn) return;
+  const done = workoutDoneToday();
+  btn.textContent = done ? '✓🏋️' : '🏋️';
+  btn.title = done ? t('workout_complete') : t('workout_lbl');
+}
+
+// ═══════════════════════════════════════════════════
+// PAIRS vs AI
+// ═══════════════════════════════════════════════════
+let aiDiff = localStorage.getItem('membrain_ai_diff') || 'medium';
+
+function selectAiDiff(el) {
+  aiDiff = el.dataset.diff;
+  localStorage.setItem('membrain_ai_diff', aiDiff);
+  document.querySelectorAll('.ai-diff-btn').forEach(b => b.classList.toggle('active', b.dataset.diff === aiDiff));
+}
+
+function loadElo() { return parseInt(localStorage.getItem('membrain_pairs_elo') || '1200'); }
+function saveElo(v) { localStorage.setItem('membrain_pairs_elo', String(Math.max(600, v))); }
+function updateEloDisplay() {
+  const badge = document.getElementById('pairs-elo-badge');
+  if (badge) badge.textContent = 'ELO: ' + loadElo();
+}
+
+function startAiGame() {
+  const coll = collById(selectedCollection);
+  const [cols, rows] = selectedGrid.split('x').map(Number);
+  const needed = cols * rows / 2;
+  const pool = [...coll.pool].sort(() => Math.random() - .5).slice(0, needed);
+  const cards = [...pool, ...pool].sort(() => Math.random() - .5);
+
+  pairsState.myName = t('ai_player_name');
+  pairsState.partner = t('ai_name_' + aiDiff);
+  pairsState.gridSize = selectedGrid;
+  pairsState.cards = cards;
+  pairsState.revealed = new Array(cols * rows).fill(false);
+  pairsState.matched = new Array(cols * rows).fill(false);
+  pairsState.holeCount = new Array(cols * rows).fill(0);
+  pairsState.scores = {
+    [pairsState.myName]: { pairs: 0, holes: 0, holePenalty: 0 },
+    [pairsState.partner]: { pairs: 0, holes: 0, holePenalty: 0 },
+  };
+  pairsState.myTurn = true;
+  pairsState.flipBuffer = [];
+  pairsState.waitingFlipBack = false;
+  pairsState.aiMode = true;
+  pairsState.aiDiff = aiDiff;
+  pairsState.aiMemory = [];
+  pairsState.aiFreeze = 0;
+  pairsState.powerups = { peek: 1, freeze: 1, hint: 1 };
+  pairsState.pairsMatchedByPlayer = 0;
+
+  document.getElementById('gameover-overlay').classList.remove('show');
+  const eloEl = document.getElementById('go-elo-change');
+  if (eloEl) eloEl.style.display = 'none';
+  document.getElementById('lobby-back-btn').textContent = t('back_menu');
+  document.getElementById('lobby-back-btn').onclick = goMenu;
+  showScreen('screen-pairs');
+  renderPowerupBar(true);
+  requestAnimationFrame(() => { renderPairsBoard(); updatePairsScores(); });
+  document.getElementById('rematch-btn').textContent = t('math_replay');
+  document.getElementById('rematch-btn').disabled = false;
+  document.getElementById('rematch-btn').onclick = startAiGame;
+  checkAchievements(['pb_first']);
+  metaTrackGame('pairs');
+}
+
+function renderPowerupBar(show) {
+  const bar = document.getElementById('pairs-powerup-bar');
+  if (!bar) return;
+  bar.classList.toggle('visible', !!show);
+  if (!show) return;
+  const pu = pairsState.powerups || { peek: 0, freeze: 0, hint: 0 };
+  ['peek', 'freeze', 'hint'].forEach(k => {
+    const btn = document.getElementById('pu-' + k);
+    const ct = document.getElementById('pu-' + k + '-ct');
+    if (btn) btn.disabled = (pu[k] || 0) <= 0 || !pairsState.myTurn;
+    if (ct) ct.textContent = pu[k] || 0;
+  });
+}
+
+function usePowerup(type) {
+  if (!pairsState.aiMode || !pairsState.myTurn) return;
+  const pu = pairsState.powerups;
+  if (!pu[type] || pu[type] <= 0) return;
+  pu[type]--;
+
+  if (type === 'peek') {
+    pairsState.cards.forEach((_, i) => {
+      if (!pairsState.matched[i] && !pairsState.revealed[i]) {
+        const el = document.querySelector(`#pairs-board .card-wrap:nth-child(${i + 1}) .card`);
+        if (el) el.classList.add('flipped');
+      }
+    });
+    setTimeout(() => {
+      pairsState.cards.forEach((_, i) => {
+        if (!pairsState.matched[i] && !pairsState.revealed[i]) {
+          const el = document.querySelector(`#pairs-board .card-wrap:nth-child(${i + 1}) .card`);
+          if (el) el.classList.remove('flipped');
+        }
+      });
+    }, 1800);
+  } else if (type === 'freeze') {
+    pairsState.aiFreeze++;
+  } else if (type === 'hint') {
+    const seen = {};
+    pairsState.cards.forEach((id, i) => {
+      if (!pairsState.matched[i]) {
+        if (seen[id] !== undefined) {
+          [seen[id], i].forEach(idx => {
+            const el = document.querySelector(`#pairs-board .card-wrap:nth-child(${idx + 1}) .card-back`);
+            if (el) { el.style.boxShadow = '0 0 18px var(--goldL)'; setTimeout(() => el.style.boxShadow = '', 1500); }
+          });
+        } else seen[id] = i;
+      }
+    });
+  }
+  renderPowerupBar(true);
+}
+
+function earnPowerup() {
+  const types = ['peek', 'freeze', 'hint'];
+  const pick = types[Math.floor(Math.random() * types.length)];
+  pairsState.powerups[pick] = (pairsState.powerups[pick] || 0) + 1;
+  renderPowerupBar(true);
+  const bar = document.getElementById('pairs-powerup-bar');
+  if (bar) { bar.style.background = 'rgba(124,58,237,.22)'; setTimeout(() => bar.style.background = '', 500); }
+}
+
+function aiTakeTurn() {
+  if (!pairsState.aiMode || pairsState.myTurn) return;
+
+  if (pairsState.aiFreeze > 0) {
+    pairsState.aiFreeze--;
+    setTimeout(() => { pairsState.myTurn = true; updatePairsScores(); renderPowerupBar(true); }, 600);
+    return;
+  }
+
+  setTimeout(() => {
+    const idx1 = aiPickCard1();
+    if (idx1 < 0) { aiEndTurn(); return; }
+    pairsState.revealed[idx1] = true;
+    pairsState.flipBuffer = [idx1];
+    aiLearnCard(idx1);
+    soundCardFlip();
+    renderPairsBoard();
+
+    setTimeout(() => {
+      const idx2 = aiPickCard2(idx1);
+      if (idx2 < 0) { aiEndTurn(); return; }
+      pairsState.revealed[idx2] = true;
+      pairsState.flipBuffer = [idx1, idx2];
+      aiLearnCard(idx2);
+      soundCardFlip();
+      renderPairsBoard();
+
+      setTimeout(() => {
+        const id1 = pairsState.cards[idx1], id2 = pairsState.cards[idx2];
+        if (id1 === id2) {
+          pairsState.matched[idx1] = pairsState.matched[idx2] = true;
+          pairsState.revealed[idx1] = pairsState.revealed[idx2] = true;
+          pairsState.flipBuffer = [];
+          pairsState.scores[pairsState.partner].pairs++;
+          soundPairFound();
+          renderPairsBoard();
+          updatePairsScores();
+          if (checkAiGameOver()) return;
+          aiTakeTurn();
+        } else {
+          pairsState.scores[pairsState.partner].holes = (pairsState.scores[pairsState.partner].holes || 0) + 1;
+          updatePairsScores();
+          soundNoMatch();
+          setTimeout(() => {
+            pairsState.revealed[idx1] = pairsState.revealed[idx2] = false;
+            pairsState.flipBuffer = [];
+            renderPairsBoard();
+            aiEndTurn();
+          }, 800);
+        }
+      }, 500);
+    }, 700);
+  }, 700);
+}
+
+function aiPickCard1() {
+  const pair = findKnownAiPair();
+  return pair ? pair[0] : randomUnrevealedCard();
+}
+
+function aiPickCard2(idx1) {
+  const id1 = pairsState.cards[idx1];
+  const forgetChance = pairsState.aiDiff === 'easy' ? 0.65 : pairsState.aiDiff === 'medium' ? 0.28 : 0.0;
+  if (Math.random() > forgetChance) {
+    const mem = pairsState.aiMemory.find(m => m.idx !== idx1 && m.objId === id1 && !pairsState.matched[m.idx]);
+    if (mem) return mem.idx;
+  }
+  return randomUnrevealedCard(idx1);
+}
+
+function aiLearnCard(idx) {
+  if (!pairsState.aiMemory.find(m => m.idx === idx)) {
+    pairsState.aiMemory.push({ idx, objId: pairsState.cards[idx] });
+    const cap = { easy: 4, medium: 8, hard: 999 }[pairsState.aiDiff] || 8;
+    if (pairsState.aiMemory.length > cap) pairsState.aiMemory.shift();
+  }
+}
+
+function findKnownAiPair() {
+  const mem = pairsState.aiMemory;
+  for (let i = 0; i < mem.length; i++) {
+    if (pairsState.matched[mem[i].idx]) continue;
+    for (let j = i + 1; j < mem.length; j++) {
+      if (pairsState.matched[mem[j].idx]) continue;
+      if (mem[i].objId === mem[j].objId) return [mem[i].idx, mem[j].idx];
+    }
+  }
+  return null;
+}
+
+function randomUnrevealedCard(exclude = -1) {
+  const cands = pairsState.cards.map((_, i) => i).filter(i => i !== exclude && !pairsState.matched[i] && !pairsState.revealed[i]);
+  return cands.length ? cands[Math.floor(Math.random() * cands.length)] : -1;
+}
+
+function aiEndTurn() {
+  pairsState.myTurn = true;
+  pairsState.flipBuffer = [];
+  renderPairsBoard();
+  updatePairsScores();
+  renderPowerupBar(true);
+}
+
+function checkAiGameOver() {
+  if (!pairsState.matched.every(Boolean)) return false;
+  const me = pairsState.scores[pairsState.myName];
+  const ai = pairsState.scores[pairsState.partner];
+  const winner = me.pairs > ai.pairs ? pairsState.myName : ai.pairs > me.pairs ? pairsState.partner : null;
+
+  const oldElo = loadElo();
+  const diff = pairsState.aiDiff;
+  const eloChange = winner === pairsState.myName
+    ? (diff === 'hard' ? +30 : diff === 'medium' ? +20 : +10)
+    : winner === null ? 0
+    : (diff === 'hard' ? -20 : diff === 'medium' ? -15 : -5);
+  const newElo = oldElo + eloChange;
+  saveElo(newElo);
+  updateEloDisplay();
+
+  const eloEl = document.getElementById('go-elo-change');
+  if (eloEl) {
+    eloEl.style.display = '';
+    eloEl.style.color = eloChange > 0 ? 'var(--greenL)' : eloChange < 0 ? 'var(--redL)' : 'var(--text2)';
+    eloEl.textContent = `ELO: ${oldElo} ${eloChange >= 0 ? '+' : ''}${eloChange} → ${newElo}`;
+  }
+
+  if (winner === pairsState.myName) soundWin(); else if (winner) soundLose();
+  showGameOver(pairsState.scores, winner);
+
+  const toEarn = [];
+  if (winner === pairsState.myName) toEarn.push('pb_win');
+  if (winner === pairsState.myName && diff === 'hard') toEarn.push('pb_hard');
+  if (newElo >= 1400) toEarn.push('pb_elo1400');
+  checkAchievements(toEarn);
+  const pairsXp = winner === pairsState.myName ? 30 : winner === null ? 15 : 10;
+  addXp(pairsXp, t('pairs_mode_title'));
+  return true;
+}
+
+// ═══════════════════════════════════════════════════
+// MATH ESTIMATION MODE
+// ═══════════════════════════════════════════════════
+function renderMathEstRow() {
+  const row = document.getElementById('math-est-row');
+  const lbl = document.getElementById('math-est-lbl');
+  if (!row) return;
+  if (lbl) lbl.textContent = t('math_est_lbl');
+  row.innerHTML = '';
+  [['off', 'math_est_off'], ['on', 'math_est_on']].forEach(([id, key]) => {
+    const b = document.createElement('div');
+    b.className = 'wm-mode-btn' + ((!mathEstMode && id === 'off') || (mathEstMode && id === 'on') ? ' active' : '');
+    b.textContent = t(key);
+    b.onclick = () => {
+      mathEstMode = id === 'on';
+      localStorage.setItem('membrain_math_est', mathEstMode ? 'on' : 'off');
+      renderMathEstRow();
+    };
+    row.appendChild(b);
+  });
+}
+
+// ═══════════════════════════════════════════════════
+// TRICK MASTERY
+// ═══════════════════════════════════════════════════
+function trickMasteryLoad() { try { return JSON.parse(localStorage.getItem('membrain_trick_mastery') || '{}'); } catch { return {}; } }
+function trickMasterySave(m) { try { localStorage.setItem('membrain_trick_mastery', JSON.stringify(m)); } catch {} }
+function trickMasteryGet(id) { return trickMasteryLoad()[id] || 0; }
+function trickMasteryIncrement(id) {
+  const m = trickMasteryLoad();
+  m[id] = (m[id] || 0) + 1;
+  trickMasterySave(m);
+  return m[id];
+}
+
+// ═══════════════════════════════════════════════════
+// DAILY LADDER
+// ═══════════════════════════════════════════════════
+function seededRand(seed) {
+  let s = seed >>> 0;
+  return () => { s = Math.imul(s ^ (s >>> 16), 0x45d9f3b); s = Math.imul(s ^ (s >>> 16), 0x45d9f3b); s ^= s >>> 16; return (s >>> 0) / 0xFFFFFFFF; };
+}
+
+function dailySeed() {
+  return mathTodayKey().split('').reduce((a, c, i) => a + c.charCodeAt(0) * (i + 1), 0);
+}
+
+function genDailyTasks() {
+  const rand = seededRand(dailySeed());
+  const ops = ['+', '-', '*', '%'];
+  return Array.from({ length: 5 }, () => {
+    const op = ops[Math.floor(rand() * ops.length)];
+    if (op === '+') {
+      const a = Math.floor(rand() * 90) + 10, b = Math.floor(rand() * 90) + 10;
+      return { q: `${a} + ${b} = ?`, target: a + b, op };
+    } else if (op === '-') {
+      const a = Math.floor(rand() * 90) + 30, b = Math.floor(rand() * (a - 10)) + 5;
+      return { q: `${a} − ${b} = ?`, target: a - b, op };
+    } else if (op === '*') {
+      const a = Math.floor(rand() * 11) + 2, b = Math.floor(rand() * 11) + 2;
+      return { q: `${a} × ${b} = ?`, target: a * b, op };
+    } else {
+      const pcts = [10, 20, 25, 50];
+      const pct = pcts[Math.floor(rand() * pcts.length)];
+      const whole = (Math.floor(rand() * 9) + 2) * 10;
+      return { q: `${pct}% of ${whole} = ?`, target: Math.round(pct * whole / 100), op };
+    }
+  });
+}
+
+function dailyDoneToday() {
+  try { const d = JSON.parse(localStorage.getItem('membrain_math_daily') || '{}'); return d[mathTodayKey()] || null; } catch { return null; }
+}
+
+function saveDailyResult(score, correct) {
+  try {
+    const d = JSON.parse(localStorage.getItem('membrain_math_daily') || '{}');
+    if (!d[mathTodayKey()]) d[mathTodayKey()] = { score, correct, done: true };
+    let streak = 0;
+    const now = new Date();
+    for (let i = 0; i < 365; i++) {
+      const dd = new Date(now); dd.setDate(now.getDate() - i);
+      if (d[mathDayKey(dd)]?.done) streak++; else break;
+    }
+    d._streak = streak;
+    localStorage.setItem('membrain_math_daily', JSON.stringify(d));
+    return streak;
+  } catch { return 0; }
+}
+
+function dailyStreak() { try { return JSON.parse(localStorage.getItem('membrain_math_daily') || '{}')._streak || 0; } catch { return 0; } }
+
+function renderDailyChallenge() {
+  const lbl = document.getElementById('math-daily-btn-lbl');
+  const badge = document.getElementById('math-daily-badge');
+  if (lbl) lbl.textContent = t('math_daily_challenge');
+  const done = dailyDoneToday();
+  if (done) {
+    if (badge) { badge.textContent = `✓ ${done.correct}/5`; badge.style.color = 'var(--greenL)'; }
+  } else {
+    const streak = dailyStreak();
+    if (badge) { badge.textContent = streak > 0 ? `🔥${streak}` : t('math_daily_go'); badge.style.color = ''; }
+  }
+}
+
+function startDailyChallenge() {
+  mathState.trickDef = null;
+  mathState.dailyMode = true;
+  mathState.dailyTasks = genDailyTasks();
+  mathState.level = 5;
+  mathState.taskIdx = 0; mathState.score = 0; mathState.correct = 0;
+  document.getElementById('math-setup').style.display = 'none';
+  document.getElementById('math-result').style.display = 'none';
+  document.getElementById('math-play').style.display = 'block';
+  document.getElementById('math-level-tag').textContent = t('math_daily_challenge');
+  mathNextTask();
+}
+
+// ═══════════════════════════════════════════════════
+// SHARE CARD
+// ═══════════════════════════════════════════════════
+function shareCard(gameEmoji, gameName, scoreText, subText){
+  const cv = document.getElementById('share-canvas');
+  cv.width = 600; cv.height = 310;
+  const ctx = cv.getContext('2d');
+  const bg = ctx.createLinearGradient(0,0,600,310);
+  bg.addColorStop(0,'#080818'); bg.addColorStop(1,'#0d0d26');
+  ctx.fillStyle = bg; ctx.fillRect(0,0,600,310);
+  ctx.strokeStyle='rgba(255,255,255,0.04)'; ctx.lineWidth=1;
+  for(let x=0;x<600;x+=40){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,310);ctx.stroke();}
+  for(let y=0;y<310;y+=40){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(600,y);ctx.stroke();}
+  const glow = ctx.createRadialGradient(300,155,30,300,155,180);
+  glow.addColorStop(0,'rgba(251,191,36,.13)'); glow.addColorStop(1,'rgba(251,191,36,0)');
+  ctx.fillStyle=glow; ctx.fillRect(0,0,600,310);
+  ctx.fillStyle='rgba(251,191,36,.75)'; ctx.font='bold 13px sans-serif'; ctx.textAlign='left';
+  ctx.fillText(lang==='uk'?'БОТАНІК':'MEMBRAIN', 22, 28);
+  ctx.textAlign='center';
+  ctx.font='48px serif'; ctx.fillText(gameEmoji, 300, 82);
+  ctx.fillStyle='rgba(255,255,255,0.55)'; ctx.font='bold 17px sans-serif'; ctx.fillText(gameName, 300, 110);
+  ctx.fillStyle='#fbbf24'; ctx.font='bold 68px sans-serif'; ctx.fillText(scoreText, 300, 198);
+  ctx.fillStyle='rgba(255,255,255,0.5)'; ctx.font='15px sans-serif'; ctx.fillText(subText, 300, 232);
+  ctx.strokeStyle='rgba(251,191,36,.32)'; ctx.lineWidth=2; ctx.strokeRect(1,1,598,308);
+  const link = document.createElement('a');
+  link.download='membrain-result.png'; link.href=cv.toDataURL(); link.click();
+}
+
+function wmShareCard(){
+  const score = document.getElementById('wm-score-pct')?.textContent || '';
+  const name = t('wm_mode_title');
+  shareCard('🧠', name, score, t('app_name'));
+}
+
+function spotShareCard(){
+  const streak = spotStreak > 0 ? `🔥 ${lang==='uk'?'Серія':'Streak'}: ${spotStreak}` : t('app_name');
+  shareCard('👁️', t('spot_mode_title'), spotStreak > 0 ? 'Streak ×'+spotStreak : '✓', streak);
+}
+
+// ═══════════════════════════════════════════════════
 // applyLang — update all static DOM + re-render dynamic sections
 // ═══════════════════════════════════════════════════
 function applyLang() {
@@ -3127,7 +4485,7 @@ function applyLang() {
   // word memory static
   setTxt('wm-section-title', 'wm_section_title'); setTxt('wm-section-sub', 'wm_section_sub');
   setTxt('wm-training-head', 'wm_training_head');
-  const wmChg = document.getElementById('wm-change-btn'); if (wmChg) wmChg.textContent = t('change_level');
+  const wmChg = document.getElementById('wm-change-btn'); if (wmChg) wmChg.textContent = t('spot_change_level');
   const wmRep = document.getElementById('wm-replay-btn'); if (wmRep) wmRep.textContent = t('math_replay');
   const wmNxt = document.getElementById('wm-next-btn'); if (wmNxt) wmNxt.textContent = t('math_next_level');
   const wmClr = document.getElementById('wm-clear-btn'); if (wmClr) wmClr.textContent = t('wm_clear');
@@ -3148,6 +4506,10 @@ function applyLang() {
   setTxt('invite-decline-btn', 'pairs_decline'); setTxt('invite-accept-btn', 'pairs_accept');
   setTxt('lobby-back-btn', 'pairs_lobby_btn');
   const remBtn = document.getElementById('rematch-btn'); if (remBtn && !remBtn.disabled) remBtn.textContent = t('pairs_rematch');
+  // AI panel
+  setTxt('ai-game-title', 'ai_game_title'); setTxt('ai-game-sub', 'ai_game_sub'); setTxt('ai-diff-lbl', 'ai_diff_lbl');
+  const aiStartBtn = document.getElementById('ai-start-btn'); if (aiStartBtn) aiStartBtn.textContent = t('ai_start_btn');
+  document.querySelectorAll('.ai-diff-btn').forEach(b => { b.textContent = t('ai_diff_' + b.dataset.diff); });
   // math static
   setTxt('math-section-title', 'math_section_title'); setTxt('math-section-sub', 'math_section_sub');
   setTxt('math-select-lbl', 'math_select_lbl'); setTxt('math-daily-head', 'math_daily_head');
@@ -3155,7 +4517,9 @@ function applyLang() {
   if (mathHint && mathState.opsId) selectMathOps(mathState.opsId); else if (mathHint) setTxt('math-op-hint', 'math_choose_arith');
   const mathRep = document.getElementById('math-replay-btn'); if (mathRep) mathRep.textContent = t('math_replay');
   // re-render dynamic level grids
-  showWordMenu(); showSpotMenu(); renderMathOps(); renderMathLevels(); renderMathTricks(); renderMathStats(); renderWmStats();
+  showWordMenu(); showSpotMenu(); renderMathOps(); renderMathLevels(); renderMathTricks(); renderMathStats(); renderWmStats(); renderMathEstRow(); renderDailyChallenge(); updateXpDisplay(); renderWorkoutBtn();
+  setTxt('radar-title','radar_title'); setTxt('workout-lbl','workout_lbl'); setTxt('workout-result-title','workout_complete'); setTxt('workout-result-sub','workout_sub'); setTxt('workout-dismiss-btn','workout_awesome');
+  updateAchBadge();
   // return to menu
   goMenu();
 }
