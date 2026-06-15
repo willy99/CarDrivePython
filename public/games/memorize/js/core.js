@@ -44,6 +44,7 @@ function backFromGame(game) {
     col:     () => document.getElementById('col-study').style.display !== 'none' ||
                    document.getElementById('col-quiz').style.display !== 'none',
     cipher:  () => document.getElementById('cipher-study').style.display !== 'none' ||
+                   document.getElementById('cipher-warmup').style.display !== 'none' ||
                    document.getElementById('cipher-recall').style.display !== 'none',
     waiter:  () => document.getElementById('wtr-study').style.display !== 'none' ||
                    document.getElementById('wtr-recall').style.display !== 'none',
@@ -59,6 +60,9 @@ function backFromGame(game) {
       if (game === 'cipher') { cphTimers.forEach(clearTimeout);  cphTimers = []; }
       if (game === 'waiter')  { wtrTimers.forEach(clearTimeout);  wtrTimers = []; }
       if (game === 'meeting') { mtgTimers.forEach(clearTimeout);  mtgTimers = []; }
+      if (game === 'spot')    { try { clearInterval(spotTimer); spotTimer = null; } catch (e) {} }
+      if (game === 'math')    { try { clearInterval(mathState.timer); } catch (e) {} }
+      if (game === 'diamond') { try { if (dmdState.animRaf) cancelAnimationFrame(dmdState.animRaf); if (dmdState.progressTimer) clearInterval(dmdState.progressTimer); dmdState.animRaf = null; dmdState.progressTimer = null; } catch (e) {} }
       if (game === 'pairs') { document.getElementById('gameover-overlay').classList.remove('show'); }
       goMenu();
     };
@@ -84,7 +88,7 @@ function leaveConfirm() {
 // ── Info popup ──
 let _infoPopupOkCb = null;
 function showInfoPopup(title, bodyHtml, okCb) {
-  document.getElementById('info-popup-title').innerHTML = title;
+  document.getElementById('info-popup-title').textContent = title;
   document.getElementById('info-popup-body').innerHTML = bodyHtml;
   document.getElementById('info-popup-ok').textContent = t('info_got_it');
   _infoPopupOkCb = okCb || null;

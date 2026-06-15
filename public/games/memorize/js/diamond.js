@@ -11,12 +11,18 @@ const DIAMOND_LEVELS = [
   {grid:5,len:20,showMs:1800},{grid:5,len:25,showMs:1500},
 ];
 
+// ── SOUNDS (reuse the global playTone from pairs.js) ──
+function dmdSnd(fn){ try{ if(typeof playTone==='function') fn(); }catch(e){} }
+function dmdSndTap(n){    dmdSnd(()=>{ playTone(440 + (n%6)*40,'sine',0.10,0.05); }); }
+function dmdSndCorrect(){ dmdSnd(()=>{ playTone(523,'triangle',0.24,0.14); playTone(659,'triangle',0.22,0.14,0.13); playTone(880,'triangle',0.20,0.18,0.26); }); }
+function dmdSndWrong(){   dmdSnd(()=>{ playTone(220,'sawtooth',0.16,0.18); playTone(165,'sawtooth',0.12,0.24,0.14); }); }
+
 function dmdLoadSave() {
   try { return JSON.parse(localStorage.getItem('membrain_diamond') || '{}'); } catch { return {}; }
 }
 function dmdSave(o) {
   const s = Object.assign(dmdLoadSave(), o);
-  localStorage.setItem('membrain_diamond', JSON.stringify(s));
+  try{ localStorage.setItem('membrain_diamond', JSON.stringify(s)); }catch(e){}
 }
 
 const dmdState = {
@@ -378,6 +384,7 @@ function dmdTapDot(dot) {
   dmdState.userPat.push(dot);
   const canvas = document.getElementById('diamond-canvas');
   const n = dmdState.userPat.length;
+  dmdSndTap(n);
   const total = dmdState.pattern.length;
   document.getElementById('diamond-hint').textContent = t('diamond_hint_selected', n, total);
   dmdDraw(canvas, [], dmdState.userPat, 'recall');
@@ -412,6 +419,7 @@ function diamondCheckResult() {
 }
 
 function diamondShowResult(correct) {
+  (correct ? dmdSndCorrect() : dmdSndWrong());
   const cfg = dmdState.cfg;
 
   if (correct) {

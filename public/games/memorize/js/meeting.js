@@ -30,6 +30,15 @@ let mtgCurrent = null;
 let mtgTimers  = [];
 let mtgAnswers = {};
 
+// ── SOUNDS (reuse the global playTone from pairs.js) ──
+function mtgSnd(fn){ try{ if(typeof playTone==='function') fn(); }catch(e){} }
+function mtgSndPick(){    mtgSnd(()=>{ playTone(500,'sine',0.10,0.05); }); }
+function mtgSndVerdict(pct){ mtgSnd(()=>{
+  if(pct>=75){ [523,659,784,1047].forEach((f,i)=>playTone(f,'triangle',0.24,0.20,i*0.11)); }
+  else if(pct>=50){ playTone(440,'triangle',0.18,0.18); playTone(523,'triangle',0.16,0.20,0.15); }
+  else { playTone(330,'sawtooth',0.16,0.24); playTone(247,'sawtooth',0.13,0.28,0.16); }
+}); }
+
 // ── RNG ─────────────────────────────────────────────────────────────────────
 function mtgRng(seed) {
   seed = seed | 0;
@@ -340,6 +349,7 @@ function mtgPick(qi, btn) {
   card.querySelectorAll('.mtg-choice-btn').forEach(b => b.classList.remove('selected'));
   btn.classList.add('selected');
   mtgAnswers[qi] = btn.dataset.val;
+  mtgSndPick();
   const allDone = mtgCurrent.questions.every((_, i) => mtgAnswers[i] !== undefined);
   const sub = document.getElementById('mtg-submit-btn');
   if (sub) sub.disabled = !allDone;
@@ -370,6 +380,7 @@ function mtgRenderResult(correct, pct) {
   const total   = cur.questions.length;
   const verdict = pct === 100 ? t('mtg_perfect') : pct >= 75 ? t('mtg_good') : pct >= 50 ? t('mtg_ok') : t('mtg_poor');
   const clr     = pct === 100 ? '#4ade80' : pct >= 75 ? '#60a5fa' : '#f472b6';
+  mtgSndVerdict(pct);
 
   document.getElementById('mtg-result-score').innerHTML = `
     <div style="font-size:2.8rem;font-weight:900;color:${clr};margin-bottom:2px">${pct}%</div>

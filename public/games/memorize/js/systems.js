@@ -90,7 +90,7 @@ function metaTrackGame(game){
 function xpForLevel(n){ return n <= 0 ? 0 : n * 150 + n * (n - 1) * 25; }
 function levelFromXp(xp){ let l = 0; while (xpForLevel(l + 1) <= xp) l++; return l; }
 function loadXp(){ return parseInt(localStorage.getItem('membrain_xp') || '0'); }
-function saveXp(v){ localStorage.setItem('membrain_xp', String(Math.max(0, v))); }
+function saveXp(v){ try{ localStorage.setItem('membrain_xp', String(Math.max(0, v))); }catch(e){} }
 
 function addXp(amount, source) {
   const old = loadXp();
@@ -134,57 +134,66 @@ function updateXpDisplay() {
 // BRAIN RADAR CHART
 // ═══════════════════════════════════════════════════
 function brainScores() {
+  // ── per-game scores (0–100) + whether the game has any data yet ──
   const wmS = wmLoadStats();
   const wmWords = Object.values(wmS.days || {}).reduce((a, x) => a + (x.words || 0), 0);
   const wmRec   = Object.values(wmS.days || {}).reduce((a, x) => a + (x.recalled || 0), 0);
-  const wmScore = wmWords > 0 ? Math.round(wmRec / wmWords * 100) : 0;
+  const wm = { score: wmWords > 0 ? Math.round(wmRec / wmWords * 100) : 0, has: wmWords > 0 };
 
-  const spotBest = parseInt(localStorage.getItem('membrain_spot_best') || '0');
-  const spotScore = Math.min(100, Math.round(spotBest / (SPOT_LEVELS.length - 1) * 100));
+  const spotBest  = parseInt(localStorage.getItem('membrain_spot_best') || '0');
+  const spot = { score: Math.min(100, Math.round(spotBest / Math.max(1, SPOT_LEVELS.length - 1) * 100)),
+                 has: localStorage.getItem('membrain_spot_best') !== null };
 
   const mS = mathLoadStats();
   const mTotal   = Object.values(mS.days || {}).reduce((a, x) => a + x.tasks, 0);
   const mCorrect = Object.values(mS.days || {}).reduce((a, x) => a + x.correct, 0);
-  const mathScore = mTotal > 0 ? Math.round(mCorrect / mTotal * 100) : 0;
+  const math = { score: mTotal > 0 ? Math.round(mCorrect / mTotal * 100) : 0, has: mTotal > 0 };
 
-  const pairsScore = Math.min(100, Math.max(0, Math.round((loadElo() - 600) / 12)));
+  const pairs = { score: Math.min(100, Math.max(0, Math.round((loadElo() - 600) / 12))),
+                  has: localStorage.getItem('membrain_pairs_elo') !== null };
 
-  const dStreak = dailyStreak();
-  const dailyScore = Math.min(100, Math.round(dStreak / 14 * 100));
+  let dmd = null; try { dmd = JSON.parse(localStorage.getItem('membrain_diamond') || 'null'); } catch (e) {}
+  const dmdBest = dmd ? Math.max(dmd.best || 0, dmd.level || 0) : 0;
+  const diamond = { score: Math.min(100, Math.round(dmdBest / Math.max(1, DIAMOND_LEVELS.length - 1) * 100)),
+                    has: !!dmd };
 
-  const cphData    = JSON.parse(localStorage.getItem('membrain_cipher_v1') || '{}');
-  const cphHistory = cphData.history || [];
-  const cphRecent  = cphHistory.slice(-20);
-  const cipherScore = cphRecent.length > 0
-    ? Math.round(cphRecent.reduce((a, h) => a + h.pct, 0) / cphRecent.length)
-    : 0;
+  const cphData   = JSON.parse(localStorage.getItem('membrain_cipher_v1') || '{}');
+  const cphRecent = (cphData.history || []).slice(-20);
+  const cipher = { score: cphRecent.length ? Math.round(cphRecent.reduce((a, h) => a + h.pct, 0) / cphRecent.length) : 0,
+                   has: cphRecent.length > 0 };
 
-  const colData   = JSON.parse(localStorage.getItem('membrain_colombo_v1') || '{}');
-  const colDays   = Object.values(colData.days || {}).slice(-20);
-  const colScore  = colDays.length > 0
-    ? Math.round(colDays.reduce((a, d) => a + (d.score || 0), 0) / colDays.length)
-    : 0;
+  const colData = JSON.parse(localStorage.getItem('membrain_colombo_v1') || '{}');
+  const colDays = Object.values(colData.days || {}).slice(-20);
+  const colombo = { score: colDays.length ? Math.round(colDays.reduce((a, d) => a + (d.score || 0), 0) / colDays.length) : 0,
+                    has: colDays.length > 0 };
 
-  const wtrData    = JSON.parse(localStorage.getItem('membrain_waiter_v1') || '{}');
-  const wtrHist    = (wtrData.history || []).slice(-20);
-  const wtrScore   = wtrHist.length > 0
-    ? Math.round(wtrHist.reduce((a, h) => a + h.pct, 0) / wtrHist.length) : 0;
+  const wtrData = JSON.parse(localStorage.getItem('membrain_waiter_v1') || '{}');
+  const wtrHist = (wtrData.history || []).slice(-20);
+  const waiter = { score: wtrHist.length ? Math.round(wtrHist.reduce((a, h) => a + h.pct, 0) / wtrHist.length) : 0,
+                   has: wtrHist.length > 0 };
 
-  const mtgData  = JSON.parse(localStorage.getItem('membrain_meeting_v1') || '{}');
-  const mtgHist  = (mtgData.history || []).slice(-20);
-  const mtgScore = mtgHist.length > 0
-    ? Math.round(mtgHist.reduce((a, h) => a + h.pct, 0) / mtgHist.length) : 0;
+  const mtgData = JSON.parse(localStorage.getItem('membrain_meeting_v1') || '{}');
+  const mtgHist = (mtgData.history || []).slice(-20);
+  const meeting = { score: mtgHist.length ? Math.round(mtgHist.reduce((a, h) => a + h.pct, 0) / mtgHist.length) : 0,
+                    has: mtgHist.length > 0 };
+
+  let lmData = {}; try { lmData = JSON.parse(localStorage.getItem('membrain_lm') || '{}'); } catch (e) {}
+  const lmHist = [];
+  (lmData.items || []).forEach(it => (it.history || []).forEach(h => lmHist.push(h.score)));
+  const lmRecent = lmHist.slice(-20);
+  const longmem = { score: lmRecent.length ? Math.round(lmRecent.reduce((a, s) => a + s, 0) / lmRecent.length) : 0,
+                    has: lmRecent.length > 0 };
+
+  // Average only the games that have been played, so an untouched game in a
+  // category doesn't drag the whole category's score to zero.
+  const group = arr => { const p = arr.filter(g => g.has); return p.length ? Math.round(p.reduce((a, g) => a + g.score, 0) / p.length) : 0; };
 
   return [
-    { label: t('radar_wm'),      score: wmScore,     color: 'rgba(168,85,247,.85)' },
-    { label: t('radar_spot'),   score: spotScore,   color: 'rgba(96,165,250,.85)' },
-    { label: t('radar_math'),   score: mathScore,   color: 'rgba(52,211,153,.85)' },
-    { label: t('radar_pairs'),  score: pairsScore,  color: 'rgba(251,191,36,.85)' },
-    { label: t('radar_daily'),  score: dailyScore,  color: 'rgba(248,113,113,.85)' },
-    { label: t('radar_cipher'), score: cipherScore, color: 'rgba(129,140,248,.85)' },
-    { label: t('radar_col'),    score: colScore,    color: 'rgba(251,191,36,.6)'  },
-    { label: t('radar_waiter'),  score: wtrScore,    color: 'rgba(255,112,67,.8)'  },
-    { label: t('radar_meeting'), score: mtgScore,    color: 'rgba(96,165,250,.85)' },
+    { label: t('radar_visual'),   score: group([waiter, colombo, spot, pairs, diamond]), color: 'rgba(96,165,250,.85)' },
+    { label: t('radar_mnemonic'), score: cipher.score,          color: 'rgba(129,140,248,.85)' },
+    { label: t('radar_math'),     score: math.score,            color: 'rgba(52,211,153,.85)' },
+    { label: t('radar_word'),     score: group([meeting, wm]),  color: 'rgba(168,85,247,.85)' },
+    { label: t('radar_longmem'),  score: longmem.score,         color: 'rgba(251,191,36,.85)' },
   ];
 }
 

@@ -1,0 +1,21 @@
+{
+  "appId": "com.pzhelnov.membrain",
+  "appName": "MEMBRAIN",
+  "webDir": "../public/games/memorize",
+  "android": {
+    "allowMixedContent": false,
+    "captureInput": true,
+    "webContentsDebuggingEnabled": false
+  },
+  "plugins": {
+    "SplashScreen": {
+      "launchShowDuration": 1500,
+      "backgroundColor": "#080818",
+      "showSpinner": false
+    },
+    "StatusBar": {
+      "style": "Dark",
+      "backgroundColor": "#080818"
+    }
+  }
+}

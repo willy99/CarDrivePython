@@ -84,10 +84,37 @@ const CPH_LEVELS = [
 const CPH_DAILY_LEN = 6;
 const CPH_LS_KEY = 'membrain_cipher_v1';
 
+// Linking actions for the active story-builder. Presented as an emoji + a short
+// caption that sits BETWEEN two shape icons, so no grammatical-case agreement is
+// needed — safe for every language (the shapes are pictures, not inflected words).
+const CPH_LINKS = [
+  { emoji:'💥', key:'cph_link_smash' },
+  { emoji:'🔥', key:'cph_link_burn'  },
+  { emoji:'🏃', key:'cph_link_chase' },
+  { emoji:'🎁', key:'cph_link_gift'  },
+  { emoji:'🔄', key:'cph_link_morph' },
+  { emoji:'⬆️', key:'cph_link_leap'  },
+];
+
 let cphState = {
-  level:0, digits:[], answer:[], timer:null, daily:false, showLabel:true
+  level:0, digits:[], answer:[], links:[], tiles:[], timer:null, daily:false, showLabel:true
 };
 let cphTimers = [];
+let cphDrag = null;
+
+// ── SOUNDS (reuse the global playTone from pairs.js) ──
+function cphSnd(fn){ try{ if(typeof playTone==='function') fn(); }catch(e){} }
+function cphSndTick(){    cphSnd(()=>{ playTone(520,'sine',0.08,0.04); }); }
+function cphSndLock(){    cphSnd(()=>{ playTone(660,'triangle',0.12,0.06); playTone(880,'triangle',0.10,0.07,0.05); }); }
+function cphSndPlace(){   cphSnd(()=>{ playTone(440,'sine',0.10,0.05); }); }
+function cphSndCorrect(d=0){ cphSnd(()=>{ playTone(587,'triangle',0.16,0.10,d); playTone(880,'triangle',0.12,0.12,d+0.08); }); }
+function cphSndWrong(d=0){   cphSnd(()=>{ playTone(196,'sawtooth',0.12,0.16,d); }); }
+function cphSndCombo(n){  cphSnd(()=>{ playTone(440+n*90,'triangle',0.16,0.10); }); }
+function cphSndVerdict(pct){ cphSnd(()=>{
+  if(pct>=80){ [523,659,784,1047].forEach((f,i)=>playTone(f,'triangle',0.24,0.20,i*0.11)); }
+  else if(pct>=50){ playTone(440,'triangle',0.18,0.18); playTone(523,'triangle',0.16,0.20,0.15); }
+  else { playTone(330,'sawtooth',0.16,0.24); playTone(247,'sawtooth',0.13,0.28,0.16); }
+}); }
 
 // ── Seeded RNG (same as Colombo's mulberry32) ──
 function cphRng(seed) {
@@ -267,10 +294,22 @@ function cphStart(levelIdx, daily=false, dailySeed=null) {
   const len = daily ? CPH_DAILY_LEN : lv.len;
   const seed = dailySeed !== null ? dailySeed : ((Date.now() + levelIdx * 31337) % 999983);
 
+  const digits = cphGenDigits(len, seed);
+  // Default link per gap is seeded so the same code starts with the same story,
+  // but the player can re-tap each link to make it their own.
+  const links = [];
+  for (let i = 0; i < digits.length - 1; i++) links.push((digits[i] + digits[i + 1]) % CPH_LINKS.length);
+
   cphState = {
     level:     levelIdx,
-    digits:    cphGenDigits(len, seed),
+    digits:    digits,
     answer:    [],
+    links:     links,
+    tiles:     [],
+    locked:    digits.map(() => false),
+    studyStart:0,
+    studyElapsed:0,
+    warmupOk:  false,
     timer:     null,
     daily:     daily,
     showLabel: daily ? true : lv.showLabel,
@@ -292,7 +331,7 @@ function cphStart(levelIdx, daily=false, dailySeed=null) {
       const saved = cphSavedData();
       if (!saved.seenIntros) saved.seenIntros = {};
       saved.seenIntros[levelIdx] = true;
-      localStorage.setItem(CPH_LS_KEY, JSON.stringify(saved));
+      try{ localStorage.setItem(CPH_LS_KEY, JSON.stringify(saved)); }catch(e){}
     }
   }
 }
@@ -301,131 +340,324 @@ function cphDaily() {
   cphStart(5, true, cphDailySeed());
 }
 
-// ── Study phase ──
+// ── Study phase (self-paced: morph → build story → lock each shape) ──
 function cphRenderStudy() {
-  const {digits, showLabel, studyMs} = cphState;
+  const {digits} = cphState;
 
-  cphSetTxt('cipher-study-title', 'cph_study_title');
-  cphSetTxt('cipher-ready-btn',   'cph_ready_btn');
+  cphSetTxt('cipher-study-title', 'cph_build_title');
 
-  // Build icon cards
-  const row = document.getElementById('cipher-icons-row');
-  if (row) {
-    row.innerHTML = digits.map((d, i) =>
-      `<div class="cph-icon-card" id="cph-icon-${i}">
-        ${cphIconSvg(d, 74, CPH_CLR[d])}
-        ${showLabel ? `<div class="cph-icon-label" style="color:${CPH_CLR[d]}">${d}</div>
-        <div class="cph-icon-name" style="color:${CPH_CLR[d]}99">${t('cph_shape_'+d)}</div>` : ''}
-      </div>`
-    ).join('');
-    // Staggered entrance animation
-    digits.forEach((_, i) => {
-      const el = document.getElementById(`cph-icon-${i}`);
-      if (el) { el.style.opacity='0'; el.style.transform='scale(.6) translateY(10px)'; }
-      const tid = setTimeout(() => {
-        if (el) { el.style.transition='opacity .3s, transform .3s'; el.style.opacity='1'; el.style.transform='scale(1) translateY(0)'; }
-      }, i * 160 + 80);
-      cphTimers.push(tid);
-    });
-  }
+  // Build the interactive chain: shape · link · shape · …
+  cphRenderChain('cipher-icons-row', true);
 
-  // Story appears after all icons loaded
-  const storyDelay = digits.length * 160 + 480;
-  const storyTid = setTimeout(() => cphShowStory(), storyDelay);
-  cphTimers.push(storyTid);
+  // Trigger the number→shape morph, staggered left-to-right
+  digits.forEach((_, i) => {
+    const tid = setTimeout(() => {
+      const m = document.getElementById('cph-morph-' + i);
+      if (m) m.classList.add('done');
+    }, i * 220 + 220);
+    cphTimers.push(tid);
+  });
 
-  // Countdown timer
-  let remaining = studyMs;
-  const fill    = document.getElementById('cipher-study-fill');
+  // Hint fades in once the shapes have settled
+  const box = document.getElementById('cipher-story-box');
+  if (box) { box.textContent = t('cph_build_hint'); box.style.opacity = '0'; box.classList.add('cph-build-hint'); }
+  const hintTid = setTimeout(() => {
+    if (box) { box.style.transition = 'opacity .5s'; box.style.opacity = '1'; }
+  }, digits.length * 220 + 420);
+  cphTimers.push(hintTid);
+
+  // Self-paced: no countdown. Hide the timebar, run a count-UP elapsed clock.
+  const bar = document.querySelector('#cipher-study .cph-study-timebar');
+  if (bar) bar.style.display = 'none';
+  cphState.studyStart = Date.now();
   const counter = document.getElementById('cipher-countdown');
-  const tick    = () => {
-    remaining -= 100;
-    const pct = Math.max(0, remaining / studyMs * 100);
-    if (fill)    fill.style.width = pct + '%';
-    if (counter) counter.textContent = Math.ceil(remaining / 1000);
-    if (remaining <= 0) { cphStartRecall(); }
-    else { const tid = setTimeout(tick, 100); cphTimers.push(tid); }
+  const tickUp = () => {
+    const s = Math.floor((Date.now() - cphState.studyStart) / 1000);
+    if (counter) counter.textContent = '⏱ ' + s + 's';
+    const tid = setTimeout(tickUp, 250); cphTimers.push(tid);
   };
-  const tid = setTimeout(tick, 100);
-  cphTimers.push(tid);
+  tickUp();
+
+  cphUpdateLockBtn();
 }
 
-function cphShowStory() {
-  const box = document.getElementById('cipher-story-box');
-  if (!box) return;
-  const story = cphMakeStory(cphState.digits);
-  box.textContent = story;
-  box.style.opacity = '0';
-  box.style.transition = 'opacity .6s';
-  requestAnimationFrame(() => { box.style.opacity = '1'; });
+// Keep already-morphed shapes visible after a chain re-render.
+function cphMarkMorphsDone() {
+  cphState.digits.forEach((_, k) => {
+    const m = document.getElementById('cph-morph-' + k);
+    if (m) m.classList.add('done');
+  });
+}
+
+// Tapping a shape "commits" it — forces the player to look at each one.
+function cphToggleLock(i) {
+  cphState.locked[i] = !cphState.locked[i];
+  if (cphState.locked[i]) cphSndLock(); else cphSndTick();
+  cphRenderChain('cipher-icons-row', true);
+  cphMarkMorphsDone();
+  cphUpdateLockBtn();
+}
+
+function cphUpdateLockBtn() {
+  const btn = document.getElementById('cipher-ready-btn');
+  if (!btn) return;
+  const n = cphState.locked.filter(Boolean).length;
+  const total = cphState.digits.length;
+  if (n >= total) { btn.disabled = false; btn.textContent = t('cph_lock_btn'); }
+  else            { btn.disabled = true;  btn.textContent = t('cph_lock_progress', n, total); }
+}
+
+// Renders the shape/link chain. interactive=true gives tappable link chips +
+// the morph wrappers; interactive=false renders a static recap (for results).
+function cphRenderChain(containerId, interactive, shapeSize) {
+  const row = document.getElementById(containerId);
+  if (!row) return;
+  const {digits, showLabel, links, locked} = cphState;
+  const sz = shapeSize || 74;
+  let html = '<div class="cph-chain">';
+  digits.forEach((d, i) => {
+    const isLocked = interactive && locked && locked[i];
+    const shapeInner = interactive
+      ? `<div class="cph-morph" id="cph-morph-${i}">
+           ${showLabel ? `<span class="cph-morph-num" style="color:${CPH_CLR[d]}">${d}</span>` : ''}
+           <span class="cph-morph-shape">${cphIconSvg(d, sz, CPH_CLR[d])}</span>
+           ${isLocked ? '<span class="cph-lock-badge">✓</span>' : ''}
+         </div>`
+      : cphIconSvg(d, sz, CPH_CLR[d]);
+    html += `<div class="cph-chain-shape ${interactive ? 'tappable' : ''} ${isLocked ? 'locked' : ''}" ${interactive ? `onclick="cphToggleLock(${i})"` : ''}>
+      ${shapeInner}
+      ${interactive && showLabel ? `<div class="cph-icon-name" style="color:${CPH_CLR[d]}99">${t('cph_shape_'+d)}</div>` : ''}
+    </div>`;
+    if (i < digits.length - 1) {
+      const lk = CPH_LINKS[links[i]];
+      html += interactive
+        ? `<button class="cph-link" onclick="cphCycleLink(${i})" aria-label="change link">
+             <span class="cph-link-emoji">${lk.emoji}</span>
+             <span class="cph-link-label">${t(lk.key)}</span>
+           </button>`
+        : `<span class="cph-link static"><span class="cph-link-emoji">${lk.emoji}</span></span>`;
+    }
+  });
+  html += '</div>';
+  row.innerHTML = html;
+}
+
+// Player taps a link chip to cycle the action — their personal mnemonic.
+function cphCycleLink(i) {
+  // Don't let a tap on the chip bubble up and toggle the shape lock.
+  if (window.event) window.event.stopPropagation();
+  cphState.links[i] = (cphState.links[i] + 1) % CPH_LINKS.length;
+  cphRenderChain('cipher-icons-row', true);
+  cphMarkMorphsDone();
+  cphUpdateLockBtn();
 }
 
 function cphSkipStudy() {
   cphTimers.forEach(clearTimeout); cphTimers = [];
-  cphStartRecall();
+  cphState.studyElapsed = Math.round((Date.now() - cphState.studyStart) / 1000);
+  cphStartWarmup();
 }
 
-// ── Recall phase ──
+// ── Warm-up flash round (active-recall priming: one shape → tap its digit) ──
+function cphStartWarmup() {
+  cphTimers.forEach(clearTimeout); cphTimers = [];
+  document.getElementById('cipher-study').style.display  = 'none';
+  document.getElementById('cipher-recall').style.display = 'none';
+  document.getElementById('cipher-result').style.display = 'none';
+  const wrap = document.getElementById('cipher-warmup');
+  wrap.style.display = '';
+
+  // Pick a shape that actually appeared, build 4 digit choices (correct + lures)
+  const {digits} = cphState;
+  const pos = Math.floor(Math.random() * digits.length);
+  const correct = digits[pos];
+  const choices = new Set([correct]);
+  while (choices.size < 4) choices.add(Math.floor(Math.random() * 10));
+  const opts = [...choices].sort(() => Math.random() - 0.5);
+
+  wrap.innerHTML = `
+    <button class="close-btn close-btn-float" onclick="backFromGame('cipher')" title="← MemBrain">✕</button>
+    <div class="cph-warmup-title">${t('cph_warmup_title')}</div>
+    <div class="cph-warmup-shape">${cphIconSvg(correct, 96, CPH_CLR[correct])}</div>
+    <div class="cph-warmup-q">${t('cph_warmup_q')}</div>
+    <div class="cph-warmup-opts" id="cipher-warmup-opts">
+      ${opts.map(d => `<button class="cph-warmup-opt" data-d="${d}" onclick="cphWarmupAnswer(${d},${correct})">${d}</button>`).join('')}
+    </div>`;
+}
+
+function cphWarmupAnswer(picked, correct) {
+  const opts = document.getElementById('cipher-warmup-opts');
+  if (!opts || opts.dataset.locked) return;
+  opts.dataset.locked = '1';
+  cphState.warmupOk = (picked === correct);
+  (cphState.warmupOk ? cphSndCorrect() : cphSndWrong());
+  opts.querySelectorAll('.cph-warmup-opt').forEach(b => {
+    const d = parseInt(b.dataset.d);
+    if (d === correct)      b.classList.add('right');
+    else if (d === picked)  b.classList.add('wrong');
+    b.disabled = true;
+  });
+  const tid = setTimeout(() => {
+    document.getElementById('cipher-warmup').style.display = 'none';
+    cphStartRecall();
+  }, 750);
+  cphTimers.push(tid);
+}
+
+// ── Recall phase (drag / tap shapes into ordered slots) ──
 function cphStartRecall() {
   cphTimers.forEach(clearTimeout); cphTimers = [];
-  cphState.answer = [];
+  cphState.answer = new Array(cphState.digits.length).fill(null);
+  cphBuildTiles();
 
   document.getElementById('cipher-study').style.display  = 'none';
-  document.getElementById('cipher-recall').style.display = '';
+  const recall = document.getElementById('cipher-recall');
+  recall.style.display = '';
+  recall.innerHTML = `
+    <button class="close-btn close-btn-float" onclick="backFromGame('cipher')" title="← MemBrain">✕</button>
+    <div id="cipher-recall-title" class="cph-recall-title">${t('cph_recall_drag_title')}</div>
+    <div class="cph-recall-hint">${t('cph_recall_hint')}</div>
+    <div id="cipher-slots" class="cph-slots"></div>
+    <div id="cipher-tray" class="cph-tray"></div>
+    <button class="btn btn-primary" id="cipher-submit-btn" onclick="cphSubmit()" style="width:100%;max-width:320px;margin-top:8px;">${t('cph_submit_btn')}</button>`;
 
-  cphSetTxt('cipher-recall-title', 'cph_recall_title');
-  cphSetTxt('cipher-submit-btn',   'cph_submit_btn');
-
-  cphRenderAnswerRow();
-  cphRenderDigitPad();
+  cphRenderRecall();
 }
 
-function cphRenderAnswerRow() {
-  const {digits, answer} = cphState;
-  const row = document.getElementById('cipher-answer-row');
-  if (!row) return;
-  row.innerHTML = digits.map((_, i) => {
-    if (i < answer.length) {
-      const d = answer[i];
-      return `<div class="cph-ans-box filled" style="border-color:${CPH_CLR[d]}">${cphIconSvg(d, 38)}</div>`;
-    }
-    return `<div class="cph-ans-box" id="cph-ans-${i}">?</div>`;
-  }).join('');
+// Build the draggable tiles: one per digit (repeats included) plus a couple of
+// decoy shapes so the player must recall WHICH shapes appeared, not just order.
+function cphBuildTiles() {
+  const {digits} = cphState;
+  let id = 0;
+  const tiles = digits.map(d => ({ id: id++, digit: d, slot: null }));
+  const present = new Set(digits);
+  const pool = [];
+  for (let d = 0; d < 10; d++) if (!present.has(d)) pool.push(d);
+  const nDist = Math.min(digits.length <= 3 ? 1 : 2, pool.length);
+  for (let k = 0; k < nDist && pool.length; k++) {
+    const idx = Math.floor(Math.random() * pool.length);
+    tiles.push({ id: id++, digit: pool.splice(idx, 1)[0], slot: null });
+  }
+  // Fisher–Yates shuffle
+  for (let i = tiles.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [tiles[i], tiles[j]] = [tiles[j], tiles[i]];
+  }
+  cphState.tiles = tiles;
 }
 
-function cphRenderDigitPad() {
-  const pad = document.getElementById('cipher-digit-pad');
-  if (!pad) return;
-  // Phone-style layout: 1-2-3 / 4-5-6 / 7-8-9 / ⌫-0-✓
-  const keys = [1,2,3,4,5,6,7,8,9,'⌫',0,'✓'];
-  pad.innerHTML = keys.map(k => {
-    if (k === '✓') return `<button class="cph-key cph-key-ok" onclick="cphSubmit()">✓</button>`;
-    if (k === '⌫') return `<button class="cph-key cph-key-del" onclick="cphDeleteDigit()">⌫</button>`;
-    return `<button class="cph-key" onclick="cphPressDigit(${k})" style="--cph-c:${CPH_CLR[k]}">
-      ${cphIconSvg(k, 34)}
-      <span class="cph-key-d">${k}</span>
-    </button>`;
-  }).join('');
+function cphRenderRecall() {
+  const {digits, tiles} = cphState;
+  const slots = document.getElementById('cipher-slots');
+  const tray  = document.getElementById('cipher-tray');
+  if (slots) {
+    slots.innerHTML = digits.map((_, i) => {
+      const tile = tiles.find(t => t.slot === i);
+      if (tile) return `<div class="cph-slot filled" data-slot="${i}" onclick="cphReturnTile(${i})">
+        <span class="cph-slot-idx">${i+1}</span>${cphIconSvg(tile.digit, 40, CPH_CLR[tile.digit])}</div>`;
+      return `<div class="cph-slot" data-slot="${i}"><span class="cph-slot-idx">${i+1}</span>?</div>`;
+    }).join('');
+  }
+  if (tray) {
+    const free = tiles.filter(t => t.slot === null);
+    tray.innerHTML = free.length
+      ? free.map(t => `<div class="cph-tile" data-tile="${t.id}">${cphIconSvg(t.digit, 40, CPH_CLR[t.digit])}</div>`).join('')
+      : `<div class="cph-tray-empty">✓</div>`;
+    cphAttachDrag();
+  }
+  // Sync answer + submit-enabled state
+  cphState.answer = digits.map((_, i) => { const tile = tiles.find(t => t.slot === i); return tile ? tile.digit : null; });
+  const btn = document.getElementById('cipher-submit-btn');
+  if (btn) btn.disabled = cphState.answer.some(a => a === null);
 }
 
-function cphPressDigit(d) {
-  if (cphState.answer.length >= cphState.digits.length) return;
-  cphState.answer.push(d);
-  cphRenderAnswerRow();
-  // Haptic-style flash on answer box
-  const box = document.getElementById(`cph-ans-${cphState.answer.length - 1}`);
-  if (box) { box.classList.add('pop'); setTimeout(() => box.classList.remove('pop'), 200); }
+function cphFirstEmptySlot() {
+  for (let i = 0; i < cphState.digits.length; i++) {
+    if (!cphState.tiles.find(t => t.slot === i)) return i;
+  }
+  return null;
 }
 
-function cphDeleteDigit() {
-  cphState.answer.pop();
-  cphRenderAnswerRow();
+function cphPlaceTile(tileId, slotIdx) {
+  if (slotIdx === null || slotIdx === undefined) { cphRenderRecall(); return; }
+  const tiles = cphState.tiles;
+  const occ = tiles.find(t => t.slot === slotIdx); if (occ) occ.slot = null; // bump existing back to tray
+  const tile = tiles.find(t => t.id === tileId); if (tile) tile.slot = slotIdx;
+  cphSndPlace();
+  cphRenderRecall();
+}
+
+function cphReturnTile(slotIdx) {
+  const tile = cphState.tiles.find(t => t.slot === slotIdx);
+  if (tile) tile.slot = null;
+  cphRenderRecall();
+}
+
+// Pointer-based drag (works for mouse + touch). A short press without movement
+// is treated as a tap → drops the tile into the first empty slot.
+function cphAttachDrag() {
+  document.querySelectorAll('#cipher-tray .cph-tile').forEach(el => {
+    el.addEventListener('pointerdown', cphPointerDown);
+  });
+}
+
+function cphPointerDown(e) {
+  e.preventDefault();
+  const el = e.currentTarget;
+  cphDrag = { tileId: parseInt(el.dataset.tile), el, startX: e.clientX, startY: e.clientY, clone: null, moved: false, overSlot: null };
+  document.addEventListener('pointermove', cphPointerMove);
+  document.addEventListener('pointerup', cphPointerUp);
+}
+
+function cphPointerMove(e) {
+  if (!cphDrag) return;
+  const dx = e.clientX - cphDrag.startX, dy = e.clientY - cphDrag.startY;
+  if (!cphDrag.moved && Math.hypot(dx, dy) < 8) return;
+  cphDrag.moved = true;
+  if (!cphDrag.clone) {
+    const c = cphDrag.el.cloneNode(true);
+    c.className = 'cph-tile cph-drag-clone';
+    document.body.appendChild(c);
+    cphDrag.clone = c;
+    cphDrag.el.classList.add('dragging');
+  }
+  cphDrag.clone.style.left = e.clientX + 'px';
+  cphDrag.clone.style.top  = e.clientY + 'px';
+  // Find the slot under the finger (hide clone so it isn't picked up)
+  cphDrag.clone.style.display = 'none';
+  const under = document.elementFromPoint(e.clientX, e.clientY);
+  cphDrag.clone.style.display = '';
+  const slotEl = under && under.closest('.cph-slot');
+  document.querySelectorAll('.cph-slot.over').forEach(s => s.classList.remove('over'));
+  cphDrag.overSlot = null;
+  if (slotEl && !slotEl.classList.contains('filled')) {
+    slotEl.classList.add('over');
+    cphDrag.overSlot = parseInt(slotEl.dataset.slot);
+  }
+}
+
+function cphPointerUp() {
+  if (!cphDrag) return;
+  document.removeEventListener('pointermove', cphPointerMove);
+  document.removeEventListener('pointerup', cphPointerUp);
+  const { tileId, moved, overSlot, clone, el } = cphDrag;
+  if (clone) clone.remove();
+  el.classList.remove('dragging');
+  document.querySelectorAll('.cph-slot.over').forEach(s => s.classList.remove('over'));
+  if (!moved) {
+    cphPlaceTile(tileId, cphFirstEmptySlot());   // tap → first empty slot
+  } else if (overSlot !== null) {
+    cphPlaceTile(tileId, overSlot);
+  } else {
+    cphRenderRecall();                           // dropped on nothing → snap back
+  }
+  cphDrag = null;
 }
 
 // ── Submit ──
 function cphSubmit() {
   const {digits, answer, level, daily} = cphState;
-  if (answer.length < digits.length) return;
+  if (!answer || answer.length < digits.length || answer.some(a => a === null)) return;
 
   let correct = 0;
   digits.forEach((d, i) => { if (answer[i] === d) correct++; });
@@ -441,10 +673,19 @@ function cphSubmit() {
   saved.history.push({date: cphDailySeed(), pct, level, daily: !!daily});
   if (saved.history.length > 90) saved.history = saved.history.slice(-90);
   if (daily) saved.dailyDate = cphDailySeed();
-  localStorage.setItem(CPH_LS_KEY, JSON.stringify(saved));
+  try{ localStorage.setItem(CPH_LS_KEY, JSON.stringify(saved)); }catch(e){}
 
-  // XP
-  if (typeof addXp === 'function') addXp(Math.round(pct / 10) * (level + 2), 'Cipher');
+  // XP — base accuracy reward + self-paced speed bonus + warm-up bonus
+  if (typeof addXp === 'function') {
+    let xp = Math.round(pct / 10) * (level + 2);
+    if (pct >= 60 && cphState.studyElapsed > 0) {
+      const perItem = cphState.studyElapsed / digits.length;
+      if (perItem < 3)      xp += 8;
+      else if (perItem < 5) xp += 4;
+    }
+    if (cphState.warmupOk) xp += 3;
+    addXp(xp, 'Cipher');
+  }
 
   // Achievement: first solve
   if (typeof unlockAch === 'function') {
@@ -456,7 +697,7 @@ function cphSubmit() {
   cphShowResult(pct, correct, digits.length);
 }
 
-// ── Result phase ──
+// ── Result phase (animated combo-meter reveal) ──
 function cphShowResult(pct, correct, total) {
   document.getElementById('cipher-recall').style.display = 'none';
   document.getElementById('cipher-result').style.display = '';
@@ -465,7 +706,7 @@ function cphShowResult(pct, correct, total) {
 
   const {digits, answer} = cphState;
 
-  // Icon row with correct/wrong markers
+  // Render icons with their markers, but start hidden — revealed one-by-one below.
   const iconsDiv = document.getElementById('cipher-result-icons');
   if (iconsDiv) {
     iconsDiv.innerHTML = digits.map((d, i) => {
@@ -475,7 +716,7 @@ function cphShowResult(pct, correct, total) {
       const guessHtml = (!ok && guessed >= 0)
         ? `<div class="cph-result-guess" style="color:#f87171">${cphIconSvg(guessed, 26)}</div>`
         : '';
-      return `<div class="cph-result-item">
+      return `<div class="cph-result-item pending" id="cph-rev-${i}">
         ${cphIconSvg(d, 52, clr)}
         <div class="cph-result-mark" style="color:${clr}">${ok ? '✓' : '✗'}</div>
         ${guessHtml}
@@ -484,26 +725,83 @@ function cphShowResult(pct, correct, total) {
     }).join('');
   }
 
-  // Score / verdict
+  // Hide score/story until the reveal finishes
+  const scoreDiv = document.getElementById('cipher-score-display');
+  const storyDiv = document.getElementById('cipher-result-story');
+  if (scoreDiv) scoreDiv.innerHTML = '';
+  if (storyDiv) storyDiv.style.display = 'none';
+  const comboEl = document.getElementById('cipher-combo-badge');
+  if (comboEl) { comboEl.textContent = ''; comboEl.className = 'cph-combo-badge'; }
+
+  // Animate the reveal, building a combo on consecutive correct slots
+  let combo = 0, maxCombo = 0;
+  digits.forEach((d, i) => {
+    const tid = setTimeout(() => {
+      const ok = answer[i] === d;
+      const el = document.getElementById('cph-rev-' + i);
+      if (el) { el.classList.remove('pending'); el.classList.add('show', ok ? 'reveal-ok' : 'reveal-miss'); }
+      if (ok) {
+        combo++; maxCombo = Math.max(maxCombo, combo);
+        cphSndCombo(combo);
+        if (combo >= 2 && comboEl) {
+          comboEl.textContent = '🔥 x' + combo;
+          comboEl.className = 'cph-combo-badge'; void comboEl.offsetWidth; // restart anim
+          comboEl.classList.add('show');
+          comboEl.style.fontSize = Math.min(1.1 + combo * 0.12, 2.0) + 'rem';
+        }
+      } else {
+        combo = 0;
+        cphSndWrong();
+        if (comboEl) comboEl.classList.remove('show');
+      }
+      if (i === digits.length - 1) {
+        const t2 = setTimeout(() => { cphSndVerdict(pct); cphRevealScore(pct, correct, total, maxCombo); }, 450);
+        cphTimers.push(t2);
+      }
+    }, 260 + i * 280);
+    cphTimers.push(tid);
+  });
+}
+
+function cphRevealScore(pct, correct, total, maxCombo) {
+  const {digits} = cphState;
+  const comboEl = document.getElementById('cipher-combo-badge');
+  if (comboEl) comboEl.classList.remove('show');
+
   const scoreDiv = document.getElementById('cipher-score-display');
   if (scoreDiv) {
     const verdictKey = pct===100 ? 'cph_verdict_perfect' : pct>=80 ? 'cph_verdict_great' : pct>=50 ? 'cph_verdict_ok' : 'cph_verdict_try';
+    const streakLine = maxCombo >= 2 ? `<div class="cph-streak-line">${t('cph_best_streak', maxCombo)}</div>` : '';
+    const timeLine = cphState.studyElapsed > 0 ? ` · ⏱ ${cphState.studyElapsed}s` : '';
     scoreDiv.innerHTML = `<div class="cph-verdict">${t(verdictKey)}</div>
-      <div class="cph-score-line">${correct}/${total} · ${pct}%</div>`;
+      <div class="cph-score-line">${correct}/${total} · ${pct}%${timeLine}</div>
+      ${streakLine}`;
   }
 
-  // Story replay
+  // Story replay — the player's own shape→link→shape chain
   const storyDiv = document.getElementById('cipher-result-story');
-  if (storyDiv) storyDiv.textContent = cphMakeStory(digits);
+  if (storyDiv) {
+    storyDiv.style.display = '';
+    let chain = `<div class="cph-story-label">${t('cph_your_story')}</div><div class="cph-chain cph-chain-sm">`;
+    digits.forEach((d, i) => {
+      chain += `<span class="cph-chain-mini">${cphIconSvg(d, 30, CPH_CLR[d])}</span>`;
+      if (i < digits.length - 1) {
+        const lk = CPH_LINKS[cphState.links[i]];
+        chain += `<span class="cph-link static sm"><span class="cph-link-emoji">${lk.emoji}</span></span>`;
+      }
+    });
+    chain += '</div>';
+    storyDiv.innerHTML = chain;
+  }
 
   const nextBtn = document.getElementById('cipher-next-btn');
   if (nextBtn) {
     const hasNext = cphState.level < CPH_LEVELS.length - 1;
     nextBtn.style.display = hasNext && !cphState.daily ? '' : 'none';
+    nextBtn.textContent = t('cph_next_btn');
   }
   const menuBtn = document.getElementById('cipher-menu-btn');
   if (menuBtn) menuBtn.textContent = t('cph_menu_btn');
-  if (nextBtn) nextBtn.textContent = t('cph_next_btn');
 }
 
 function cphNext() {

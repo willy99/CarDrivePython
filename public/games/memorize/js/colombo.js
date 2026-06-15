@@ -495,6 +495,19 @@ function showColomboMenu(){
 }
 
 let colCurrent=null;
+// ── SOUNDS (noir detective cues; reuse the global playTone from pairs.js) ──
+function colSnd(fn){ try{ if(typeof playTone==='function') fn(); }catch(e){} }
+function colSndStudy(){   colSnd(()=>{ playTone(150,'sine',0.16,0.45); playTone(225,'sine',0.10,0.50,0.16); }); }      // case opens — low & mysterious
+function colSndQuiz(){    colSnd(()=>{ playTone(330,'triangle',0.13,0.12); playTone(440,'triangle',0.12,0.14,0.10); }); } // interrogation begins
+function colSndSelect(){  colSnd(()=>{ playTone(520,'sine',0.10,0.045); }); }                                       // pick an answer
+function colSndCorrect(d=0){ colSnd(()=>{ playTone(587,'triangle',0.18,0.10,d); playTone(880,'triangle',0.14,0.12,d+0.09); }); }
+function colSndWrong(d=0){   colSnd(()=>{ playTone(196,'sawtooth',0.14,0.16,d); playTone(150,'sawtooth',0.10,0.20,d+0.10); }); }
+function colSndVerdict(stars){ colSnd(()=>{
+  if(stars>=2){ [523,659,784,1047].forEach((f,i)=>playTone(f,'triangle',0.26,0.22,i*0.12)); }           // case closed!
+  else if(stars===1){ playTone(440,'triangle',0.20,0.18); playTone(523,'triangle',0.18,0.22,0.16); }    // partial
+  else { playTone(330,'sawtooth',0.18,0.26); playTone(247,'sawtooth',0.15,0.30,0.18); playTone(196,'sawtooth',0.12,0.40,0.40); } // case went cold
+}); }
+
 function colStart(lvIdx, fixedSeed){
   colLevel = lvIdx==null?colLevel:lvIdx;
   const cfg = lvIdx==null?colCfg(colLevel):colCfg(lvIdx);
@@ -512,6 +525,7 @@ function colStart(lvIdx, fixedSeed){
   document.getElementById('col-study-cap').textContent=t('col_study_cap');
   document.getElementById('col-ready-btn').textContent=t('col_seen_enough');
   document.getElementById('col-ready-btn').onclick=colStartQuiz;
+  colSndStudy();
   // countdown
   const bar=document.getElementById('col-timebar'); bar.style.transition='none'; bar.style.width='100%';
   void bar.offsetWidth; bar.style.transition='width '+cfg.len+'ms linear'; bar.style.width='0%';
@@ -529,6 +543,7 @@ function colStartQuiz(){
   document.getElementById('col-study').style.display='none';
   document.getElementById('col-quiz').style.display='block';
   document.getElementById('col-results').style.display='none';
+  colSndQuiz();
   setColScroll();
   document.getElementById('col-quiz-title').textContent=t('col_quiz_title');
   document.getElementById('col-quiz-sub').textContent=t('col_quiz_sub');
@@ -540,7 +555,7 @@ function colStartQuiz(){
     if(colAnsStyle==='choice'){
       inner+=`<div class="col-choices">`+q.choices.map(c=>`<button class="col-choice" data-v="${escapeAttr(c)}">${c}</button>`).join('')+`</div>`;
       card.innerHTML=inner;
-      card.querySelectorAll('.col-choice').forEach(btn=>{ btn.onclick=()=>{ card.querySelectorAll('.col-choice').forEach(b=>b.classList.remove('sel')); btn.classList.add('sel'); colQuiz.answers[qi]=btn.dataset.v; }; });
+      card.querySelectorAll('.col-choice').forEach(btn=>{ btn.onclick=()=>{ card.querySelectorAll('.col-choice').forEach(b=>b.classList.remove('sel')); btn.classList.add('sel'); colQuiz.answers[qi]=btn.dataset.v; colSndSelect(); }; });
     } else {
       inner+=`<input type="text" class="col-type-input" data-qi="${qi}" placeholder="${t('col_type_ph')}" style="width:100%;padding:10px 12px;border-radius:10px;border:1.5px solid var(--border2);background:var(--glass);color:var(--text);font-size:.92rem;font-weight:700;">`;
       card.innerHTML=inner;
@@ -571,10 +586,10 @@ function colSubmit(){
   colSaveStats(stats);
   try{ if(typeof addXp==='function') addXp(20+score, t('col_mode_title')); }catch(e){}
   try{ checkAchievements && checkAchievements(['col_first']); }catch(e){}
-  colShowResults();
+  colShowResults(true);
 }
 
-function colShowResults(){
+function colShowResults(animate){
   document.getElementById('col-study').style.display='none';
   document.getElementById('col-quiz').style.display='none';
   document.getElementById('col-results').style.display='block';
@@ -585,10 +600,25 @@ function colShowResults(){
   const verdict = score>=90?t('col_verdict_3'):score>=70?t('col_verdict_2'):score>=50?t('col_verdict_1'):t('col_verdict_0');
   document.getElementById('col-verdict').textContent=t('col_solved_n',correct,questions.length)+' · '+verdict;
   const list=document.getElementById('col-result-list'); list.innerHTML='';
-  questions.forEach((q,i)=>{ const ok=colCheck(q,answers[i]); const row=document.createElement('div'); row.className='col-result-q';
+  const rows=questions.map((q,i)=>{ const ok=colCheck(q,answers[i]); const row=document.createElement('div'); row.className='col-result-q';
     const yourAns = answers[i]==null||answers[i]===''?t('col_no_answer'):answers[i];
-    row.innerHTML=`<div class="rq-ico">${ok?'✅':'❌'}</div><div class="rq-body"><div class="rq-q">${q.secret?'🔍 ':''}${q.q}</div><div class="rq-a ${ok?'ok':'no'}">${ok?'✓ '+q.a : t('col_you_said')+' '+yourAns+' · '+t('col_answer_was')+' '+q.a}</div></div>`;
-    list.appendChild(row); });
+    const ico=document.createElement('div'); ico.className='rq-ico'; ico.textContent=ok?'✅':'❌';
+    const body=document.createElement('div'); body.className='rq-body';
+    const qEl=document.createElement('div'); qEl.className='rq-q'; qEl.textContent=(q.secret?'🔍 ':'')+q.q;
+    const aEl=document.createElement('div'); aEl.className='rq-a '+(ok?'ok':'no');
+    aEl.textContent=ok?'✓ '+q.a : t('col_you_said')+' '+yourAns+' · '+t('col_answer_was')+' '+q.a;
+    body.appendChild(qEl); body.appendChild(aEl); row.appendChild(ico); row.appendChild(body);
+    return {row, ok}; });
+  if(animate){
+    colTimers.forEach(clearTimeout); colTimers=[];
+    rows.forEach((r,i)=>{ r.row.style.opacity='0'; r.row.style.transform='translateY(8px)'; list.appendChild(r.row);
+      const tid=setTimeout(()=>{ r.row.style.transition='opacity .25s,transform .25s'; r.row.style.opacity='1'; r.row.style.transform='none'; (r.ok?colSndCorrect():colSndWrong()); }, 240+i*280);
+      colTimers.push(tid); });
+    const vtid=setTimeout(()=>colSndVerdict(stars), 240+rows.length*280+220);
+    colTimers.push(vtid);
+  } else {
+    rows.forEach(r=>list.appendChild(r.row));
+  }
   document.getElementById('col-change-btn').textContent=t('col_new_case');
   document.getElementById('col-replay-btn').textContent=t('col_reexamine');
   document.getElementById('col-next-btn').textContent=t('math_next_level');
@@ -617,7 +647,7 @@ function colStartDaily(){
 }
 
 function colLoadStats(){ try{ return JSON.parse(localStorage.getItem('membrain_colombo_v1'))||{}; }catch(e){ return {}; } }
-function colSaveStats(s){ localStorage.setItem('membrain_colombo_v1', JSON.stringify(s)); }
+function colSaveStats(s){ try{ localStorage.setItem('membrain_colombo_v1', JSON.stringify(s)); }catch(e){} }
 function colStreak(s){ s.days=s.days||{}; let n=0; const d=new Date(); for(;;){ const k=mathDayKey(d); if(s.days[k]&&s.days[k].cases){ n++; d.setDate(d.getDate()-1); } else break; } return n; }
 function renderColStats(){
   const s=colLoadStats(); s.days=s.days||{};

@@ -2,11 +2,12 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; connect-src 'none'; object-src 'none'; base-uri 'self';">
 <title>MemBrain</title>
-  <link rel="stylesheet" href="css/base.css">
-  <link rel="stylesheet" href="css/components.css">
-  <link rel="stylesheet" href="css/games.css">
+  <link rel="stylesheet" href="css/base.css?v=5">
+  <link rel="stylesheet" href="css/components.css?v=5">
+  <link rel="stylesheet" href="css/games.css?v=5">
 </head>
 <body>
 
@@ -270,6 +271,7 @@
   </div>
   <!-- sub: memorize phase -->
   <div id="wm-memorize" style="display:none;width:100%;max-width:700px;padding:30px 20px;text-align:center;">
+    <button class="close-btn close-btn-float" onclick="backFromGame('wm')" title="← MemBrain">✕</button>
     <div id="wm-title">GET READY</div>
     <div id="wm-word-display">&nbsp;</div>
     <div id="wm-progress"><div id="wm-progress-bar" style="width:0%"></div></div>
@@ -277,6 +279,7 @@
   </div>
   <!-- sub: recall phase -->
   <div id="wm-recall" style="display:none;width:100%;max-width:700px;padding:20px;text-align:center;">
+    <button class="close-btn close-btn-float" onclick="backFromGame('wm')" title="← MemBrain">✕</button>
     <div class="section-title" style="margin-bottom:4px;" id="wm-recall-title">What did you see?</div>
     <div class="section-sub" id="wm-recall-sub">Click words in the order you remember them</div>
     <!-- pool mode -->
@@ -346,6 +349,7 @@
       <div style="display:flex;align-items:center;gap:8px;">
         <span style="font-size:.8rem;color:var(--text2);" id="spot-streak-lbl">Streak</span>
         <span style="font-weight:800;color:var(--goldL);" id="spot-streak">0</span>
+        <button class="close-btn" onclick="backFromGame('spot')" title="← MemBrain">✕</button>
       </div>
     </div>
     <div id="spot-canvas-wrap">
@@ -568,6 +572,7 @@
       <span class="mh-task" id="math-task-counter">Task 1 / 10</span>
       <span id="math-level-tag" class="tag tag-gold">Level 1</span>
       <span class="mh-score" id="math-score">0 pts</span>
+      <button class="close-btn" onclick="backFromGame('math')" title="← MemBrain">✕</button>
     </div>
     <div id="math-timer"><div id="math-timer-fill"></div></div>
     <div id="math-trick-hint"></div>
@@ -631,6 +636,7 @@
       <span class="tag tag-purple" id="diamond-level-tag">L1</span>
       <span id="diamond-phase-lbl" style="font-size:.88rem;color:var(--text2);font-weight:700;"></span>
       <span id="diamond-round-lbl" style="font-size:.82rem;font-weight:800;color:var(--goldL);"></span>
+      <button class="close-btn" onclick="backFromGame('diamond')" title="← MemBrain">✕</button>
     </div>
     <div id="diamond-progress-wrap">
       <div id="diamond-progress-fill" style="width:100%;transition:width .1s linear;"></div>
@@ -657,13 +663,13 @@
 
 <!-- ══ LONG MEMORY ══ -->
 <div id="screen-lm" class="screen">
-  <button class="back-btn" onclick="goMenu()">← MemBrain</button>
 
   <!-- Hub -->
   <div id="lm-hub" class="lm-panel" style="display:none;">
     <div style="display:flex;align-items:center;justify-content:center;gap:6px;margin-bottom:4px;">
       <div class="section-title" id="lm-section-title">Long Memory</div>
       <button class="info-btn" onclick="showGameInfo('lm')">ℹ</button>
+      <button class="close-btn" onclick="goMenu()" title="← MemBrain">✕</button>
     </div>
     <div class="section-sub" id="lm-section-sub">Encode · wait · recall</div>
     <div class="lm-hub-card" id="lm-today-card">
@@ -697,6 +703,7 @@
     </div>
     <button class="btn btn-primary" onclick="lmFinishEncode()" id="lm-memorized-btn" style="width:100%;padding:16px;font-size:1rem;font-weight:900;">✓ I've memorized it!</button>
     <div style="text-align:center;margin-top:12px;font-size:.78rem;color:var(--text3);" id="lm-encode-note"></div>
+    <button class="btn" onclick="lmShowHub()" id="lm-encode-back-btn" style="width:100%;margin-top:10px;">Back</button>
   </div>
 
   <!-- Recall -->
@@ -704,8 +711,11 @@
     <div class="section-title" id="lm-recall-title">Recall</div>
     <div class="section-sub" id="lm-recall-prompt"></div>
     <div id="lm-recall-tier-row" style="text-align:center;margin:10px 0;"></div>
+    <div class="lm-step-lbl" id="lm-recall-step1-lbl"></div>
+    <div id="lm-recall-questions"></div>
+    <div class="lm-step-lbl" id="lm-recall-step2-lbl"></div>
     <textarea class="lm-textarea" id="lm-recall-input" placeholder="Write what you remember…"></textarea>
-    <button class="btn btn-primary" onclick="lmSubmitRecall()" id="lm-submit-btn" style="width:100%;margin-top:14px;padding:14px;font-weight:900;">Submit</button>
+    <button class="btn btn-primary" onclick="lmSubmitRecall()" id="lm-submit-btn" style="width:100%;margin-top:14px;padding:14px;font-weight:900;">Reveal everything →</button>
     <button class="btn" onclick="lmShowHub()" id="lm-recall-back-btn" style="width:100%;margin-top:8px;">Back</button>
   </div>
 
@@ -801,6 +811,7 @@
 
   <!-- sub: quiz phase -->
   <div id="col-quiz" style="display:none;width:100%;max-width:680px;margin:0 auto;padding:30px 18px 100px;text-align:center;">
+    <button class="close-btn close-btn-float" onclick="backFromGame('col')" title="← MemBrain">✕</button>
     <div style="display:flex;align-items:center;justify-content:center;gap:6px;margin-bottom:4px;">
       <div class="section-title" id="col-quiz-title">The scene is gone.</div>
     </div>
@@ -866,6 +877,7 @@
 
   <!-- Recall phase -->
   <div id="wtr-recall" style="display:none;width:100%;max-width:560px;margin:0 auto;padding:24px 16px 100px;text-align:center;">
+    <button class="close-btn close-btn-float" onclick="backFromGame('waiter')" title="← MemBrain">✕</button>
     <div id="wtr-recall-dots" class="wtr-dots-row"></div>
     <div id="wtr-recall-q" class="wtr-recall-q"></div>
     <div id="wtr-slots" class="wtr-slots-row"></div>
@@ -922,6 +934,7 @@
 
   <!-- Quiz phase -->
   <div id="mtg-quiz" style="display:none;width:100%;max-width:560px;margin:0 auto;padding:24px 16px 100px;">
+    <button class="close-btn close-btn-float" onclick="backFromGame('meeting')" title="← MemBrain">✕</button>
     <div style="font-size:1rem;font-weight:900;color:var(--text2);letter-spacing:.5px;margin-bottom:16px;text-align:center;" id="mtg-quiz-title">What do you remember?</div>
     <div id="mtg-questions"></div>
     <button class="btn btn-primary" id="mtg-submit-btn" onclick="mtgSubmit()" style="width:100%;margin-top:6px;" disabled>Submit →</button>
@@ -973,13 +986,17 @@
 
   <!-- STUDY PHASE -->
   <div id="cipher-study" style="display:none;">
+    <button class="close-btn close-btn-float" onclick="backFromGame('cipher')" title="← MemBrain">✕</button>
     <div id="cipher-study-title" style="font-size:1rem;font-weight:900;color:var(--text2);letter-spacing:1px;margin-bottom:10px;">Memorize this code</div>
     <div id="cipher-icons-row" class="cph-icons-row"></div>
     <div id="cipher-story-box" class="cph-story-box" style="opacity:0;"></div>
     <div class="cph-study-timebar"><div id="cipher-study-fill"></div></div>
-    <div id="cipher-countdown" style="font-size:1.3rem;font-weight:900;color:var(--text2);margin-bottom:10px;">9</div>
-    <button class="btn btn-primary" id="cipher-ready-btn" onclick="cphSkipStudy()">I'm ready →</button>
+    <div id="cipher-countdown" style="font-size:1rem;font-weight:800;color:var(--text3);margin-bottom:10px;">⏱ 0s</div>
+    <button class="btn btn-primary" id="cipher-ready-btn" onclick="cphSkipStudy()" disabled>Got it →</button>
   </div>
+
+  <!-- WARM-UP PHASE -->
+  <div id="cipher-warmup" style="display:none;"></div>
 
   <!-- RECALL PHASE -->
   <div id="cipher-recall" style="display:none;">
@@ -992,6 +1009,7 @@
   <!-- RESULT PHASE -->
   <div id="cipher-result" style="display:none;">
     <div id="cipher-result-label" style="font-size:1rem;font-weight:900;color:var(--text2);letter-spacing:1px;margin-bottom:16px;">Result</div>
+    <div id="cipher-combo-badge" class="cph-combo-badge"></div>
     <div id="cipher-result-icons" class="cph-result-icons"></div>
     <div id="cipher-score-display"></div>
     <div id="cipher-result-story" class="cph-result-story" style="display:none;"></div>
@@ -1002,23 +1020,23 @@
   </div>
 </div>
 
-<script src="js/i18n.js"></script>
-<script src="js/constants.js"></script>
-<script src="js/objects.js"></script>
-<script src="js/core.js"></script>
-<script src="js/word.js"></script>
-<script src="js/spot.js"></script>
-<script src="js/pairs.js"></script>
-<script src="js/math.js"></script>
-<script src="js/diamond.js"></script>
-<script src="js/longmemory.js"></script>
-<script src="js/systems.js"></script>
-<script src="js/pairs-ai.js"></script>
-<script src="js/math-extra.js"></script>
-<script src="js/colombo.js"></script>
-<script src="js/cipher.js"></script>
-<script src="js/waiter.js"></script>
-<script src="js/meeting.js"></script>
-<script src="js/init.js"></script>
+<script src="js/i18n.js?v=5"></script>
+<script src="js/constants.js?v=5"></script>
+<script src="js/objects.js?v=5"></script>
+<script src="js/core.js?v=5"></script>
+<script src="js/word.js?v=5"></script>
+<script src="js/spot.js?v=5"></script>
+<script src="js/pairs.js?v=5"></script>
+<script src="js/math.js?v=5"></script>
+<script src="js/diamond.js?v=5"></script>
+<script src="js/longmemory.js?v=5"></script>
+<script src="js/systems.js?v=5"></script>
+<script src="js/pairs-ai.js?v=5"></script>
+<script src="js/math-extra.js?v=5"></script>
+<script src="js/colombo.js?v=5"></script>
+<script src="js/cipher.js?v=5"></script>
+<script src="js/waiter.js?v=5"></script>
+<script src="js/meeting.js?v=5"></script>
+<script src="js/init.js?v=5"></script>
 </body>
 </html>

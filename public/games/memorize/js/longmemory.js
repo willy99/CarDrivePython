@@ -107,6 +107,7 @@ let lmActiveItem = null;
 function showLmMenu() { lmShowHub(); showScreen('screen-lm'); }
 
 function lmShowHub() {
+  lmClearTimers();
   ['lm-hub','lm-encode','lm-recall','lm-score-panel','lm-add'].forEach(id => {
     document.getElementById(id).style.display = id === 'lm-hub' ? '' : 'none';
   });
@@ -164,7 +165,17 @@ function lmRenderReview() {
   const data = lmLoadData();
   const now = lmNow();
   const today = lmTodayStr();
-  const due = data.items.filter(it => it.recalled && it.nextReviewAt && it.nextReviewAt <= now && it.lastRecallDate !== today);
+  const todayIdx = lmDailyIdx();
+  // Surface daily items that are ready to recall: either a first recall
+  // (encoded 12h+ ago, never recalled) or a spaced-repetition review now due.
+  // Today's daily lives in the Today card; personal items live in the Diary.
+  const due = data.items.filter(it => {
+    if (it.type !== 'daily') return false;
+    if (it.itemIdx === todayIdx) return false;
+    const firstRecall = it.encodedAt && !it.recalled && lmHoursAgo(it.encodedAt) >= 12;
+    const repeatDue   = it.recalled && it.nextReviewAt && it.nextReviewAt <= now && it.lastRecallDate !== today;
+    return firstRecall || repeatDue;
+  });
   const card = document.getElementById('lm-review-card');
   if (!due.length) { card.style.display = 'none'; return; }
   card.style.display = '';
@@ -253,6 +264,8 @@ function lmShowEncodeScreen() {
   document.getElementById('lm-tips-body').innerHTML = t('lm_tips_body');
   document.getElementById('lm-memorized-btn').textContent = t('lm_memorized_btn');
   document.getElementById('lm-encode-note').textContent = t('lm_encode_note');
+  const encBack = document.getElementById('lm-encode-back-btn');
+  if (encBack) encBack.textContent = t('lm_recall_back');
 }
 
 function lmFinishEncode() {
@@ -277,14 +290,66 @@ function lmShowRecallScreen() {
   ['lm-hub','lm-encode','lm-recall','lm-score-panel','lm-add'].forEach(id => {
     document.getElementById(id).style.display = id === 'lm-recall' ? '' : 'none';
   });
+  lmClearTimers();
   document.getElementById('lm-recall-title').textContent = t('lm_recall_title');
   document.getElementById('lm-recall-prompt').textContent = t('lm_recall_prompt_' + Math.min(tier, 3));
   document.getElementById('lm-recall-tier-row').innerHTML = lmTierBadge(tier);
-  document.getElementById('lm-recall-input').value = '';
-  document.getElementById('lm-submit-btn').textContent = t('lm_submit_btn');
+
+  // Step 1 — cued detail questions (no original text shown)
+  lmRecallQs = lmBuildQuestions(lmActiveItem);
+  document.getElementById('lm-recall-step1-lbl').textContent = t('lm_step1', lmRecallQs.length);
+  document.getElementById('lm-recall-questions').innerHTML = lmRecallQs.map((q, i) =>
+    `<div class="lm-q-row">
+      <label class="lm-q-label" for="lm-q-${i}">${t(q.qKey)}</label>
+      <input class="lm-q-input" id="lm-q-${i}" type="text" autocomplete="off" autocapitalize="off"
+             placeholder="${q.hint ? t('lm_q_hint', q.hint) : t('lm_q_ph')}">
+    </div>`).join('');
+
+  // Step 2 — reconstruct the full text
+  document.getElementById('lm-recall-step2-lbl').textContent = t('lm_step2');
+  const rin = document.getElementById('lm-recall-input');
+  rin.value = ''; rin.placeholder = t('lm_recall_ph');
+  document.getElementById('lm-submit-btn').textContent = t('lm_reveal_btn');
   document.getElementById('lm-recall-back-btn').textContent = t('lm_recall_back');
-  setTimeout(() => document.getElementById('lm-recall-input').focus(), 100);
+  setTimeout(() => document.getElementById('lm-q-0')?.focus(), 100);
 }
+
+// ── Question generation for staged "deep recall" ──
+// Each key detail becomes a cued question. Categories we can detect with high
+// confidence get a natural question; everything else gets a generic "what detail"
+// prompt with a gentle first-letter hint (a real recall cue, not the answer).
+const LM_COLORS = ['red','blue','green','yellow','black','white','orange','purple','pink','brown','grey','gray',
+  'червон','синь','блакитн','зелен','жовт','чорн','біл','помаранч','фіолет','рожев','коричнев','сір'];
+const LM_NUMWORDS = ['one','two','three','four','five','six','seven','eight','nine','ten','eleven','twelve',
+  'один','два','три','чотири','п\'ять','шість','сім','вісім','дев\'ять','десять'];
+function lmClassify(kw) {
+  const k = String(kw).toLowerCase();
+  if (/\d{1,2}:\d{2}/.test(k)) return 'time';
+  if (/\d/.test(k)) return 'number';
+  if (LM_COLORS.some(c => k.includes(c))) return 'color';
+  if (LM_NUMWORDS.includes(k)) return 'quantity';
+  return 'generic';
+}
+let lmRecallQs = [];
+let lmTimers = [];
+function lmClearTimers() { lmTimers.forEach(clearTimeout); lmTimers = []; }
+function lmBuildQuestions(item) {
+  return lmItemCheck(item).map(kw => {
+    const cat = lmClassify(kw);
+    return { target: kw, cat, qKey: 'lm_q_' + cat, hint: cat === 'generic' ? (String(kw).trim()[0] || '').toUpperCase() : '' };
+  });
+}
+
+// ── SOUNDS (reuse the global playTone from pairs.js) ──
+function lmSnd(fn){ try{ if(typeof playTone==='function') fn(); }catch(e){} }
+function lmSndSubmit(){ lmSnd(()=>{ playTone(330,'triangle',0.12,0.10); playTone(440,'triangle',0.10,0.12,0.09); }); }
+function lmSndHit(d=0){  lmSnd(()=>{ playTone(587,'triangle',0.16,0.10,d); playTone(880,'triangle',0.12,0.12,d+0.08); }); }
+function lmSndMiss(d=0){ lmSnd(()=>{ playTone(196,'sawtooth',0.10,0.14,d); }); }
+function lmSndVerdict(score){ lmSnd(()=>{
+  if(score>=70){ [523,659,784,1047].forEach((f,i)=>playTone(f,'triangle',0.24,0.20,i*0.11)); }
+  else if(score>=50){ playTone(440,'triangle',0.18,0.18); playTone(523,'triangle',0.16,0.20,0.15); }
+  else { playTone(330,'sawtooth',0.16,0.24); playTone(247,'sawtooth',0.13,0.28,0.16); }
+}); }
 
 function lmScore(userText, checkWords) {
   const lower = userText.toLowerCase();
@@ -294,8 +359,13 @@ function lmScore(userText, checkWords) {
 }
 
 function lmSubmitRecall() {
-  const userText = document.getElementById('lm-recall-input').value.trim();
-  if (!userText || !lmActiveItem) return;
+  if (!lmActiveItem) return;
+  // Combine everything the player recalled — answers to the cued questions AND
+  // the full-text reconstruction. A detail counts if it appears in either place.
+  const qAnswers = lmRecallQs.map((_, i) => document.getElementById('lm-q-' + i)?.value || '');
+  const fullText = document.getElementById('lm-recall-input').value;
+  const userText = [fullText, ...qAnswers].join(' \n ').trim();
+  if (!userText) return;
   const checkWords = lmItemCheck(lmActiveItem);
   const score = lmScore(userText, checkWords);
   const data = lmLoadData();
@@ -327,22 +397,41 @@ function lmShowScoreScreen(userText, score, checkWords, xp) {
   ['lm-hub','lm-encode','lm-recall','lm-score-panel','lm-add'].forEach(id => {
     document.getElementById(id).style.display = id === 'lm-score-panel' ? '' : 'none';
   });
+  lmClearTimers();
   document.getElementById('lm-score-title').textContent = t('lm_score_title');
   document.getElementById('lm-kw-title').textContent = t('lm_kw_title');
   document.getElementById('lm-orig-lbl').textContent = t('lm_orig_lbl');
   document.getElementById('lm-score-done-btn').textContent = t('lm_done_btn');
-  document.getElementById('lm-score-orig').textContent = lmItemText(lmActiveItem);
   const color = score >= 70 ? '#34d399' : score >= 50 ? '#fbbf24' : '#f87171';
   const ring = document.getElementById('lm-score-ring');
   ring.style.borderColor = color; ring.style.color = color;
   ring.textContent = score >= 70 ? '✓' : score >= 50 ? '~' : '✗';
   document.getElementById('lm-score-pct').textContent = score + '%';
   document.getElementById('lm-score-msg').textContent = score >= 80 ? t('lm_score_great') : score >= 55 ? t('lm_score_ok') : t('lm_score_try');
+
+  // Reveal each recalled detail one-by-one with sound; hold the original text
+  // back until every detail has been shown ("reveal everything possible" first).
   const lower = userText.toLowerCase();
-  document.getElementById('lm-kw-row').innerHTML = checkWords.map(kw => {
+  document.getElementById('lm-kw-row').innerHTML = checkWords.map((kw, i) => {
     const hit = lower.includes(kw.toLowerCase());
-    return `<span class="${hit?'lm-kw-hit':'lm-kw-miss'}">${hit?'✓':'✗'} ${kw}</span>`;
+    return `<span class="${hit?'lm-kw-hit':'lm-kw-miss'} lm-kw-pending" id="lm-kw-${i}">${hit?'✓':'✗'} ${kw}</span>`;
   }).join('');
+  const orig = document.getElementById('lm-score-orig');
+  orig.textContent = lmItemText(lmActiveItem);
+  orig.style.opacity = '0'; orig.style.transition = 'opacity .45s';
+  lmSndSubmit();
+  checkWords.forEach((kw, i) => {
+    const hit = lower.includes(kw.toLowerCase());
+    const tid = setTimeout(() => {
+      const el = document.getElementById('lm-kw-' + i);
+      if (el) el.classList.remove('lm-kw-pending');
+      (hit ? lmSndHit() : lmSndMiss());
+    }, 200 + i * 240);
+    lmTimers.push(tid);
+  });
+  const endTid = setTimeout(() => { orig.style.opacity = '1'; lmSndVerdict(score); }, 260 + checkWords.length * 240);
+  lmTimers.push(endTid);
+
   const days = lmActiveItem?.intervalDays || 1;
   document.getElementById('lm-next-review-lbl').textContent = t('lm_next_in', days);
   document.getElementById('lm-xp-earned').textContent = '+' + xp + ' XP';

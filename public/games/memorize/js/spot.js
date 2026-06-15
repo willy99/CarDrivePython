@@ -6,6 +6,13 @@ let spotLevel = 0, spotScene = [], spotMissings = [], spotSelected = [],
 let spotMode     = localStorage.getItem('membrain_spot_mode') || 'missing';
 let spotDiffMult = parseFloat(localStorage.getItem('membrain_spot_diff') || '1.0');
 
+// ── SOUNDS (reuse the global playTone from pairs.js) ──
+function spotSnd(fn){ try{ if(typeof playTone==='function') fn(); }catch(e){} }
+function spotSndTap(){     spotSnd(()=>{ playTone(500,'sine',0.10,0.05); }); }
+function spotSndReveal(){  spotSnd(()=>{ playTone(300,'sine',0.10,0.18); }); }
+function spotSndCorrect(){ spotSnd(()=>{ playTone(523,'triangle',0.22,0.12); playTone(659,'triangle',0.20,0.12,0.12); playTone(880,'triangle',0.18,0.16,0.24); }); }
+function spotSndWrong(){   spotSnd(()=>{ playTone(220,'sawtooth',0.16,0.16); playTone(165,'sawtooth',0.12,0.22,0.13); }); }
+
 const SPOT_PACK_ICONS = {
   classic:'🎯', animals:'🦁', sealife:'🐬', fruits:'🍓', food:'🍕',
   sweets:'🍭', flora:'🌸', kitchen:'🍳', devices:'💻', transport:'🚀',
@@ -317,6 +324,7 @@ function spotGuess(id) {
   } else if (spotSelected.length < numMissing) {
     spotSelected.push(id);
     if (el) el.classList.add('selected');
+    spotSndTap();
   }
   const left = numMissing - spotSelected.length;
   const ctr = document.getElementById('spot-find-counter');
@@ -333,6 +341,7 @@ function spotGuess(id) {
 }
 
 function showSpotResult(correct) {
+  (correct ? spotSndCorrect() : spotSndWrong());
   const overlay = document.getElementById('spot-result-overlay');
   document.getElementById('spot-result-emoji').textContent = correct ? '🎉' : '😅';
   document.getElementById('spot-result-title').textContent = correct ? t('spot_correct') : t('spot_wrong');

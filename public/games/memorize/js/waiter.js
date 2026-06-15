@@ -55,6 +55,16 @@ let wtrLevel = 0;
 let wtrCurrent = null;
 let wtrTimers = [];
 let wtrAnswers = [];
+
+// ── SOUNDS (reuse the global playTone from pairs.js) ──
+function wtrSnd(fn){ try{ if(typeof playTone==='function') fn(); }catch(e){} }
+function wtrSndPick(){    wtrSnd(()=>{ playTone(520,'sine',0.10,0.05); }); }
+function wtrSndNext(){    wtrSnd(()=>{ playTone(392,'triangle',0.12,0.10); playTone(523,'triangle',0.10,0.12,0.09); }); }
+function wtrSndVerdict(stars){ wtrSnd(()=>{
+  if(stars>=2){ [523,659,784,1047].forEach((f,i)=>playTone(f,'triangle',0.24,0.20,i*0.11)); }
+  else if(stars===1){ playTone(440,'triangle',0.18,0.18); playTone(523,'triangle',0.16,0.20,0.15); }
+  else { playTone(330,'sawtooth',0.16,0.24); playTone(247,'sawtooth',0.13,0.28,0.16); }
+}); }
 let wtrRecallIdx = 0;
 
 // ── RNG ────────────────────────────────────────────────────────────────────
@@ -397,6 +407,7 @@ function wtrPickItem(itemId) {
   const nItems = wtrCurrent.cfg.items;
   if (mine.length >= nItems || mine.includes(itemId)) return;
   mine.push(itemId);
+  wtrSndPick();
   wtrRenderRecall();
 }
 
@@ -450,6 +461,7 @@ function wtrSubmit() {
 function wtrRenderResult(results, pct, correct, total) {
   const verdict = pct === 100 ? t('wtr_perfect') : pct >= 80 ? t('wtr_good') : pct >= 50 ? t('wtr_ok') : t('wtr_poor');
   const stars   = pct === 100 ? 3 : pct >= 70 ? 2 : pct >= 40 ? 1 : 0;
+  wtrSndVerdict(stars);
 
   // Emotional customer scene
   document.getElementById('wtr-result-faces').innerHTML = wtrResultSceneSvg(results);
@@ -490,7 +502,7 @@ function wtrRenderResult(results, pct, correct, total) {
 function wtrLoadStats() {
   try { return JSON.parse(localStorage.getItem('membrain_waiter_v1')) || {}; } catch (e) { return {}; }
 }
-function wtrSaveStats(s) { localStorage.setItem('membrain_waiter_v1', JSON.stringify(s)); }
+function wtrSaveStats(s) { try{ localStorage.setItem('membrain_waiter_v1', JSON.stringify(s)); }catch(e){} }
 
 // ── Lang re-render hook ────────────────────────────────────────────────────
 function showWaiterMenuLang() {
