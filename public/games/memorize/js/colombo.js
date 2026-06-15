@@ -7,7 +7,10 @@ function colShade(hex,f){const n=parseInt(hex.slice(1),16);let r=(n>>16)&255,g=(
 const COL_COLORS=[['red','#c0392b'],['blue','#2563eb'],['green','#2e8b57'],['yellow','#e1b12c'],['purple','#7c4ddb'],['orange','#e07b1a'],['white','#e9edf2'],['black','#2c2c34'],['brown','#7a5230'],['pink','#d96ba8'],['teal','#17a2a2'],['gray','#8a94a0']];
 const COL_HAIR=[['black','#2b2b30'],['brown','#5b3a22'],['blonde','#d9b25a'],['gray','#9a9aa0'],['red','#a8431f'],['white','#e3e3e8']];
 const COL_SKIN=['#f1c9a5','#e0a878','#c68642','#8d5524','#4a2e1a'];
-const COL_HELD=['cup','bottle','vase','book','candle','glass','phone','key','envelope','knife'];
+const COL_HELD=[
+  'cup','bottle','vase','book','candle','glass','phone','key','envelope','knife',
+  'magnifier', 'camera', 'drone', 'cezve', 'whistle', 'oscilloscope', 'watch'
+];
 const COL_OUTSIDE=['moon','tree','rain','city','watcher'];
 const COL_PAINT=['portrait','landscape','ship','abstract'];
 const COL_SETTINGS={
@@ -65,10 +68,14 @@ function colBuild(seed, cfg){
   const outside = cfg.secret ? pick(['moon','tree','watcher','rain','city','watcher']) : pick(['moon','tree','rain','city']);
   const windo = {present: chance(.85), outside, watcher: pick(COL_COLORS)};
   const painting = {present: chance(.7), subject: pick(COL_PAINT), frame: pick([['gold','#caa24a'],['black','#1f1f26'],['brown','#6a4a2c']])};
-  let mirror = {present:false, reveals:null};
+let mirror = {present:false, reveals:null};
   if(cfg.secret && chance(.8)){
-    const mirH = ((12 - clock.h) % 12) || 12;
-    const mirM = (60 - clock.m) % 60;
+    // Calculate true physical geometric reflection of the clock
+    const totalM = (clock.h % 12) * 60 + clock.m;
+    const reflM = (720 - totalM) % 720;
+    const mirH = Math.floor(reflM / 60) || 12;
+    const mirM = reflM % 60;
+
     mirror = {present:true, reveals:{type: pick(['person','object','clock']),
       personShirt: pick(COL_COLORS), object: pick(COL_HELD),
       clockH: mirH, clockM: mirM}};
@@ -93,10 +100,22 @@ function colObj(type,x,yb,hex){
     case 'book': return `<rect x="${x-18}" y="${yb-9}" width="36" height="9" rx="1" fill="${hex}"/><rect x="${x-18}" y="${yb-22}" width="34" height="13" fill="${colShade(hex,1.1)}" transform="rotate(-7 ${x} ${yb-15})"/><rect x="${x-15}" y="${yb-21}" width="28" height="2" fill="#fff" opacity=".7" transform="rotate(-7 ${x} ${yb-15})"/>`;
     case 'candle': return `<rect x="${x-5}" y="${yb-6}" width="10" height="6" rx="2" fill="${d}"/><rect x="${x-3}" y="${yb-30}" width="6" height="24" fill="${hex}"/><ellipse cx="${x}" cy="${yb-36}" rx="4" ry="7" fill="#ffd24a"/><ellipse cx="${x}" cy="${yb-35}" rx="2" ry="4" fill="#ff7a18"/>`;
     case 'glass': return `<path d="M${x-9} ${yb-32} q9 14 9 14 q0 0 9 -14 z" fill="${hex}" opacity=".82"/><rect x="${x-1.5}" y="${yb-18}" width="3" height="14" fill="#cdd3da"/><ellipse cx="${x}" cy="${yb-3}" rx="9" ry="3" fill="#cdd3da"/>`;
-    case 'phone': return `<rect x="${x-16}" y="${yb-12}" width="32" height="12" rx="3" fill="${d}"/><rect x="${x-18}" y="${yb-26}" width="36" height="9" rx="4" fill="${hex}"/><circle cx="${x-12}" cy="${yb-21}" r="3" fill="${d}"/><circle cx="${x+12}" cy="${yb-21}" r="3" fill="${d}"/>`;
     case 'key': return `<circle cx="${x-9}" cy="${yb-8}" r="8" fill="none" stroke="${hex}" stroke-width="4"/><rect x="${x-2}" y="${yb-10}" width="20" height="4" fill="${hex}"/><rect x="${x+12}" y="${yb-6}" width="4" height="6" fill="${hex}"/><rect x="${x+6}" y="${yb-6}" width="3" height="6" fill="${hex}"/>`;
     case 'envelope': return `<rect x="${x-18}" y="${yb-14}" width="36" height="24" rx="2" fill="${hex}"/><path d="M${x-18} ${yb-14} L${x} ${yb-1} L${x+18} ${yb-14}" fill="none" stroke="${d}" stroke-width="2"/>`;
-    case 'knife': return `<rect x="${x-2}" y="${yb-6}" width="16" height="6" rx="2" fill="${d}"/><path d="M${x-2} ${yb-3} L${x-22} ${yb-6} L${x-2} ${yb-9} z" fill="#cfd6dd"/>`;
+
+    // ── Fixed Objects ──
+    case 'phone': return `<rect x="${x-10}" y="${yb-32}" width="20" height="32" rx="3" fill="${hex}"/><rect x="${x-8}" y="${yb-30}" width="16" height="26" rx="1" fill="#111"/><circle cx="${x}" cy="${yb-2}" r="1.5" fill="${d}"/>`;
+    case 'knife': return `<rect x="${x}" y="${yb-6}" width="16" height="5" rx="1" fill="${d}"/><path d="M${x} ${yb-6} L${x-20} ${yb-1} L${x} ${yb-1} z" fill="#cfd6dd"/><circle cx="${x+4}" cy="${yb-3.5}" r="1" fill="#111" opacity="0.3"/><circle cx="${x+12}" cy="${yb-3.5}" r="1" fill="#111" opacity="0.3"/>`;
+
+    // ── New Objects ──
+    case 'magnifier': return `<rect x="${x-12}" y="${yb-6}" width="14" height="4" rx="2" fill="${hex}" transform="rotate(45 ${x-12} ${yb-6})"/><circle cx="${x+2}" cy="${yb-16}" r="10" fill="${colShade(hex, 1.2)}" stroke="${d}" stroke-width="3"/><path d="M${x-2} ${yb-20} Q${x+4} ${yb-22} ${x+6} ${yb-14}" fill="none" stroke="#fff" stroke-width="2" opacity="0.6"/>`;
+    case 'camera': return `<rect x="${x-14}" y="${yb-20}" width="28" height="20" rx="3" fill="${d}"/><rect x="${x-10}" y="${yb-22}" width="8" height="4" rx="1" fill="${hex}"/><circle cx="${x}" cy="${yb-10}" r="7" fill="${hex}"/><circle cx="${x}" cy="${yb-10}" r="4" fill="#111"/><circle cx="${x-8}" cy="${yb-16}" r="1.5" fill="#fff" opacity="0.8"/>`;
+    case 'drone': return `<rect x="${x-14}" y="${yb-4}" width="28" height="2" fill="${d}"/><path d="M${x-14} ${yb-4} L${x-8} ${yb-12} L${x+8} ${yb-12} L${x+14} ${yb-4}" fill="none" stroke="${hex}" stroke-width="2"/><rect x="${x-5}" y="${yb-14}" width="10" height="6" rx="1" fill="${d}"/><ellipse cx="${x-14}" cy="${yb-12}" rx="8" ry="1.5" fill="#a0a0a0" opacity="0.7"/><ellipse cx="${x+14}" cy="${yb-12}" rx="8" ry="1.5" fill="#a0a0a0" opacity="0.7"/><rect x="${x-1}" y="${yb-16}" width="2" height="4" fill="#cf2020"/>`;
+    case 'cezve': return `<path d="M${x-10} ${yb} L${x-6} ${yb-20} L${x+6} ${yb-20} L${x+10} ${yb} z" fill="${hex}"/><path d="M${x+6} ${yb-18} L${x+24} ${yb-32}" stroke="${d}" stroke-width="2.5" stroke-linecap="round"/><ellipse cx="${x}" cy="${yb}" rx="10" ry="3" fill="${colShade(hex,0.8)}"/><ellipse cx="${x}" cy="${yb-20}" rx="6" ry="2" fill="${colShade(hex,1.2)}"/>`;
+    case 'whistle': return `<rect x="${x-16}" y="${yb-6}" width="32" height="4" rx="1" fill="${d}"/><rect x="${x-18}" y="${yb-7}" width="6" height="6" rx="1" fill="${hex}"/><path d="M${x-18} ${yb-7} L${x-22} ${yb-4} L${x-18} ${yb-1} z" fill="${d}"/><circle cx="${x-2}" cy="${yb-4}" r="1" fill="#222"/><circle cx="${x+2}" cy="${yb-4}" r="1" fill="#222"/><circle cx="${x+6}" cy="${yb-4}" r="1" fill="#222"/><circle cx="${x+10}" cy="${yb-4}" r="1" fill="#222"/>`;
+    case 'oscilloscope': return `<rect x="${x-14}" y="${yb-24}" width="28" height="24" rx="2" fill="${d}"/><rect x="${x-12}" y="${yb-22}" width="16" height="14" fill="#1c2833"/><path d="M${x-12} ${yb-15} Q${x-8} ${yb-20} ${x-4} ${yb-15} T${x+4} ${yb-15}" fill="none" stroke="#2ecc71" stroke-width="1.5"/><circle cx="${x+9}" cy="${yb-18}" r="2" fill="${hex}"/><circle cx="${x+9}" cy="${yb-12}" r="2" fill="${hex}"/><rect x="${x-10}" y="${yb-6}" width="4" height="2" fill="${hex}"/><rect x="${x-4}" y="${yb-6}" width="4" height="2" fill="${hex}"/>`;
+    case 'watch': return `<rect x="${x-12}" y="${yb-8}" width="24" height="6" rx="1" fill="${d}"/><circle cx="${x}" cy="${yb-12}" r="10" fill="${hex}"/><circle cx="${x}" cy="${yb-12}" r="8" fill="#111"/><circle cx="${x}" cy="${yb-12}" r="6" fill="none" stroke="#555" stroke-width="1"/><line x1="${x}" y1="${yb-12}" x2="${x+4}" y2="${yb-15}" stroke="#fff" stroke-width="1.5"/><line x1="${x}" y1="${yb-12}" x2="${x}" y2="${yb-8}" stroke="#fff" stroke-width="1.5"/>`;
+
     default: return '';
   }
 }
@@ -116,6 +135,86 @@ function colWindowView(m,U,ix,iy,iw,ih){
     P.push(`<circle cx="${fx}" cy="${hY}" r="12" fill="#14141b"/>`);
     P.push(`<ellipse cx="${fx}" cy="${hY-8}" rx="19" ry="5" fill="#0e0e14"/><rect x="${fx-8}" y="${hY-19}" width="16" height="12" rx="3" fill="#0e0e14"/>`); }
   return P.join('');
+}
+
+// ── setting-specific background decor ──
+// ── setting-specific background decor ──
+// ── setting-specific background decor ──
+function colSettingDecor(m, P) {
+  const s = m.setting;
+  if (s === 'office') {
+    // Filing Cabinet
+    P.push(`<rect x="220" y="250" width="40" height="80" rx="2" fill="#7f8c8d" stroke="#34495e" stroke-width="2"/>`);
+    P.push(`<rect x="225" y="255" width="30" height="22" fill="#95a5a6"/><rect x="235" y="264" width="10" height="4" fill="#2c3e50"/>`);
+    P.push(`<rect x="225" y="280" width="30" height="22" fill="#95a5a6"/><rect x="235" y="289" width="10" height="4" fill="#2c3e50"/>`);
+    P.push(`<rect x="225" y="305" width="30" height="22" fill="#95a5a6"/><rect x="235" y="314" width="10" height="4" fill="#2c3e50"/>`);
+
+    // Computer Table
+    P.push(`<rect x="80" y="285" width="120" height="6" rx="1" fill="#bdc3c7"/>`);
+    P.push(`<rect x="85" y="291" width="6" height="39" fill="#2c3e50"/><rect x="189" y="291" width="6" height="39" fill="#2c3e50"/>`);
+
+    // Desktop Monitor
+    P.push(`<rect x="115" y="255" width="40" height="26" rx="2" fill="#34495e"/>`);
+    P.push(`<rect x="117" y="257" width="36" height="22" fill="#ecf0f1"/>`);
+    P.push(`<rect x="133" y="281" width="4" height="4" fill="#34495e"/><rect x="125" y="284" width="20" height="2" fill="#2c3e50"/>`);
+
+    // Notebooks on the desk
+    P.push(`<rect x="90" y="280" width="16" height="5" rx="1" fill="#e74c3c" transform="rotate(-4 90 280)"/>`);
+    P.push(`<rect x="92" y="274" width="16" height="5" rx="1" fill="#f1c40f" transform="rotate(2 92 274)"/>`);
+
+    // Office Chair
+    P.push(`<rect x="125" y="295" width="6" height="25" fill="#2c3e50"/>`);
+    P.push(`<path d="M115 320 L141 320 L138 325 L118 325 Z" fill="#34495e"/>`);
+    P.push(`<rect x="115" y="270" width="26" height="22" rx="4" fill="#2980b9" opacity="0.9"/>`);
+    P.push(`<rect x="112" y="290" width="32" height="6" rx="3" fill="#34495e"/>`);
+  } else if (s === 'cafe') {
+    // Espresso Machine on a low back-counter
+    P.push(`<rect x="96" y="250" width="92" height="80" rx="4" fill="#1c1006" stroke="#4a3418" stroke-width="2"/>`);
+    P.push(`<rect x="100" y="254" width="84" height="40" rx="2" fill="#120c04"/>`);
+    P.push(`<circle cx="124" cy="274" r="12" fill="#201408" stroke="#b8924c" stroke-width="2"/>`);
+    P.push(`<rect x="150" y="260" width="28" height="20" rx="2" fill="#2c1c0a"/>`);
+    P.push(`<circle cx="158" cy="268" r="4" fill="#d97706" opacity=".9"/><circle cx="170" cy="268" r="4" fill="#2e8b57" opacity=".9"/>`);
+    P.push(`<rect x="112" y="290" width="32" height="4" rx="1" fill="#38260e"/>`);
+    P.push(`<line x1="122" y1="294" x2="120" y2="304" stroke="#38260e" stroke-width="2" stroke-linecap="round"/>`);
+    P.push(`<line x1="130" y1="294" x2="128" y2="304" stroke="#38260e" stroke-width="2" stroke-linecap="round"/>`);
+
+    // Cafe Bar Counter
+    P.push(`<rect x="84" y="310" width="160" height="20" rx="2" fill="#5a3c1e" stroke="#6e4e2a" stroke-width="1.5"/>`);
+    P.push(`<rect x="84" y="325" width="160" height="5" fill="#2e1808"/>`);
+
+    // Bar Stool
+    P.push(`<path d="M200 330 L194 400 L198 400 L204 330 Z" fill="#7f8c8d"/><path d="M216 330 L222 400 L218 400 L212 330 Z" fill="#7f8c8d"/><ellipse cx="208" cy="330" rx="18" ry="6" fill="#e67e22"/>`);
+  } else if (s === 'hotel') {
+    // Velvet Lobby Sofa
+    P.push(`<rect x="88" y="280" width="140" height="35" rx="10" fill="#42264a" stroke="#5a3462" stroke-width="2"/>`);
+    P.push(`<rect x="88" y="310" width="140" height="20" rx="8" fill="#362040"/>`);
+    P.push(`<rect x="88" y="280" width="16" height="50" rx="8" fill="#3a2044"/><rect x="212" y="280" width="16" height="50" rx="8" fill="#3a2044"/>`);
+
+    // Luggage Cart
+    P.push(`<rect x="250" y="250" width="40" height="60" rx="4" fill="#2c3e50"/><rect x="258" y="240" width="24" height="10" rx="2" fill="none" stroke="#7f8c8d" stroke-width="2"/><rect x="254" y="260" width="32" height="4" fill="#34495e"/><rect x="254" y="290" width="32" height="4" fill="#34495e"/>`);
+    P.push(`<rect x="240" y="310" width="60" height="6" rx="3" fill="#f1c40f"/><circle cx="250" cy="320" r="4" fill="#333"/><circle cx="290" cy="320" r="4" fill="#333"/>`);
+  } else if (s === 'study') {
+    // Low Bookshelf
+    P.push(`<rect x="90" y="250" width="150" height="80" fill="#3e2723" stroke="#212121" stroke-width="3"/>`);
+    P.push(`<rect x="90" y="286" width="150" height="4" fill="#5d4037"/>`);
+    const bkCols = ['#c0392b','#2980b9','#27ae60','#f39c12','#8e44ad'];
+    for(let r=0; r<2; r++) {
+      let bx = 95;
+      while(bx < 230) {
+        let w = 8 + (bx*r)%10;
+        P.push(`<rect x="${bx}" y="${256 + r*40}" width="${w}" height="${26 - (r%3)*4}" fill="${bkCols[(bx+r)%5]}"/>`);
+        bx += w + 2;
+      }
+    }
+
+    // Globe
+    P.push(`<circle cx="280" cy="270" r="22" fill="#3498db"/><path d="M270 255 Q290 270 280 285" fill="none" stroke="#2ecc71" stroke-width="6"/><path d="M255 270 A25 25 0 0 0 305 270" fill="none" stroke="#f1c40f" stroke-width="3"/><rect x="278" y="295" width="4" height="25" fill="#f1c40f"/><ellipse cx="280" cy="320" rx="14" ry="4" fill="#f1c40f"/>`);
+  } else if (s === 'lounge') {
+    // Low Fireplace
+    P.push(`<rect x="580" y="230" width="140" height="100" fill="#ecf0f1" stroke="#bdc3c7" stroke-width="2"/><rect x="570" y="220" width="160" height="10" fill="#95a5a6"/><rect x="605" y="260" width="90" height="70" rx="4" fill="#2c3e50"/>`);
+    P.push(`<path d="M650 330 Q630 290 650 270 Q670 290 650 330" fill="#e74c3c"/><path d="M650 330 Q640 300 650 290 Q660 300 650 330" fill="#f1c40f"/>`);
+    P.push(`<rect x="625" y="320" width="50" height="10" rx="3" fill="#5d4037" transform="rotate(8 650 325)"/><rect x="625" y="320" width="50" height="10" rx="3" fill="#4e342e" transform="rotate(-8 650 325)"/>`);
+  }
 }
 
 // ── full scene renderer ──
@@ -175,6 +274,8 @@ function colRender(m){
     if(m.door.open){ P.push(`<rect x="${dx}" y="${dy}" width="${dw}" height="${dh}" fill="#0a0a12"/><polygon points="${dx},${dy} ${dx+38},${dy+14} ${dx+38},${dy+dh-14} ${dx},${dy+dh}" fill="${m.door.color[1]}"/><polygon points="${dx},${dy} ${dx+38},${dy+14} ${dx+38},${dy+dh-14} ${dx},${dy+dh}" fill="#000" opacity=".18"/>`); }
     else { P.push(`<rect x="${dx}" y="${dy}" width="${dw}" height="${dh}" fill="${m.door.color[1]}"/><rect x="${dx+10}" y="${dy+16}" width="${dw-20}" height="${dh*0.4-10}" rx="3" fill="${colShade(m.door.color[1],.85)}"/><rect x="${dx+10}" y="${dy+dh*0.5}" width="${dw-20}" height="${dh*0.42}" rx="3" fill="${colShade(m.door.color[1],.85)}"/><circle cx="${dx+dw-14}" cy="${dy+dh*0.52}" r="4" fill="#e7c64a"/>`); }
   }
+  // setting-specific background decor
+  colSettingDecor(m, P);
   // rug
   if(m.rug.present) P.push(`<ellipse cx="400" cy="452" rx="250" ry="44" fill="${m.rug.color[1]}" opacity=".55"/><ellipse cx="400" cy="452" rx="250" ry="44" fill="none" stroke="${colShade(m.rug.color[1],1.3)}" stroke-width="3" opacity=".5"/>`);
   // plant (back-left corner)
@@ -191,23 +292,28 @@ function colRender(m){
   objs.forEach((o,i)=>{ const ox = tx+34 + i*((tw-68)/Math.max(1,oc-1||1)); colObjEl(P,o.type,oc===1?tx+tw/2:ox,ty+2,o.color[1]); });
   // pet on floor
   if(m.pet==='cat') P.push(`<g transform="translate(150,452)">
-    <ellipse cx="0" cy="4" rx="22" ry="7" fill="rgba(0,0,0,.28)"/>
-    <ellipse cx="2" cy="-15" rx="16" ry="20" fill="#6b6b78"/>
-    <circle cx="0" cy="-42" r="15" fill="#6b6b78"/>
-    <polygon points="-14,-54 -6,-35 -20,-35" fill="#5a5a66"/>
-    <polygon points="14,-54 20,-35 6,-35" fill="#5a5a66"/>
-    <polygon points="-13,-51 -8,-39 -17,-39" fill="#e879a8" opacity=".65"/>
-    <polygon points="13,-51 17,-39 9,-39" fill="#e879a8" opacity=".65"/>
-    <ellipse cx="-6" cy="-44" rx="4" ry="5" fill="#1c1c24"/>
-    <ellipse cx="6" cy="-44" rx="4" ry="5" fill="#1c1c24"/>
-    <circle cx="-4" cy="-46" r="1.5" fill="white"/>
-    <circle cx="8" cy="-46" r="1.5" fill="white"/>
-    <path d="M-2,-36 l2 2.5 l2 -2.5 z" fill="#f9a8d4"/>
-    <line x1="-14" y1="-38" x2="-3" y2="-37" stroke="#9ca3af" stroke-width="1" opacity=".6"/>
-    <line x1="3" y1="-37" x2="14" y2="-38" stroke="#9ca3af" stroke-width="1" opacity=".6"/>
-    <ellipse cx="-8" cy="-1" rx="7" ry="5" fill="#6b6b78"/>
-    <ellipse cx="8" cy="-1" rx="7" ry="5" fill="#6b6b78"/>
-    <path d="M16,-10 q18 -4 16 -24 q0 -10 -6 -8 q6 2 4 10 q-2 16 -16 20 z" fill="#6b6b78"/>
+      <ellipse cx="0" cy="4" rx="22" ry="7" fill="rgba(0,0,0,.28)"/>
+      <ellipse cx="2" cy="-15" rx="16" ry="20" fill="#6b6b78"/>
+      <circle cx="0" cy="-42" r="15" fill="#6b6b78"/>
+
+      <!-- Outer Ears (lifted higher on the head) -->
+      <polygon points="-13,-62 -5,-53 -14,-45" fill="#5a5a66"/>
+      <polygon points="13,-62 14,-45 5,-53" fill="#5a5a66"/>
+
+      <!-- Inner Ears (pink part, matching the new lift) -->
+      <polygon points="-12,-58 -6,-52 -12,-47" fill="#e879a8" opacity=".65"/>
+      <polygon points="12,-58 12,-47 6,-52" fill="#e879a8" opacity=".65"/>
+
+      <ellipse cx="-6" cy="-44" rx="4" ry="5" fill="#1c1c24"/>
+      <ellipse cx="6" cy="-44" rx="4" ry="5" fill="#1c1c24"/>
+      <circle cx="-4" cy="-46" r="1.5" fill="white"/>
+      <circle cx="8" cy="-46" r="1.5" fill="white"/>
+      <path d="M-2,-36 l2 2.5 l2 -2.5 z" fill="#f9a8d4"/>
+      <line x1="-14" y1="-38" x2="-3" y2="-37" stroke="#9ca3af" stroke-width="1" opacity=".6"/>
+      <line x1="3" y1="-37" x2="14" y2="-38" stroke="#9ca3af" stroke-width="1" opacity=".6"/>
+      <ellipse cx="-8" cy="-1" rx="7" ry="5" fill="#6b6b78"/>
+      <ellipse cx="8" cy="-1" rx="7" ry="5" fill="#6b6b78"/>
+      <path d="M16,-10 q18 -4 16 -24 q0 -10 -6 -8 q6 2 4 10 q-2 16 -16 20 z" fill="#6b6b78"/>
   </g>`);
   else if(m.pet==='dog') P.push(`<g transform="translate(150,452)">
     <ellipse cx="0" cy="4" rx="26" ry="8" fill="rgba(0,0,0,.28)"/>
@@ -323,7 +429,30 @@ function colQuestions(m,cfg){
     if(m.mirror.present && m.mirror.reveals){ const rv=m.mirror.reveals;
       if(rv.type==='person') secret.push(colorQ('colq_mirror_person', rv.personShirt[0], true));
       else if(rv.type==='object') secret.push(poolQ(t('colq_mirror_object'), rv.object, COL_HELD, k=>colName('obj',k), true));
-      else { const a=rv.clockH+':'+(rv.clockM<10?'0'+rv.clockM:rv.clockM); const opts=new Set([a]); while(opts.size<4){ const h=1+Math.floor(rnd()*12), mm=[0,15,30,45][Math.floor(rnd()*4)]; opts.add(h+':'+(mm<10?'0'+mm:mm)); } secret.push({q:t('colq_mirror_clock'),a,choices:[...opts].sort(()=>rnd()-.5),accept:[a],secret:true}); }
+      else {
+        // The TRUE time in the room (the correct detective answer)
+        const realA = m.clock.h + ':' + (m.clock.m < 10 ? '0' + m.clock.m : m.clock.m);
+
+        // The ILLUSION time shown on the mirror's face (the trap/distractor)
+        const fakeA = rv.clockH + ':' + (rv.clockM < 10 ? '0' + rv.clockM : rv.clockM);
+
+        const opts = new Set([realA, fakeA]);
+
+        // Fill the rest with random times
+        while(opts.size < 4) {
+          const h = 1 + Math.floor(rnd() * 12);
+          const mm = [0, 15, 30, 45][Math.floor(rnd() * 4)];
+          opts.add(h + ':' + (mm < 10 ? '0' + mm : mm));
+        }
+
+        secret.push({
+          q: t('colq_mirror_clock'),
+          a: realA, // The correct answer is now the REAL time
+          choices: [...opts].sort(() => rnd() - .5),
+          accept: [realA, realA.replace(':', '.'), realA.replace(':', 'h')],
+          secret: true
+        });
+      }
     }
     if(m.window.outside==='watcher') secret.push(colorQ('colq_watcher', m.window.watcher[0], true));
     if(m.clue.type!=='none'){ const correct=m.clue.type; const choices=['footprints','spill','dropped','none'].map(k=>colName('clue',k)); secret.push({q:t('colq_clue'),a:colName('clue',correct),choices,accept:[colName('clue',correct).toLowerCase()],secret:true}); }

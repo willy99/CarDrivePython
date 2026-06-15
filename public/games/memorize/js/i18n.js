@@ -251,6 +251,8 @@ const STRINGS = {
     // vocab: objects
     cobj_cup:'Cup', cobj_bottle:'Bottle', cobj_vase:'Vase', cobj_book:'Book', cobj_candle:'Candle',
     cobj_glass:'Wine glass', cobj_phone:'Telephone', cobj_key:'Key', cobj_envelope:'Envelope', cobj_knife:'Knife',
+    cobj_magnifier: 'Magnifier', cobj_camera: 'Camera', cobj_drone: 'Drone', cobj_cezve: 'Cezve', cobj_whistle: 'Whistle',
+    cobj_oscilloscope: 'Oscilloscope', cobj_watch: 'Watch',
     // vocab: outside
     cout_moon:'The moon', cout_tree:'A tree', cout_rain:'Rain', cout_city:'City lights', cout_watcher:'A watcher',
     // vocab: painting
@@ -664,6 +666,8 @@ const STRINGS = {
     // vocab: objects
     cobj_cup:'Чашка', cobj_bottle:'Пляшка', cobj_vase:'Ваза', cobj_book:'Книга', cobj_candle:'Свічка',
     cobj_glass:'Келих', cobj_phone:'Телефон', cobj_key:'Ключ', cobj_envelope:'Конверт', cobj_knife:'Ніж',
+    cobj_magnifier: 'Лупа', cobj_camera: 'Камера',  cobj_drone: 'Дрон', cobj_cezve: 'Джезва',
+    cobj_whistle: 'Свисток', cobj_oscilloscope: 'Осцилограф', cobj_watch: 'Годинник',
     // vocab: outside
     cout_moon:'Місяць', cout_tree:'Дерево', cout_rain:'Дощ', cout_city:'Вогні міста', cout_watcher:'Спостерігач',
     // vocab: painting
