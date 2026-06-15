@@ -15,11 +15,14 @@ function applyLang() {
   setTxt('math-mode-title', 'math_mode_title'); setTxt('math-mode-desc', 'math_mode_desc');
   setTxt('diamond-mode-title', 'diamond_mode_title'); setTxt('diamond-mode-desc', 'diamond_mode_desc');
   setTxt('lm-mode-title', 'lm_mode_title'); setTxt('lm-mode-desc', 'lm_mode_desc');
-  setTxt('col-mode-title', 'col_mode_title'); setTxt('col-mode-desc', 'col_mode_desc');
+  setTxt('col-mode-title',  'col_mode_title');  setTxt('col-mode-desc',  'col_mode_desc');
+  setTxt('cph-mode-title',  'cph_mode_title');  setTxt('cph-mode-desc',  'cph_mode_desc');
+  setTxt('wtr-mode-title',  'wtr_mode_title');  setTxt('wtr-mode-desc',  'wtr_mode_desc');
+  setTxt('mtg-mode-title',  'mtg_mode_title');  setTxt('mtg-mode-desc',  'mtg_mode_desc');
   // back buttons
   document.querySelectorAll('.back-btn').forEach(b => { b.textContent = t('back_menu'); });
   // options toggle labels
-  ['wm-opts-label','spot-opts-label','math-opts-label','col-opts-label'].forEach(id => setTxt(id, 'opts_label'));
+  ['wm-opts-label','spot-opts-label','math-opts-label','col-opts-label','cipher-opts-label'].forEach(id => setTxt(id, 'opts_label'));
   // colombo static
   setTxt('col-section-title', 'col_section_title'); setTxt('col-section-sub', 'col_section_sub');
   setTxt('col-training-head', 'col_training_head');
@@ -58,7 +61,7 @@ function applyLang() {
   if (mathHint && mathState.opsId) selectMathOps(mathState.opsId); else if (mathHint) setTxt('math-op-hint', 'math_choose_arith');
   const mathRep = document.getElementById('math-replay-btn'); if (mathRep) mathRep.textContent = t('math_replay');
   // re-render dynamic level grids
-  showWordMenu(); showSpotMenu(); showDiamondMenu(); showLmMenu(); showColomboMenu(); renderMathOps(); renderMathLevels(); renderMathTricks(); renderMathStats(); renderWmStats(); renderMathEstRow(); renderDailyChallenge(); updateXpDisplay(); renderWorkoutBtn();
+  showWordMenu(); showSpotMenu(); showDiamondMenu(); showLmMenu(); showColomboMenu(); showCipherMenuLang(); showWaiterMenuLang(); showMeetingMenuLang(); renderMathOps(); renderMathLevels(); renderMathTricks(); renderMathStats(); renderWmStats(); renderMathEstRow(); renderDailyChallenge(); updateXpDisplay(); renderWorkoutBtn();
   setTxt('radar-title','radar_title'); setTxt('workout-lbl','workout_lbl'); setTxt('workout-result-title','workout_complete'); setTxt('workout-result-sub','workout_sub'); setTxt('workout-dismiss-btn','workout_awesome');
   updateAchBadge();
   // return to menu

@@ -153,6 +153,66 @@
       <h2 id="math-mode-title">Math Drills</h2>
       <p id="math-mode-desc">Solve arithmetic against the clock — beat your brain</p>
     </div>
+    <div class="mode-card indigo" onclick="showCipherMenu()">
+      <svg class="icon-svg" viewBox="0 0 58 58" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <linearGradient id="cphIcoG" x1="0" y1="0" x2="58" y2="58" gradientUnits="userSpaceOnUse">
+            <stop stop-color="#818cf8"/><stop offset="1" stop-color="#c084fc"/>
+          </linearGradient>
+        </defs>
+        <!-- Ring (0) -->
+        <circle cx="14" cy="14" r="9" fill="none" stroke="url(#cphIcoG)" stroke-width="3.5"/>
+        <!-- Candle (1) -->
+        <rect x="26" y="18" width="7" height="18" rx="2" stroke="url(#cphIcoG)" stroke-width="2.2" fill="none"/>
+        <path d="M29.5,8 C28,12 26,15 29.5,18 C33,15 31,12 29.5,8Z" fill="url(#cphIcoG)"/>
+        <!-- Lightning (7) -->
+        <path d="M42,8 L36,22 L41,22 L38,36 L46,20 L41,20 Z" fill="url(#cphIcoG)"/>
+        <!-- Heart (3) -->
+        <path d="M14,38 L6,31 A7,7,0,0,1,14,27 A7,7,0,0,1,22,31 Z" fill="url(#cphIcoG)" opacity=".85"/>
+        <!-- Balloon (9) -->
+        <ellipse cx="44" cy="44" rx="10" ry="12" fill="none" stroke="url(#cphIcoG)" stroke-width="2.4"/>
+        <path d="M44,56 Q43,60 44,62" stroke="url(#cphIcoG)" stroke-width="2" stroke-linecap="round"/>
+      </svg>
+      <h2 id="cph-mode-title">Cipher</h2>
+      <p id="cph-mode-desc">Map numbers to vivid shapes — memorize any code in seconds</p>
+    </div>
+    <div class="mode-card terracotta" onclick="showWaiterMenu()">
+      <svg class="icon-svg" viewBox="0 0 58 58" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <linearGradient id="wtrIcoG" x1="0" y1="0" x2="58" y2="58" gradientUnits="userSpaceOnUse">
+            <stop stop-color="#ff7043"/><stop offset="1" stop-color="#ffa726"/>
+          </linearGradient>
+        </defs>
+        <!-- Cloche dome -->
+        <path d="M8 38 Q8 14 29 14 Q50 14 50 38 Z" stroke="url(#wtrIcoG)" stroke-width="3" fill="none" stroke-linejoin="round"/>
+        <!-- Plate rim -->
+        <ellipse cx="29" cy="38" rx="21" ry="5.5" stroke="url(#wtrIcoG)" stroke-width="2.5"/>
+        <!-- Handle -->
+        <circle cx="29" cy="14" r="4" stroke="url(#wtrIcoG)" stroke-width="2.5"/>
+        <!-- Tray -->
+        <line x1="5" y1="46" x2="53" y2="46" stroke="url(#wtrIcoG)" stroke-width="3" stroke-linecap="round"/>
+      </svg>
+      <h2 id="wtr-mode-title">Waiter</h2>
+      <p id="wtr-mode-desc">Watch orders come in · serve each customer from memory</p>
+    </div>
+    <div class="mode-card sky" onclick="showMeetingMenu()">
+      <svg class="icon-svg" viewBox="0 0 58 58" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <linearGradient id="mtgIcoG" x1="0" y1="0" x2="58" y2="58" gradientUnits="userSpaceOnUse">
+            <stop stop-color="#60a5fa"/><stop offset="1" stop-color="#a78bfa"/>
+          </linearGradient>
+        </defs>
+        <!-- speech bubble -->
+        <path d="M7 9 Q7 4 12 4 L46 4 Q51 4 51 9 L51 33 Q51 38 46 38 L26 38 L16 48 L16 38 L12 38 Q7 38 7 33 Z"
+              stroke="url(#mtgIcoG)" stroke-width="3" fill="none" stroke-linejoin="round"/>
+        <!-- text lines inside bubble -->
+        <line x1="15" y1="15" x2="43" y2="15" stroke="url(#mtgIcoG)" stroke-width="2.5" stroke-linecap="round"/>
+        <line x1="15" y1="23" x2="37" y2="23" stroke="url(#mtgIcoG)" stroke-width="2.5" stroke-linecap="round"/>
+        <line x1="15" y1="31" x2="43" y2="31" stroke="url(#mtgIcoG)" stroke-width="2.5" stroke-linecap="round"/>
+      </svg>
+      <h2 id="mtg-mode-title">The Meeting</h2>
+      <p id="mtg-mode-desc">Read the conversation · recall key details from memory</p>
+    </div>
     <div class="mode-card amber" onclick="showColomboMenu()">
       <svg class="icon-svg" viewBox="0 0 58 58" fill="none" xmlns="http://www.w3.org/2000/svg">
         <defs>
@@ -740,7 +800,7 @@
   </div>
 
   <!-- sub: quiz phase -->
-  <div id="col-quiz" style="display:none;width:100%;max-width:680px;margin:0 auto;padding:30px 18px 24px;text-align:center;">
+  <div id="col-quiz" style="display:none;width:100%;max-width:680px;margin:0 auto;padding:30px 18px 100px;text-align:center;">
     <div style="display:flex;align-items:center;justify-content:center;gap:6px;margin-bottom:4px;">
       <div class="section-title" id="col-quiz-title">The scene is gone.</div>
     </div>
@@ -752,7 +812,7 @@
   </div>
 
   <!-- sub: results -->
-  <div id="col-results" style="display:none;text-align:center;width:100%;max-width:680px;margin:0 auto;padding:24px 18px;">
+  <div id="col-results" style="display:none;text-align:center;width:100%;max-width:680px;margin:0 auto;padding:24px 18px 100px;">
     <div class="wm-stars" id="col-stars"></div>
     <div class="result-hero" id="col-score-pct"></div>
     <div class="result-label" id="col-result-label">Case Solved</div>
@@ -762,6 +822,182 @@
       <button class="btn" id="col-change-btn" onclick="showColomboMenu()">New Case</button>
       <button class="btn btn-primary" id="col-replay-btn" onclick="colReplayReveal()">Re-examine Scene</button>
       <button class="btn btn-primary" id="col-next-btn" onclick="colNextCase()">Next Case →</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ WAITER ══ -->
+<div id="screen-waiter" class="screen">
+  <!-- Menu -->
+  <div id="wtr-select" style="text-align:center;padding:40px 20px 20px;width:100%;max-width:760px;margin:0 auto;">
+    <div style="display:flex;align-items:center;justify-content:center;gap:6px;">
+      <div class="section-title" id="wtr-section-title">Waiter</div>
+      <button class="info-btn" onclick="showGameInfo('waiter')">ℹ</button>
+      <button class="close-btn" onclick="goMenu()" title="← MemBrain">✕</button>
+    </div>
+    <div class="section-sub" id="wtr-section-sub">Watch the orders · then serve each customer from memory</div>
+    <div style="display:flex;flex-wrap:wrap;gap:10px;justify-content:center;padding:16px 0;" id="wtr-level-grid"></div>
+    <div style="margin:6px auto 0;max-width:560px;padding:0 8px;">
+      <button class="col-daily-btn" id="wtr-daily-btn" onclick="wtrStartDaily()">
+        <span>🍽️ <span id="wtr-daily-lbl">Daily Special</span></span>
+        <span class="dc-badge" id="wtr-daily-badge">Open</span>
+      </button>
+    </div>
+    <div style="margin-top:26px;border-top:1px solid var(--border);padding-top:14px;">
+      <div class="daily-head">
+        <div style="font-weight:800;font-size:.95rem;" id="wtr-training-head">🍽️ Your Service Record</div>
+      </div>
+      <div class="math-stat-grid" id="wtr-stats"></div>
+    </div>
+  </div>
+
+  <!-- Study phase -->
+  <div id="wtr-study" style="display:none;width:100%;padding:14px 16px 20px;text-align:center;">
+    <div class="col-stage-wrap">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+        <span class="tag tag-gold" id="wtr-study-lbl">Memorize the orders</span>
+        <button class="close-btn" onclick="backFromGame('waiter')" title="← MemBrain">✕</button>
+      </div>
+      <div class="wtr-scene-frame" id="wtr-scene"></div>
+      <div class="col-timebar-wrap"><div class="col-timebar" id="wtr-timebar"></div></div>
+      <button class="btn btn-primary" id="wtr-skip-btn" onclick="wtrStartRecall()" style="margin-top:14px;">Start serving →</button>
+    </div>
+  </div>
+
+  <!-- Recall phase -->
+  <div id="wtr-recall" style="display:none;width:100%;max-width:560px;margin:0 auto;padding:24px 16px 100px;text-align:center;">
+    <div id="wtr-recall-dots" class="wtr-dots-row"></div>
+    <div id="wtr-recall-q" class="wtr-recall-q"></div>
+    <div id="wtr-slots" class="wtr-slots-row"></div>
+    <div id="wtr-menu-grid" class="wtr-menu-grid"></div>
+    <div id="wtr-recall-action" style="margin-top:16px;"></div>
+  </div>
+
+  <!-- Result -->
+  <div id="wtr-result" style="display:none;text-align:center;width:100%;max-width:680px;margin:0 auto;padding:14px 16px 100px;">
+    <div id="wtr-result-faces" class="wtr-faces-frame"></div>
+    <div id="wtr-result-score"></div>
+    <div id="wtr-result-grid" class="wtr-res-grid"></div>
+    <div id="wtr-result-btns" style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin-top:20px;"></div>
+  </div>
+</div>
+
+<!-- ══ MEETING ══ -->
+<div id="screen-meeting" class="screen">
+  <!-- Menu -->
+  <div id="mtg-select" style="text-align:center;padding:40px 20px 20px;width:100%;max-width:760px;margin:0 auto;">
+    <div style="display:flex;align-items:center;justify-content:center;gap:6px;">
+      <div class="section-title" id="mtg-section-title">The Meeting</div>
+      <button class="info-btn" onclick="showGameInfo('meeting')">ℹ</button>
+      <button class="close-btn" onclick="goMenu()" title="← MemBrain">✕</button>
+    </div>
+    <div class="section-sub" id="mtg-section-sub">Read the dialogue · then answer from memory</div>
+    <div style="display:flex;flex-wrap:wrap;gap:10px;justify-content:center;padding:16px 0;" id="mtg-level-grid"></div>
+    <div style="margin:6px auto 0;max-width:560px;padding:0 8px;">
+      <button class="col-daily-btn" id="mtg-daily-btn">
+        <span>🗣️ <span id="mtg-daily-lbl">Meeting of the Day</span></span>
+        <span class="dc-badge" id="mtg-daily-badge">Open</span>
+      </button>
+    </div>
+    <div style="margin-top:26px;border-top:1px solid var(--border);padding-top:14px;">
+      <div class="daily-head">
+        <div style="font-weight:800;font-size:.95rem;" id="mtg-training-head">🗣️ Your Meeting Log</div>
+      </div>
+      <div class="math-stat-grid" id="mtg-stats"></div>
+    </div>
+  </div>
+
+  <!-- Study phase -->
+  <div id="mtg-study" style="display:none;width:100%;padding:14px 16px 20px;text-align:center;">
+    <div class="col-stage-wrap">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+        <span class="tag tag-blue" id="mtg-study-cap">Read the meeting notes carefully</span>
+        <button class="close-btn" onclick="backFromGame('meeting')" title="← MemBrain">✕</button>
+      </div>
+      <div id="mtg-transcript"></div>
+      <div class="col-timebar-wrap" style="margin-top:12px;"><div class="col-timebar" id="mtg-timebar"></div></div>
+      <button class="btn btn-primary" id="mtg-ready-btn" onclick="mtgSkipStudy()" style="margin-top:14px;">I've read it →</button>
+    </div>
+  </div>
+
+  <!-- Quiz phase -->
+  <div id="mtg-quiz" style="display:none;width:100%;max-width:560px;margin:0 auto;padding:24px 16px 100px;">
+    <div style="font-size:1rem;font-weight:900;color:var(--text2);letter-spacing:.5px;margin-bottom:16px;text-align:center;" id="mtg-quiz-title">What do you remember?</div>
+    <div id="mtg-questions"></div>
+    <button class="btn btn-primary" id="mtg-submit-btn" onclick="mtgSubmit()" style="width:100%;margin-top:6px;" disabled>Submit →</button>
+  </div>
+
+  <!-- Result -->
+  <div id="mtg-result" style="display:none;text-align:center;width:100%;max-width:560px;margin:0 auto;padding:24px 16px 100px;">
+    <div id="mtg-result-score"></div>
+    <div id="mtg-result-review"></div>
+    <div id="mtg-result-btns" style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin-top:20px;"></div>
+  </div>
+</div>
+
+<!-- ══ CIPHER ══ -->
+<div id="screen-cipher" class="screen">
+  <!-- MENU -->
+  <div id="cipher-menu" style="text-align:center;padding:20px;width:100%;max-width:680px;margin:0 auto;">
+    <div style="display:flex;align-items:center;justify-content:center;gap:6px;">
+      <div class="section-title" id="cipher-section-title">Cipher</div>
+      <button class="info-btn" onclick="showGameInfo('cipher')">ℹ</button>
+      <button class="close-btn" onclick="goMenu()" title="← MemBrain">✕</button>
+    </div>
+    <div class="section-sub" id="cipher-section-sub">Learn the shape code · encode numbers into stories · recall them</div>
+    <!-- Shape reference strip (0–9) -->
+    <div id="cipher-ref-strip" class="cph-ref-strip"></div>
+    <!-- Level grid -->
+    <div class="level-grid" id="cipher-level-grid"></div>
+    <!-- Daily Code card -->
+    <div id="cipher-daily-wrap" style="margin:14px 0 4px;"></div>
+    <!-- Options -->
+    <div class="opts-toggle" onclick="toggleOpts('cipher-opts')" id="cipher-opts-toggle">
+      <div class="opts-toggle-inner"><span>⚙️</span><span id="cipher-opts-label">Options</span></div>
+      <span class="opts-arrow" id="cipher-opts-arrow">▼</span>
+    </div>
+    <div class="opts-panel" id="cipher-opts">
+      <div class="opts-inner">
+        <div style="font-size:.75rem;color:var(--text3);">More modes coming soon…</div>
+      </div>
+    </div>
+    <!-- Stats -->
+    <div style="margin-top:26px;border-top:1px solid var(--border);padding-top:14px;">
+      <div class="daily-head">
+        <div style="font-weight:800;font-size:.95rem;" id="cipher-training-head">🔢 Your Code Training</div>
+      </div>
+      <div class="bars7" id="cipher-bars"></div>
+      <div class="math-stat-grid" id="cipher-daily-stats"></div>
+    </div>
+  </div>
+
+  <!-- STUDY PHASE -->
+  <div id="cipher-study" style="display:none;">
+    <div id="cipher-study-title" style="font-size:1rem;font-weight:900;color:var(--text2);letter-spacing:1px;margin-bottom:10px;">Memorize this code</div>
+    <div id="cipher-icons-row" class="cph-icons-row"></div>
+    <div id="cipher-story-box" class="cph-story-box" style="opacity:0;"></div>
+    <div class="cph-study-timebar"><div id="cipher-study-fill"></div></div>
+    <div id="cipher-countdown" style="font-size:1.3rem;font-weight:900;color:var(--text2);margin-bottom:10px;">9</div>
+    <button class="btn btn-primary" id="cipher-ready-btn" onclick="cphSkipStudy()">I'm ready →</button>
+  </div>
+
+  <!-- RECALL PHASE -->
+  <div id="cipher-recall" style="display:none;">
+    <div id="cipher-recall-title" style="font-size:1rem;font-weight:900;color:var(--text2);letter-spacing:1px;margin-bottom:16px;">What was the code?</div>
+    <div id="cipher-answer-row" class="cph-answer-row"></div>
+    <div id="cipher-digit-pad" class="cph-digit-pad"></div>
+    <button class="btn btn-primary" id="cipher-submit-btn" onclick="cphSubmit()" style="width:100%;max-width:320px;margin-top:4px;">Confirm →</button>
+  </div>
+
+  <!-- RESULT PHASE -->
+  <div id="cipher-result" style="display:none;">
+    <div id="cipher-result-label" style="font-size:1rem;font-weight:900;color:var(--text2);letter-spacing:1px;margin-bottom:16px;">Result</div>
+    <div id="cipher-result-icons" class="cph-result-icons"></div>
+    <div id="cipher-score-display"></div>
+    <div id="cipher-result-story" class="cph-result-story" style="display:none;"></div>
+    <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin-top:6px;">
+      <button class="btn" id="cipher-menu-btn" onclick="showCipherMenu()">Menu</button>
+      <button class="btn btn-primary" id="cipher-next-btn" onclick="cphNext()">Next Level →</button>
     </div>
   </div>
 </div>
@@ -780,6 +1016,9 @@
 <script src="js/pairs-ai.js"></script>
 <script src="js/math-extra.js"></script>
 <script src="js/colombo.js"></script>
+<script src="js/cipher.js"></script>
+<script src="js/waiter.js"></script>
+<script src="js/meeting.js"></script>
 <script src="js/init.js"></script>
 </body>
 </html>

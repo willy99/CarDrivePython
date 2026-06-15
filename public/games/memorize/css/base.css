@@ -23,7 +23,7 @@ body{background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,san
 .back-btn:hover{background:rgba(255,255,255,0.12);color:#fff;}
 
 /* ── MAIN MENU ── */
-#screen-menu{justify-content:center;gap:0;}
+#screen-menu{justify-content:flex-start;align-items:center;gap:0;}
 .menu-hero{text-align:center;padding:40px 20px 30px;}
 .menu-hero h1{font-size:clamp(2.4rem,6vw,3.8rem);font-weight:900;letter-spacing:-1px;
   background:linear-gradient(135deg,#a855f7,#60a5fa,#34d399);
@@ -51,6 +51,12 @@ body{background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,san
 .mode-card.rose:hover{box-shadow:0 16px 48px rgba(251,113,133,.22);}
 .mode-card.amber{border-color:rgba(217,119,6,.35);}
 .mode-card.amber:hover{box-shadow:0 16px 48px rgba(217,119,6,.25);}
+.mode-card.indigo{border-color:rgba(129,140,248,.35);}
+.mode-card.indigo:hover{box-shadow:0 16px 48px rgba(129,140,248,.28);}
+.mode-card.terracotta{border-color:rgba(255,112,67,.35);}
+.mode-card.terracotta:hover{box-shadow:0 16px 48px rgba(255,112,67,.28);}
+.mode-card.sky{border-color:rgba(96,165,250,.35);}
+.mode-card.sky:hover{box-shadow:0 16px 48px rgba(96,165,250,.28);}
 .mode-card .icon-svg{width:58px;height:58px;margin:0 auto 14px;display:block;}
 
 /* ── LONG MEMORY GAME ── */

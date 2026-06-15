@@ -152,12 +152,39 @@ function brainScores() {
   const dStreak = dailyStreak();
   const dailyScore = Math.min(100, Math.round(dStreak / 14 * 100));
 
+  const cphData    = JSON.parse(localStorage.getItem('membrain_cipher_v1') || '{}');
+  const cphHistory = cphData.history || [];
+  const cphRecent  = cphHistory.slice(-20);
+  const cipherScore = cphRecent.length > 0
+    ? Math.round(cphRecent.reduce((a, h) => a + h.pct, 0) / cphRecent.length)
+    : 0;
+
+  const colData   = JSON.parse(localStorage.getItem('membrain_colombo_v1') || '{}');
+  const colDays   = Object.values(colData.days || {}).slice(-20);
+  const colScore  = colDays.length > 0
+    ? Math.round(colDays.reduce((a, d) => a + (d.score || 0), 0) / colDays.length)
+    : 0;
+
+  const wtrData    = JSON.parse(localStorage.getItem('membrain_waiter_v1') || '{}');
+  const wtrHist    = (wtrData.history || []).slice(-20);
+  const wtrScore   = wtrHist.length > 0
+    ? Math.round(wtrHist.reduce((a, h) => a + h.pct, 0) / wtrHist.length) : 0;
+
+  const mtgData  = JSON.parse(localStorage.getItem('membrain_meeting_v1') || '{}');
+  const mtgHist  = (mtgData.history || []).slice(-20);
+  const mtgScore = mtgHist.length > 0
+    ? Math.round(mtgHist.reduce((a, h) => a + h.pct, 0) / mtgHist.length) : 0;
+
   return [
-    { label: t('radar_wm'),    score: wmScore,    color: 'rgba(168,85,247,.85)' },
-    { label: t('radar_spot'),  score: spotScore,  color: 'rgba(96,165,250,.85)' },
-    { label: t('radar_math'),  score: mathScore,  color: 'rgba(52,211,153,.85)' },
-    { label: t('radar_pairs'), score: pairsScore, color: 'rgba(251,191,36,.85)' },
-    { label: t('radar_daily'), score: dailyScore, color: 'rgba(248,113,113,.85)' },
+    { label: t('radar_wm'),      score: wmScore,     color: 'rgba(168,85,247,.85)' },
+    { label: t('radar_spot'),   score: spotScore,   color: 'rgba(96,165,250,.85)' },
+    { label: t('radar_math'),   score: mathScore,   color: 'rgba(52,211,153,.85)' },
+    { label: t('radar_pairs'),  score: pairsScore,  color: 'rgba(251,191,36,.85)' },
+    { label: t('radar_daily'),  score: dailyScore,  color: 'rgba(248,113,113,.85)' },
+    { label: t('radar_cipher'), score: cipherScore, color: 'rgba(129,140,248,.85)' },
+    { label: t('radar_col'),    score: colScore,    color: 'rgba(251,191,36,.6)'  },
+    { label: t('radar_waiter'),  score: wtrScore,    color: 'rgba(255,112,67,.8)'  },
+    { label: t('radar_meeting'), score: mtgScore,    color: 'rgba(96,165,250,.85)' },
   ];
 }
 

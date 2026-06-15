@@ -43,13 +43,22 @@ function backFromGame(game) {
     diamond: () => document.getElementById('diamond-game').style.display !== 'none',
     col:     () => document.getElementById('col-study').style.display !== 'none' ||
                    document.getElementById('col-quiz').style.display !== 'none',
+    cipher:  () => document.getElementById('cipher-study').style.display !== 'none' ||
+                   document.getElementById('cipher-recall').style.display !== 'none',
+    waiter:  () => document.getElementById('wtr-study').style.display !== 'none' ||
+                   document.getElementById('wtr-recall').style.display !== 'none',
+    meeting: () => document.getElementById('mtg-study').style.display !== 'none' ||
+                   document.getElementById('mtg-quiz').style.display  !== 'none',
     pairs:   () => true,
   };
   const check = inGame[game];
   if (check && check()) {
     _leaveCb = () => {
-      if (game === 'wm') { wmTimers.forEach(clearTimeout); wmTimers = []; }
-      if (game === 'col') { colTimers.forEach(clearTimeout); colTimers = []; }
+      if (game === 'wm')     { wmTimers.forEach(clearTimeout);  wmTimers  = []; }
+      if (game === 'col')    { colTimers.forEach(clearTimeout);  colTimers = []; }
+      if (game === 'cipher') { cphTimers.forEach(clearTimeout);  cphTimers = []; }
+      if (game === 'waiter')  { wtrTimers.forEach(clearTimeout);  wtrTimers = []; }
+      if (game === 'meeting') { mtgTimers.forEach(clearTimeout);  mtgTimers = []; }
       if (game === 'pairs') { document.getElementById('gameover-overlay').classList.remove('show'); }
       goMenu();
     };

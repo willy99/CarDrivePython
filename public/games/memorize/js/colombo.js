@@ -67,9 +67,11 @@ function colBuild(seed, cfg){
   const painting = {present: chance(.7), subject: pick(COL_PAINT), frame: pick([['gold','#caa24a'],['black','#1f1f26'],['brown','#6a4a2c']])};
   let mirror = {present:false, reveals:null};
   if(cfg.secret && chance(.8)){
+    const mirH = ((12 - clock.h) % 12) || 12;
+    const mirM = (60 - clock.m) % 60;
     mirror = {present:true, reveals:{type: pick(['person','object','clock']),
       personShirt: pick(COL_COLORS), object: pick(COL_HELD),
-      clockH:1+Math.floor(rnd()*12), clockM:pick([0,15,30,45])}};
+      clockH: mirH, clockM: mirM}};
   } else if(chance(.4)){ mirror = {present:true, reveals:null}; }
   const door = {present: chance(.72), open: chance(.5), color: pick([['red','#9c3b32'],['white','#d8d8de'],['brown','#6a4a2c'],['blue','#34557a'],['green','#2e6b50']])};
   const nObj = 2 + Math.floor(rnd()*Math.max(1,cfg.objects-1));
@@ -110,7 +112,7 @@ function colWindowView(m,U,ix,iy,iw,ih){
   else if(o==='city'){ for(let i=0;i<5;i++){ const bx=ix+i*(iw/5); const bh=ih*(0.4+((i*13)%5)/10); P.push(`<rect x="${bx}" y="${iy+ih-bh}" width="${iw/5-3}" height="${bh}" fill="#1b2747"/>`); for(let w=0;w<6;w++) P.push(`<rect x="${bx+4+(w%2)*10}" y="${iy+ih-bh+8+Math.floor(w/2)*14}" width="5" height="6" fill="${((i+w)%2)?'#ffd76a':'#2a3a5e'}"/>`); } }
   else if(o==='watcher'){ const wc=m.window.watcher[1]; const fx=ix+iw*0.42, baseY=iy+ih, hY=iy+ih*0.36;
     P.push(`<circle cx="${ix+iw*0.8}" cy="${iy+ih*0.2}" r="10" fill="#e8e2c4"/>`);
-    P.push(`<path d="M${fx-22} ${baseY} L${fx-17} ${iy+ih*0.52} Q${fx} ${iy+ih*0.44} ${fx+17} ${iy+ih*0.52} L${fx+22} ${baseY} Z" fill="${wc}"/>`);
+    P.push(`<path d="M${fx-22} ${baseY} L${fx-17} ${iy+ih*0.52} Q${fx} ${iy+ih*0.44} ${fx+17} ${iy+ih*0.52} L${fx+22} ${baseY} Z" fill="${wc}" stroke="rgba(255,255,255,0.45)" stroke-width="1.5"/>`);
     P.push(`<circle cx="${fx}" cy="${hY}" r="12" fill="#14141b"/>`);
     P.push(`<ellipse cx="${fx}" cy="${hY-8}" rx="19" ry="5" fill="#0e0e14"/><rect x="${fx-8}" y="${hY-19}" width="16" height="12" rx="3" fill="#0e0e14"/>`); }
   return P.join('');
@@ -188,8 +190,42 @@ function colRender(m){
   const objs=m.table.objects, oc=objs.length;
   objs.forEach((o,i)=>{ const ox = tx+34 + i*((tw-68)/Math.max(1,oc-1||1)); colObjEl(P,o.type,oc===1?tx+tw/2:ox,ty+2,o.color[1]); });
   // pet on floor
-  if(m.pet==='cat') P.push(`<g transform="translate(150,452)"><ellipse cx="0" cy="6" rx="26" ry="9" fill="rgba(0,0,0,.25)"/><path d="M-20 4 q-4 -20 8 -22 q-2 -8 4 -10 q2 6 4 8 q6 -2 10 2 q8 0 10 10 q6 4 4 14 z" fill="#5a5a64"/><path d="M18 -2 q12 -2 14 -16 q4 6 0 18 q-6 4 -14 2 z" fill="#5a5a64"/><circle cx="-8" cy="-12" r="2" fill="#bfe"/></g>`);
-  else if(m.pet==='dog') P.push(`<g transform="translate(150,452)"><ellipse cx="0" cy="8" rx="30" ry="9" fill="rgba(0,0,0,.25)"/><ellipse cx="0" cy="-2" rx="22" ry="14" fill="#9a6b3f"/><circle cx="-20" cy="-8" r="11" fill="#9a6b3f"/><path d="M-28 -16 q-4 12 4 14 z" fill="#7a5230"/><circle cx="-24" cy="-9" r="2" fill="#1a1a22"/></g>`);
+  if(m.pet==='cat') P.push(`<g transform="translate(150,452)">
+    <ellipse cx="0" cy="4" rx="22" ry="7" fill="rgba(0,0,0,.28)"/>
+    <ellipse cx="2" cy="-15" rx="16" ry="20" fill="#6b6b78"/>
+    <circle cx="0" cy="-42" r="15" fill="#6b6b78"/>
+    <polygon points="-14,-54 -6,-35 -20,-35" fill="#5a5a66"/>
+    <polygon points="14,-54 20,-35 6,-35" fill="#5a5a66"/>
+    <polygon points="-13,-51 -8,-39 -17,-39" fill="#e879a8" opacity=".65"/>
+    <polygon points="13,-51 17,-39 9,-39" fill="#e879a8" opacity=".65"/>
+    <ellipse cx="-6" cy="-44" rx="4" ry="5" fill="#1c1c24"/>
+    <ellipse cx="6" cy="-44" rx="4" ry="5" fill="#1c1c24"/>
+    <circle cx="-4" cy="-46" r="1.5" fill="white"/>
+    <circle cx="8" cy="-46" r="1.5" fill="white"/>
+    <path d="M-2,-36 l2 2.5 l2 -2.5 z" fill="#f9a8d4"/>
+    <line x1="-14" y1="-38" x2="-3" y2="-37" stroke="#9ca3af" stroke-width="1" opacity=".6"/>
+    <line x1="3" y1="-37" x2="14" y2="-38" stroke="#9ca3af" stroke-width="1" opacity=".6"/>
+    <ellipse cx="-8" cy="-1" rx="7" ry="5" fill="#6b6b78"/>
+    <ellipse cx="8" cy="-1" rx="7" ry="5" fill="#6b6b78"/>
+    <path d="M16,-10 q18 -4 16 -24 q0 -10 -6 -8 q6 2 4 10 q-2 16 -16 20 z" fill="#6b6b78"/>
+  </g>`);
+  else if(m.pet==='dog') P.push(`<g transform="translate(150,452)">
+    <ellipse cx="0" cy="4" rx="26" ry="8" fill="rgba(0,0,0,.28)"/>
+    <ellipse cx="0" cy="-15" rx="20" ry="24" fill="#b07c3a"/>
+    <circle cx="0" cy="-46" r="18" fill="#b07c3a"/>
+    <ellipse cx="-18" cy="-42" rx="9" ry="15" fill="#8b6228" transform="rotate(-10 -18 -42)"/>
+    <ellipse cx="18" cy="-42" rx="9" ry="15" fill="#8b6228" transform="rotate(10 18 -42)"/>
+    <ellipse cx="0" cy="-35" rx="11" ry="9" fill="#c4944e"/>
+    <ellipse cx="0" cy="-30" rx="8" ry="6" fill="#b07c3a"/>
+    <ellipse cx="0" cy="-36" rx="6" ry="5" fill="#1c1c24"/>
+    <circle cx="-9" cy="-50" r="4.5" fill="#1c1c24"/>
+    <circle cx="9" cy="-50" r="4.5" fill="#1c1c24"/>
+    <circle cx="-7" cy="-52" r="1.8" fill="white"/>
+    <circle cx="11" cy="-52" r="1.8" fill="white"/>
+    <ellipse cx="-10" cy="-1" rx="9" ry="6" fill="#b07c3a"/>
+    <ellipse cx="10" cy="-1" rx="9" ry="6" fill="#b07c3a"/>
+    <path d="M18,-10 q16 -2 14 -20 q-2 -8 -8 -6 q6 0 4 8 q-2 14 -12 18 z" fill="#b07c3a"/>
+  </g>`);
   // floor clue (detective)
   if(m.clue.type==='footprints'){ for(let i=0;i<4;i++) P.push(`<ellipse cx="${560+i*30}" cy="${470-i*8}" rx="7" ry="12" fill="${m.clue.color[1]}" opacity=".5" transform="rotate(20 ${560+i*30} ${470-i*8})"/>`); }
   else if(m.clue.type==='spill') P.push(`<path d="M180 478 q-30 -6 -34 10 q-2 16 26 14 q30 4 40 -8 q16 -2 10 -14 q-22 -10 -42 -2 z" fill="${m.clue.color[1]}" opacity=".55"/>`);
