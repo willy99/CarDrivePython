@@ -1,7 +1,7 @@
 // ═══════════════════════════════════════════════════
 // i18n
 // ═══════════════════════════════════════════════════
-let lang = localStorage.getItem('membrain_lang') || 'en';
+let lang = localStorage.getItem('pashka-lang') || localStorage.getItem('membrain_lang') || 'en';
 const STRINGS = {
   en: {
     app_name:'MEMBRAIN', menu_tagline:'Train your mind · Challenge your brain', lang_toggle:'🇺🇦 УКР',
@@ -854,7 +854,7 @@ function t(key, ...args) {
   const v = s[key] !== undefined ? s[key] : (STRINGS.en[key] !== undefined ? STRINGS.en[key] : key);
   return typeof v === 'function' ? v(...args) : v;
 }
-function setLang(l) { lang = l; localStorage.setItem('membrain_lang', l); applyLang(); }
+function setLang(l) { lang = l; localStorage.setItem('membrain_lang', l); localStorage.setItem('pashka-lang', l); applyLang(); }
 function toggleLang() { setLang(lang === 'en' ? 'uk' : 'en'); }
 
 function pluralUK(n, f1, f2, f5) {

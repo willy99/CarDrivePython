@@ -52,19 +52,17 @@ export default function HomePage() {
     <div className="min-h-screen bg-gray-950 text-white flex flex-col items-center">
 
       {/* Header */}
-      <header className="w-full px-6 pt-8 pb-10">
-        <div className="max-w-4xl mx-auto flex items-center justify-between mb-12">
-          <h1 className="text-5xl font-extrabold tracking-tight">
-            🕹️ <span className="text-blue-400">Pashka</span> Games
-          </h1>
-          <button
-            onClick={toggleLang}
-            className="px-4 py-2 rounded-full bg-white/10 hover:bg-white/20 border border-white/20 text-sm font-bold transition-colors"
-          >
-            {t.langBtn}
-          </button>
-        </div>
-        <p className="text-gray-400 text-lg text-center">
+      <header className="relative w-full pt-16 pb-10 text-center">
+        <button
+          onClick={toggleLang}
+          className="absolute top-6 right-6 px-4 py-2 rounded-full bg-white/10 hover:bg-white/20 border border-white/20 text-sm font-bold transition-colors"
+        >
+          {t.langBtn}
+        </button>
+        <h1 className="text-5xl font-extrabold tracking-tight">
+          🕹️ <span className="text-blue-400">Pashka</span> Games
+        </h1>
+        <p className="text-gray-400 text-lg mt-4">
           {t.subtitle}
         </p>
       </header>
