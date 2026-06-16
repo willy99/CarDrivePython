@@ -1,0 +1,792 @@
+{
+  "/Users/pzhelnov/work/CarDrivePython/.claude/launch.json": {
+    "mtime": 1781614238.5195017,
+    "ast_hash": "055d18f0c5cc319c9f65880368243465",
+    "semantic_hash": "055d18f0c5cc319c9f65880368243465"
+  },
+  "/Users/pzhelnov/work/CarDrivePython/.claude/settings.json": {
+    "mtime": 1781623531.0357156,
+    "ast_hash": "e1073342e958ac9f00716938c8f165e3",
+    "semantic_hash": "e1073342e958ac9f00716938c8f165e3"
+  },
+  "/Users/pzhelnov/work/CarDrivePython/.claude/settings.local.json": {
+    "mtime": 1780726881.1619043,
+    "ast_hash": "5c57e748d1bc8713258487dc202348d5",
+    "semantic_hash": "5c57e748d1bc8713258487dc202348d5"
+  },
+  "/Users/pzhelnov/work/CarDrivePython/build.sh": {
+    "mtime": 1780512964.8225574,
+    "ast_hash": "7b162e7dedf2abfa54965a661d75a665",
+    "semantic_hash": "7b162e7dedf2abfa54965a661d75a665"
+  },
+  "/Users/pzhelnov/work/CarDrivePython/eslint.config.js": {
+    "mtime": 1780392865.1212177,
+    "ast_hash": "3aa4b57d7f08181d86bde52a4dcb7f22",
+    "semantic_hash": "3aa4b57d7f08181d86bde52a4dcb7f22"
+  },
+  "/Users/pzhelnov/work/CarDrivePython/games/cardrive/.cardrive_save.json": {
+    "mtime": 1781103966.3955238,
+    "ast_hash": "bd436e6b0ba6d9f2b64ab32a038ab777",
+    "semantic_hash": "bd436e6b0ba6d9f2b64ab32a038ab777"
+  },
+  "/Users/pzhelnov/work/CarDrivePython/games/cardrive/car.py": {
+    "mtime": 1781028981.132936,
+    "ast_hash": "d6d107c7df3346c5ea1df4afc14fc400",
+    "semantic_hash": "d6d107c7df3346c5ea1df4afc14fc400"
+  },
+  "/Users/pzhelnov/work/CarDrivePython/games/cardrive/car_types.py": {
+    "mtime": 1781028947.9821122,
+    "ast_hash": "c452ba0629eacb62fcb1f41d29a98187",
+    "semantic_hash": "c452ba0629eacb62fcb1f41d29a98187"
+  },
+  "/Users/pzhelnov/work/CarDrivePython/games/cardrive/constants.py": {
+    "mtime": 1781097472.2263906,
+    "ast_hash": "a4a2a61f8c5a40bf00fa3cf4be861395",
+    "semantic_hash": "a4a2a61f8c5a40bf00fa3cf4be861395"
+  },
+  "/Users/pzhelnov/work/CarDrivePython/games/cardrive/effects.py": {
+    "mtime": 1780586311.1464286,
+    "ast_hash": "8337d7589a706217957b3236cbbb649f",
+    "semantic_hash": "8337d7589a706217957b3236cbbb649f"
+  },
+  "/Users/pzhelnov/work/CarDrivePython/games/cardrive/game.py": {
+    "mtime": 1781100534.0406072,
+    "ast_hash": "f545a9935e2465e4950d917bdcc90991",
+    "semantic_hash": "f545a9935e2465e4950d917bdcc90991"
+  },
+  "/Users/pzhelnov/work/CarDrivePython/games/cardrive/game_map.py": {
+    "mtime": 1781102198.198086,
+    "ast_hash": "dac2f235401c09e66ba33a195eedeaed",
+    "semantic_hash": "dac2f235401c09e66ba33a195eedeaed"
+  },
+  "/Users/pzhelnov/work/CarDrivePython/games/cardrive/hud.py": {
+    "mtime": 1781097642.4752638,
+    "ast_hash": "781996a1e02a9ca3d34357da9fb32ee1",
+    "semantic_hash": "781996a1e02a9ca3d34357da9fb32ee1"
+  },
+  "/Users/pzhelnov/work/CarDrivePython/games/cardrive/i18n.py": {
+    "mtime": 1781097710.1801667,
+    "ast_hash": "f6d18e56f476b4a18351e4b8d1c36c50",
+    "semantic_hash": "f6d18e56f476b4a18351e4b8d1c36c50"
+  },
+  "/Users/pzhelnov/work/CarDrivePython/games/cardrive/level_config.py": {
+    "mtime": 1781097548.1413112,
+    "ast_hash": "426a9104ce4d171fc7bd743ec3eecf89",
+    "semantic_hash": "426a9104ce4d171fc7bd743ec3eecf89"
+  },
+  "/Users/pzhelnov/work/CarDrivePython/games/cardrive/main.py": {
+    "mtime": 1780393839.8325965,
+    "ast_hash": "00ba9bb2ab2070900fead49d100b3d40",
+    "semantic_hash": "00ba9bb2ab2070900fead49d100b3d40"
+  },
+  "/Users/pzhelnov/work/CarDrivePython/games/cardrive/main_desktop.py": {
+    "mtime": 1780393839.1106505,
+    "ast_hash": "4ad29d95279130b9ac7cc8e5ca14ed4b",
+    "semantic_hash": "4ad29d95279130b9ac7cc8e5ca14ed4b"
+  },
+  "/Users/pzhelnov/work/CarDrivePython/games/cardrive/mini_map.py": {
+    "mtime": 1780434293.5584097,
+    "ast_hash": "d5390adc5f9f3cd58be60f410d1354b6",
+    "semantic_hash": "d5390adc5f9f3cd58be60f410d1354b6"
+  },
+  "/Users/pzhelnov/work/CarDrivePython/games/cardrive/nicegui_embed.py": {
+    "mtime": 1780393839.1112297,
+    "ast_hash": "38ab51bddd61f940efa524ec7c7b8c14",
+    "semantic_hash": "38ab51bddd61f940efa524ec7c7b8c14"
+  },
+  "/Users/pzhelnov/work/CarDrivePython/games/cardrive/npc_car.py": {
+    "mtime": 1781093993.4031153,
+    "ast_hash": "5b875386bfee87b5354686de338ca3ef",
+    "semantic_hash": "5b875386bfee87b5354686de338ca3ef"
+  },
+  "/Users/pzhelnov/work/CarDrivePython/games/cardrive/pedestrian.py": {
+    "mtime": 1780434786.4378455,
+    "ast_hash": "87ad282520f53ebd46249d6678d14d3f",
+    "semantic_hash": "87ad282520f53ebd46249d6678d14d3f"
+  },
+  "/Users/pzhelnov/work/CarDrivePython/games/cardrive/police_car.py": {
+    "mtime": 1780585759.4644217,
+    "ast_hash": "174a7b410fb9e6408de2a468dce83666",
+    "semantic_hash": "174a7b410fb9e6408de2a468dce83666"
+  },
+  "/Users/pzhelnov/work/CarDrivePython/games/cardrive/run.sh": {
+    "mtime": 1780393839.1196651,
+    "ast_hash": "ed1aa640124d27692d82537930419dd7",
+    "semantic_hash": "ed1aa640124d27692d82537930419dd7"
+  },
+  "/Users/pzhelnov/work/CarDrivePython/games/cardrive/screens.py": {
+    "mtime": 1781100503.2924385,
+    "ast_hash": "d2052d38ad17e32061104b17d7f1043f",
+    "semantic_hash": "d2052d38ad17e32061104b17d7f1043f"
+  },
+  "/Users/pzhelnov/work/CarDrivePython/games/cardrive/sounds.py": {
+    "mtime": 1780571541.0969036,
+    "ast_hash": "a8fe4f424f754db477b991efff66fd35",
+    "semantic_hash": "a8fe4f424f754db477b991efff66fd35"
+  },
+  "/Users/pzhelnov/work/CarDrivePython/games/cardrive/storage.py": {
+    "mtime": 1781028973.2245884,
+    "ast_hash": "4ead7b844addf2ccd32047ffcdfba290",
+    "semantic_hash": "4ead7b844addf2ccd32047ffcdfba290"
+  },
+  "/Users/pzhelnov/work/CarDrivePython/games/cardrive/traffic_ai.py": {
+    "mtime": 1780506728.2854774,
+    "ast_hash": "df5fcab4af996bd51278b63bf8759305",
+    "semantic_hash": "df5fcab4af996bd51278b63bf8759305"
+  },
+  "/Users/pzhelnov/work/CarDrivePython/games/cardrive/traffic_light.py": {
+    "mtime": 1781097477.6496778,
+    "ast_hash": "05f1c14fef91f924da9389a57d786176",
+    "semantic_hash": "05f1c14fef91f924da9389a57d786176"
+  },
+  "/Users/pzhelnov/work/CarDrivePython/games/cardrive/utils.py": {
+    "mtime": 1780393839.1207747,
+    "ast_hash": "b80614b4cf2bddb6a65446038bcc8a82",
+    "semantic_hash": "b80614b4cf2bddb6a65446038bcc8a82"
+  },
+  "/Users/pzhelnov/work/CarDrivePython/main_desktop.py": {
+    "mtime": 1780418403.9641595,
+    "ast_hash": "4ad29d95279130b9ac7cc8e5ca14ed4b",
+    "semantic_hash": "4ad29d95279130b9ac7cc8e5ca14ed4b"
+  },
+  "/Users/pzhelnov/work/CarDrivePython/mobile/android/app/build.gradle": {
+    "mtime": 1781527551.8065932,
+    "ast_hash": "7a6707712c1248334fe66f5146fd7533",
+    "semantic_hash": "7a6707712c1248334fe66f5146fd7533"
+  },
+  "/Users/pzhelnov/work/CarDrivePython/mobile/android/app/capacitor.build.gradle": {
+    "mtime": 1781556203.419312,
+    "ast_hash": "b863e425fbde80251bd3c68ac8ccba02",
+    "semantic_hash": "b863e425fbde80251bd3c68ac8ccba02"
+  },
+  "/Users/pzhelnov/work/CarDrivePython/mobile/android/app/src/androidTest/java/com/getcapacitor/myapp/ExampleInstrumentedTest.java": {
+    "mtime": 1780416477.0,
+    "ast_hash": "fbaf7cc870c663eb52dcf218531c439d",
+    "semantic_hash": "fbaf7cc870c663eb52dcf218531c439d"
+  },
+  "/Users/pzhelnov/work/CarDrivePython/mobile/android/app/src/main/assets/capacitor.config.json": {
+    "mtime": 1781556203.4067755,
+    "ast_hash": "3682eee35a6e2cc940c06ee3b0b8edc2",
+    "semantic_hash": "3682eee35a6e2cc940c06ee3b0b8edc2"
+  },
+  "/Users/pzhelnov/work/CarDrivePython/mobile/android/app/src/main/assets/capacitor.plugins.json": {
+    "mtime": 1781556203.4101038,
+    "ast_hash": "58e0494c51d30eb3494f7c9198986bb9",
+    "semantic_hash": "58e0494c51d30eb3494f7c9198986bb9"
+  },
+  "/Users/pzhelnov/work/CarDrivePython/mobile/android/app/src/main/assets/public/cordova.js": {
+    "mtime": 1781556203.418413,
+    "ast_hash": "d41d8cd98f00b204e9800998ecf8427e",
+    "semantic_hash": "d41d8cd98f00b204e9800998ecf8427e"
+  },
+  "/Users/pzhelnov/work/CarDrivePython/mobile/android/app/src/main/assets/public/cordova_plugins.js": {
+    "mtime": 1781556203.4184709,
+    "ast_hash": "d41d8cd98f00b204e9800998ecf8427e",
+    "semantic_hash": "d41d8cd98f00b204e9800998ecf8427e"
+  },
+  "/Users/pzhelnov/work/CarDrivePython/mobile/android/app/src/main/assets/public/js/cipher.js": {
+    "mtime": 1781556203.4052546,
+    "ast_hash": "44f5fb548d4a33142127717ddfe8e228",
+    "semantic_hash": "44f5fb548d4a33142127717ddfe8e228"
+  },
+  "/Users/pzhelnov/work/CarDrivePython/mobile/android/app/src/main/assets/public/js/colombo.js": {
+    "mtime": 1781556203.404239,
+    "ast_hash": "e60ab26412398187bb0a619afb80ea4c",
+    "semantic_hash": "e60ab26412398187bb0a619afb80ea4c"
+  },
+  "/Users/pzhelnov/work/CarDrivePython/mobile/android/app/src/main/assets/public/js/constants.js": {
+    "mtime": 1781556203.402881,
+    "ast_hash": "f9a02fd1fcb9beda19289f8e175b551c",
+    "semantic_hash": "f9a02fd1fcb9beda19289f8e175b551c"
+  },
+  "/Users/pzhelnov/work/CarDrivePython/mobile/android/app/src/main/assets/public/js/core.js": {
+    "mtime": 1781556203.40342,
+    "ast_hash": "a18252de9179a0e6b3f892f54d1b3b75",
+    "semantic_hash": "a18252de9179a0e6b3f892f54d1b3b75"
+  },
+  "/Users/pzhelnov/work/CarDrivePython/mobile/android/app/src/main/assets/public/js/diamond.js": {
+    "mtime": 1781556203.4039292,
+    "ast_hash": "a81cce83805e90542ba6095ffc2e9b7a",
+    "semantic_hash": "a81cce83805e90542ba6095ffc2e9b7a"
+  },
+  "/Users/pzhelnov/work/CarDrivePython/mobile/android/app/src/main/assets/public/js/i18n.js": {
+    "mtime": 1781615462.9753246,
+    "ast_hash": "e37a3bed33cd4a21459958ee380a5fda",
+    "semantic_hash": "e37a3bed33cd4a21459958ee380a5fda"
+  },
+  "/Users/pzhelnov/work/CarDrivePython/mobile/android/app/src/main/assets/public/js/init.js": {
+    "mtime": 1781556203.4042451,
+    "ast_hash": "3a8c503e4b7d6288abd096ba0e8f60f3",
+    "semantic_hash": "3a8c503e4b7d6288abd096ba0e8f60f3"
+  },
+  "/Users/pzhelnov/work/CarDrivePython/mobile/android/app/src/main/assets/public/js/longmemory.js": {
+    "mtime": 1781556203.4048898,
+    "ast_hash": "80012be16d48f36a84354b84790739f8",
+    "semantic_hash": "80012be16d48f36a84354b84790739f8"
+  },
+  "/Users/pzhelnov/work/CarDrivePython/mobile/android/app/src/main/assets/public/js/math-extra.js": {
+    "mtime": 1781556203.4040275,
+    "ast_hash": "0f6c6aa9d61808b98f77e7327ba0c630",
+    "semantic_hash": "0f6c6aa9d61808b98f77e7327ba0c630"
+  },
+  "/Users/pzhelnov/work/CarDrivePython/mobile/android/app/src/main/assets/public/js/math.js": {
+    "mtime": 1781556203.4048116,
+    "ast_hash": "3ab1a5981102f88e8ded9dec8c421281",
+    "semantic_hash": "3ab1a5981102f88e8ded9dec8c421281"
+  },
+  "/Users/pzhelnov/work/CarDrivePython/mobile/android/app/src/main/assets/public/js/meeting.js": {
+    "mtime": 1781556203.4051952,
+    "ast_hash": "23b03e87f8339543ef470969b0eec4f5",
+    "semantic_hash": "23b03e87f8339543ef470969b0eec4f5"
+  },
+  "/Users/pzhelnov/work/CarDrivePython/mobile/android/app/src/main/assets/public/js/objects.js": {
+    "mtime": 1781556203.4044867,
+    "ast_hash": "04cb00477cc2a44873d685212fda12dc",
+    "semantic_hash": "04cb00477cc2a44873d685212fda12dc"
+  },
+  "/Users/pzhelnov/work/CarDrivePython/mobile/android/app/src/main/assets/public/js/pairs-ai.js": {
+    "mtime": 1781556203.4031165,
+    "ast_hash": "85ba8086bf20a549fb4684594c1630c1",
+    "semantic_hash": "85ba8086bf20a549fb4684594c1630c1"
+  },
+  "/Users/pzhelnov/work/CarDrivePython/mobile/android/app/src/main/assets/public/js/pairs.js": {
+    "mtime": 1781556203.4036906,
+    "ast_hash": "8aa788929f3c7ca3d16722583152220d",
+    "semantic_hash": "8aa788929f3c7ca3d16722583152220d"
+  },
+  "/Users/pzhelnov/work/CarDrivePython/mobile/android/app/src/main/assets/public/js/spot.js": {
+    "mtime": 1781556203.404382,
+    "ast_hash": "e02c10d8c697c322a0e475662f9e618c",
+    "semantic_hash": "e02c10d8c697c322a0e475662f9e618c"
+  },
+  "/Users/pzhelnov/work/CarDrivePython/mobile/android/app/src/main/assets/public/js/systems.js": {
+    "mtime": 1781556203.4040532,
+    "ast_hash": "9f1ad65d5ac3fb2d6fa782e3f8d96182",
+    "semantic_hash": "9f1ad65d5ac3fb2d6fa782e3f8d96182"
+  },
+  "/Users/pzhelnov/work/CarDrivePython/mobile/android/app/src/main/assets/public/js/waiter.js": {
+    "mtime": 1781556203.403675,
+    "ast_hash": "a2f7ded1d3425c94a0c07b081276044b",
+    "semantic_hash": "a2f7ded1d3425c94a0c07b081276044b"
+  },
+  "/Users/pzhelnov/work/CarDrivePython/mobile/android/app/src/main/assets/public/js/word.js": {
+    "mtime": 1781556203.4053335,
+    "ast_hash": "389449582b6f0b996a9456cbcc335687",
+    "semantic_hash": "389449582b6f0b996a9456cbcc335687"
+  },
+  "/Users/pzhelnov/work/CarDrivePython/mobile/android/app/src/main/java/com/pzhelnov/membrain/MainActivity.java": {
+    "mtime": 1781527551.806409,
+    "ast_hash": "a6b2c8a4fb00348f1b42f8b68b2bf389",
+    "semantic_hash": "a6b2c8a4fb00348f1b42f8b68b2bf389"
+  },
+  "/Users/pzhelnov/work/CarDrivePython/mobile/android/app/src/test/java/com/getcapacitor/myapp/ExampleUnitTest.java": {
+    "mtime": 1780416477.0,
+    "ast_hash": "e91b4501c14da821682fa5c26a16d616",
+    "semantic_hash": "e91b4501c14da821682fa5c26a16d616"
+  },
+  "/Users/pzhelnov/work/CarDrivePython/mobile/android/build.gradle": {
+    "mtime": 1781530121.3110752,
+    "ast_hash": "b0144187c6f272c0a04342f1d6735cba",
+    "semantic_hash": "b0144187c6f272c0a04342f1d6735cba"
+  },
+  "/Users/pzhelnov/work/CarDrivePython/mobile/android/capacitor-cordova-android-plugins/build.gradle": {
+    "mtime": 1781556203.4196262,
+    "ast_hash": "56ee1e41ba80b64df15915bd7c40d6df",
+    "semantic_hash": "56ee1e41ba80b64df15915bd7c40d6df"
+  },
+  "/Users/pzhelnov/work/CarDrivePython/mobile/android/capacitor-cordova-android-plugins/cordova.variables.gradle": {
+    "mtime": 1781556203.4197297,
+    "ast_hash": "8ccd69ac09ef80b05c393964b2f6e349",
+    "semantic_hash": "8ccd69ac09ef80b05c393964b2f6e349"
+  },
+  "/Users/pzhelnov/work/CarDrivePython/mobile/android/capacitor.settings.gradle": {
+    "mtime": 1781556203.4192166,
+    "ast_hash": "455ebb7f9fe84a6974da6bdae43097c2",
+    "semantic_hash": "455ebb7f9fe84a6974da6bdae43097c2"
+  },
+  "/Users/pzhelnov/work/CarDrivePython/mobile/android/gradlew": {
+    "mtime": 1780416477.0,
+    "ast_hash": "f092910dfa8e47c5a37a452c3f6baf8a",
+    "semantic_hash": "f092910dfa8e47c5a37a452c3f6baf8a"
+  },
+  "/Users/pzhelnov/work/CarDrivePython/mobile/android/settings.gradle": {
+    "mtime": 1780416477.0,
+    "ast_hash": "f6cd925b3f859e23c3d819fe2459e0e4",
+    "semantic_hash": "f6cd925b3f859e23c3d819fe2459e0e4"
+  },
+  "/Users/pzhelnov/work/CarDrivePython/mobile/android/variables.gradle": {
+    "mtime": 1780416477.0,
+    "ast_hash": "7f844007d51d16140dbd0903de821b18",
+    "semantic_hash": "7f844007d51d16140dbd0903de821b18"
+  },
+  "/Users/pzhelnov/work/CarDrivePython/mobile/capacitor.config.json": {
+    "mtime": 1781527529.198995,
+    "ast_hash": "c3fd682f4a368b610c31dff0772b02ab",
+    "semantic_hash": "c3fd682f4a368b610c31dff0772b02ab"
+  },
+  "/Users/pzhelnov/work/CarDrivePython/mobile/package.json": {
+    "mtime": 1781527523.7340302,
+    "ast_hash": "86a19f9a23bb27629c3fd3dec8d6a3be",
+    "semantic_hash": "86a19f9a23bb27629c3fd3dec8d6a3be"
+  },
+  "/Users/pzhelnov/work/CarDrivePython/nicegui_embed.py": {
+    "mtime": 1780418403.9642715,
+    "ast_hash": "38ab51bddd61f940efa524ec7c7b8c14",
+    "semantic_hash": "38ab51bddd61f940efa524ec7c7b8c14"
+  },
+  "/Users/pzhelnov/work/CarDrivePython/package.json": {
+    "mtime": 1780416538.6935718,
+    "ast_hash": "3db6b89124647fcd28c7ed6ae909f566",
+    "semantic_hash": "3db6b89124647fcd28c7ed6ae909f566"
+  },
+  "/Users/pzhelnov/work/CarDrivePython/public/games/memorize/js/cipher.js": {
+    "mtime": 1781554966.378647,
+    "ast_hash": "44f5fb548d4a33142127717ddfe8e228",
+    "semantic_hash": "44f5fb548d4a33142127717ddfe8e228"
+  },
+  "/Users/pzhelnov/work/CarDrivePython/public/games/memorize/js/colombo.js": {
+    "mtime": 1781541402.0452826,
+    "ast_hash": "e60ab26412398187bb0a619afb80ea4c",
+    "semantic_hash": "e60ab26412398187bb0a619afb80ea4c"
+  },
+  "/Users/pzhelnov/work/CarDrivePython/public/games/memorize/js/constants.js": {
+    "mtime": 1781479688.7059412,
+    "ast_hash": "f9a02fd1fcb9beda19289f8e175b551c",
+    "semantic_hash": "f9a02fd1fcb9beda19289f8e175b551c"
+  },
+  "/Users/pzhelnov/work/CarDrivePython/public/games/memorize/js/core.js": {
+    "mtime": 1781554867.3437452,
+    "ast_hash": "a18252de9179a0e6b3f892f54d1b3b75",
+    "semantic_hash": "a18252de9179a0e6b3f892f54d1b3b75"
+  },
+  "/Users/pzhelnov/work/CarDrivePython/public/games/memorize/js/diamond.js": {
+    "mtime": 1781555069.824988,
+    "ast_hash": "a81cce83805e90542ba6095ffc2e9b7a",
+    "semantic_hash": "a81cce83805e90542ba6095ffc2e9b7a"
+  },
+  "/Users/pzhelnov/work/CarDrivePython/public/games/memorize/js/i18n.js": {
+    "mtime": 1781617910.3386352,
+    "ast_hash": "36330ca946b79f577cece13046430b43",
+    "semantic_hash": "36330ca946b79f577cece13046430b43"
+  },
+  "/Users/pzhelnov/work/CarDrivePython/public/games/memorize/js/init.js": {
+    "mtime": 1781507770.1621356,
+    "ast_hash": "3a8c503e4b7d6288abd096ba0e8f60f3",
+    "semantic_hash": "3a8c503e4b7d6288abd096ba0e8f60f3"
+  },
+  "/Users/pzhelnov/work/CarDrivePython/public/games/memorize/js/longmemory.js": {
+    "mtime": 1781543952.4753528,
+    "ast_hash": "80012be16d48f36a84354b84790739f8",
+    "semantic_hash": "80012be16d48f36a84354b84790739f8"
+  },
+  "/Users/pzhelnov/work/CarDrivePython/public/games/memorize/js/math-extra.js": {
+    "mtime": 1781479688.7070386,
+    "ast_hash": "0f6c6aa9d61808b98f77e7327ba0c630",
+    "semantic_hash": "0f6c6aa9d61808b98f77e7327ba0c630"
+  },
+  "/Users/pzhelnov/work/CarDrivePython/public/games/memorize/js/math.js": {
+    "mtime": 1781479688.7063801,
+    "ast_hash": "3ab1a5981102f88e8ded9dec8c421281",
+    "semantic_hash": "3ab1a5981102f88e8ded9dec8c421281"
+  },
+  "/Users/pzhelnov/work/CarDrivePython/public/games/memorize/js/meeting.js": {
+    "mtime": 1781555244.8402793,
+    "ast_hash": "23b03e87f8339543ef470969b0eec4f5",
+    "semantic_hash": "23b03e87f8339543ef470969b0eec4f5"
+  },
+  "/Users/pzhelnov/work/CarDrivePython/public/games/memorize/js/objects.js": {
+    "mtime": 1781479688.7060163,
+    "ast_hash": "04cb00477cc2a44873d685212fda12dc",
+    "semantic_hash": "04cb00477cc2a44873d685212fda12dc"
+  },
+  "/Users/pzhelnov/work/CarDrivePython/public/games/memorize/js/pairs-ai.js": {
+    "mtime": 1781479688.7068846,
+    "ast_hash": "85ba8086bf20a549fb4684594c1630c1",
+    "semantic_hash": "85ba8086bf20a549fb4684594c1630c1"
+  },
+  "/Users/pzhelnov/work/CarDrivePython/public/games/memorize/js/pairs.js": {
+    "mtime": 1781479688.7062778,
+    "ast_hash": "8aa788929f3c7ca3d16722583152220d",
+    "semantic_hash": "8aa788929f3c7ca3d16722583152220d"
+  },
+  "/Users/pzhelnov/work/CarDrivePython/public/games/memorize/js/spot.js": {
+    "mtime": 1781555020.9776366,
+    "ast_hash": "e02c10d8c697c322a0e475662f9e618c",
+    "semantic_hash": "e02c10d8c697c322a0e475662f9e618c"
+  },
+  "/Users/pzhelnov/work/CarDrivePython/public/games/memorize/js/systems.js": {
+    "mtime": 1781555934.3885846,
+    "ast_hash": "9f1ad65d5ac3fb2d6fa782e3f8d96182",
+    "semantic_hash": "9f1ad65d5ac3fb2d6fa782e3f8d96182"
+  },
+  "/Users/pzhelnov/work/CarDrivePython/public/games/memorize/js/waiter.js": {
+    "mtime": 1781555190.9655528,
+    "ast_hash": "a2f7ded1d3425c94a0c07b081276044b",
+    "semantic_hash": "a2f7ded1d3425c94a0c07b081276044b"
+  },
+  "/Users/pzhelnov/work/CarDrivePython/public/games/memorize/js/word.js": {
+    "mtime": 1781479688.706134,
+    "ast_hash": "389449582b6f0b996a9456cbcc335687",
+    "semantic_hash": "389449582b6f0b996a9456cbcc335687"
+  },
+  "/Users/pzhelnov/work/CarDrivePython/scripts/build-cardrive.sh": {
+    "mtime": 1780395283.7997093,
+    "ast_hash": "183f18dfe3327edceb1c1175a6b7d89b",
+    "semantic_hash": "183f18dfe3327edceb1c1175a6b7d89b"
+  },
+  "/Users/pzhelnov/work/CarDrivePython/src/App.jsx": {
+    "mtime": 1781606482.6985128,
+    "ast_hash": "ed8e237da6053dcf4ffa596b90584a94",
+    "semantic_hash": "ed8e237da6053dcf4ffa596b90584a94"
+  },
+  "/Users/pzhelnov/work/CarDrivePython/src/components/GameCard.jsx": {
+    "mtime": 1781603155.1860542,
+    "ast_hash": "1696c17ba983cf93baac9d0dd1dbb79e",
+    "semantic_hash": "1696c17ba983cf93baac9d0dd1dbb79e"
+  },
+  "/Users/pzhelnov/work/CarDrivePython/src/components/GameFrame.jsx": {
+    "mtime": 1780393874.2691488,
+    "ast_hash": "77d7d5631a8ff2680d51479a08970e21",
+    "semantic_hash": "77d7d5631a8ff2680d51479a08970e21"
+  },
+  "/Users/pzhelnov/work/CarDrivePython/src/main.jsx": {
+    "mtime": 1780392865.1231155,
+    "ast_hash": "e13723e2574429d9a6d849727e3ff695",
+    "semantic_hash": "e13723e2574429d9a6d849727e3ff695"
+  },
+  "/Users/pzhelnov/work/CarDrivePython/src/pages/GamePage.jsx": {
+    "mtime": 1781364841.343386,
+    "ast_hash": "0be9dbd23d0e5508d6155b48c533e055",
+    "semantic_hash": "0be9dbd23d0e5508d6155b48c533e055"
+  },
+  "/Users/pzhelnov/work/CarDrivePython/src/pages/HomePage.jsx": {
+    "mtime": 1781617920.556894,
+    "ast_hash": "a50e6e6904c6eeb90a94068f2bd65b86",
+    "semantic_hash": "a50e6e6904c6eeb90a94068f2bd65b86"
+  },
+  "/Users/pzhelnov/work/CarDrivePython/vercel.json": {
+    "mtime": 1780417943.5351427,
+    "ast_hash": "2abe444e5ae8f3fd5cf41036b0f24252",
+    "semantic_hash": "2abe444e5ae8f3fd5cf41036b0f24252"
+  },
+  "/Users/pzhelnov/work/CarDrivePython/vite.config.js": {
+    "mtime": 1780417256.0334547,
+    "ast_hash": "b45ccf182df7ca19f728edad630512ed",
+    "semantic_hash": "b45ccf182df7ca19f728edad630512ed"
+  },
+  "/Users/pzhelnov/work/CarDrivePython/worker/GameServer.js": {
+    "mtime": 1781375794.8632598,
+    "ast_hash": "a850694c2649a8c41c799f16ffc45df7",
+    "semantic_hash": "a850694c2649a8c41c799f16ffc45df7"
+  },
+  "/Users/pzhelnov/work/CarDrivePython/worker/index.js": {
+    "mtime": 1781367001.7836363,
+    "ast_hash": "f2083dfcdb4e59be85967703a07957c7",
+    "semantic_hash": "f2083dfcdb4e59be85967703a07957c7"
+  },
+  "/Users/pzhelnov/work/CarDrivePython/.claude/.audit.MD": {
+    "mtime": 1780691699.059129,
+    "ast_hash": "a70385236d7c78d64beb623cef3df7b6",
+    "semantic_hash": "a70385236d7c78d64beb623cef3df7b6"
+  },
+  "/Users/pzhelnov/work/CarDrivePython/.claude/CLAUDE.md": {
+    "mtime": 1781623531.0343697,
+    "ast_hash": "db73b0edd7ffbc61ceac177130730865",
+    "semantic_hash": "db73b0edd7ffbc61ceac177130730865"
+  },
+  "/Users/pzhelnov/work/CarDrivePython/.claude/skills/graphify/SKILL.md": {
+    "mtime": 1781623531.0340955,
+    "ast_hash": "97c2755905a5a0e53b96b31c725a7010",
+    "semantic_hash": "97c2755905a5a0e53b96b31c725a7010"
+  },
+  "/Users/pzhelnov/work/CarDrivePython/.claude/skills/graphify/references/add-watch.md": {
+    "mtime": 1781623118.8255563,
+    "ast_hash": "0df0589623217ca38a12bdcabfb42f4c",
+    "semantic_hash": "0df0589623217ca38a12bdcabfb42f4c"
+  },
+  "/Users/pzhelnov/work/CarDrivePython/.claude/skills/graphify/references/exports.md": {
+    "mtime": 1781623118.8257384,
+    "ast_hash": "c04ddf8f1f5ef5e262ebec491a523c74",
+    "semantic_hash": "c04ddf8f1f5ef5e262ebec491a523c74"
+  },
+  "/Users/pzhelnov/work/CarDrivePython/.claude/skills/graphify/references/extraction-spec.md": {
+    "mtime": 1781623118.8259432,
+    "ast_hash": "24808b03abfeaf5f6435bb69c0125b2c",
+    "semantic_hash": "24808b03abfeaf5f6435bb69c0125b2c"
+  },
+  "/Users/pzhelnov/work/CarDrivePython/.claude/skills/graphify/references/github-and-merge.md": {
+    "mtime": 1781623118.826118,
+    "ast_hash": "cde13df085e4c492aeb7ba298a996d0d",
+    "semantic_hash": "cde13df085e4c492aeb7ba298a996d0d"
+  },
+  "/Users/pzhelnov/work/CarDrivePython/.claude/skills/graphify/references/hooks.md": {
+    "mtime": 1781623118.8262625,
+    "ast_hash": "3f545db6ce646650bb9de588f5512a27",
+    "semantic_hash": "3f545db6ce646650bb9de588f5512a27"
+  },
+  "/Users/pzhelnov/work/CarDrivePython/.claude/skills/graphify/references/query.md": {
+    "mtime": 1781623118.826502,
+    "ast_hash": "8b40ed8c9e9060fc215219a8fc964091",
+    "semantic_hash": "8b40ed8c9e9060fc215219a8fc964091"
+  },
+  "/Users/pzhelnov/work/CarDrivePython/.claude/skills/graphify/references/transcribe.md": {
+    "mtime": 1781623118.8266234,
+    "ast_hash": "70f6aa30d6211f3a2c7e9fc45479f50c",
+    "semantic_hash": "70f6aa30d6211f3a2c7e9fc45479f50c"
+  },
+  "/Users/pzhelnov/work/CarDrivePython/.claude/skills/graphify/references/update.md": {
+    "mtime": 1781623118.8268151,
+    "ast_hash": "0dad167a95bdb389f02fecffb60b1bc8",
+    "semantic_hash": "0dad167a95bdb389f02fecffb60b1bc8"
+  },
+  "/Users/pzhelnov/work/CarDrivePython/CLAUDE.md": {
+    "mtime": 1781623531.0354464,
+    "ast_hash": "ca14f68e86a3a97ecc0f15a830149cfb",
+    "semantic_hash": "ca14f68e86a3a97ecc0f15a830149cfb"
+  },
+  "/Users/pzhelnov/work/CarDrivePython/PORTING.md": {
+    "mtime": 1780418403.963756,
+    "ast_hash": "de3049794ea534b1077524a01dbb2992",
+    "semantic_hash": "de3049794ea534b1077524a01dbb2992"
+  },
+  "/Users/pzhelnov/work/CarDrivePython/README.md": {
+    "mtime": 1780395328.2249074,
+    "ast_hash": "76d4406a79ab81ee6a0e7c948b5af413",
+    "semantic_hash": "76d4406a79ab81ee6a0e7c948b5af413"
+  },
+  "/Users/pzhelnov/work/CarDrivePython/games/cardrive/PORTING.md": {
+    "mtime": 1780393839.119335,
+    "ast_hash": "de3049794ea534b1077524a01dbb2992",
+    "semantic_hash": "de3049794ea534b1077524a01dbb2992"
+  },
+  "/Users/pzhelnov/work/CarDrivePython/games/cardrive/requirements.txt": {
+    "mtime": 1780393839.1115394,
+    "ast_hash": "38d926c341ff16b5121d961a7acc9d1f",
+    "semantic_hash": "38d926c341ff16b5121d961a7acc9d1f"
+  },
+  "/Users/pzhelnov/work/CarDrivePython/games/hanoi/index.html": {
+    "mtime": 1781359816.660379,
+    "ast_hash": "1e0504d69a953ee066457de289f05f3f",
+    "semantic_hash": "1e0504d69a953ee066457de289f05f3f"
+  },
+  "/Users/pzhelnov/work/CarDrivePython/index.html": {
+    "mtime": 1781606679.543616,
+    "ast_hash": "ff64ec5afdcbeb1d006b86c5b79caddc",
+    "semantic_hash": "ff64ec5afdcbeb1d006b86c5b79caddc"
+  },
+  "/Users/pzhelnov/work/CarDrivePython/mobile/android/app/src/main/assets/public/index.html": {
+    "mtime": 1781556203.4022932,
+    "ast_hash": "3589fc92f33ce8b6716aee9bd8bfa23c",
+    "semantic_hash": "3589fc92f33ce8b6716aee9bd8bfa23c"
+  },
+  "/Users/pzhelnov/work/CarDrivePython/mobile/android/app/src/main/assets/public/landing.html": {
+    "mtime": 1781604540.18901,
+    "ast_hash": "19304934745b89e72bb968792234f31e",
+    "semantic_hash": "19304934745b89e72bb968792234f31e"
+  },
+  "/Users/pzhelnov/work/CarDrivePython/mobile/android/app/src/main/assets/public/linkedin-poster.html": {
+    "mtime": 1781604458.574411,
+    "ast_hash": "43f2cfa737ba78870be51c54d89f1b6f",
+    "semantic_hash": "43f2cfa737ba78870be51c54d89f1b6f"
+  },
+  "/Users/pzhelnov/work/CarDrivePython/public/games/cardrive/index.html": {
+    "mtime": 1781117034.0244102,
+    "ast_hash": "ef7d326a680087247abed1ca090b5216",
+    "semantic_hash": "ef7d326a680087247abed1ca090b5216"
+  },
+  "/Users/pzhelnov/work/CarDrivePython/public/games/cardrive/landing.html": {
+    "mtime": 1781614779.4855742,
+    "ast_hash": "d641cf2f2818ce702b89fde1b5c50c5b",
+    "semantic_hash": "d641cf2f2818ce702b89fde1b5c50c5b"
+  },
+  "/Users/pzhelnov/work/CarDrivePython/public/games/hanoi/index.html": {
+    "mtime": 1781366987.0373638,
+    "ast_hash": "1e0504d69a953ee066457de289f05f3f",
+    "semantic_hash": "1e0504d69a953ee066457de289f05f3f"
+  },
+  "/Users/pzhelnov/work/CarDrivePython/public/games/hanoi/landing.html": {
+    "mtime": 1781615421.7820117,
+    "ast_hash": "2b117612535bd34943cf9d8678de1891",
+    "semantic_hash": "2b117612535bd34943cf9d8678de1891"
+  },
+  "/Users/pzhelnov/work/CarDrivePython/public/games/memorize/index.html": {
+    "mtime": 1781556118.1570773,
+    "ast_hash": "3589fc92f33ce8b6716aee9bd8bfa23c",
+    "semantic_hash": "3589fc92f33ce8b6716aee9bd8bfa23c"
+  },
+  "/Users/pzhelnov/work/CarDrivePython/public/games/memorize/landing.html": {
+    "mtime": 1781615523.2348146,
+    "ast_hash": "9144e6ef6f384049195fdce96bf9fa3f",
+    "semantic_hash": "9144e6ef6f384049195fdce96bf9fa3f"
+  },
+  "/Users/pzhelnov/work/CarDrivePython/public/games/memorize/linkedin-poster.html": {
+    "mtime": 1781604458.5709667,
+    "ast_hash": "43f2cfa737ba78870be51c54d89f1b6f",
+    "semantic_hash": "43f2cfa737ba78870be51c54d89f1b6f"
+  },
+  "/Users/pzhelnov/work/CarDrivePython/mobile/android/app/src/main/res/drawable-land-hdpi/splash.png": {
+    "mtime": 1780416477.0,
+    "ast_hash": "f7a80786dd355bd39014e58027aa6e19",
+    "semantic_hash": "f7a80786dd355bd39014e58027aa6e19"
+  },
+  "/Users/pzhelnov/work/CarDrivePython/mobile/android/app/src/main/res/drawable-land-mdpi/splash.png": {
+    "mtime": 1780416477.0,
+    "ast_hash": "acc976d4a36479233371a53021525c0c",
+    "semantic_hash": "acc976d4a36479233371a53021525c0c"
+  },
+  "/Users/pzhelnov/work/CarDrivePython/mobile/android/app/src/main/res/drawable-land-xhdpi/splash.png": {
+    "mtime": 1780416477.0,
+    "ast_hash": "b8c72969bc1f78aab71a76035360d4af",
+    "semantic_hash": "b8c72969bc1f78aab71a76035360d4af"
+  },
+  "/Users/pzhelnov/work/CarDrivePython/mobile/android/app/src/main/res/drawable-land-xxhdpi/splash.png": {
+    "mtime": 1780416477.0,
+    "ast_hash": "f87e988387b07d843905f38b084929fb",
+    "semantic_hash": "f87e988387b07d843905f38b084929fb"
+  },
+  "/Users/pzhelnov/work/CarDrivePython/mobile/android/app/src/main/res/drawable-land-xxxhdpi/splash.png": {
+    "mtime": 1780416477.0,
+    "ast_hash": "055a69553b16b0bf5f72094a2e459fc7",
+    "semantic_hash": "055a69553b16b0bf5f72094a2e459fc7"
+  },
+  "/Users/pzhelnov/work/CarDrivePython/mobile/android/app/src/main/res/drawable-port-hdpi/splash.png": {
+    "mtime": 1780416477.0,
+    "ast_hash": "5eb10d16c81338abe8bbc033d49638a8",
+    "semantic_hash": "5eb10d16c81338abe8bbc033d49638a8"
+  },
+  "/Users/pzhelnov/work/CarDrivePython/mobile/android/app/src/main/res/drawable-port-mdpi/splash.png": {
+    "mtime": 1780416477.0,
+    "ast_hash": "d855a76a5070c8e6fcfd83a27549bdce",
+    "semantic_hash": "d855a76a5070c8e6fcfd83a27549bdce"
+  },
+  "/Users/pzhelnov/work/CarDrivePython/mobile/android/app/src/main/res/drawable-port-xhdpi/splash.png": {
+    "mtime": 1780416477.0,
+    "ast_hash": "df100b2a36bdb98b711cca58941728de",
+    "semantic_hash": "df100b2a36bdb98b711cca58941728de"
+  },
+  "/Users/pzhelnov/work/CarDrivePython/mobile/android/app/src/main/res/drawable-port-xxhdpi/splash.png": {
+    "mtime": 1780416477.0,
+    "ast_hash": "2c1b668364e815256f67b71dcdfa4d6e",
+    "semantic_hash": "2c1b668364e815256f67b71dcdfa4d6e"
+  },
+  "/Users/pzhelnov/work/CarDrivePython/mobile/android/app/src/main/res/drawable-port-xxxhdpi/splash.png": {
+    "mtime": 1780416477.0,
+    "ast_hash": "b5b1b22b59abe686c1df0d74a423d034",
+    "semantic_hash": "b5b1b22b59abe686c1df0d74a423d034"
+  },
+  "/Users/pzhelnov/work/CarDrivePython/mobile/android/app/src/main/res/drawable/splash.png": {
+    "mtime": 1780416477.0,
+    "ast_hash": "acc976d4a36479233371a53021525c0c",
+    "semantic_hash": "acc976d4a36479233371a53021525c0c"
+  },
+  "/Users/pzhelnov/work/CarDrivePython/mobile/android/app/src/main/res/mipmap-hdpi/ic_launcher.png": {
+    "mtime": 1780416477.0,
+    "ast_hash": "1956941339dd5fe36d5c66601c89a08d",
+    "semantic_hash": "1956941339dd5fe36d5c66601c89a08d"
+  },
+  "/Users/pzhelnov/work/CarDrivePython/mobile/android/app/src/main/res/mipmap-hdpi/ic_launcher_foreground.png": {
+    "mtime": 1780416477.0,
+    "ast_hash": "73b1e06d769fa08a9c3b8328cc15fd75",
+    "semantic_hash": "73b1e06d769fa08a9c3b8328cc15fd75"
+  },
+  "/Users/pzhelnov/work/CarDrivePython/mobile/android/app/src/main/res/mipmap-hdpi/ic_launcher_round.png": {
+    "mtime": 1780416477.0,
+    "ast_hash": "f43e5674865a00186dd76183cf1f2f8e",
+    "semantic_hash": "f43e5674865a00186dd76183cf1f2f8e"
+  },
+  "/Users/pzhelnov/work/CarDrivePython/mobile/android/app/src/main/res/mipmap-mdpi/ic_launcher.png": {
+    "mtime": 1780416477.0,
+    "ast_hash": "7ed1b3739b83215d0c4a0b4a7f2dcab4",
+    "semantic_hash": "7ed1b3739b83215d0c4a0b4a7f2dcab4"
+  },
+  "/Users/pzhelnov/work/CarDrivePython/mobile/android/app/src/main/res/mipmap-mdpi/ic_launcher_foreground.png": {
+    "mtime": 1780416477.0,
+    "ast_hash": "5b77e8aec8b17eed320a97567c7cb8bf",
+    "semantic_hash": "5b77e8aec8b17eed320a97567c7cb8bf"
+  },
+  "/Users/pzhelnov/work/CarDrivePython/mobile/android/app/src/main/res/mipmap-mdpi/ic_launcher_round.png": {
+    "mtime": 1780416477.0,
+    "ast_hash": "a49547a32c7d9b529af607b033811d81",
+    "semantic_hash": "a49547a32c7d9b529af607b033811d81"
+  },
+  "/Users/pzhelnov/work/CarDrivePython/mobile/android/app/src/main/res/mipmap-xhdpi/ic_launcher.png": {
+    "mtime": 1780416477.0,
+    "ast_hash": "5689511ee4e41a367d0342f37ac48bdf",
+    "semantic_hash": "5689511ee4e41a367d0342f37ac48bdf"
+  },
+  "/Users/pzhelnov/work/CarDrivePython/mobile/android/app/src/main/res/mipmap-xhdpi/ic_launcher_foreground.png": {
+    "mtime": 1780416477.0,
+    "ast_hash": "15cdded29b9877ac98c5931024c5da5d",
+    "semantic_hash": "15cdded29b9877ac98c5931024c5da5d"
+  },
+  "/Users/pzhelnov/work/CarDrivePython/mobile/android/app/src/main/res/mipmap-xhdpi/ic_launcher_round.png": {
+    "mtime": 1780416477.0,
+    "ast_hash": "c890fa4af62a63486d5dea62441ce7ab",
+    "semantic_hash": "c890fa4af62a63486d5dea62441ce7ab"
+  },
+  "/Users/pzhelnov/work/CarDrivePython/mobile/android/app/src/main/res/mipmap-xxhdpi/ic_launcher.png": {
+    "mtime": 1780416477.0,
+    "ast_hash": "a3285eeaedda8201f04e7737b9df8421",
+    "semantic_hash": "a3285eeaedda8201f04e7737b9df8421"
+  },
+  "/Users/pzhelnov/work/CarDrivePython/mobile/android/app/src/main/res/mipmap-xxhdpi/ic_launcher_foreground.png": {
+    "mtime": 1780416477.0,
+    "ast_hash": "4e9584ecc16d1fc75afb798688ce576f",
+    "semantic_hash": "4e9584ecc16d1fc75afb798688ce576f"
+  },
+  "/Users/pzhelnov/work/CarDrivePython/mobile/android/app/src/main/res/mipmap-xxhdpi/ic_launcher_round.png": {
+    "mtime": 1780416477.0,
+    "ast_hash": "14cde87848553e24d7106f56eb8ceb6f",
+    "semantic_hash": "14cde87848553e24d7106f56eb8ceb6f"
+  },
+  "/Users/pzhelnov/work/CarDrivePython/mobile/android/app/src/main/res/mipmap-xxxhdpi/ic_launcher.png": {
+    "mtime": 1780416477.0,
+    "ast_hash": "9e029293ab1ae8e3a6a7b7d0b7177e46",
+    "semantic_hash": "9e029293ab1ae8e3a6a7b7d0b7177e46"
+  },
+  "/Users/pzhelnov/work/CarDrivePython/mobile/android/app/src/main/res/mipmap-xxxhdpi/ic_launcher_foreground.png": {
+    "mtime": 1780416477.0,
+    "ast_hash": "ed3696b7c52d9747411a475dbe3fa34a",
+    "semantic_hash": "ed3696b7c52d9747411a475dbe3fa34a"
+  },
+  "/Users/pzhelnov/work/CarDrivePython/mobile/android/app/src/main/res/mipmap-xxxhdpi/ic_launcher_round.png": {
+    "mtime": 1780416477.0,
+    "ast_hash": "85addb4159ecd3f76f02fbacd5ec86de",
+    "semantic_hash": "85addb4159ecd3f76f02fbacd5ec86de"
+  },
+  "/Users/pzhelnov/work/CarDrivePython/public/favicon.svg": {
+    "mtime": 1780392865.1216989,
+    "ast_hash": "7e840862161341271697daa99a40d76b",
+    "semantic_hash": "7e840862161341271697daa99a40d76b"
+  },
+  "/Users/pzhelnov/work/CarDrivePython/public/games/cardrive/favicon.png": {
+    "mtime": 1781117034.0245907,
+    "ast_hash": "51589f25eb6e3fd068c04d4b44a62283",
+    "semantic_hash": "51589f25eb6e3fd068c04d4b44a62283"
+  },
+  "/Users/pzhelnov/work/CarDrivePython/public/icons.svg": {
+    "mtime": 1780392865.1219275,
+    "ast_hash": "3b4fcfcf393eca4d264dca4a4663bc37",
+    "semantic_hash": "3b4fcfcf393eca4d264dca4a4663bc37"
+  },
+  "/Users/pzhelnov/work/CarDrivePython/public/og-image.svg": {
+    "mtime": 1781602182.5327055,
+    "ast_hash": "dd1df192292d6c44b60469f7584495c3",
+    "semantic_hash": "dd1df192292d6c44b60469f7584495c3"
+  },
+  "/Users/pzhelnov/work/CarDrivePython/src/assets/hero.png": {
+    "mtime": 1780392865.1225784,
+    "ast_hash": "aead493361b27e7510691c5d7072dfc1",
+    "semantic_hash": "aead493361b27e7510691c5d7072dfc1"
+  },
+  "/Users/pzhelnov/work/CarDrivePython/src/assets/react.svg": {
+    "mtime": 1780392865.1227949,
+    "ast_hash": "f0402b67b6ce880f65666bb49e841696",
+    "semantic_hash": "f0402b67b6ce880f65666bb49e841696"
+  },
+  "/Users/pzhelnov/work/CarDrivePython/src/assets/vite.svg": {
+    "mtime": 1780392865.1228883,
+    "ast_hash": "9960a24288958394ac50e57ff638b036",
+    "semantic_hash": "9960a24288958394ac50e57ff638b036"
+  }
+}

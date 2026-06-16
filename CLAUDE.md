@@ -1185,3 +1185,13 @@ Ukrainian translations follow the same keys with `_uk` values.
 - **Clock display**: `clockM` is always 0/15/30/45. Display as `"4:30"` not `"4:30:00"`. Accept `"4:30"` and `"4h30"` and `"4.30"` as correct (normalize before comparing).
 - **`close-btn` (✕)** must be placed next to `ℹ` in the title row, same as WM/Spot/Math/Diamond. `onclick="goMenu()"` — no leave-confirmation needed (player hasn't started a round yet from level select). During study/quiz phase, use `backFromGame('ew')` to show the leave popup.
 - **`backFromGame`** needs `'ew'` added to its `inGame` map: active when `#ew-study` or `#ew-quiz` is visible.
+
+## graphify
+
+This project has a knowledge graph at graphify-out/ with god nodes, community structure, and cross-file relationships.
+
+Rules:
+- For codebase questions, first run `graphify query "<question>"` when graphify-out/graph.json exists. Use `graphify path "<A>" "<B>"` for relationships and `graphify explain "<concept>"` for focused concepts. These return a scoped subgraph, usually much smaller than GRAPH_REPORT.md or raw grep output.
+- If graphify-out/wiki/index.md exists, use it for broad navigation instead of raw source browsing.
+- Read graphify-out/GRAPH_REPORT.md only for broad architecture review or when query/path/explain do not surface enough context.
+- After modifying code, run `graphify update .` to keep the graph current (AST-only, no API cost).

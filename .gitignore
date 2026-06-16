@@ -29,3 +29,5 @@ games/*/build/
 games/*/__pycache__/
 games/**/__pycache__/
 games/*/*.pyc
+
+graphify-out/cache/*
