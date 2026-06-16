@@ -70,6 +70,10 @@
     .game-card.pairs::after {background:linear-gradient(90deg,#34d399,#a78bfa);}
     .game-card.diamond::after{background:linear-gradient(90deg,#22d3ee,#a78bfa);}
     .game-card.lm::after    {background:linear-gradient(90deg,#fb7185,#fbbf24);}
+    .game-card.colombo::after{background:linear-gradient(90deg,#fbbf24,#94a3b8);}
+    .game-card.cipher::after {background:linear-gradient(90deg,#818cf8,#a78bfa);}
+    .game-card.waiter::after {background:linear-gradient(90deg,#fb923c,#fbbf24);}
+    .game-card.meeting::after{background:linear-gradient(90deg,#60a5fa,#f472b6);}
     .game-card:hover{border-color:rgba(167,139,250,.22);transform:translateY(-4px);box-shadow:0 24px 64px rgba(0,0,0,.45);}
     .game-icon{font-size:2.2rem;margin-bottom:16px;display:block;line-height:1;}
     .game-name{font-size:1.1rem;font-weight:900;color:var(--text1);margin-bottom:10px;}
@@ -109,6 +113,7 @@
 <nav>
   <div class="nav-logo" id="nav-logo">MEMBRAIN</div>
   <div class="nav-right">
+    <a href="/" id="home-link" style="color:var(--text3);text-decoration:none;font-size:.83rem;font-weight:700;">← All games</a>
     <button class="lang-btn" onclick="toggleLang()" id="lang-btn">🇺🇦 UA</button>
     <a href="index.html" class="nav-play" id="nav-play">▶ Play</a>
   </div>
@@ -119,12 +124,12 @@
   <div class="hero-badge" id="hero-badge">Brain Training App</div>
   <h1 class="hero-title" id="hero-title">MEMBRAIN</h1>
   <p class="hero-sub" id="hero-sub">Train Your Brain · Develop Your Mind</p>
-  <p class="hero-desc" id="hero-desc">A science-inspired memory training app with 6 adaptive subgames — each targeting a different cognitive skill. Difficulty adjusts to you automatically. No install, no account.</p>
+  <p class="hero-desc" id="hero-desc">A science-inspired memory training app with 10 adaptive subgames — each targeting a different cognitive skill. Difficulty adjusts to you automatically. No install, no account.</p>
   <div class="hero-cta">
     <a href="index.html" class="btn-primary" id="hero-btn">▶ Play Now — It's Free</a>
   </div>
   <div class="stats-row">
-    <div class="stat-item"><div class="stat-num">6</div><div class="stat-label" id="st1">Mini-games</div></div>
+    <div class="stat-item"><div class="stat-num" id="stat-games-num">10</div><div class="stat-label" id="st1">Mini-games</div></div>
     <div class="stat-item"><div class="stat-num">29</div><div class="stat-label" id="st2">Achievements</div></div>
     <div class="stat-item"><div class="stat-num">100%</div><div class="stat-label" id="st3">Free</div></div>
     <div class="stat-item"><div class="stat-num">2</div><div class="stat-label" id="st4">Languages</div></div>
@@ -137,7 +142,7 @@
 <div class="section-wrap">
   <div class="section-head">
     <div class="section-kicker" id="g-kicker">The Games</div>
-    <h2 class="section-title" id="g-title">6 ways to challenge your mind</h2>
+    <h2 class="section-title" id="g-title">10 ways to challenge your mind</h2>
     <p class="section-sub" id="g-sub">Each subgame trains a distinct cognitive skill. Together they form a complete daily brain workout.</p>
   </div>
   <div class="games-grid">
@@ -208,6 +213,50 @@
       </div>
     </div>
 
+    <div class="game-card colombo">
+      <span class="game-icon">🕵️</span>
+      <div class="game-name" id="colombo-name">Colombo</div>
+      <p class="game-desc" id="colombo-desc">Study a crime scene down to the last detail — the people, objects, colours and the clock. Then the scene vanishes and the detective grills you: who wore what, what time was it, what did the mirror reveal?</p>
+      <div class="pill-row">
+        <span class="pill" id="colombo-p1">Crime scenes</span>
+        <span class="pill" id="colombo-p2">Detective twists</span>
+        <span class="pill" id="colombo-p3">Daily case</span>
+      </div>
+    </div>
+
+    <div class="game-card cipher">
+      <span class="game-icon">🔢</span>
+      <div class="game-name" id="cipher-name">Cipher</div>
+      <p class="game-desc" id="cipher-desc">Each digit 0–9 becomes a vivid shape. Link them into a wild little story, then rebuild the number from memory by dragging the shapes back in order. You learn a real mnemonic technique, not just drill.</p>
+      <div class="pill-row">
+        <span class="pill" id="cipher-p1">Shape code</span>
+        <span class="pill" id="cipher-p2">Story building</span>
+        <span class="pill" id="cipher-p3">Drag to recall</span>
+      </div>
+    </div>
+
+    <div class="game-card waiter">
+      <span class="game-icon">🍽️</span>
+      <div class="game-name" id="waiter-name">The Waiter</div>
+      <p class="game-desc" id="waiter-desc">Customers arrive and place their orders. Memorize who wanted what, then serve every table correctly from memory — before they lose their patience.</p>
+      <div class="pill-row">
+        <span class="pill" id="waiter-p1">Order recall</span>
+        <span class="pill" id="waiter-p2">Multiple tables</span>
+        <span class="pill" id="waiter-p3">Daily shift</span>
+      </div>
+    </div>
+
+    <div class="game-card meeting">
+      <span class="game-icon">🗣️</span>
+      <div class="game-name" id="meeting-name">The Meeting</div>
+      <p class="game-desc" id="meeting-desc">Watch a short business meeting unfold, then answer from memory — who promised what, which budget was named, whose birthday is coming up.</p>
+      <div class="pill-row">
+        <span class="pill" id="meeting-p1">Read &amp; recall</span>
+        <span class="pill" id="meeting-p2">Who said what</span>
+        <span class="pill" id="meeting-p3">Key details</span>
+      </div>
+    </div>
+
   </div>
 </div>
 
@@ -267,15 +316,15 @@ let lang = 'en';
 
 const C = {
   en: {
-    navLogo:'MEMBRAIN', langBtn:'🇺🇦 UA', navPlay:'▶ Play',
+    navLogo:'MEMBRAIN', homeLink:'← All games', langBtn:'🇺🇦 UA', navPlay:'▶ Play',
     heroBadge:'Brain Training App',
     heroTitle:'MEMBRAIN',
     heroSub:'Train Your Brain · Develop Your Mind',
-    heroDesc:'A science-inspired memory training app with 6 adaptive subgames — each targeting a different cognitive skill. Difficulty adjusts to you automatically. No install, no account.',
+    heroDesc:'A science-inspired memory training app with {n} adaptive subgames — each targeting a different cognitive skill. Difficulty adjusts to you automatically. No install, no account.',
     heroBtn:'▶ Play Now — It\'s Free',
     st1:'Mini-games', st2:'Achievements', st3:'Free', st4:'Languages',
     gKicker:'The Games',
-    gTitle:'6 ways to challenge your mind',
+    gTitle:'{n} ways to challenge your mind',
     gSub:'Each subgame trains a distinct cognitive skill. Together they form a complete daily brain workout.',
     wmName:'🧠 Word Sequence',
     wmDesc:'Words flash one by one. Memorize the exact sequence, then recall it in order. Early levels offer a word pool to pick from — later levels demand you type from pure memory.',
@@ -295,6 +344,18 @@ const C = {
     lmName:'🕰️ Long Memory',
     lmDesc:'One curated item per day to memorize — from a beautiful word definition to a short story with embedded facts. Return 12+ hours later and write your recall. Spaced repetition schedules reviews automatically.',
     lmP1:'5 content tiers', lmP2:'Spaced repetition', lmP3:'Personal diary',
+    colomboName:'🕵️ Colombo',
+    colomboDesc:'Study a crime scene down to the last detail — the people, objects, colours and the clock. Then the scene vanishes and the detective grills you: who wore what, what time was it, what did the mirror reveal?',
+    colomboP1:'Crime scenes', colomboP2:'Detective twists', colomboP3:'Daily case',
+    cipherName:'🔢 Cipher',
+    cipherDesc:'Each digit 0–9 becomes a vivid shape. Link them into a wild little story, then rebuild the number from memory by dragging the shapes back in order. You learn a real mnemonic technique, not just drill.',
+    cipherP1:'Shape code', cipherP2:'Story building', cipherP3:'Drag to recall',
+    waiterName:'🍽️ The Waiter',
+    waiterDesc:'Customers arrive and place their orders. Memorize who wanted what, then serve every table correctly from memory — before they lose their patience.',
+    waiterP1:'Order recall', waiterP2:'Multiple tables', waiterP3:'Daily shift',
+    meetingName:'🗣️ The Meeting',
+    meetingDesc:'Watch a short business meeting unfold, then answer from memory — who promised what, which budget was named, whose birthday is coming up.',
+    meetingP1:'Read & recall', meetingP2:'Who said what', meetingP3:'Key details',
     fKicker:'Features',
     fTitle:'Built to keep you coming back',
     fSub:'Every detail is designed to make daily training rewarding and effortless.',
@@ -306,21 +367,21 @@ const C = {
     f6t:'Works anywhere', f6d:'No install, no account required. Runs in any modern browser on phone, tablet, or desktop. All progress is saved locally on your device.',
     ctaKicker:'Ready?',
     ctaTitle:'Start training today',
-    ctaTagline:'Five minutes a day. Six games. One sharper mind.',
+    ctaTagline:'Five minutes a day. {n} games. One sharper mind.',
     ctaBtn:'▶ Open MEMBRAIN — Free',
     footerTxt:'© 2025 MEMBRAIN · Brain Training App · Built with ❤️ for curious minds',
     docTitle:'MEMBRAIN — Brain Training App',
   },
   uk: {
-    navLogo:'БОТАНІК', langBtn:'🇬🇧 EN', navPlay:'▶ Грати',
+    navLogo:'БОТАНІК', homeLink:'← Усі ігри', langBtn:'🇬🇧 EN', navPlay:'▶ Грати',
     heroBadge:'Тренажер мозку',
     heroTitle:'БОТАНІК',
     heroSub:'Тренуй розум · Розвивай мозок',
-    heroDesc:'Браузерний тренажер когнітивних навичок із 6 адаптивними міні-іграми — кожна розвиває окремий аспект пам\'яті та мислення. Складність підлаштовується автоматично.',
+    heroDesc:'Браузерний тренажер когнітивних навичок із {n} адаптивними міні-іграми — кожна розвиває окремий аспект пам\'яті та мислення. Складність підлаштовується автоматично.',
     heroBtn:'▶ Грошей не треба, тільки гарний настрій',
     st1:'Міні-ігор', st2:'Досягнень', st3:'Безкоштовно', st4:'Мови',
     gKicker:'Ігри',
-    gTitle:'6 способів кинути виклик розуму',
+    gTitle:'{n} способів кинути виклик розуму',
     gSub:'Кожна міні-гра тренує окрему когнітивну навичку. Разом вони формують повноцінне щоденне тренування мозку.',
     wmName:'🧠 Ланцюжок слів',
     wmDesc:'Слова з\'являються одне за одним. Запам\'ятай точну послідовність і відтвори її в точному порядку. На перших рівнях вибирай слова зі списку, пізніше — вводь самостійно по пам\'яті з клавіатури.',
@@ -340,6 +401,18 @@ const C = {
     lmName:'🕰️ Довга пам\'ять',
     lmDesc:'Щодня — один об\'єкт для запам\'ятовування: від красивого слова до оповідання з вбудованими фактами. Повернись через 12+ годин і відтвори по пам\'яті. Тренується Постійний Пристрій Пам\'яті',
     lmP1:'5 рівнів складності', lmP2:'Інтервальні повторення', lmP3:'Особистий щоденник',
+    colomboName:'🕵️ Colombo',
+    colomboDesc:'Вивчи місце злочину до найдрібніших деталей — людей, предмети, кольори, годинник. Потім сцена зникає, і детектив допитує тебе: хто був у чому вдягнений, котра була година, що показало дзеркало?',
+    colomboP1:'Місця злочину', colomboP2:'Детективні твісти', colomboP3:'Справа дня',
+    cipherName:'🔢 Шифр',
+    cipherDesc:'Кожна цифра 0–9 стає яскравим образом. Зв\'яжи їх у божевільну історію, а потім віднови число по пам\'яті, перетягуючи образи в правильному порядку. Ти опановуєш справжню мнемотехніку, а не просто зубриш.',
+    cipherP1:'Код образів', cipherP2:'Складання історій', cipherP3:'Відтворення жестом',
+    waiterName:'🍽️ Офіціант',
+    waiterDesc:'Приходять відвідувачі й роблять замовлення. Запам\'ятай, хто що хотів, і обслужи кожен столик по пам\'яті, поки гості не втратили терпіння.',
+    waiterP1:'Запам\'ятай замовлення', waiterP2:'Кілька столиків', waiterP3:'Зміна дня',
+    meetingName:'🗣️ Нарада',
+    meetingDesc:'Прочитай, як проходить коротка ділова нарада, а потім відповідай по пам\'яті — хто що пообіцяв, який бюджет назвали, у кого скоро день народження.',
+    meetingP1:'Читай і згадуй', meetingP2:'Хто що сказав', meetingP3:'Ключові деталі',
     fKicker:'Можливості',
     fTitle:'Створено щоб повертатись щодня',
     fSub:'Кожна деталь розроблена щоб зробити щоденне тренування звичним та приємним.',
@@ -351,7 +424,7 @@ const C = {
     f6t:'Працює всюди. Ну, майже', f6d:'Без установки та реєстрації. Запускається в будь-якому сучасному браузері на телефоні, планшеті або ПК. Прогрес зберігається локально.',
     ctaKicker:'Готовий?',
     ctaTitle:'Починай тренуватись сьогодні!',
-    ctaTagline:'П\'ять хвилин на день. Шість ігор. Твій гостріший розум!',
+    ctaTagline:'П\'ять хвилин на день. {n} ігор. Твій гостріший розум!',
     ctaBtn:'▶ Відкрити БОТАНІК',
     footerTxt:'© 2025 БОТАНІК · Тренажер мозку · Створено Пашкінсоном з ❤️ для допитливих умів',
     docTitle:'БОТАНІК — Тренажер мозку',
@@ -360,13 +433,20 @@ const C = {
 
 function s(id, val) { const el = document.getElementById(id); if (el) el.textContent = val; }
 
+// Number of mini-games, counted automatically from the cards on the page.
+// Add a new .game-card and every "{n}" reference updates itself — no edits here.
+function gameCount() { return document.querySelectorAll('.games-grid .game-card').length; }
+
 function applyLang() {
   const c = C[lang];
-  s('nav-logo', c.navLogo); s('lang-btn', c.langBtn); s('nav-play', c.navPlay);
+  const n = gameCount();
+  const r = (val) => String(val).replace(/\{n\}/g, n);
+  const gameSlug = document.getElementById('stat-games-num'); if (gameSlug) gameSlug.textContent = n;
+  s('nav-logo', c.navLogo); s('home-link', c.homeLink); s('lang-btn', c.langBtn); s('nav-play', c.navPlay);
   s('hero-badge', c.heroBadge); s('hero-title', c.heroTitle); s('hero-sub', c.heroSub);
-  s('hero-desc', c.heroDesc); s('hero-btn', c.heroBtn);
+  s('hero-desc', r(c.heroDesc)); s('hero-btn', c.heroBtn);
   s('st1', c.st1); s('st2', c.st2); s('st3', c.st3); s('st4', c.st4);
-  s('g-kicker', c.gKicker); s('g-title', c.gTitle); s('g-sub', c.gSub);
+  s('g-kicker', c.gKicker); s('g-title', r(c.gTitle)); s('g-sub', c.gSub);
   s('wm-name', c.wmName); s('wm-desc', c.wmDesc);
   s('wm-p1', c.wmP1); s('wm-p2', c.wmP2); s('wm-p3', c.wmP3);
   s('spot-name', c.spotName); s('spot-desc', c.spotDesc);
@@ -379,6 +459,14 @@ function applyLang() {
   s('diamond-p1', c.diamondP1); s('diamond-p2', c.diamondP2); s('diamond-p3', c.diamondP3);
   s('lm-name', c.lmName); s('lm-desc', c.lmDesc);
   s('lm-p1', c.lmP1); s('lm-p2', c.lmP2); s('lm-p3', c.lmP3);
+  s('colombo-name', c.colomboName); s('colombo-desc', c.colomboDesc);
+  s('colombo-p1', c.colomboP1); s('colombo-p2', c.colomboP2); s('colombo-p3', c.colomboP3);
+  s('cipher-name', c.cipherName); s('cipher-desc', c.cipherDesc);
+  s('cipher-p1', c.cipherP1); s('cipher-p2', c.cipherP2); s('cipher-p3', c.cipherP3);
+  s('waiter-name', c.waiterName); s('waiter-desc', c.waiterDesc);
+  s('waiter-p1', c.waiterP1); s('waiter-p2', c.waiterP2); s('waiter-p3', c.waiterP3);
+  s('meeting-name', c.meetingName); s('meeting-desc', c.meetingDesc);
+  s('meeting-p1', c.meetingP1); s('meeting-p2', c.meetingP2); s('meeting-p3', c.meetingP3);
   s('f-kicker', c.fKicker); s('f-title', c.fTitle); s('f-sub', c.fSub);
   s('f1t', c.f1t); s('f1d', c.f1d);
   s('f2t', c.f2t); s('f2d', c.f2d);
@@ -387,7 +475,7 @@ function applyLang() {
   s('f5t', c.f5t); s('f5d', c.f5d);
   s('f6t', c.f6t); s('f6d', c.f6d);
   s('cta-kicker', c.ctaKicker); s('cta-title', c.ctaTitle);
-  s('cta-tagline', c.ctaTagline); s('cta-btn', c.ctaBtn);
+  s('cta-tagline', r(c.ctaTagline)); s('cta-btn', c.ctaBtn);
   s('footer-txt', c.footerTxt);
   document.title = c.docTitle;
   document.documentElement.lang = lang;

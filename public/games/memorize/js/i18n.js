@@ -460,7 +460,7 @@ const STRINGS = {
     wm_get_ready:'ГОТУЙСЯ', wm_type_ready:'Готуйся ПИСАТИ їх назад!',
     wm_now_recall:'ВІДТВОРЮЙ!',
     wm_word_n_of:(i,n)=>`СЛОВО ${i} З ${n}`,
-    wm_more_to_go:(n)=>`Ще ${n} слів`,
+    wm_more_to_go: (n) => `Ще ${n} ${pluralUK(n, 'слово', 'слова', 'слів')}`,
     wm_what_did_you_see:'Що ти бачив(ла)?',
     wm_recall_sub_pool:'Клікни слова в тому порядку, в якому запам\'ятав(ла)',
     wm_type_recall_title:'Введи що пам\'ятаєш',
@@ -469,7 +469,7 @@ const STRINGS = {
     wm_perfect:'✨ ІДЕАЛЬНО! ✨', wm_sharp:'Чудово!', wm_keep:'Продовжуй тренуватись!', wm_try:'Спробуй ще раз!',
     wm_score_label:'Результат пам\'яті', wm_new_best:'НОВИЙ РЕКОРД!',
     wm_words_lbl:'слів', wm_time_lbl:'с кожне',
-    wm_day_streak:(n)=>`🔥 ${n} ${n===1?'день':n<5?'дні':'днів'} поспіль`,
+    wm_day_streak: (n) => `🔥 ${n} ${pluralUK(n, 'день', 'дні', 'днів')} поспіль`,
     wm_today:'Сьогодні', wm_recalled:'Відтворено', wm_in_order:'По порядку', wm_best_streak:'Найкраща серія',
     wm_wrong:'Помилки', wm_false_picks:'Зайві слова',
     wm_shown:'Показана послідовність', wm_your_ans:'Твоя відповідь', wm_nothing:'Нічого не введено',
@@ -483,7 +483,7 @@ const STRINGS = {
     spot_memorize_one:'Запам\'ятай об\'єкти!', spot_memorize_multi:(n)=>`Запам\'ятай — знайди ${n} зниклих!`,
     spot_eyes_closed:'Заплющ очі!', spot_rearranging:'Переставляємо…',
     spot_find_one:'Який об\'єкт зник?', spot_find_many:(n)=>`Які ${n} об\'єктів зникли?`,
-    spot_select_n:(n)=>`Вибери ще ${n} об\'єкт${n===1?'':'ів'}`,
+    spot_select_n: (n) => `Вибери ще ${n} ${pluralUK(n, 'об\'єкт', 'об\'єкти', 'об\'єктів')}`,
     spot_checking:'Перевіряємо…',
     spot_correct:'Правильно!', spot_wrong:'Не зовсім…',
     spot_missing_was:(labels)=>`Зник: ${labels[0]}`,
@@ -507,7 +507,7 @@ const STRINGS = {
     pairs_gameover_tie:'Нічия!', pairs_gameover_win:'Ти виграв(ла)! 🎉',
     pairs_gameover_lose:(winner)=>`${winner} переміг(ла)!`,
     pairs_tie_sub:'Рівні за силою!', pairs_win_sub:'Чудова пам\'ять!', pairs_lose_sub:'Наступного разу пощастить!',
-    pairs_holes:'пмлк:', pairs_turn:'ХІД', pairs_your_turn:'Твій хід', pairs_their_turn:(name)=>`Хід ${name}`,
+    pairs_holes:'промахи:', pairs_turn:'ХІД', pairs_your_turn:'Твій хід', pairs_their_turn:(name)=>`Хід ${name}`,
     pairs_decline:'Відхилити', pairs_accept:'Прийняти!',
     pairs_lobby_btn:'← Лобі', pairs_rematch:'Реванш!', pairs_waiting:'Зачекайте…', pairs_accept_rematch:'Прийняти реванш',
     math_section_title:'Математика', math_section_sub:'Вибери операції та складність',
@@ -522,10 +522,10 @@ const STRINGS = {
     math_today:'Сьогодні', math_alltime:'Всього завдань', math_accuracy:'Точність',
     math_intro_input:'Введи відповідь самостійно', math_intro_equation:'Знайди X',
     math_intro_three:'Тепер три числа', math_intro_eq3:'Знайди X · 3 члени',
-    math_sub_eq:'знайди X', math_sub_plain:(n)=>`${n} числ`,
+    math_sub_eq:'знайди X', math_sub_plain: (n) => `${n} ${pluralUK(n, 'число', 'числа', 'чисел')}`,
     math_practicing:(ops)=>`Практика: ${ops}`,
     math_menu:'Меню', math_replay:'Повтор',
-    math_day_streak:(n)=>`🔥 ${n} ${n===1?'день':n<5?'дні':'днів'} поспіль`,
+    math_day_streak: (n) => `🔥 ${n} ${pluralUK(n, 'день', 'дні', 'днів')} поспіль`,
     // achievements
     ach_panel_title:'🏆 Досягнення',
     ach_wm_first:'Перше відтворення',  ach_wm_first_d:'Завершити перший раунд Ланцюжка слів',
@@ -536,7 +536,7 @@ const STRINGS = {
     ach_sp_first:'Орлиний погляд',    ach_sp_first_d:'Завершити перший раунд Знайди різницю',
     ach_sp_boss:'Переможець боса',    ach_sp_boss_d:'Знайти всі 4 зниклих об\'єкти на рівні Бос',
     ach_sp_streak5:'В ударі!',        ach_sp_streak5_d:'Досягти серії з 5 раундів у Знайди різницю',
-    ach_sp_appeared:'Режим шпигуна',  ach_sp_appeared_d:'Знайти зайвий об\'єкт у режимі Інтрудер',
+    ach_sp_appeared:'Режим шпигуна',  ach_sp_appeared_d: 'Знайти зайвий об\'єкт у відповідному режимі',
     ach_mt_first:'Математичний старт',ach_mt_first_d:'Завершити перший раунд Математики',
     ach_mt_perfect:'Ідеальний рахунок',ach_mt_perfect_d:'Правильно відповісти на всі 10 завдань',
     ach_mt_trick:'Майстер хитрощів', ach_mt_trick_d:'Завершити сесію Математичних хитрощів',
@@ -544,9 +544,9 @@ const STRINGS = {
     ach_all_games:'Різнобічний',      ach_all_games_d:'Зіграти в Ланцюжок слів, Знайди різницю і Математику',
     ach_streak3:'Відданість',         ach_streak3_d:'Тренуватись 3 дні поспіль',
     // Pairs vs AI achievements
-    ach_pb_first:'Переможець роботів', ach_pb_first_d:'Зіграти перший матч проти ІІ',
-    ach_pb_win:'Переможець',           ach_pb_win_d:'Перемогти суперника-ІІ',
-    ach_pb_hard:'Геній',               ach_pb_hard_d:'Перемогти Важкий ІІ',
+    ach_pb_first:'Переможець роботів', ach_pb_first_d:'Зіграти перший матч проти ШІ',
+    ach_pb_win:'Переможець',           ach_pb_win_d:'Перемогти суперника-ШІ',
+    ach_pb_hard:'Геній',               ach_pb_hard_d:'Перемогти Важкий ШІ',
     ach_pb_elo1400:'Зірка рейтингу',   ach_pb_elo1400_d:'Досягти рейтингу ELO 1400',
     // Math achievements
     ach_mt_trick_master:'Легенда хитрощів', ach_mt_trick_master_d:'3 ідеальні сесії однієї хитрощі',
@@ -575,11 +575,11 @@ const STRINGS = {
     trick_pct_swap:'Правило % обміну', trick_pct_swap_hint:'A% від B = B% від A — бери зручніше!',
     trick_mastered:'🥇 Опановано',
     // AI Pairs
-    ai_game_title:'🤖 проти ІІ', ai_game_sub:'Грай офлайн · Не потрібне з\'єднання',
+    ai_game_title:'🤖 проти ШІ', ai_game_sub:'Грай офлайн · Не потрібне з\'єднання',
     ai_diff_lbl:'СКЛАДНІСТЬ',
     ai_diff_easy:'😊 Легко', ai_diff_medium:'🧠 Середнє', ai_diff_hard:'🔥 Важко',
-    ai_player_name:'Ти', ai_name_easy:'Легкий ІІ', ai_name_medium:'ІІ', ai_name_hard:'Важкий ІІ',
-    ai_start_btn:'⚔️ Грати проти ІІ',
+    ai_player_name:'Ти', ai_name_easy:'Легкий ШІ', ai_name_medium:'ШІ', ai_name_hard:'Важкий ШІ',
+    ai_start_btn:'⚔️ Грати проти ШІ',
     // math estimation
     math_est_lbl:'РЕЖИМ ВІДПОВІДІ',
     math_est_off:'🎯 Точно', math_est_on:'≈ Приблизно ±10%',
@@ -606,17 +606,17 @@ const STRINGS = {
     // info popup
     info_got_it:'Зрозуміло!',
     info_wm_title:'🧠 Ланцюжок слів',
-    info_wm_body:'<ul class="info-body-list"><li>Слова з\'являються одне за одним — уважно стеж</li><li>Відтвори їх <b>у тому самому порядку</b></li><li>Рівні 1–6: вибирай зі списку слів</li><li>Рівні 7–12: вводь кожне слово самостійно</li><li><b>Режим назад:</b> відтворюй у зворотному порядку</li><li><b>Аудіо режим:</b> слова зачитуються вголос</li></ul>',
+    info_wm_body: '<ul class="info-body-list"><li>Слова з\'являються одне за одним — уважно стеж</li><li>Відтвори їх <b>у тому самому порядку</b></li><li>Рівні 1–6: вибирай зі списку слів</li><li>Рівні 7–12: вводь кожне слово самостійно</li><li><b>Режим назад:</b> відтворюй у зворотному порядку</li><li><b>Аудіорежим:</b> слова зачитуються вголос</li></ul>',
     info_spot_title:'👁️ Знайди різницю',
     info_spot_body:'<ul class="info-body-list"><li>Уважно вивчи сітку об\'єктів</li><li>Поки ти відводиш погляд, об\'єкти переставляються</li><li>Знайди який об\'єкт <b>зник</b></li><li>Вищі рівні = більше об\'єктів для запам\'ятовування</li><li><b>Режим зайвого:</b> знайди НОВИЙ об\'єкт що з\'явився</li></ul>',
     info_pairs_title:'⚔️ Битва пар',
-    info_pairs_body:'<ul class="info-body-list"><li>Перевертай картки, знаходь однакові пари</li><li>Запам\'ятовуй розташування — точність перемагає</li><li><b>Проти ІІ:</b> офлайн суперник — легко / середнє / важко</li><li><b>Онлайн:</b> виклик живому гравцю в реальному часі</li><li>Заробляй бонуси кожні 3 знайдені пари</li><li>Рейтинг ELO відстежує твій прогрес</li></ul>',
+    info_pairs_body:'<ul class="info-body-list"><li>Перевертай картки, знаходь однакові пари</li><li>Запам\'ятовуй розташування — точність перемагає</li><li><b>Проти ШІ:</b> офлайн суперник — легко / середнє / важко</li><li><b>Онлайн:</b> виклик живому гравцю в реальному часі</li><li>Заробляй бонуси кожні 3 знайдені пари</li><li>Рейтинг ELO відстежує твій прогрес</li></ul>',
     info_math_title:'➕ Математика',
     info_math_body:'<ul class="info-body-list"><li>Розв\'язуй приклади якомога швидше</li><li>10 завдань за сесію — рахунок залежить від швидкості</li><li>Вибирай операції: + − × ÷ та %</li><li><b>Хитрощі:</b> вивчай методи блискавичних обчислень</li><li><b>Виклик дня:</b> 5 спільних завдань, оновлюються опівночі</li><li><b>Режим оцінки:</b> ±10% зараховується — думай швидше!</li></ul>',
     trick_mul11_instr:'<b>Правило:</b> для 2-значного числа AB пиши A·(A+B)·B поряд. Якщо сума > 9 — перенось 1 вліво.<br><br><b>53 × 11:</b> A=5, B=3, A+B=8 → <b>583</b><br><b>78 × 11:</b> A+B=15 → перенос! → (7+1)·5·8 = <b>858</b>',
     trick_mul5_instr:'<b>Правило:</b> множення на 5 = поділи навпіл, потім ×10.<br><br><b>48 × 5:</b> 48÷2=24 → ×10 = <b>240</b><br><b>37 × 5:</b> 37÷2=18,5 → ×10 = <b>185</b>',
     trick_mul25_instr:'<b>Правило:</b> множення на 25 = поділи на 4, потім ×100.<br><br><b>36 × 25:</b> 36÷4=9 → ×100 = <b>900</b><br><b>44 × 25:</b> 44÷4=11 → <b>1100</b>',
-    trick_sq5_instr:'<b>Правило:</b> для числа на 5 (позначимо N5):<br>обчисли N×(N+1), потім допиши 25.<br><br><b>35²:</b> N=3 → 3×4=12 → допиши 25 → <b>1225</b><br><b>65²:</b> N=6 → 6×7=42 → <b>4225</b>',
+    trick_sq5_instr: '<b>Правило:</b> для числа, що закінчується на 5 (позначимо N5):<br>обчисли N×(N+1), потім допиши 25.<br><br><b>35²:</b> N=3 → 3×4=12 → допиши 25 → <b>1225</b><br><b>65²:</b> N=6 → 6×7=42 → <b>4225</b>',
     trick_near100_instr:'<b>Правило:</b> для A×B обох близьких до 100:<br>d1=100−A, d2=100−B<br>Ліво = 100−d1−d2 · Право = d1×d2 (2 цифри)<br><br><b>97 × 94:</b> d1=3, d2=6 → ліво=91, право=18 → <b>9118</b><br><b>98 × 97:</b> d1=2, d2=3 → ліво=95, право=06 → <b>9506</b>',
     trick_pct_swap_instr:'<b>Правило:</b> A% від B = B% від A — бери зручніший напрям!<br><br><b>4% від 75:</b> міняємо → 75% від 4 = <b>3</b><br><b>8% від 50:</b> міняємо → 50% від 8 = <b>4</b>',
     // diamond
@@ -635,11 +635,11 @@ const STRINGS = {
     diamond_stat_correct:'Правильно', diamond_stat_total:'Всього', diamond_stat_level:'Рівень', diamond_stat_grid:'Поле',
     // info popup for diamond
     info_diamond_title:'💎 Діамант',
-    info_diamond_body:'<ul class="info-body-list"><li>Послідовність з\'єднаних точок малюється перед тобою</li><li>Запам\'ятай маршрут — відтвори його по порядку</li><li>Складність зростає: від поля 2×2 до 5×5 і далі</li><li>2 правильних підряд → рівень вгору · 1 помилка → крок назад</li><li>Часу нема — важлива точність, а не швидкість</li></ul>',
+    info_diamond_body: '<ul class="info-body-list"><li>Послідовність з\'єднаних точок малюється перед тобою</li><li>Запам\'ятай маршрут — відтвори його по порядку</li><li>Складність зростає: від поля 2×2 до 5×5 і далі</li><li>2 правильних підряд → рівень вгору · 1 помилка → крок назад</li><li>Часу немає — важлива точність, а не швидкість</li></ul>',
     // achievements
     ach_dmd_first:'Дебют Діаманта', ach_dmd_first_d:'Успішно відтвори перший жест',
     ach_dmd_streak5:'Майстер жестів', ach_dmd_streak5_d:'5 правильних жестів підряд',
-    ach_dmd_level10:'Жестовий генiй', ach_dmd_level10_d:'Досягнути 10 рівня в Діаманті',
+    ach_dmd_level10: 'Жестовий геній', ach_dmd_level10_d:'Досягнути 10 рівня в Діаманті',
     // ── COLOMBO ──
     col_mode_title:'Коломбо', col_mode_desc:'Поглянь на місце злочину — і розкрий його по пам\'яті',
     col_section_title:'Коломбо', col_section_sub:'Вивчи місце злочину, а потім розкрий справу по пам\'яті',
@@ -655,7 +655,7 @@ const STRINGS = {
     col_study_cap:'Роздивись усе, лейтенанте…', col_seen_enough:'Я побачив досить →',
     col_revealed_cap:'Сцена, відкрита', col_back_verdict:'До вироку',
     col_quiz_title:'Сцена зникла.', col_quiz_sub:'Що ти пам\'ятаєш, детективе?',
-    col_submit:'Закрити справу →', col_twist:'ЩЕ ОДНА ДРІБНИЦЯ', col_clue_n:(n)=>`ЗАЧІПКА ${n}`,
+    col_submit:'Закрити справу →', col_twist:'О, ЩЕ ОДНЕ ПИТАННЯ', col_clue_n:(n)=>`ЗАЧІПКА ${n}`,
     col_type_ph:'Твоя відповідь…',
     col_result_label:'Справу розкрито', col_new_case:'Нова справа', col_reexamine:'Оглянути сцену',
     col_solved_n:(c,t)=>`${c} / ${t} зачіпок розкрито`,
@@ -684,7 +684,7 @@ const STRINGS = {
     colq_mirror_clock:'Годинник було видно лише в дзеркалі. Котру годину він показував?',
     colq_watcher:'Хтось спостерігав знадвору. Якого кольору було його пальто?',
     colq_clue:'Яку зачіпку залишили на підлозі?',
-    colpos_only:'', colpos_left:'крайній лівій', colpos_right:'крайній правій',
+    colpos_only:'цій', colpos_left:'крайній лівій', colpos_right:'крайній правій',
     // vocab: colours
     clr_red:'Червоний', clr_blue:'Синій', clr_green:'Зелений', clr_yellow:'Жовтий', clr_purple:'Фіолетовий',
     clr_orange:'Помаранчевий', clr_white:'Білий', clr_black:'Чорний', clr_brown:'Коричневий', clr_pink:'Рожевий',
@@ -714,7 +714,7 @@ const STRINGS = {
     lm_encoded:'Вивчено', lm_recalled_today:'Відтворено сьогодні',
     lm_recall_opens_in:(h)=>`Відтворення відкриється через ${h} год`,
     lm_due_now:'Час повторити',
-    lm_next_in:(d)=>`Наступне повторення через ${d} ${d===1?'день':d<5?'дні':'днів'}`,
+    lm_next_in: (d) => `Наступне повторення через ${d} ${pluralUK(d, 'день', 'дні', 'днів')}`,
     lm_encode_title:'Вивчи це', lm_encode_sub:'Читай уважно — потім закрий очі',
     lm_memorized_btn:'✓ Я запам\'ятав(ла)!',
     lm_encode_note:'Повертайся через 12+ годин щоб відтворити по пам\'яті',
@@ -762,7 +762,7 @@ const STRINGS = {
     wtr_study_cap:'Запам\'ятай замовлення', wtr_skip:'Почати обслугу →',
     wtr_submit:'Підтвердити', wtr_next:'Далі →', wtr_open:'Відкрити',
     wtr_to_menu:'Меню', wtr_retry:'Спробувати знову',
-    wtr_perfect:'Ездалось! 🌟', wtr_good:'Чудова робота!', wtr_ok:'Непогано!', wtr_poor:'Продовжуй тренуватись',
+    wtr_perfect:'Вдалось! 🌟', wtr_good:'Чудова робота!', wtr_ok:'Непогано!', wtr_poor:'Продовжуй тренуватись',
     wtr_items_correct:'позицій правильно', wtr_wrong_label:'Зайва страва',
     wtr_question:n=>`Що замовив гість ${n}?`,
     wtr_stat_today:'Сьогодні', wtr_stat_total:'Всього', wtr_stat_avg:'Сер. %', wtr_stat_best:'Кращий %',
@@ -791,7 +791,7 @@ const STRINGS = {
     cph_daily_sub:'Однаковий код для всіх сьогодні',
     cph_digits:'цифр',
     cph_intro_learn:'Образи показують свою цифру поки ти вчишся. Запам\'ятай зв\'язок!',
-    cph_intro_hidden:'Цифри більше не показуються. Довіртись пам\'яті.',
+    cph_intro_hidden: 'Цифри більше не показуються. Довіртеся пам\'яті.',
     cph_verdict_perfect:'🏆 Бездоганне відтворення!',
     cph_verdict_great:'Гостро! Майже ідеально.',
     cph_verdict_ok:'Добрий старт — продовжуй тренуватися.',
@@ -799,20 +799,22 @@ const STRINGS = {
     cph_stat_today:'Сьогодні', cph_stat_total:'Всього',
     cph_stat_avg:'Середній %', cph_stat_best:'Рекорд %',
     ach_cph_first:'Зміна форм',    ach_cph_first_d:'Завершити перший раунд Шифру',
-    ach_cph_perfect:'Зламав код',  ach_cph_perfect_d:'100% точності у Шифрі',
+    ach_cph_perfect:'Код зламано',  ach_cph_perfect_d:'100% точності у Шифрі',
     ach_cph_daily:'Дешифрувальник', ach_cph_daily_d:'Розгадати Код дня',
-    cph_story_tpl_2a:(a,b)=>`${a} наздоганяло ${b}`,
-    cph_story_tpl_2b:(a,b)=>`${b} впало на ${a}`,
-    cph_story_tpl_2c:(a,b)=>`${a} поглинуло ${b}`,
-    cph_story_tpl_2d:(a,b)=>`${a} та ${b} зіткнулись на повній швидкості`,
-    cph_story_tpl_2e:(a,b)=>`Гігантське ${a} перетворилось на ${b}`,
-    cph_story_tpl_3a:(a,b,c)=>`${a} вдарило ${b}, і воно полетіло в ${c}`,
-    cph_story_tpl_3b:(a,b,c)=>`${a} та ${b} змагались хто першим дістанеться ${c}`,
-    cph_story_tpl_3c:(a,b,c)=>`${a} подарувало ${b} як подарунок для ${c}`,
-    cph_story_tpl_3d:(a,b,c)=>`${b} перестрибнуло через ${a} і знищило ${c}`,
+
+    cph_story_tpl_2a: (a, b) => `Символ «${a}» влаштовує погоню за символом «${b}»`,
+    cph_story_tpl_2b: (a, b) => `Символ «${b}» падає прямо на символ «${a}»`,
+    cph_story_tpl_2c: (a, b) => `Символ «${a}» повністю ковтає символ «${b}»`,
+    cph_story_tpl_2d: (a, b) => `Символ «${a}» та символ «${b}» зіткнулися`,
+    cph_story_tpl_2e: (a, b) => `Раптом символ «${a}» перетворюється на символ «${b}»`,
+    cph_story_tpl_3a: (a, b, c) => `Символ «${a}» збиває символ «${b}» прямо на символ «${c}»`,
+    cph_story_tpl_3b: (a, b, c) => `«${a}» та «${b}» змагаються, хто першим дістанеться символу «${c}»`,
+    cph_story_tpl_3c: (a, b, c) => `Символ «${a}» передає символ «${b}» як подарунок для «${c}»`,
+    cph_story_tpl_3d: (a, b, c) => `Символ «${b}» стрибає через «${a}» і знищує символ «${c}»`,
+
     // ── active story-builder + drag recall ──
     cph_link_smash:'трощить', cph_link_burn:'палає', cph_link_chase:'женеться',
-    cph_link_gift:'дарує',    cph_link_morph:'стає',  cph_link_leap:'перестрибує',
+    cph_link_gift:'дарує',    cph_link_morph: 'перетворюється на',  cph_link_leap: 'стрибає через',
     cph_build_title:'Склади свою історію',
     cph_build_hint:'Торкнись зв\'язки, щоб змінити дію, потім торкнись кожного образу, щоб зафіксувати',
     cph_lock_btn:'Готово →',
@@ -854,4 +856,12 @@ function t(key, ...args) {
 }
 function setLang(l) { lang = l; localStorage.setItem('membrain_lang', l); applyLang(); }
 function toggleLang() { setLang(lang === 'en' ? 'uk' : 'en'); }
+
+function pluralUK(n, f1, f2, f5) {
+  const m10 = n % 10;
+  const m100 = n % 100;
+  if (m10 === 1 && m100 !== 11) return f1;
+  if ([2, 3, 4].includes(m10) && ![12, 13, 14].includes(m100)) return f2;
+  return f5;
+}
 

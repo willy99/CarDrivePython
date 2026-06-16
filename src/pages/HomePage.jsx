@@ -10,6 +10,7 @@ const GAMES = [
     emoji:       '🏎️',
     color:       'bg-blue-700',
     available:   true,
+    landing:     '/games/cardrive/landing.html',
   },
   {
     id:          'hanoi',
@@ -18,6 +19,7 @@ const GAMES = [
     emoji:       '🗼',
     color:       'bg-purple-700',
     available:   true,
+    landing:     '/games/hanoi/landing.html',
   },
   {
     id:          'memorize',
@@ -26,6 +28,7 @@ const GAMES = [
     emoji:       '🧠',
     color:       'bg-violet-700',
     available:   true,
+    landing:     '/games/memorize/landing.html',
   },
 ]
 
