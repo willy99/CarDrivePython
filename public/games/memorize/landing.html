@@ -312,7 +312,7 @@
 </footer>
 
 <script>
-let lang = 'en';
+let lang = localStorage.getItem('pashka-lang') || 'en';
 
 const C = {
   en: {
@@ -481,7 +481,7 @@ function applyLang() {
   document.documentElement.lang = lang;
 }
 
-function toggleLang() { lang = lang === 'en' ? 'uk' : 'en'; applyLang(); }
+function toggleLang() { lang = lang === 'en' ? 'uk' : 'en'; localStorage.setItem('pashka-lang', lang); applyLang(); }
 
 applyLang();
 </script>

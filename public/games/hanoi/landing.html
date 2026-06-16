@@ -138,7 +138,7 @@
 <footer><p id="footer-txt">© 2025 Tower of Hanoi · A Pashka Game</p></footer>
 
 <script>
-let lang='en';
+let lang=localStorage.getItem('pashka-lang')||'en';
 const C={
   en:{
     navLogo:'TOWER OF HANOI',homeLink:'← All games',langBtn:'🇺🇦 UA',navPlay:'▶ Play',
@@ -207,7 +207,7 @@ function applyLang(){
   s('footer-txt',c.footerTxt);
   document.title=c.docTitle;document.documentElement.lang=lang;
 }
-function toggleLang(){lang=lang==='en'?'uk':'en';applyLang();}
+function toggleLang(){lang=lang==='en'?'uk':'en';localStorage.setItem('pashka-lang',lang);applyLang();}
 applyLang();
 </script>
 </body>
