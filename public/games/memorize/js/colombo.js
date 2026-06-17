@@ -329,9 +329,23 @@ function colRender(m){
   }
   if(m.mirror.present){
     const mx=556,my=52,mw=116,mh=150;
+
+    // Рамка дзеркала
     P.push(`<rect x="${mx-8}" y="${my-8}" width="${mw+16}" height="${mh+16}" rx="14" fill="#b9923f"/><rect x="${mx-4}" y="${my-4}" width="${mw+8}" height="${mh+8}" rx="11" fill="#8a6c2c"/>`);
+
+    // Маска (clip-path) розміром зі скло
+    P.push(`<defs><clipPath id="${U}mir"><rect x="${mx}" y="${my}" width="${mw}" height="${mh}" rx="8"/></clipPath></defs>`);
+
+    // Фон скла
     P.push(`<rect x="${mx}" y="${my}" width="${mw}" height="${mh}" rx="8" fill="#aeb9c4"/><rect x="${mx}" y="${my}" width="${mw}" height="${mh}" rx="8" fill="#1b2030" opacity=".42"/>`);
-    P.push(`<path d="M${mx+14} ${my} l40 0 l-${mw-8} ${mh} l-32 0 z" fill="#fff" opacity=".1"/>`);
+
+    // Група, яка обрізається по масці
+    P.push(`<g clip-path="url(#${U}mir)">`);
+
+    // Нові, красиві бліки (вони можуть бути безкінечно довгими, маска їх рівно обріже)
+    P.push(`<path d="M${mx+mw*0.5} ${my-10} l40 0 l-80 ${mh+20} l-40 0 z" fill="#fff" opacity=".12"/>`);
+    P.push(`<path d="M${mx+mw*0.9} ${my-10} l12 0 l-50 ${mh+20} l-12 0 z" fill="#fff" opacity=".08"/>`);
+
     const rv=m.mirror.reveals;
     if(rv){
       const cx=mx+mw/2, cy=my+mh*0.5;
@@ -339,6 +353,8 @@ function colRender(m){
       else if(rv.type==='object'){ P.push(`<g opacity=".92">${colObj(rv.object,cx,cy+mh*0.22,COL_COLORS[3][1])}</g>`); }
       else { const r=26; const ha=((rv.clockH%12)/12+rv.clockM/720)*2*Math.PI-Math.PI/2; const ma=(rv.clockM/60)*2*Math.PI-Math.PI/2; P.push(`<circle cx="${cx}" cy="${cy}" r="${r}" fill="#f6f3ea" opacity=".92" stroke="#2a2a30" stroke-width="2"/><line x1="${cx}" y1="${cy}" x2="${cx+Math.cos(ha)*r*0.5}" y2="${cy+Math.sin(ha)*r*0.5}" stroke="#222" stroke-width="3"/><line x1="${cx}" y1="${cy}" x2="${cx+Math.cos(ma)*r*0.8}" y2="${cy+Math.sin(ma)*r*0.8}" stroke="#222" stroke-width="1.8"/>`); }
     }
+
+    P.push(`</g>`);
   }
   // door
   if(m.door.present){
@@ -551,82 +567,128 @@ function colQuestions(m,cfg){
   const rng=colMulberry((m.seed*2654435761)>>>0); const rnd=()=>rng();
   const clrKeys=COL_COLORS.map(c=>c[0]);
   const clrName=k=>t('clr_'+k);
+
   const colorQ=(qKey,correctKey,secret)=>{ const dis=colPickN(clrKeys,3,rng,correctKey); const choices=[...dis,correctKey].sort(()=>rnd()-.5).map(clrName); return {q:t(qKey),a:clrName(correctKey),choices,accept:[clrName(correctKey).toLowerCase()],secret:!!secret}; };
   const poolQ=(qStr,correctKey,allKeys,nameFn,secret)=>{ const dis=colPickN(allKeys,3,rng,correctKey); const choices=[...dis,correctKey].sort(()=>rnd()-.5).map(nameFn); return {q:qStr,a:nameFn(correctKey),choices,accept:[nameFn(correctKey).toLowerCase()],secret:!!secret}; };
   const countQ=(qStr,nVal)=>{ const set=new Set([nVal]); let g=Math.max(0,nVal-2); while(set.size<4){ set.add(g); g++; } const choices=[...set].sort((a,b)=>a-b).map(String); return {q:qStr,a:String(nVal),choices,accept:[String(nVal)]}; };
   const ynQ=(qStr,yes,secret)=>({q:qStr,a:yes?t('col_yes'):t('col_no'),choices:[t('col_yes'),t('col_no')],accept:[(yes?t('col_yes'):t('col_no')).toLowerCase(), yes?'yes':'no'],secret:!!secret});
 
   const core=[]; const secret=[];
-  // always: people count
+
+  // Кількість людей
   core.push(countQ(t('colq_people'), m.people.length));
-  // person shirt
-  if(m.people.length){ let idx=0,posKey='only'; if(m.people.length>1){ const pos=rnd(); if(pos<.5){idx=0;posKey='left';} else {idx=m.people.length-1;posKey='right';} } core.push(colorQ_pos('colq_shirt',posKey,m.people[idx].shirt[0])); }
-  function colorQ_pos(base,posKey,correctKey){ const q=t(base, t('colpos_'+posKey)); const dis=colPickN(clrKeys,3,rng,correctKey); const choices=[...dis,correctKey].sort(()=>rnd()-.5).map(clrName); return {q,a:clrName(correctKey),choices,accept:[clrName(correctKey).toLowerCase()]}; }
-  // clock
+
+  // Час доби
+  core.push(poolQ(t('colq_timeofday'), m.timeOfDay, ['day','dusk','night'], k=>t('ctime_'+k)));
+
+  // Деталі людей
+  if(m.people.length){
+    let idx=0, posKey='only';
+    if(m.people.length>1){
+      const pos=rnd();
+      if(pos<.5){idx=0;posKey='left';} else {idx=m.people.length-1;posKey='right';}
+    }
+    const p = m.people[idx];
+
+    // Хелпер для кольорів з прив'язкою до позиції (зліва/справа)
+    function colorQ_pos(base, posKey, correctKey){ const q=t(base, t('colpos_'+posKey)); const dis=colPickN(clrKeys,3,rng,correctKey); const choices=[...dis,correctKey].sort(()=>rnd()-.5).map(clrName); return {q,a:clrName(correctKey),choices,accept:[clrName(correctKey).toLowerCase()]}; }
+
+    // Сорочка та штани
+    core.push(colorQ_pos('colq_shirt', posKey, p.shirt[0]));
+    core.push(colorQ_pos('colq_pants', posKey, p.pants[0]));
+
+    // Колір волосся
+    const hairKeys = COL_HAIR.map(h=>h[0]);
+    core.push(poolQ(t('colq_hair', t('colpos_'+posKey)), p.hair[0], hairKeys, k=>t('clr_'+k)));
+
+    // Окуляри, вуса, капелюхи (по групі загалом, чи є хоч у когось)
+    core.push(ynQ(t('colq_glasses'), m.people.some(x=>x.glasses)));
+    core.push(ynQ(t('colq_mustache'), m.people.some(x=>x.mustache)));
+    core.push(ynQ(t('colq_hat'), m.people.some(x=>x.hat)));
+
+    // Що тримають
+    const holder=m.people.find(x=>x.holding);
+    if(holder) core.push(poolQ(t('colq_holding'), holder.holding, COL_HELD, k=>colName('obj',k)));
+  }
+
+  // Годинник
   if(m.clock.present){ const a=m.clock.h+':'+(m.clock.m<10?'0'+m.clock.m:m.clock.m); const opts=new Set([a]); while(opts.size<4){ const h=1+Math.floor(rnd()*12), mm=[0,15,30,45][Math.floor(rnd()*4)]; opts.add(h+':'+(mm<10?'0'+mm:mm)); } core.push({q:t('colq_clock'),a,choices:[...opts].sort(()=>rnd()-.5),accept:[a, a.replace(':','.'), a.replace(':','h')]}); }
-  // table count
+
+  // Стіл та предмети
   core.push(countQ(t('colq_objcount'), m.table.objects.length));
-  // table has (which object was present)
-  if(m.table.objects.length){ const present=m.table.objects.map(o=>o.type); const correct=present[Math.floor(rnd()*present.length)]; const absent=COL_HELD.filter(o=>!present.includes(o)); const dis=colPickN(absent,3,rng,null); const choices=[...dis,correct].sort(()=>rnd()-.5).map(k=>colName('obj',k)); core.push({q:t('colq_objhas'),a:colName('obj',correct),choices,accept:[colName('obj',correct).toLowerCase()]}); }
-  // painting
-  if(m.painting.present) core.push(poolQ(t('colq_painting'), m.painting.subject, COL_PAINT, k=>colName('paint',k)));
-  // door
-  if(m.door.present) core.push({q:t('colq_door'),a:m.door.open?t('col_open'):t('col_closed'),choices:[t('col_open'),t('col_closed')],accept:[(m.door.open?t('col_open'):t('col_closed')).toLowerCase()]});
-  // setting
+  if(m.table.objects.length){
+    const present=m.table.objects.map(o=>o.type);
+    const correct=present[Math.floor(rnd()*present.length)];
+    const absent=COL_HELD.filter(o=>!present.includes(o));
+    const dis=colPickN(absent,3,rng,null);
+    const choices=[...dis,correct].sort(()=>rnd()-.5).map(k=>colName('obj',k));
+    core.push({q:t('colq_objhas'),a:colName('obj',correct),choices,accept:[colName('obj',correct).toLowerCase()]});
+
+    // Питання про колір конкретного предмета (напр. "Якого кольору чашка?")
+    const objClr = m.table.objects.find(o=>o.type===correct);
+    if(objClr) {
+      const qObj = t('colq_obj_color', colName('obj', correct));
+      const disClr=colPickN(clrKeys,3,rng,objClr.color[0]);
+      const chClr=[...disClr,objClr.color[0]].sort(()=>rnd()-.5).map(clrName);
+      core.push({q:qObj, a:clrName(objClr.color[0]), choices:chClr, accept:[clrName(objClr.color[0]).toLowerCase()]});
+    }
+  }
+
+  // Інтер'єр
   core.push(poolQ(t('colq_setting'), m.setting, COL_SETTING_KEYS, k=>colName('set',k)));
-  // plant (skip for outdoor — plant is always absent and question is nonsensical)
-  if (!m.pal.outdoor) core.push(ynQ(t('colq_plant'), m.plant));
-  // pet
-  { const correct=m.pet||'none'; const choices=[t('cpet_cat'),t('cpet_dog'),t('cpet_none')]; core.push({q:t('colq_pet'),a:t('cpet_'+correct),choices,accept:[t('cpet_'+correct).toLowerCase()]}); }
-  // glasses
-  if(m.people.length) core.push(ynQ(t('colq_glasses'), m.people.some(p=>p.glasses)));
-  // holding
-  const holder=m.people.find(p=>p.holding); if(holder) core.push(poolQ(t('colq_holding'), holder.holding, COL_HELD, k=>colName('obj',k)));
-  // rug
+  if(m.painting.present) core.push(poolQ(t('colq_painting'), m.painting.subject, COL_PAINT, k=>colName('paint',k)));
+  if(m.door.present) {
+    core.push({q:t('colq_door'),a:m.door.open?t('col_open'):t('col_closed'),choices:[t('col_open'),t('col_closed')],accept:[(m.door.open?t('col_open'):t('col_closed')).toLowerCase()]});
+    core.push(poolQ(t('colq_door_color'), m.door.color[0], ['red','white','brown','blue','green'], clrName));
+  }
+  if (!m.pal.outdoor) {
+    core.push(ynQ(t('colq_plant'), m.plant));
+    core.push(ynQ(t('colq_lamp'), m.lamp));
+  }
   if(m.rug.present) core.push(colorQ('colq_rug', m.rug.color[0]));
-  // window view
   if(m.window.present) core.push(poolQ(t('colq_window'), m.window.outside, COL_OUTSIDE, k=>colName('out',k)));
 
-  // ── SECRET / detective twists ──
+  // Домашня тварина
+  const petCor=m.pet||'none';
+  core.push({q:t('colq_pet'),a:t('cpet_'+petCor),choices:[t('cpet_cat'),t('cpet_dog'),t('cpet_none')],accept:[t('cpet_'+petCor).toLowerCase()]});
+
+  // ── SECRET / детективи ──
   if(cfg.secret){
     if(m.mirror.present && m.mirror.reveals){ const rv=m.mirror.reveals;
       if(rv.type==='person') secret.push(colorQ('colq_mirror_person', rv.personShirt[0], true));
       else if(rv.type==='object') secret.push(poolQ(t('colq_mirror_object'), rv.object, COL_HELD, k=>colName('obj',k), true));
       else {
-        // The TRUE time in the room (the correct detective answer)
         const realA = m.clock.h + ':' + (m.clock.m < 10 ? '0' + m.clock.m : m.clock.m);
-
-        // The ILLUSION time shown on the mirror's face (the trap/distractor)
         const fakeA = rv.clockH + ':' + (rv.clockM < 10 ? '0' + rv.clockM : rv.clockM);
-
         const opts = new Set([realA, fakeA]);
-
-        // Fill the rest with random times
-        while(opts.size < 4) {
-          const h = 1 + Math.floor(rnd() * 12);
-          const mm = [0, 15, 30, 45][Math.floor(rnd() * 4)];
-          opts.add(h + ':' + (mm < 10 ? '0' + mm : mm));
-        }
-
-        secret.push({
-          q: t('colq_mirror_clock'),
-          a: realA, // The correct answer is now the REAL time
-          choices: [...opts].sort(() => rnd() - .5),
-          accept: [realA, realA.replace(':', '.'), realA.replace(':', 'h')],
-          secret: true
-        });
+        while(opts.size < 4) { const h = 1 + Math.floor(rnd() * 12); const mm = [0, 15, 30, 45][Math.floor(rnd() * 4)]; opts.add(h + ':' + (mm < 10 ? '0' + mm : mm)); }
+        secret.push({ q: t('colq_mirror_clock'), a: realA, choices: [...opts].sort(() => rnd() - .5), accept: [realA, realA.replace(':', '.'), realA.replace(':', 'h')], secret: true });
       }
     }
     if(m.window.outside==='watcher') secret.push(colorQ('colq_watcher', m.window.watcher[0], true));
-    if(m.clue.type!=='none'){ const correct=m.clue.type; const choices=['footprints','spill','dropped','none'].map(k=>colName('clue',k)); secret.push({q:t('colq_clue'),a:colName('clue',correct),choices,accept:[colName('clue',correct).toLowerCase()],secret:true}); }
+
+    if(m.clue && m.clue.type!=='none'){
+      const correctClue=m.clue.type;
+      secret.push({q:t('colq_clue'), a:colName('clue',correctClue), choices:['footprints','spill','dropped','none'].map(k=>colName('clue',k)), accept:[colName('clue',correctClue).toLowerCase()], secret:true});
+
+      // Деталі доказу (колір / предмет)
+      if(m.clue.color) {
+        const qClueClr = t('colq_clue_color', colName('clue', correctClue));
+        const disClr=colPickN(clrKeys,3,rng,m.clue.color[0]);
+        secret.push({q: qClueClr, a: clrName(m.clue.color[0]), choices:[...disClr,m.clue.color[0]].sort(()=>rnd()-.5).map(clrName), accept: [clrName(m.clue.color[0]).toLowerCase()], secret: true});
+      }
+      if(m.clue.object) {
+        const qClueObj = t('colq_clue_obj', colName('clue', correctClue));
+        secret.push(poolQ(qClueObj, m.clue.object, COL_HELD, k=>colName('obj',k), true));
+      }
+    }
   }
 
-  // assemble: core (people-count first, rest shuffled), then secret last
+  // Збираємо: 1 питання завжди про кількість людей, решта ядро (перемішане), секрети в кінці
   const head=core[0]; const rest=core.slice(1).sort(()=>rnd()-.5);
   const secSel=secret.slice(0,3);
   const coreNeeded=Math.max(1, cfg.questions - secSel.length);
-  const final=[head,...rest].slice(0,coreNeeded).concat(secSel);
-  return final;
+  return [head,...rest].slice(0,coreNeeded).concat(secSel);
 }
 
 // ── game loop ──
