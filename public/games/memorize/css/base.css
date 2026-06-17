@@ -18,14 +18,14 @@ body{background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,san
 #bg-canvas{position:fixed;inset:0;z-index:0;pointer-events:none;}
 .screen>*{position:relative;z-index:1;}
 
-/* ── BACK BTN (lobby/lm — legacy small) ── */
-.back-btn{position:fixed;top:14px;left:14px;z-index:100;padding:7px 16px;border-radius:10px;
-  border:1px solid var(--border2);background:rgba(0,0,0,0.55);backdrop-filter:blur(12px);
-  color:var(--text2);font-size:13px;font-weight:600;cursor:pointer;transition:.2s;}
-/* floating close ✕ for in-play screens that have no header to host one */
+/* ── HOME BTN ── */
+.back-btn{position:fixed;top:14px;left:14px;z-index:100;width:34px;height:34px;border-radius:50%;
+  border:1.5px solid var(--border2);background:rgba(0,0,0,0.55);backdrop-filter:blur(12px);
+  color:var(--text3);cursor:pointer;transition:.2s;display:inline-flex;align-items:center;justify-content:center;}
+/* floating home btn for in-play screens */
 .close-btn-float{position:fixed;top:calc(14px + env(safe-area-inset-top));right:calc(14px + env(safe-area-inset-right));
   z-index:200;background:rgba(0,0,0,0.55);backdrop-filter:blur(12px);}
-.back-btn:hover{background:rgba(255,255,255,0.12);color:#fff;}
+.back-btn:hover{border-color:var(--blueL,#60a5fa);color:var(--blueL,#60a5fa);background:rgba(96,165,250,.12);}
 
 /* ── MAIN MENU ── */
 #screen-menu{justify-content:flex-start;align-items:center;gap:0;}

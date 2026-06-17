@@ -21,6 +21,9 @@ const COL_SETTINGS={
   office:{wall:'#4a5c6e',floor:'#6e7080'},
   street:{wall:'#3a6898',floor:'#585e64',outdoor:true},
   park:  {wall:'#3e7a64',floor:'#3a5e28',outdoor:true},
+  train: {wall:'#3e2a1e',floor:'#5c2e20'},
+  bank:  {wall:'#cdd4d8',floor:'#9a9aac'},
+  casino:{wall:'#1a3a1e',floor:'#2a1430'},
 };
 const COL_SETTING_KEYS=Object.keys(COL_SETTINGS);
 
@@ -103,8 +106,8 @@ let mirror = {present:false, reveals:null};
   }
   return {seed,setting,pal,timeOfDay,people,
     clock:     pal.outdoor ? {present:false} : clock,
-    window:    pal.outdoor ? {present:false} : windo,
-    painting:  pal.outdoor ? {present:false} : painting,
+    window:    (pal.outdoor || setting==='bank' || setting==='casino') ? {present:false} : windo,
+    painting:  (pal.outdoor || setting==='bank') ? {present:false} : painting,
     mirror:    pal.outdoor ? {present:false,reveals:null} : mirror,
     door:      pal.outdoor ? {present:false} : door,
     table:{objects},
@@ -268,10 +271,18 @@ function colSettingDecor(m, P) {
     // Globe
     P.push(`<circle cx="280" cy="270" r="22" fill="#3498db"/><path d="M270 255 Q290 270 280 285" fill="none" stroke="#2ecc71" stroke-width="6"/><path d="M255 270 A25 25 0 0 0 305 270" fill="none" stroke="#f1c40f" stroke-width="3"/><rect x="278" y="295" width="4" height="25" fill="#f1c40f"/><ellipse cx="280" cy="320" rx="14" ry="4" fill="#f1c40f"/>`);
   } else if (s === 'lounge') {
-    // Low Fireplace
-    P.push(`<rect x="580" y="230" width="140" height="100" fill="#ecf0f1" stroke="#bdc3c7" stroke-width="2"/><rect x="570" y="220" width="160" height="10" fill="#95a5a6"/><rect x="605" y="260" width="90" height="70" rx="4" fill="#2c3e50"/>`);
-    P.push(`<path d="M650 330 Q630 290 650 270 Q670 290 650 330" fill="#e74c3c"/><path d="M650 330 Q640 300 650 290 Q660 300 650 330" fill="#f1c40f"/>`);
-    P.push(`<rect x="625" y="320" width="50" height="10" rx="3" fill="#5d4037" transform="rotate(8 650 325)"/><rect x="625" y="320" width="50" height="10" rx="3" fill="#4e342e" transform="rotate(-8 650 325)"/>`);
+    // Low Fireplace — тепер ліворуч (x ≈ 100-240 замість 580-720)
+    const fx = 100; // Базова позиція ліворуч
+    P.push(`<rect x="${fx}" y="230" width="140" height="100" fill="#ecf0f1" stroke="#bdc3c7" stroke-width="2"/>`);
+    P.push(`<rect x="${fx-10}" y="220" width="160" height="10" fill="#95a5a6"/>`);
+    P.push(`<rect x="${fx+25}" y="260" width="90" height="70" rx="4" fill="#2c3e50"/>`);
+
+    // Полум'я
+    P.push(`<path d="M${fx+70} 330 Q${fx+50} 290 ${fx+70} 270 Q${fx+90} 290 ${fx+70} 330" fill="#e74c3c"/>`);
+    P.push(`<path d="M${fx+70} 330 Q${fx+60} 300 ${fx+70} 290 Q${fx+80} 300 ${fx+70} 330" fill="#f1c40f"/>`);
+
+    // Дрова
+    P.push(`<rect x="${fx+45}" y="320" width="50" height="10" rx="3" fill="#5d4037" transform="rotate(8 ${fx+70} 325)"/><rect x="${fx+45}" y="320" width="50" height="10" rx="3" fill="#4e342e" transform="rotate(-8 ${fx+70} 325)"/>`);
   } else if (s === 'street') {
     // Left building
     P.push(`<rect x="0" y="60" width="195" height="272" fill="#3a4858"/>`);
@@ -315,6 +326,178 @@ function colSettingDecor(m, P) {
     P.push(`<ellipse cx="490" cy="270" rx="36" ry="14" fill="#5aaccc" opacity=".55" stroke="#3e90b0" stroke-width="2"/>`);
     P.push(`<rect x="487" y="240" width="6" height="30" fill="#8bb8c8"/>`);
     P.push(`<path d="M490 240 q-10 -18 -14 -30 q8 2 14 8 q6 -6 14 -8 q-4 12 -14 30" fill="#5aaccc" opacity=".7"/>`);
+  } else if (s === 'train') {
+    const wp = m.pal.wall;
+
+    // 1. Стіни купе (вертикальна панель)
+    P.push(`<rect x="0" y="0" width="800" height="330" fill="${colShade(wp, 0.9)}"/>`);
+
+    // 2. Дві бічні полиці (нижні та верхні)
+    // Ліва секція (x = 0 до 250)
+    P.push(`<rect x="0" y="240" width="250" height="20" fill="#5d4037"/>`); // Нижня полиця ліворуч
+    P.push(`<rect x="0" y="150" width="250" height="15" fill="#5d4037"/>`); // Верхня полиця ліворуч
+
+    // Права секція (x = 550 до 800)
+    P.push(`<rect x="550" y="240" width="250" height="20" fill="#5d4037"/>`); // Нижня полиця праворуч
+    P.push(`<rect x="550" y="150" width="250" height="15" fill="#5d4037"/>`); // Верхня полиця праворуч
+
+    // 3. Валізи на верхніх полицях
+    const luggage = [
+      {x: 20, y: 110, w: 80, h: 40, c: '#b52a2a'}, // Ліворуч верх
+      {x: 120, y: 120, w: 70, h: 30, c: '#1a5faa'},
+      {x: 580, y: 120, w: 70, h: 30, c: '#2a7a44'}, // Праворуч верх
+      {x: 680, y: 110, w: 80, h: 40, c: '#7a42aa'}
+    ];
+
+    luggage.forEach(l => {
+      P.push(`<rect x="${l.x}" y="${l.y}" width="${l.w}" height="${l.h}" rx="5" fill="${l.c}"/>`);
+      P.push(`<rect x="${l.x+5}" y="${l.y+5}" width="${l.w-10}" height="${l.h/3}" rx="2" fill="${colShade(l.c, 1.2)}"/>`);
+    });
+
+// 4. Віконце посередині
+    P.push(`<rect x="280" y="80" width="240" height="160" fill="#1a1c24" stroke="#4a4a4a" stroke-width="6"/>`);
+
+    // Кольори залежно від часу доби
+    const isNight = m.timeOfDay === 'night';
+    const skyClr = isNight ? '#1b273a' : (m.timeOfDay === 'dusk' ? '#d48a6e' : '#8ab2d4');
+    const groundClr = isNight ? '#0d141e' : '#457a40';
+    const tFarClr = isNight ? '#141d2b' : '#348a42';
+    const tNearClr = isNight ? '#080d14' : '#1e5a28';
+    const trunkClr = isNight ? '#0a0a0a' : '#3e2723';
+
+    // Маска, щоб пейзаж не вилазив за межі вікна
+    P.push(`<defs><clipPath id="trainWin${m.seed}"><rect x="290" y="90" width="220" height="140"/></clipPath></defs>`);
+
+    // Група з маскою (всередині вікна)
+    P.push(`<g clip-path="url(#trainWin${m.seed})">`);
+
+    // Небо та сонце/місяць (статичні)
+    P.push(`<rect x="290" y="90" width="220" height="140" fill="${skyClr}"/>`);
+    if(isNight) P.push(`<circle cx="450" cy="115" r="12" fill="#f4f0d8" opacity="0.85"/>`);
+    else if(m.timeOfDay === 'day') P.push(`<circle cx="450" cy="115" r="16" fill="#ffd76a" opacity="0.9"/>`);
+
+    // Земля (горизонт)
+    P.push(`<rect x="290" y="195" width="220" height="35" fill="${groundClr}"/>`);
+
+    // Функція для створення безперервного шару дерев, що рухаються
+    const addMovingLayer = (dur, yOff, clr, elements) => {
+      let content = '';
+      // Малюємо об'єкти двічі (offset 0 і 220), щоб анімація зациклювалась без ривків
+      for (let offset of [0, 220]) {
+        elements.forEach(el => {
+          // Стовбур
+          content += `<rect x="${290 + offset + el.x - el.w*0.1}" y="${195 + yOff - el.h*0.4}" width="${el.w*0.2}" height="${el.h*0.5}" fill="${trunkClr}"/>`;
+          // Крона дерева
+          content += `<ellipse cx="${290 + offset + el.x}" cy="${195 + yOff - el.h*0.5}" rx="${el.w*0.5}" ry="${el.h*0.5}" fill="${clr}"/>`;
+        });
+      }
+      P.push(`<g>
+        <animateTransform attributeName="transform" type="translate" from="0 0" to="-220 0" dur="${dur}s" repeatCount="indefinite"/>
+        ${content}
+      </g>`);
+    };
+
+    // Дальні дерева (рухаються повільно - 4 секунди)
+    addMovingLayer(4, 0, tFarClr, [
+      {x: 30, w: 30, h: 40}, {x: 90, w: 40, h: 50}, {x: 160, w: 25, h: 35}, {x: 200, w: 35, h: 45}
+    ]);
+
+    // Ближні дерева (рухаються швидко - 1.5 секунди)
+    addMovingLayer(1.5, 12, tNearClr, [
+      {x: 50, w: 50, h: 70}, {x: 140, w: 60, h: 80}
+    ]);
+
+    P.push(`</g>`); // Закінчення групи вікна
+
+    // Шторки збоку вікна (малюються поверх пейзажу)
+    P.push(`<rect x="280" y="80" width="20" height="160" fill="#8b5e3c" opacity="0.8"/>`);
+    P.push(`<rect x="500" y="80" width="20" height="160" fill="#8b5e3c" opacity="0.8"/>`);
+
+
+
+    // 5. Лампа над столом посередині (під вікном або над ним)
+    P.push(`<rect x="396" y="50" width="8" height="30" fill="#444"/>`);
+    P.push(`<path d="M370 80 L430 80 L420 100 L380 100 Z" fill="#ffe8a0" opacity="0.7"/>`);
+  } else if (s === 'bank') {
+    // Marble wall texture — subtle horizontal veins
+    for(let i=0;i<7;i++) P.push(`<line x1="${i*110}" y1="0" x2="${i*110+70}" y2="330" stroke="rgba(255,255,255,.055)" stroke-width="${10+i%3*6}"/>`);
+    // Large vault door — frame embedded in left wall (partially off-screen)
+    const vx=320, vy=232, vr=84;
+    P.push(`<circle cx="${vx}" cy="${vy}" r="${vr+14}" fill="#828a92" stroke="#5a6268" stroke-width="5"/>`);
+    // Dark vault interior
+    P.push(`<circle cx="${vx}" cy="${vy}" r="${vr}" fill="#12121c"/>`);
+    // Safety deposit boxes visible inside vault
+    for(let row=0;row<5;row++) for(let col=0;col<3;col++){
+      const bx=vx-40+col*28, by=vy-56+row*24;
+      if((bx-vx)**2+(by-vy)**2<(vr-18)**2){
+        P.push(`<rect x="${bx}" y="${by}" width="22" height="17" rx="2" fill="#1e1e2c"/>`);
+        P.push(`<circle cx="${bx+17}" cy="${by+8}" r="3.5" fill="#c8a84a"/>`);
+      }
+    }
+    // Vault door (swung open to the right)
+    const dx=vx+vr+22, dy=vy;
+    P.push(`<circle cx="${dx}" cy="${dy}" r="${vr}" fill="#6a7280" stroke="#4a5060" stroke-width="4"/>`);
+    for(let a=0;a<4;a++){
+      const ra=a/4*Math.PI*2, r1=Math.round(vr*.34), r2=Math.round(vr*.87);
+      P.push(`<line x1="${Math.round(dx+Math.cos(ra)*r1)}" y1="${Math.round(dy+Math.sin(ra)*r1)}" x2="${Math.round(dx+Math.cos(ra)*r2)}" y2="${Math.round(dy+Math.sin(ra)*r2)}" stroke="#5a6270" stroke-width="5" opacity=".55"/>`);
+    }
+    // Locking wheel
+    P.push(`<circle cx="${dx}" cy="${dy}" r="25" fill="#4a5260" stroke="#3a4250" stroke-width="3"/>`);
+    P.push(`<circle cx="${dx}" cy="${dy}" r="16" fill="none" stroke="#c8a84a" stroke-width="3.5"/>`);
+    for(let i=0;i<6;i++){ const ra=i/6*Math.PI*2; P.push(`<line x1="${Math.round(dx+Math.cos(ra)*10)}" y1="${Math.round(dy+Math.sin(ra)*10)}" x2="${Math.round(dx+Math.cos(ra)*23)}" y2="${Math.round(dy+Math.sin(ra)*23)}" stroke="#c8a84a" stroke-width="2.5"/>`); }
+    P.push(`<circle cx="${dx}" cy="${dy}" r="6" fill="#c8a84a"/>`);
+    // Safety deposit box wall (right)
+    P.push(`<rect x="10" y="48" width="186" height="262" rx="4" fill="${colShade(m.pal.wall,.82)}" stroke="${colShade(m.pal.wall,.64)}" stroke-width="2"/>`);
+    for(let row=0;row<7;row++) for(let col=0;col<4;col++){
+      const bx=16+col*44, by=56+row*36;
+      P.push(`<rect x="${bx}" y="${by}" width="36" height="26" rx="2" fill="${colShade(m.pal.wall,.70)}"/>`);
+      P.push(`<circle cx="${bx+29}" cy="${by+13}" r="4.5" fill="#c8a84a"/>`);
+      P.push(`<rect x="${bx+4}" y="${by+12}" width="16" height="2" fill="rgba(255,255,255,.2)"/>`);
+    }
+    // Scattered banknotes on floor
+    [[125,358,-17],[268,374,9],[412,362,-6],[542,351,13],[664,368,-8]].forEach(([bx,by,rot])=>{
+      P.push(`<rect x="${bx}" y="${by}" width="54" height="26" rx="2" fill="#c8d8a0" transform="rotate(${rot} ${bx+27} ${by+13})" opacity=".80"/>`);
+      P.push(`<rect x="${bx+5}" y="${by+6}" width="44" height="14" rx="1" fill="#b8c890" transform="rotate(${rot} ${bx+27} ${by+13})" opacity=".65"/>`);
+    });
+  } else if (s === 'casino') {
+    // Chandelier (ceiling center)
+    P.push(`<line x1="400" y1="0" x2="400" y2="44" stroke="#b0903a" stroke-width="4"/>`);
+    P.push(`<ellipse cx="400" cy="48" rx="42" ry="11" fill="#b0903a"/>`);
+    for(let i=0;i<8;i++){
+      const a=i/8*Math.PI*2, lx=400+Math.cos(a)*36, ly=48+Math.sin(a)*9;
+      P.push(`<line x1="${lx.toFixed(1)}" y1="${ly.toFixed(1)}" x2="${(lx+Math.cos(a)*9).toFixed(1)}" y2="${(ly+13).toFixed(1)}" stroke="#d4b84a" stroke-width="1.5"/>`);
+      P.push(`<ellipse cx="${(lx+Math.cos(a)*9).toFixed(1)}" cy="${(ly+15).toFixed(1)}" rx="4" ry="7" fill="#ffe8a0" opacity=".88"/>`);
+    }
+    P.push(`<ellipse cx="400" cy="60" rx="58" ry="24" fill="rgba(255,228,110,.22)"/>`);
+    // Roulette wheel (right upper background)
+    const wx=80, wy=178, wr=88;
+    P.push(`<circle cx="${wx}" cy="${wy}" r="${wr+11}" fill="#180808" stroke="#c8a84a" stroke-width="4"/>`);
+    P.push(`<circle cx="${wx}" cy="${wy}" r="${wr}" fill="#280808"/>`);
+    for(let i=0;i<18;i++){
+      const a1=i/18*Math.PI*2-Math.PI/2, a2=(i+1)/18*Math.PI*2-Math.PI/2;
+      const x1=wx+Math.cos(a1)*wr, y1=wy+Math.sin(a1)*wr;
+      const x2=wx+Math.cos(a2)*wr, y2=wy+Math.sin(a2)*wr;
+      P.push(`<path d="M${wx} ${wy} L${x1.toFixed(1)} ${y1.toFixed(1)} A${wr} ${wr} 0 0 1 ${x2.toFixed(1)} ${y2.toFixed(1)} Z" fill="${i%2===0?'#c0392b':'#1a1a1a'}" stroke="#0a0a0a" stroke-width="0.8"/>`);
+    }
+    const ir1=(wr*.32).toFixed(1), ir2=(wr*.22).toFixed(1);
+    P.push(`<circle cx="${wx}" cy="${wy}" r="${ir1}" fill="#2e8a34"/>`);
+    P.push(`<circle cx="${wx}" cy="${wy}" r="${ir2}" fill="#247028" stroke="#c8a84a" stroke-width="2"/>`);
+    P.push(`<circle cx="${wx}" cy="${wy}" r="9" fill="#e0e0e8"/>`);
+    P.push(`<circle cx="${(wx+wr*.72).toFixed(1)}" cy="${(wy-wr*.22).toFixed(1)}" r="6" fill="#f0f0f8" stroke="#b0b0c0" stroke-width="1"/>`);
+    // Large suit symbols on wall (atmosphere)
+    P.push(`<text x="168" y="178" text-anchor="middle" font-size="82" fill="rgba(255,255,255,.07)">♠</text>`);
+    P.push(`<text x="558" y="162" text-anchor="middle" font-size="78" fill="rgba(200,60,60,.09)">♥</text>`);
+    // Playing cards on floor (scattered)
+    [[-18,'♠','#1a1a2a',128,352],[9,'♥','#c0392b',196,372],[-5,'♦','#c0392b',358,358],[12,'♣','#1a1a2a',486,345]].forEach(([rot,suit,tc,cx,cy])=>{
+      P.push(`<rect x="${cx-18}" y="${cy-26}" width="36" height="50" rx="4" fill="#f0f0f8" transform="rotate(${rot} ${cx} ${cy})" opacity=".88"/>`);
+      P.push(`<text x="${cx}" y="${cy+2}" text-anchor="middle" dominant-baseline="middle" font-size="19" fill="${tc}" transform="rotate(${rot} ${cx} ${cy})" opacity=".85">${suit}</text>`);
+    });
+    // Poker chips on floor
+    [['#e74c3c',155,425],['#2980b9',232,418],['#27ae60',302,430],['#e74c3c',392,420],['#f1c40f',448,424]].forEach(([cc,cx,cy])=>{
+      P.push(`<ellipse cx="${cx}" cy="${cy+3}" rx="15" ry="5" fill="rgba(0,0,0,.28)"/>`);
+      P.push(`<circle cx="${cx}" cy="${cy}" r="14" fill="${cc}" stroke="${colShade(cc,.72)}" stroke-width="2"/>`);
+      P.push(`<circle cx="${cx}" cy="${cy}" r="9" fill="none" stroke="${colShade(cc,1.28)}" stroke-width="2" opacity=".5"/>`);
+    });
   }
 }
 
@@ -346,8 +529,28 @@ function colRender(m){
   }
   if(m.painting.present){
     const fr=m.painting.frame[1], s=m.painting.subject, px=336,py=44,pw=128,ph=92;
+
+    // 1. Цвях та ниточки (кріплення малюнка)
+    const nailX = px + pw / 2;       // Центр картини по горизонталі
+    const nailY = py - 7 - 20;       // На 20 пікселів вище за верхній край рами
+    const frameLeftX = px - 7;       // Лівий край рами
+    const frameRightX = px + pw + 7; // Правий край рами
+    const frameTopY = py - 7;        // Верхній край рами
+
+    // Малюємо дві ниточки від цвяха до кутів рами
+    P.push(`<line x1="${nailX}" y1="${nailY}" x2="${frameLeftX}" y2="${frameTopY}" stroke="#5a4a3a" stroke-width="1.5" stroke-linecap="round"/>`);
+    P.push(`<line x1="${nailX}" y1="${nailY}" x2="${frameRightX}" y2="${frameTopY}" stroke="#5a4a3a" stroke-width="1.5" stroke-linecap="round"/>`);
+
+    // Сам цвяшок (капелюшок з легкою тінню)
+    P.push(`<circle cx="${nailX}" cy="${nailY+1}" r="3" fill="rgba(0,0,0,0.3)"/>`); // Тінь цвяшка
+    P.push(`<circle cx="${nailX}" cy="${nailY}" r="2.5" fill="#7f8c8d"/>`);         // Металевий цвях
+    P.push(`<circle cx="${nailX-0.5}" cy="${nailY-0.5}" r="0.8" fill="#bdc3c7"/>`); // Блік на капелюшку
+
+    // 2. Рама та полотно картины
     P.push(`<rect x="${px-7}" y="${py-7}" width="${pw+14}" height="${ph+14}" rx="3" fill="${fr}"/>`);
     P.push(`<rect x="${px}" y="${py}" width="${pw}" height="${ph}" fill="#dfe3df"/>`);
+
+    // 3. Сюжети малюнків
     if(s==='portrait'){ P.push(`<rect x="${px}" y="${py}" width="${pw}" height="${ph}" fill="#8a93a6"/><circle cx="${px+pw/2}" cy="${py+ph*0.42}" r="22" fill="#e7c6a3"/><path d="M${px+pw/2-28} ${py+ph} q28 -34 56 0 z" fill="#3a3550"/>`); }
     else if(s==='landscape'){ P.push(`<rect x="${px}" y="${py}" width="${pw}" height="${ph*0.6}" fill="#9fd0e8"/><circle cx="${px+pw*0.74}" cy="${py+ph*0.26}" r="13" fill="#ffd76a"/><path d="M${px} ${py+ph} L${px+pw*0.4} ${py+ph*0.5} L${px+pw*0.7} ${py+ph} z" fill="#3f7d44"/><path d="M${px+pw*0.45} ${py+ph} L${px+pw*0.78} ${py+ph*0.56} L${px+pw} ${py+ph} z" fill="#56994f"/>`); }
     else if(s==='ship'){ P.push(`<rect x="${px}" y="${py}" width="${pw}" height="${ph}" fill="#7fa8c9"/><rect x="${px}" y="${py+ph*0.62}" width="${pw}" height="${ph*0.38}" fill="#2f5f87"/><path d="M${px+pw*0.36} ${py+ph*0.62} l24 0 l-6 14 l-12 0 z" fill="#5b3a22"/><rect x="${px+pw*0.47}" y="${py+ph*0.3}" width="3" height="${ph*0.32}" fill="#3a2a1a"/><path d="M${px+pw*0.49} ${py+ph*0.32} l22 12 l-22 8 z" fill="#fff"/>`); }
@@ -407,12 +610,24 @@ function colRender(m){
   const n=m.people.length, lo=190, hi=610;
   m.people.forEach((p,i)=>{ const px = n===1?400:Math.round(lo+i*((hi-lo)/(n-1))); colPerson(P,px,p); });
   // table + objects (front)
-  const tx=270,tw=260,ty=394;
+
+  const isCasino = m.setting === 'casino';
+  const tx = isCasino ? 100 : 270;
+  const tw = isCasino ? 600 : 260;
+  const ty = 394;
+
   P.push(`<ellipse cx="400" cy="${ty+82}" rx="${tw/2+6}" ry="12" fill="rgba(0,0,0,.28)"/>`);
   P.push(`<rect x="${tx}" y="${ty}" width="${tw}" height="14" rx="3" fill="${colShade(pal.floor,1.25)}"/><rect x="${tx}" y="${ty+14}" width="${tw}" height="6" fill="${colShade(pal.floor,.8)}"/>`);
+  // Ніжки столу
   P.push(`<rect x="${tx+14}" y="${ty+20}" width="12" height="62" fill="${colShade(pal.floor,.9)}"/><rect x="${tx+tw-26}" y="${ty+20}" width="12" height="62" fill="${colShade(pal.floor,.9)}"/>`);
+
   const objs=m.table.objects, oc=objs.length;
-  objs.forEach((o,i)=>{ const ox = tx+34 + i*((tw-68)/Math.max(1,oc-1||1)); colObjEl(P,o.type,oc===1?tx+tw/2:ox,ty+2,o.color[1]); });
+  objs.forEach((o,i)=>{
+    // Якщо казино, розставляємо предмети ширше
+    const step = isCasino ? (tw - 100) / Math.max(1, oc - 1) : (tw - 68) / Math.max(1, oc - 1);
+    const ox = oc === 1 ? tx + tw/2 : tx + (isCasino ? 50 : 34) + i * step;
+    colObjEl(P,o.type,ox,ty+2,o.color[1]);
+  });
   // pet on floor
   if(m.pet==='cat') P.push(`<g transform="translate(150,452)">
       <ellipse cx="0" cy="4" rx="22" ry="7" fill="rgba(0,0,0,.28)"/>
@@ -456,7 +671,31 @@ function colRender(m){
     <path d="M18,-10 q16 -2 14 -20 q-2 -8 -8 -6 q6 0 4 8 q-2 14 -12 18 z" fill="#b07c3a"/>
   </g>`);
   // floor clue (detective)
-  if(m.clue.type==='footprints'){ for(let i=0;i<4;i++) P.push(`<ellipse cx="${560+i*30}" cy="${470-i*8}" rx="7" ry="12" fill="${m.clue.color[1]}" opacity=".5" transform="rotate(20 ${560+i*30} ${470-i*8})"/>`); }
+  if (m.clue.type === 'footprints') {
+    for (let i = 0; i < 4; i++) {
+      const px = 550 + i * 32;
+      // Зміщуємо лівий/правий слід по вертикалі, щоб вони йшли "кроками"
+      const py = 490 - i * 14 + (i % 2 === 0 ? -8 : 8);
+      const isRight = i % 2 !== 0;
+      // Дзеркалимо X для правого черевика (щоб вигин був з правильного боку)
+      const scaleX = isRight ? -1 : 1;
+      // Базовий кут напрямку + трохи хаосу для реалізму
+      const rot = 25 + (Math.random() * 8 - 4);
+
+      P.push(`<g transform="translate(${px}, ${py}) rotate(${rot}) scale(${scaleX}, 1)" opacity=".65">`);
+
+      // Підошва (передня частина)
+      P.push(`<path d="M -4.5,2 C -6.5,-4 -6,-11 -2,-13 C 2,-14 6,-10 5.5,-4 C 5,0 3.5,2 3.5,2 C 1.5,3.5 -2.5,3.5 -4.5,2 Z" fill="${m.clue.color[1]}"/>`);
+
+      // П'ята
+      P.push(`<path d="M -4,5 C -4,9 -3,12 0,12 C 3,12 4,9 4,5 C 3,4 -3,4 -4,5 Z" fill="${m.clue.color[1]}"/>`);
+
+      // Деталізація протектора (легкі смужки поперек)
+      P.push(`<path d="M -5,-8 L 4,-9 M -6,-4 L 5,-5 M -4,0 L 4,0 M -3,8 L 3,8" stroke="rgba(0,0,0,0.25)" stroke-width="1.2" fill="none"/>`);
+
+      P.push(`</g>`);
+    }
+  }
   else if(m.clue.type==='spill') P.push(`<path d="M180 478 q-30 -6 -34 10 q-2 16 26 14 q30 4 40 -8 q16 -2 10 -14 q-22 -10 -42 -2 z" fill="${m.clue.color[1]}" opacity=".55"/>`);
   else if(m.clue.type==='dropped') P.push(`<g opacity=".95">${colObj(m.clue.object,210,470,m.clue.color[1])}</g>`);
 
@@ -657,7 +896,7 @@ function colBuildAlibi(m, rng) {
   const lieIdxs=new Set();
   while(lieIdxs.size<Math.min(numLies,shuffled.length)) lieIdxs.add(Math.floor(rng()*shuffled.length));
   const finalClaims = shuffled.map((c, i) => ({
-    text: applyAccent(lieIdxs.has(i) ? c.falseText : c.trueText),
+    text: (()=>{ const raw=lieIdxs.has(i)?c.falseText:c.trueText; return rng()<0.3?applyAccent(raw):raw; })(),
     truth: !lieIdxs.has(i)
   }));
   return { type:'alibi', q:t('colq_alibi'), claims:finalClaims, a:finalClaims.map(c=>c.truth?t('col_truth'):t('col_lie')).join(', '), _expected:finalClaims.map(c=>c.truth?'truth':'lie'), choices:[], accept:[], secret:false };
@@ -1144,10 +1383,13 @@ function _cDistMouse(layer, model) {
   const goRight = Math.random() > 0.3;
   const bottom = 2 + Math.random() * 6;
   const el = document.createElement('div');
-  el.style.cssText = `position:absolute;bottom:${bottom}%;${goRight?'left:-10%':'right:-10%'};width:6%;transition:none;`;
 
-  // ВИПРАВЛЕННЯ: Якщо миша біжить вправо (goRight), ми її віддзеркалюємо, бо оригінал дивиться вліво.
-  el.innerHTML = `<svg viewBox="0 0 72 42" xmlns="http://www.w3.org/2000/svg" width="100%" style="${goRight ? 'transform:scaleX(-1); ' : ''}animation: colDScurry 0.25s infinite;">
+  // ВИПРАВЛЕННЯ: Додаємо transform: scaleX(-1) на сам DIV-контейнер,
+  // щоб анімація всередині SVG його не перезаписувала.
+  const flipTransform = goRight ? 'transform: scaleX(-1);' : '';
+  el.style.cssText = `position:absolute;bottom:${bottom}%;${goRight?'left:-10%':'right:-10%'};width:6%;transition:none;${flipTransform}`;
+
+  el.innerHTML = `<svg viewBox="0 0 72 42" xmlns="http://www.w3.org/2000/svg" width="100%" style="animation: colDScurry 0.25s infinite;">
     <path d="M53 23 q30-5 5 16" stroke="#7a7a7a" fill="none" stroke-width="2.5" stroke-linecap="round"/>
     <ellipse cx="29" cy="24" rx="22" ry="13" fill="#8c8c8c"/>
     <ellipse cx="11" cy="17" rx="11" ry="9" fill="#9c9c9c"/>
@@ -1357,14 +1599,15 @@ function renderColStats(){
 }
 
 function applyAccent(text) {
-  const flavor = ["Слухай, ", "Чуєш, ", "Короче, ", "", "Та ти що, ", "Вай, ", "Ну йомайо, "];
+  const isUK = typeof lang !== 'undefined' && lang === 'uk';
+  const flavor = isUK
+    ? ["Слухай, ", "Чуєш, ", "Короче, ", "", "Та ти що, ", "Вай, ", "Ну йомайо, ", "Мамою клянуся, ", "Шо ти мені нерви робиш, детективе! ", "Згадую, "]
+    : ["Yo, ", "Bro, ", "Oh, come on! ", "Yeah, ", "Look, ", "I mean, ", "Honestly, ", "", "I remember, ", "Swear to God, "];
   const start = flavor[Math.floor(Math.random() * flavor.length)];
 
-  // Трохи змінюємо структуру під "акцент"
-  let result = text
-    .replace('На мені', 'На мені, значить,')
-    .replace('Я стояв', 'Я стояв собі')
-    .replace('Був', 'був');
+  let result = isUK
+    ? text.replace('На мені', 'На мені, значить,').replace('Я стояв', 'Я стояв собі').replace('Був', 'був')
+    : text.replace('I was wearing', "I was, like, wearing").replace('I was holding', 'I was holding, like,').replace('It was', 'it was');
 
   return start + result.charAt(0).toLowerCase() + result.slice(1);
 }

@@ -9,7 +9,7 @@ const STRINGS = {
     spot_mode_title:'Object Spotting', spot_mode_desc:'Memorize a scene, then find which object has vanished',
     pairs_mode_title:'Pairs Battle', pairs_mode_desc:'Find matching pairs online — outsmart your opponent',
     math_mode_title:'Math Drills', math_mode_desc:'Solve arithmetic against the clock — beat your brain',
-    back_menu:'← MemBrain',
+    back_menu:'← MemBrain', home_btn:'Home',
     opts_label:'Options', opts_open:'▲', opts_closed:'▼',
     leave_title:'Leave game?', leave_sub:'Progress in this round will be lost.',
     leave_stay:'Stay', leave_leave:'Leave',
@@ -294,6 +294,7 @@ const STRINGS = {
     cpaint_portrait:'A portrait', cpaint_landscape:'A landscape', cpaint_ship:'A ship', cpaint_abstract:'Abstract art',
     // vocab: setting
     cset_lounge:'lounge', cset_study:'study', cset_cafe:'café', cset_hotel:'hotel room', cset_office:'office', cset_street:'street', cset_park:'park',
+    cset_train:'train carriage', cset_bank:'bank vault', cset_casino:'casino',
     // vocab: pet
     cpet_cat:'A cat', cpet_dog:'A dog', cpet_none:'No animal',
     // vocab: clue
@@ -509,7 +510,7 @@ const STRINGS = {
     spot_mode_title:'Знайди різницю', spot_mode_desc:'Запам\'ятай картину, знайди що зникло',
     pairs_mode_title:'Битва пар', pairs_mode_desc:'Знаходь пари онлайн — обіграй суперника',
     math_mode_title:'Математика', math_mode_desc:'Розв\'язуй приклади на час — перевір розум',
-    back_menu:'← MemBrain',
+    back_menu:'← MemBrain', home_btn:'На головну',
     opts_label:'Налаштування', opts_open:'▲', opts_closed:'▼',
     leave_title:'Покинути гру?', leave_sub:'Прогрес у цьому раунді буде втрачено.',
     leave_stay:'Залишитись', leave_leave:'Вийти',
@@ -795,6 +796,7 @@ const STRINGS = {
     cpaint_portrait:'Портрет', cpaint_landscape:'Пейзаж', cpaint_ship:'Корабель', cpaint_abstract:'Абстракція',
     // vocab: setting
     cset_lounge:'Вітальня', cset_study:'Кабінет', cset_cafe:'Кафе', cset_hotel:'Готельний номер', cset_office:'Офіс', cset_street:'Вулиця', cset_park:'Парк',
+    cset_train:'Купе поїзда', cset_bank:'Банківське сховище', cset_casino:'Казино',
     // vocab: pet
     cpet_cat:'Кіт', cpet_dog:'Пес', cpet_none:'Тварини не було',
     // vocab: clue

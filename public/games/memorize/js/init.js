@@ -20,7 +20,7 @@ function applyLang() {
   setTxt('wtr-mode-title',  'wtr_mode_title');  setTxt('wtr-mode-desc',  'wtr_mode_desc');
   setTxt('mtg-mode-title',  'mtg_mode_title');  setTxt('mtg-mode-desc',  'mtg_mode_desc');
   // back buttons
-  document.querySelectorAll('.back-btn').forEach(b => { b.textContent = t('back_menu'); });
+  document.querySelectorAll('.back-btn').forEach(b => { b.innerHTML = '<svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>'; b.title = t('home_btn'); });
   // options toggle labels
   ['wm-opts-label','spot-opts-label','math-opts-label','col-opts-label','cipher-opts-label'].forEach(id => setTxt(id, 'opts_label'));
   // colombo static
