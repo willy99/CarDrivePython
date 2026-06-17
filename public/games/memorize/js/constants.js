@@ -1,41 +1,70 @@
 // ═══════════════════════════════════════════════════
 // CONSTANTS
 // ═══════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════
+// CONSTANTS
+// ═══════════════════════════════════════════════════
 const WORD_BANKS = {
-  animals:['cat','dog','bird','fish','lion','bear','wolf','deer','frog','snake','fox','owl','crab','duck','moth','hawk'],
-  colors: ['red','blue','green','gold','pink','cyan','gray','lime','navy','teal','rose','jade','ivory','amber','coral'],
-  food:   ['apple','bread','cake','milk','rice','soup','corn','plum','mango','lemon','cherry','grape','melon','basil'],
-  nature: ['tree','rock','lake','rain','wind','snow','fire','leaf','cloud','storm','river','stone','forest','hill'],
-  objects:['book','door','lamp','ring','shoe','bell','coin','desk','mirror','key','clock','phone','pen','hat','chain'],
-  space:  ['comet','orbit','rocket','galaxy','planet','meteor','cosmos','nebula','lunar','solar','venus','mars'],
-  music:  ['drum','flute','piano','violin','tempo','chord','melody','banjo','cello','organ','harp','tuba'],
+  animals: ['cat','dog','bird','fish','lion','bear','wolf','deer','frog','snake','fox','owl','crab','duck','moth','hawk','bat','bee','ant','ram','hen','cow','pig','rat','elk','emu','swan','mole','robin','crane','zebra','panda','eagle','gecko','hippo','parrot','walrus','camel','tiger','horse','sheep','mouse','rhino','shark','whale','koala','lemur','sloth','hyena','badger','otter','skunk','bison','puma','seal','squid','toad','worm'],
+  colors:  ['red','blue','green','gold','pink','cyan','gray','lime','navy','teal','rose','jade','ivory','amber','coral','violet','maroon','olive','silver','bronze','magenta','crimson','scarlet','indigo','beige','khaki','peach','lilac','sienna','plum','salmon','azure','ruby','mint','mustard','orchid','slate','rust','sepia','aqua'],
+  food:    ['apple','bread','cake','milk','rice','soup','corn','plum','mango','lemon','cherry','grape','melon','basil','pear','kiwi','fig','oat','egg','tofu','beet','jam','pie','taco','sushi','pasta','steak','pizza','curry','noodle','waffle','bagel','donut','cream','cheese','onion','garlic','bean','pork','honey','sugar','salt','pepper','olive','bacon','candy','fudge','toast','syrup','salad','beef'],
+  nature:  ['tree','rock','lake','rain','wind','snow','fire','leaf','cloud','storm','river','stone','forest','hill','mud','fog','ice','soil','moss','sand','cave','tide','reef','mist','peak','dawn','dune','marsh','glacier','cactus','pebble','thorn','swamp','brook','beach','ocean','grass','bush','weed','vine','wood','clay','star','moon','gulf','pond','cliff','dust','ash','wave'],
+  objects: ['book','door','lamp','ring','shoe','bell','coin','desk','mirror','key','clock','phone','pen','hat','chain','bag','cup','mat','pot','net','box','axe','jar','bow','ink','map','fan','rod','vase','rope','flag','mask','brush','hook','lens','bolt','wire','tube','comb','fork','spoon','plate','bowl','glass','tool','nail','lock','tape','mug','plug','cord','soap'],
+  space:   ['comet','orbit','rocket','galaxy','planet','meteor','cosmos','nebula','lunar','solar','venus','mars','star','void','dust','beam','aurora','quasar','pulsar','eclipse','gravity','asteroid','saturn','crater','photon','wormhole','sun','nova','ring','ship','probe','alien','zenith','ufo','pluto','earth','moon'],
+  music:   ['drum','flute','piano','violin','tempo','chord','melody','banjo','cello','organ','harp','tuba','bass','beat','jazz','rock','note','tune','solo','duet','choir','opera','lyric','rhyme','pitch','riff','groove','clef','song','rest','brass','horn','gong','reed','band','vinyl','synth','pop'],
+  clothing:['shirt','shoe','sock','hat','coat','belt','vest','boot','scarf','robe','suit','tie','gown','cap','hood','glove','jeans','cape','skirt','dress','heel','shawl','cuff','zip','button','yarn','silk'],
+  body:    ['head','hand','foot','eye','ear','nose','lip','arm','leg','knee','toe','neck','hair','chin','jaw','skin','bone','rib','spine','blood','vein','nail','thumb','wrist','heel','palm','lung'],
+  professions: ['chef','cop','vet','nurse','judge','pilot','actor','baker','coach','guard','mayor','poet','clerk','spy','hero','maid','smith','king','queen','duke','boss','monk','thief','singer','driver'],
+  transport: ['car','bus','bike','boat','ship','jet','train','tram','cab','cart','raft','sled','truck','van','tank','yacht','sub','plane','ferry','drone','glider','canoe','scooter'],
+  buildings: ['house','barn','hut','tent','fort','shop','mall','bank','pub','cafe','dome','shed','mill','tower','base','hotel','motel','ruin','tomb','camp','hall','room','roof']
 };
+
 const WM_ALL_CATS = Object.keys(WORD_BANKS);
 
 const WORD_BANKS_UK = {
-  animals:['кіт','пес','птах','риба','лев','ведмідь','вовк','олень','жаба','змія','лис','сова','краб','качка','метелик','яструб'],
-  colors: ['червоний','синій','зелений','золотий','рожевий','блакитний','сірий','жовтий','білий','чорний','бузковий','брунатний','коричневий','бежевий','малиновий'],
-  food:   ['яблуко','хліб','торт','молоко','рис','суп','слива','манго','лимон','вишня','виноград','диня','базилік','пшениця'],
-  nature: ['дерево','камінь','озеро','дощ','вітер','сніг','вогонь','листок','хмара','буря','річка','скеля','ліс','пагорб'],
-  objects:['книга','двері','лампа','перстень','черевик','дзвін','монета','стіл','дзеркало','ключ','годинник','телефон','ручка','капелюх','ланцюг'],
-  space:  ['комета','орбіта','ракета','галактика','планета','метеор','космос','туманність','місяць','сонце','венера','марс'],
-  music:  ['барабан','флейта','піано','скрипка','темп','акорд','мелодія','банджо','віолончель','орган','арфа','туба'],
+  animals: ['кіт','пес','птах','риба','лев','ведмідь','вовк','олень','жаба','змія','лис','сова','краб','качка','метелик','яструб','кажан','бджола','мураха','баран','курка','корова','свиня','щур','лось','ему','лебідь','кріт','малинівка','журавель','зебра','панда','орел','гекон','бегемот','папуга','морж','верблюд','тигр','кінь','вівця','миша','носоріг','акула','кит','коала','лемур','лінивець','гієна','борсук','видра','скунс','бізон','пума','тюлень','кальмар','ропуха','хробак'],
+  colors:  ['червоний','синій','зелений','золотий','рожевий','блакитний','сірий','жовтий','білий','чорний','бузковий','брунатний','коричневий','бежевий','малиновий','фіолетовий','бордовий','оливковий','срібний','бронзовий','пурпурний','індиго','персиковий','сієна','сливовий','лососевий','лазурний','рубіновий','м\'ятний','гірчичний','орхідея','сланцевий','іржавий','сепія','аква'],
+  food:    ['яблуко','хліб','торт','молоко','рис','суп','слива','манго','лимон','вишня','виноград','диня','базилік','пшениця','груша','ківі','інжир','овес','яйце','тофу','буряк','джем','пиріг','тако','суші','паста','стейк','піца','карі','локшина','вафля','бублик','пончик','крем','сир','цибуля','часник','біб','свинина','мед','цукор','сіль','перець','оливка','бекон','цукерка','тост','сироп','салат','яловичина'],
+  nature:  ['дерево','камінь','озеро','дощ','вітер','сніг','вогонь','листок','хмара','буря','річка','скеля','ліс','пагорб','болото','туман','лід','ґрунт','мох','пісок','печера','прибій','риф','імла','вершина','світанок','дюна','трясовина','льодовик','кактус','галька','шип','бурелом','струмок','пляж','океан','трава','кущ','бур\'ян','лоза','деревина','глина','зоря','місяць','затока','ставок','урвище','пил','попіл','хвиля'],
+  objects: ['книга','двері','лампа','перстень','черевик','дзвін','монета','стіл','дзеркало','ключ','годинник','телефон','ручка','капелюх','ланцюг','сумка','кухоль','мат','горщик','сіть','ящик','сокира','глечик','лук','чорнило','карта','віяло','жезл','ваза','мотузка','прапор','маска','щітка','гак','лінза','болт','дріт','труба','гребінець','виделка','ложка','тарілка','миска','склянка','інструмент','цвях','замок','стрічка','горнятко','штекер','кабель','мило'],
+  space:   ['комета','орбіта','ракета','галактика','планета','метеор','космос','туманність','місяць','сонце','венера','марс','зірка','порожнеча','пил','промінь','аврора','квазар','пульсар','затемнення','гравітація','астероїд','сатурн','кратер','фотон','хроботочина','нова','кільце','корабель','зонд','прибулець','зеніт','нло','плутон','земля'],
+  music:   ['барабан','флейта','піано','скрипка','темп','акорд','мелодія','банджо','віолончель','орган','арфа','туба','бас','ритм','джаз','рок','нота','мотив','соло','дует','хор','опера','лірика','рима','тон','риф','грув','ключ','пісня','пауза','мідь','ріжок','гонг','тростина','гурт','вініл','синт','поп'],
+  clothing:['сорочка','взуття','шкарпетка','капелюх','пальто','пояс','жилет','чобіт','шарф','халат','костюм','краватка','сукня','кепка','каптур','рукавиця','джинси','плащ','спідниця','каблук','шаль','манжет','замок','ґудзик','пряжа','шовк'],
+  body:    ['голова','рука','нога','око','вухо','ніс','губа','коліно','палець','шия','волосся','підборіддя','щелепа','шкіра','кістка','ребро','хребет','кров','вена','ніготь','зап\'ястя','п\'ята','долоня','легеня'],
+  professions: ['кухар','коп','лікар','медбрат','суддя','пілот','актор','пекар','тренер','охоронець','мер','поет','клерк','шпигун','герой','покоївка','коваль','король','королева','герцог','бос','монах','злодій','співак','водій'],
+  transport: ['авто','автобус','велосипед','човен','корабель','джет','потяг','трамвай','таксі','візок','пліт','сани','вантажівка','фургон','танк','яхта','метро','літак','паром','дрон','планер','каное','скутер'],
+  buildings: ['дім','сарай','хатина','намет','форт','крамниця','тц','банк','паб','кафе','купол','навіс','млин','вежа','база','готель','мотель','руїна','гробниця','табір','зал','кімната','дах']
 };
 
 // 12 levels. 1–6 = click words from a pool (easier). 7–12 = TYPE each word
 // from memory with the keyboard (no pool to lean on → much harder).
 const WM_LEVELS = [
-  {words:3,  time:3500, mode:'pool', cats:['animals']},
-  {words:4,  time:3200, mode:'pool', cats:['animals','colors']},
-  {words:5,  time:2900, mode:'pool', cats:['animals','colors','food']},
-  {words:6,  time:2600, mode:'pool', cats:['colors','food','nature']},
-  {words:8,  time:2200, mode:'pool', cats:['animals','food','nature','objects']},
+  // ─── РЕЖИМ ВИБОРУ (Кліки) ───
+  // Рівень 1: Базові, найзвичніші слова
+  {words:3,  time:3500, mode:'pool', cats:['animals', 'colors']},
+  // Рівень 2: Особистий простір (їжа, тіло, одяг)
+  {words:4,  time:3200, mode:'pool', cats:['food', 'body', 'clothing']},
+  // Рівень 3: Навколишній світ (природа, тварини, космос)
+  {words:5,  time:2900, mode:'pool', cats:['nature', 'animals', 'space']},
+  // Рівень 4: Місто та інфраструктура (будівлі, транспорт, предмети)
+  {words:6,  time:2600, mode:'pool', cats:['buildings', 'transport', 'objects']},
+  // Рівень 5: Люди і культура (професії, музика, їжа, одяг)
+  {words:8,  time:2200, mode:'pool', cats:['professions', 'music', 'food', 'clothing']},
+  // Рівень 6: Фінал першого етапу (всі 12 категорій разом)
   {words:10, time:1900, mode:'pool', cats:WM_ALL_CATS},
-  {words:4,  time:3000, mode:'type', cats:['animals','colors'],            introKey:'wm_type_intro'},
-  {words:5,  time:2600, mode:'type', cats:['animals','colors','food']},
-  {words:6,  time:2300, mode:'type', cats:['food','nature','objects']},
-  {words:7,  time:2000, mode:'type', cats:['nature','objects','space']},
+
+  // ─── РЕЖИМ ДРУКУВАННЯ (Клавіатура - набагато складніше) ───
+  // Рівень 7: Легкий старт друкування (прості короткі слова)
+  {words:4,  time:3000, mode:'type', cats:['animals', 'colors', 'body'], introKey:'wm_type_intro'},
+  // Рівень 8: Побут
+  {words:5,  time:2600, mode:'type', cats:['food', 'clothing', 'objects']},
+  // Рівень 9: Вулиця і світ
+  {words:6,  time:2300, mode:'type', cats:['nature', 'buildings', 'transport']},
+  // Рівень 10: Складніші абстрактні слова
+  {words:7,  time:2000, mode:'type', cats:['professions', 'space', 'music']},
+  // Рівень 11: Солянка (всі категорії)
   {words:8,  time:1700, mode:'type', cats:WM_ALL_CATS},
+  // Рівень 12: Абсолютний хардкор пам'яті та швидкості друку
   {words:10, time:1400, mode:'type', cats:WM_ALL_CATS},
 ];
 
@@ -47,39 +76,30 @@ const WM_DIFF_DEFS = [
 ];
 
 const SPOT_LEVELS = [
-  // warmup — 1 missing
-  {count:5,  memorize:10000, blackout:2500, missing:1},
-  {count:7,  memorize:8000,  blackout:2500, missing:1},
-  {count:9,  memorize:7000,  blackout:2000, missing:1},
-  {count:12, memorize:6000,  blackout:2000, missing:1},
-  {count:15, memorize:5500,  blackout:2000, missing:1},
-  // medium — bigger grids
-  {count:8,  memorize:8000,  blackout:2500, missing:1},
-  {count:10, memorize:6500,  blackout:2000, missing:1},
-  {count:12, memorize:6000,  blackout:2000, missing:1},
-  {count:14, memorize:5500,  blackout:2000, missing:1},
-  {count:16, memorize:5500,  blackout:1800, missing:1},
-  // harder — less time
-  {count:10, memorize:5000,  blackout:1800, missing:1},
-  {count:14, memorize:5000,  blackout:1800, missing:1},
-  {count:16, memorize:4500,  blackout:1800, missing:1},
-  {count:18, memorize:4500,  blackout:1500, missing:1},
-  {count:20, memorize:5000,  blackout:1500, missing:1},
-  // expert — fast rounds
-  {count:14, memorize:3500,  blackout:1500, missing:1},
-  {count:16, memorize:3500,  blackout:1500, missing:1},
-  {count:18, memorize:4000,  blackout:1500, missing:1},
-  {count:20, memorize:4000,  blackout:1500, missing:1},
-  {count:22, memorize:4500,  blackout:1500, missing:1},
-  // multi-missing: find 2
-  {count:10, memorize:9000,  blackout:2500, missing:2, introKey:'spot_intro_two'},
-  {count:12, memorize:8000,  blackout:2500, missing:2},
-  {count:16, memorize:7500,  blackout:2000, missing:2},
-  // multi-missing: find 3
-  {count:12, memorize:9000,  blackout:2500, missing:3, introKey:'spot_intro_three'},
-  {count:16, memorize:8000,  blackout:2500, missing:3},
-  // boss: find 4
-  {count:14, memorize:10000, blackout:2500, missing:4, introKey:'spot_intro_four'},
+  // warmup
+  {count:5,  memorize:10000, blackout:2500},
+  {count:7,  memorize:8000,  blackout:2500},
+  {count:9,  memorize:7000,  blackout:2000},
+  {count:12, memorize:6000,  blackout:2000},
+  {count:15, memorize:5500,  blackout:2000},
+  // medium
+  {count:8,  memorize:8000,  blackout:2500},
+  {count:10, memorize:6500,  blackout:2000},
+  {count:12, memorize:6000,  blackout:2000},
+  {count:14, memorize:5500,  blackout:2000},
+  {count:16, memorize:5500,  blackout:1800},
+  // harder
+  {count:10, memorize:5000,  blackout:1800},
+  {count:14, memorize:5000,  blackout:1800},
+  {count:16, memorize:4500,  blackout:1800},
+  {count:18, memorize:4500,  blackout:1500},
+  {count:20, memorize:5000,  blackout:1500},
+  // expert
+  {count:14, memorize:3500,  blackout:1500},
+  {count:16, memorize:3500,  blackout:1500},
+  {count:18, memorize:4000,  blackout:1500},
+  {count:20, memorize:4000,  blackout:1500},
+  {count:22, memorize:4500,  blackout:1500},
 ];
 
 // Object definitions for spotting & pairs

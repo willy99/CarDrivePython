@@ -758,6 +758,7 @@ function colStart(lvIdx, fixedSeed){
   void bar.offsetWidth; bar.style.transition='width '+cfg.len+'ms linear'; bar.style.width='0%';
   colTimers.forEach(clearTimeout); colTimers=[];
   colTimers.push(setTimeout(()=>colStartQuiz(), cfg.len));
+  colStartDistractions(cfg.len, model);
   try{ metaTrackGame && metaTrackGame('colombo'); }catch(e){}
 }
 
@@ -887,6 +888,261 @@ function colStartDaily(){
   const prevSecret=colSecretOpt; colSecretOpt=true;
   colStart(lvIdx, colDailySeed());
   colSecretOpt=prevSecret;
+}
+
+// ══════════════════════════════════════════════════════
+// DISTRACTIONS — animated overlays during study phase
+// ══════════════════════════════════════════════════════
+let _colDistCSS = null;
+function _colEnsureDistCSS() {
+  if (_colDistCSS) return;
+  _colDistCSS = document.createElement('style');
+  _colDistCSS.textContent = `
+    @keyframes colDFloat  { 0%{transform:translateY(0) scaleX(1);opacity:.65} 50%{transform:translateY(-45%) scaleX(1.25);opacity:.45} 100%{transform:translateY(-95%) scaleX(.7);opacity:0} }
+    @keyframes colDBlink  { 0%,45%{transform:scaleY(1)} 50%{transform:scaleY(.05)} 56%{transform:scaleY(1)} 100%{transform:scaleY(1)} }
+    @keyframes colDFlash  { 0%{opacity:0} 8%{opacity:.75} 18%{opacity:0} 32%{opacity:.42} 44%{opacity:0} 100%{opacity:0} }
+    @keyframes colDDark   { 0%{opacity:0} 40%{opacity:.13} 100%{opacity:.08} }
+    @keyframes colDShad   { from{transform:translateX(-100%)} to{transform:translateX(250%)} }
+    @keyframes colDBuzz   { 0%{transform:translate(0,0)} 12%{transform:translate(-9px,-14px)} 24%{transform:translate(17px,-4px)} 36%{transform:translate(-6px,11px)} 48%{transform:translate(22px,-16px)} 60%{transform:translate(-12px,6px)} 72%{transform:translate(27px,-9px)} 84%{transform:translate(-17px,13px)} 96%{transform:translate(11px,-21px)} 100%{transform:translate(0,0)} }
+    @keyframes colDSpider { from{top:-5%} to{top:55%} }
+    /* Нова анімація для миші (швидкі стрибки вгору-вниз) */
+    @keyframes colDScurry { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-8%)} }
+  `;
+  document.head.appendChild(_colDistCSS);
+}
+
+function colStartDistractions(len, model) {
+  _colEnsureDistCSS();
+  const frame = document.getElementById('col-scene');
+  if (!frame) return;
+  const old = document.getElementById('col-distract-layer');
+  if (old) old.remove();
+  const layer = document.createElement('div');
+  layer.id = 'col-distract-layer';
+  layer.style.cssText = 'position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;overflow:hidden;z-index:6;';
+  frame.appendChild(layer);
+
+  const isOutdoor = model && model.pal && model.pal.outdoor;
+  const pool = isOutdoor
+    ? [_cDistMouse, _cDistFly, _cDistBird, _cDistCloud, _cDistLightning, _cDistBlink]
+    : [_cDistMouse, _cDistFly, _cDistSmoke, _cDistBlink, _cDistShadow, _cDistLightning, _cDistSpider];
+
+  const count = len >= 8000 ? 2 + Math.floor(Math.random()*2) : len >= 5000 ? 1 + Math.floor(Math.random()*2) : Math.floor(Math.random()*2);
+  const used = new Set();
+  const slots = [];
+  for (let i = 0; i < count; i++) {
+    slots.push(1100 + Math.random() * Math.max(400, len - 2800));
+  }
+  slots.sort((a, b) => a - b);
+
+  slots.forEach(ms => {
+    const tid = setTimeout(() => {
+      if (!document.getElementById('col-distract-layer')) return;
+      let fn;
+      let tries = 0;
+      do { fn = pool[Math.floor(Math.random() * pool.length)]; tries++; } while (used.has(fn) && tries < 8);
+      used.add(fn);
+      // ПЕРЕДАЄМО MODEL СЮДИ!
+      fn(layer, model);
+    }, ms);
+    colTimers.push(tid);
+  });
+}
+
+function _cDistMouse(layer, model) {
+  const goRight = Math.random() > 0.3;
+  const bottom = 2 + Math.random() * 6;
+  const el = document.createElement('div');
+  el.style.cssText = `position:absolute;bottom:${bottom}%;${goRight?'left:-10%':'right:-10%'};width:6%;transition:none;`;
+
+  // ВИПРАВЛЕННЯ: Якщо миша біжить вправо (goRight), ми її віддзеркалюємо, бо оригінал дивиться вліво.
+  el.innerHTML = `<svg viewBox="0 0 72 42" xmlns="http://www.w3.org/2000/svg" width="100%" style="${goRight ? 'transform:scaleX(-1); ' : ''}animation: colDScurry 0.25s infinite;">
+    <path d="M53 23 q30-5 5 16" stroke="#7a7a7a" fill="none" stroke-width="2.5" stroke-linecap="round"/>
+    <ellipse cx="29" cy="24" rx="22" ry="13" fill="#8c8c8c"/>
+    <ellipse cx="11" cy="17" rx="11" ry="9" fill="#9c9c9c"/>
+    <ellipse cx="5" cy="8" rx="5" ry="7" fill="#d4b0b0"/>
+    <ellipse cx="5" cy="8" rx="3" ry="5" fill="#c8a0a0"/>
+    <circle cx="7" cy="13" r="2.5" fill="#111"/>
+    <circle cx="8" cy="12" r=".9" fill="#fff"/>
+    <line x1="2" y1="13" x2="-11" y2="9" stroke="#9c9c9c" stroke-width="1.5" stroke-linecap="round"/>
+    <line x1="2" y1="14" x2="-13" y2="14" stroke="#9c9c9c" stroke-width="1.5" stroke-linecap="round"/>
+    <line x1="2" y1="15" x2="-9" y2="20" stroke="#9c9c9c" stroke-width="1.5" stroke-linecap="round"/>
+    <line x1="20" y1="35" x2="17" y2="43" stroke="#7a7a7a" stroke-width="2" stroke-linecap="round"/>
+    <line x1="29" y1="36" x2="27" y2="44" stroke="#7a7a7a" stroke-width="2" stroke-linecap="round"/>
+    <line x1="38" y1="35" x2="37" y2="43" stroke="#7a7a7a" stroke-width="2" stroke-linecap="round"/>
+    <line x1="46" y1="34" x2="46" y2="41" stroke="#7a7a7a" stroke-width="2" stroke-linecap="round"/>
+  </svg>`;
+  layer.appendChild(el);
+
+  void el.offsetWidth;
+
+  const dur = 4.5 + Math.random() * 1.5;
+  el.style.transition = `${goRight?'left':'right'} ${dur}s linear`;
+  el.style[goRight ? 'left' : 'right'] = '110%';
+
+  setTimeout(() => el.remove(), (dur + 0.4) * 1000);
+}
+
+function _cDistLightning(layer) {
+  const flash = document.createElement('div');
+  flash.style.cssText = 'position:absolute;inset:0;background:rgba(210,235,255,.82);animation:colDFlash .55s ease-out forwards;';
+  layer.appendChild(flash);
+  setTimeout(() => flash.remove(), 650);
+
+  const dark = document.createElement('div');
+  dark.style.cssText = 'position:absolute;inset:0;background:rgba(8,5,28,.1);animation:colDDark 3.5s ease-out forwards;';
+  setTimeout(() => { layer.appendChild(dark); setTimeout(() => dark.remove(), 3600); }, 420);
+
+  const bolt = document.createElement('div');
+  bolt.style.cssText = 'position:absolute;top:4%;right:7%;width:7%;opacity:0;transition:opacity 0.04s;';
+  bolt.innerHTML = `<svg viewBox="0 0 40 82" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <path d="M26 2L8 42h14L10 80 40 30H24Z" fill="rgba(190,225,255,.92)" stroke="rgba(255,255,255,.8)" stroke-width="1.2"/>
+  </svg>`;
+  layer.appendChild(bolt);
+  void bolt.offsetWidth;
+  bolt.style.opacity = '1';
+  setTimeout(() => { bolt.style.opacity = '0'; setTimeout(() => bolt.remove(), 220); }, 70);
+}
+
+function _cDistSmoke(layer, model) {
+  if (!model || !model.table || !model.table.objects) return;
+
+  // Шукаємо, чи є на столі чашка або джезва
+  const objs = model.table.objects;
+  const hotObjIdx = objs.findIndex(o => o.type === 'cup' || o.type === 'cezve');
+
+  // Якщо немає нічого гарячого, запускаємо муху замість диму
+  if (hotObjIdx === -1) {
+    _cDistFly(layer, model);
+    return;
+  }
+
+  // Вираховуємо координати цього предмета на столі
+  const oc = objs.length;
+  const tx = 270, tw = 260, ty = 394;
+  const ox = oc === 1 ? tx + tw/2 : tx + 34 + hotObjIdx * ((tw - 68) / Math.max(1, oc - 1));
+
+  // Переводимо у відсотки для CSS
+  const xRatio = (ox / 800) * 100;
+  const yRatio = 100 - ((ty - 10) / 500) * 100; // Висота столу
+
+  const count = 2 + Math.floor(Math.random() * 2);
+  for (let i = 0; i < count; i++) {
+    setTimeout(() => {
+      const wisp = document.createElement('div');
+      const xOff = xRatio - 1 + (Math.random() - .5) * 2;
+      const dur = 2.4 + Math.random() * 1.4;
+      wisp.style.cssText = `position:absolute;bottom:${yRatio}%;left:${xOff}%;width:2.2%;height:9%;animation:colDFloat ${dur}s ease-out forwards;`;
+      wisp.innerHTML = `<svg viewBox="0 0 22 64" xmlns="http://www.w3.org/2000/svg" width="100%" height="100%">
+        <path d="M11 62 q-9-16 4-32 q13-16-4-30" stroke="rgba(210,210,215,.65)" stroke-width="3.5" fill="none" stroke-linecap="round"/>
+      </svg>`;
+      layer.appendChild(wisp);
+      setTimeout(() => wisp.remove(), (dur + .3) * 1000);
+    }, i * 450);
+  }
+}
+
+function _cDistBlink(layer) {
+  const x = 22 + Math.random() * 52;
+  const y = 18 + Math.random() * 38;
+  const el = document.createElement('div');
+  el.style.cssText = `position:absolute;left:${x}%;top:${y}%;width:6%;transform:translate(-50%,-50%);opacity:0;transition:opacity .18s;`;
+  el.innerHTML = `<svg viewBox="0 0 64 32" xmlns="http://www.w3.org/2000/svg" width="100%">
+    <ellipse cx="16" cy="16" rx="15" ry="11" fill="white" stroke="rgba(0,0,0,.28)" stroke-width="1.5"/>
+    <ellipse cx="48" cy="16" rx="15" ry="11" fill="white" stroke="rgba(0,0,0,.28)" stroke-width="1.5"/>
+    <circle cx="16" cy="16" r="6.5" fill="#2a1e10"/>
+    <circle cx="48" cy="16" r="6.5" fill="#2a1e10"/>
+    <circle cx="13" cy="13" r="2.2" fill="white"/>
+    <circle cx="45" cy="13" r="2.2" fill="white"/>
+    <ellipse cx="16" cy="16" rx="15" ry="11" fill="rgba(38,22,14,.9)" style="animation:colDBlink 2.6s ease-in-out forwards;transform-origin:16px 16px;"/>
+    <ellipse cx="48" cy="16" rx="15" ry="11" fill="rgba(38,22,14,.9)" style="animation:colDBlink 2.6s ease-in-out forwards;transform-origin:48px 16px;"/>
+  </svg>`;
+  layer.appendChild(el);
+  setTimeout(() => { el.style.opacity = '1'; }, 10);
+  setTimeout(() => { el.style.opacity = '0'; setTimeout(() => el.remove(), 220); }, 2900);
+}
+
+function _cDistShadow(layer) {
+  const el = document.createElement('div');
+  const top = 4 + Math.random() * 22;
+  const h = 22 + Math.random() * 22;
+  const dur = 1.0 + Math.random() * 0.9;
+  el.style.cssText = `position:absolute;top:${top}%;left:0;width:14%;height:${h}%;animation:colDShad ${dur}s ease-in-out forwards;`;
+  el.innerHTML = `<svg viewBox="0 0 70 130" width="100%" height="100%" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+    <ellipse cx="35" cy="28" rx="25" ry="25" fill="rgba(0,0,0,.30)"/>
+    <rect x="14" y="50" width="42" height="80" rx="10" fill="rgba(0,0,0,.26)"/>
+  </svg>`;
+  layer.appendChild(el);
+  setTimeout(() => el.remove(), (dur + .4) * 1000);
+}
+
+function _cDistFly(layer) {
+  const x = 18 + Math.random() * 60;
+  const y = 12 + Math.random() * 55;
+  const el = document.createElement('div');
+  el.style.cssText = `position:absolute;left:${x}%;top:${y}%;line-height:1;animation:colDBuzz 2.2s ease-in-out;`;
+  el.style.fontSize = 'clamp(9px,1.2%,14px)';
+  el.textContent = '🪰';
+  layer.appendChild(el);
+  setTimeout(() => el.remove(), 2400);
+}
+
+function _cDistSpider(layer) {
+  const x = 10 + Math.random() * 75;
+  const dur = 2.5 + Math.random() * 1.5;
+  const el = document.createElement('div');
+  el.style.cssText = `position:absolute;left:${x}%;top:-5%;width:3%;animation:colDSpider ${dur}s linear forwards;`;
+  el.innerHTML = `<svg viewBox="0 0 32 48" xmlns="http://www.w3.org/2000/svg" width="100%">
+    <line x1="16" y1="0" x2="16" y2="16" stroke="rgba(160,140,130,.7)" stroke-width="1.2"/>
+    <circle cx="16" cy="24" r="9" fill="rgba(40,30,20,.75)"/>
+    <circle cx="16" cy="20" r="5" fill="rgba(60,45,30,.8)"/>
+    <circle cx="13" cy="18" r="1.5" fill="rgba(255,220,60,.9)"/>
+    <circle cx="19" cy="18" r="1.5" fill="rgba(255,220,60,.9)"/>
+    <line x1="7" y1="22" x2="-4" y2="17" stroke="rgba(40,30,20,.6)" stroke-width="1.2" stroke-linecap="round"/>
+    <line x1="7" y1="25" x2="-5" y2="26" stroke="rgba(40,30,20,.6)" stroke-width="1.2" stroke-linecap="round"/>
+    <line x1="7" y1="28" x2="-3" y2="33" stroke="rgba(40,30,20,.6)" stroke-width="1.2" stroke-linecap="round"/>
+    <line x1="25" y1="22" x2="36" y2="17" stroke="rgba(40,30,20,.6)" stroke-width="1.2" stroke-linecap="round"/>
+    <line x1="25" y1="25" x2="37" y2="26" stroke="rgba(40,30,20,.6)" stroke-width="1.2" stroke-linecap="round"/>
+    <line x1="25" y1="28" x2="35" y2="33" stroke="rgba(40,30,20,.6)" stroke-width="1.2" stroke-linecap="round"/>
+  </svg>`;
+  layer.appendChild(el);
+  setTimeout(() => el.remove(), (dur + .4) * 1000);
+}
+
+function _cDistBird(layer) {
+  const goRight = Math.random() > 0.4;
+  const y = 8 + Math.random() * 30;
+  const el = document.createElement('div');
+  el.style.cssText = `position:absolute;top:${y}%;${goRight?'left:-6%':'right:-6%'};width:5%;transition:none;`;
+  el.innerHTML = `<svg viewBox="0 0 60 30" xmlns="http://www.w3.org/2000/svg" width="100%" style="${goRight?'':'transform:scaleX(-1)'}">
+    <path d="M30 18 q-14-18-26-14 q8 2 10 8 q-6-4-14-2 q12-2 14 8 z" fill="rgba(60,50,40,.7)"/>
+    <path d="M30 18 q14-18 26-14 q-8 2-10 8 q6-4 14-2 q-12-2-14 8 z" fill="rgba(60,50,40,.7)"/>
+  </svg>`;
+  layer.appendChild(el);
+  void el.offsetWidth;
+  const dur = .9 + Math.random() * .6;
+  el.style.transition = `${goRight?'left':'right'} ${dur}s ease-in`;
+  el.style[goRight ? 'left' : 'right'] = '108%';
+  setTimeout(() => el.remove(), (dur + .3) * 1000);
+}
+
+function _cDistCloud(layer) {
+  const y = 5 + Math.random() * 20;
+  const goRight = Math.random() > 0.5;
+  const el = document.createElement('div');
+  el.style.cssText = `position:absolute;top:${y}%;${goRight?'left:-18%':'right:-18%'};width:16%;transition:none;opacity:.72;`;
+  el.innerHTML = `<svg viewBox="0 0 120 60" xmlns="http://www.w3.org/2000/svg" width="100%">
+    <ellipse cx="60" cy="38" rx="55" ry="22" fill="rgba(210,220,235,.55)"/>
+    <ellipse cx="38" cy="30" rx="28" ry="20" fill="rgba(220,228,242,.6)"/>
+    <ellipse cx="72" cy="26" rx="32" ry="22" fill="rgba(215,224,240,.65)"/>
+    <ellipse cx="95" cy="34" rx="22" ry="16" fill="rgba(210,220,235,.55)"/>
+  </svg>`;
+  layer.appendChild(el);
+  void el.offsetWidth;
+  const dur = 4 + Math.random() * 3;
+  el.style.transition = `${goRight?'left':'right'} ${dur}s linear`;
+  el.style[goRight ? 'left' : 'right'] = '112%';
+  setTimeout(() => el.remove(), (dur + .4) * 1000);
 }
 
 function colLoadStats(){ try{ return JSON.parse(localStorage.getItem('membrain_colombo_v1'))||{}; }catch(e){ return {}; } }

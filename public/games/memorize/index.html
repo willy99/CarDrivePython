@@ -341,11 +341,17 @@
       <button class="info-btn" onclick="showGameInfo('spot')">ℹ</button>
       <button class="close-btn" onclick="goMenu()" title="← MemBrain">✕</button>
     </div>
-    <div class="section-sub" id="spot-section-sub">Memorize the scene — spot what's missing</div>
-    <div style="font-size:.75rem;color:var(--text2);font-weight:700;letter-spacing:.5px;margin:4px 0 8px;" id="spot-choose-pack-lbl">CHOOSE PACK</div>
-    <div id="spot-pack-row"></div>
-    <div style="font-size:.75rem;color:var(--text2);font-weight:700;letter-spacing:.5px;margin:14px 0 4px;" id="spot-select-level-lbl">SELECT LEVEL</div>
-    <div class="level-grid" id="spot-level-grid"></div>
+    <div class="section-sub" id="spot-section-sub">Memorize the scene — spot what changed</div>
+    <!-- Level spinner -->
+    <div style="display:flex;align-items:center;justify-content:center;gap:18px;margin:24px 0 8px;">
+      <button class="btn" id="spot-level-down" onclick="spotStepLevel(-1)" style="width:48px;height:48px;font-size:1.4rem;padding:0;border-radius:50%;">▼</button>
+      <div id="spot-level-num" style="font-size:3.5rem;font-weight:900;line-height:1;color:var(--purpleL);">1</div>
+      <button class="btn" id="spot-level-up" onclick="spotStepLevel(1)" style="width:48px;height:48px;font-size:1.4rem;padding:0;border-radius:50%;">▲</button>
+    </div>
+    <div id="spot-level-info" style="text-align:center;color:var(--text2);font-size:.85rem;margin-bottom:18px;"></div>
+    <div style="text-align:center;margin-bottom:20px;">
+      <button class="btn btn-primary" onclick="spotStartSelected()" style="padding:12px 44px;font-size:1rem;font-weight:900;" id="spot-start-btn">▶ <span id="spot-start-lbl">Start</span></button>
+    </div>
     <!-- Options toggle -->
     <div class="opts-toggle" onclick="toggleOpts('spot-opts')" id="spot-opts-toggle">
       <div class="opts-toggle-inner"><span>⚙️</span><span id="spot-opts-label">Options</span></div>
@@ -353,8 +359,12 @@
     </div>
     <div class="opts-panel" id="spot-opts">
       <div class="opts-inner">
-        <div style="font-size:.7rem;color:var(--text3);font-weight:800;letter-spacing:1.5px;margin:0 0 6px;text-align:center;" id="spot-mode-lbl">SPOT MODE</div>
-        <div class="spot-ctrl-row" id="spot-mode-row"></div>
+        <div style="font-size:.7rem;color:var(--text3);font-weight:800;letter-spacing:1.5px;margin:0 0 6px;text-align:center;" id="spot-choose-pack-lbl">CHOOSE PACK</div>
+        <div id="spot-pack-row"></div>
+        <div style="font-size:.7rem;color:var(--text3);font-weight:800;letter-spacing:1.5px;margin:14px 0 6px;text-align:center;" id="spot-removed-lbl">OBJECTS REMOVED</div>
+        <div class="spot-ctrl-row" id="spot-vanished-row"></div>
+        <div style="font-size:.7rem;color:var(--text3);font-weight:800;letter-spacing:1.5px;margin:12px 0 6px;text-align:center;" id="spot-appeared-lbl">OBJECTS APPEARED</div>
+        <div class="spot-ctrl-row" id="spot-appeared-row"></div>
         <div style="font-size:.7rem;color:var(--text3);font-weight:800;letter-spacing:1.5px;margin:12px 0 6px;text-align:center;" id="spot-diff-lbl">MEMORIZE TIME</div>
         <div class="spot-ctrl-row" id="spot-diff-row"></div>
       </div>
@@ -362,13 +372,13 @@
   </div>
   <!-- sub: game -->
   <div id="spot-game" style="display:none;flex-direction:column;align-items:center;width:100%;height:100vh;">
+    <button class="close-btn close-btn-float" onclick="spotBack()" title="← Levels">✕</button>
     <div id="spot-header">
       <div><span class="tag tag-purple" id="spot-level-tag">Level 1</span></div>
       <div style="font-size:.85rem;color:var(--text2);" id="spot-phase-label">Memorize the objects</div>
       <div style="display:flex;align-items:center;gap:8px;">
         <span style="font-size:.8rem;color:var(--text2);" id="spot-streak-lbl">Streak</span>
         <span style="font-weight:800;color:var(--goldL);" id="spot-streak">0</span>
-        <button class="close-btn" onclick="spotBack()" title="← Levels">✕</button>
       </div>
     </div>
     <div id="spot-canvas-wrap">
@@ -1034,23 +1044,23 @@
   </div>
 </div>
 
-<script src="js/i18n.js?v=9"></script>
-<script src="js/constants.js?v=9"></script>
-<script src="js/objects.js?v=9"></script>
-<script src="js/core.js?v=9"></script>
-<script src="js/word.js?v=9"></script>
-<script src="js/spot.js?v=9"></script>
-<script src="js/pairs.js?v=9"></script>
-<script src="js/math.js?v=9"></script>
-<script src="js/diamond.js?v=9"></script>
-<script src="js/longmemory.js?v=9"></script>
-<script src="js/systems.js?v=9"></script>
-<script src="js/pairs-ai.js?v=9"></script>
-<script src="js/math-extra.js?v=9"></script>
-<script src="js/colombo.js?v=9"></script>
-<script src="js/cipher.js?v=9"></script>
-<script src="js/waiter.js?v=9"></script>
-<script src="js/meeting.js?v=9"></script>
-<script src="js/init.js?v=9"></script>
+<script src="js/i18n.js?v=11"></script>
+<script src="js/constants.js?v=11"></script>
+<script src="js/objects.js?v=11"></script>
+<script src="js/core.js?v=11"></script>
+<script src="js/word.js?v=11"></script>
+<script src="js/spot.js?v=11"></script>
+<script src="js/pairs.js?v=11"></script>
+<script src="js/math.js?v=11"></script>
+<script src="js/diamond.js?v=11"></script>
+<script src="js/longmemory.js?v=11"></script>
+<script src="js/systems.js?v=11"></script>
+<script src="js/pairs-ai.js?v=11"></script>
+<script src="js/math-extra.js?v=11"></script>
+<script src="js/colombo.js?v=11"></script>
+<script src="js/cipher.js?v=11"></script>
+<script src="js/waiter.js?v=11"></script>
+<script src="js/meeting.js?v=11"></script>
+<script src="js/init.js?v=11"></script>
 </body>
 </html>

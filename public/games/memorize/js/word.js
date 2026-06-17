@@ -147,7 +147,7 @@ function wmStart(lvIdx) {
   const filtered = allWords.filter(diff.filter);
   const wordPool = filtered.length >= lv.words ? filtered : allWords;
   wmSequence = wordPool.slice(0, lv.words);
-  const distractors = wordPool.slice(lv.words, lv.words + Math.max(4, Math.floor(lv.words*0.6)));
+  const distractors = wordPool.slice(lv.words, lv.words + Math.max(8, lv.words));
   wmPool = [...wmSequence, ...distractors].sort(() => Math.random()-0.5);
   wmSelected = [];
 
