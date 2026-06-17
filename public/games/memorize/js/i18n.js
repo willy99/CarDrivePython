@@ -298,6 +298,32 @@ const STRINGS = {
     cpet_cat:'A cat', cpet_dog:'A dog', cpet_none:'No animal',
     // vocab: clue
     cclue_footprints:'Footprints', cclue_spill:'A spilled drink', cclue_dropped:'A dropped object', cclue_none:'Nothing',
+    // Lineup
+    col_lineup_tag:'LINEUP',
+    colq_lineup:'Who was at the scene? Find the real suspect.',
+    col_lineup_n:(n)=>`Suspect #${n}`,
+    col_lineup_correct:(n)=>`Correct — suspect #${n}`,
+    col_lineup_wrong:(yours,correct)=>`You chose #${yours} · Correct was #${correct}`,
+    // Alibi Check
+    col_alibi_tag:'ALIBI CHECK',
+    colq_alibi:'The suspect\'s alibi — is each claim TRUE or a LIE?',
+    col_truth:'TRUE', col_lie:'LIE',
+    col_alibi_verdict:(c,total)=>`${c}/${total} claims correctly identified`,
+    colab_holding:(key)=>`"I was holding a ${t('cobj_'+key).toLowerCase()}"`,
+    colab_window_moon:'"Outside the window I could see the moon"',
+    colab_window_tree:'"Outside the window there was a tree"',
+    colab_window_rain:'"Outside the window it was raining"',
+    colab_window_city:'"Outside the window there were city lights"',
+    colab_shirt:(key)=>`"I was wearing a ${t('clr_'+key).toLowerCase()} shirt"`,
+    colab_clock:(time)=>`"The clock showed ${time}"`,
+    colab_timeofday_day:'"It was daytime outside"',
+    colab_timeofday_dusk:'"It was dusk outside"',
+    colab_timeofday_night:'"It was night outside"',
+    colab_hair:(key)=>`"My hair was ${t('clr_'+key).toLowerCase()}"`,
+    colab_glasses_yes:'"I was wearing glasses"', colab_glasses_no:'"I was not wearing glasses"',
+    colab_mustache_yes:'"I had a mustache"', colab_mustache_no:'"I had no mustache"',
+    colab_pet_cat:'"There was a cat in the room"', colab_pet_dog:'"There was a dog in the room"',
+    colab_pet_none:'"There were no animals in the room"',
     ach_col_first:'First Case', ach_col_first_d:'Solve your first Colombo case',
     // long memory
     lm_mode_title:'Long Memory', lm_mode_desc:'Encode today\'s item — recall it after 12 hours',
@@ -773,6 +799,49 @@ const STRINGS = {
     cpet_cat:'Кіт', cpet_dog:'Пес', cpet_none:'Тварини не було',
     // vocab: clue
     cclue_footprints:'Сліди', cclue_spill:'Розлитий напій', cclue_dropped:'Загублений предмет', cclue_none:'Нічого',
+    // Lineup
+    col_lineup_tag:'ВПІЗНАННЯ',
+    colq_lineup:'Хто був на місці події? Знайди справжнього підозрюваного.',
+    col_lineup_n:(n)=>`Підозрюваний #${n}`,
+    col_lineup_correct:(n)=>`Правильно — підозрюваний #${n}`,
+    col_lineup_wrong:(yours,correct)=>`Ти вибрав #${yours} · Правильно було #${correct}`,
+    // Alibi Check
+    col_alibi_tag:'ПЕРЕВІРКА АЛІБІ',
+    colq_alibi:'Підозрюваний дає свідчення — правда чи брехня?',
+    col_truth:'ПРАВДА', col_lie:'БРЕХНЯ',
+    col_alibi_verdict:(c,total)=>`${c}/${total} тверджень визначено правильно`,
+
+    // Alibi claim templates (граматично правильна українська)
+    colab_holding:(key)=>`«Я тримав ${t('cobj_acc_'+key)}»`,
+    colab_window_moon:'«За вікном був місяць»',
+    colab_window_tree:'«За вікном росло дерево»',
+    colab_window_rain:'«За вікном йшов дощ»',
+    colab_window_city:'«За вікном були вогні міста»',
+    colab_shirt:(key)=>`«На мені була ${t('clrf_'+key)} сорочка»`,
+    colab_clock:(time)=>`«Годинник показував ${time}»`,
+    colab_timeofday_day:'«Надворі був день»',
+    colab_timeofday_dusk:'«Надворі були сутінки»',
+    colab_timeofday_night:'«Надворі була ніч»',
+    colab_hair:(key)=>`«Моє волосся було ${t('clrn_'+key)}»`,
+    colab_glasses_yes:'«Я носив окуляри»', colab_glasses_no:'«Я не носив окулярів»',
+    colab_mustache_yes:'«У мене були вуса»', colab_mustache_no:'«У мене не було вусів»',
+    colab_pet_cat:'«У кімнаті був кіт»', colab_pet_dog:'«У кімнаті був пес»',
+    colab_pet_none:'«У кімнаті не було тварин»',
+    // Жіночий рід кольорів (для сорочки та подібних)
+    clrf_red:'червона', clrf_blue:'синя', clrf_green:'зелена', clrf_yellow:'жовта',
+    clrf_purple:'фіолетова', clrf_orange:'помаранчева', clrf_white:'біла', clrf_black:'чорна',
+    clrf_brown:'коричнева', clrf_pink:'рожева', clrf_teal:'бірюзова', clrf_gray:'сіра', clrf_blonde:'білява',
+    // Орудний відмінок середнього роду (для волосся)
+    clrn_red:'червоним', clrn_blue:'синім', clrn_green:'зеленим', clrn_yellow:'жовтим',
+    clrn_purple:'фіолетовим', clrn_orange:'помаранчевим', clrn_white:'білим', clrn_black:'чорним',
+    clrn_brown:'коричневим', clrn_pink:'рожевим', clrn_teal:'бірюзовим', clrn_gray:'сірим', clrn_blonde:'білявим',
+    // Знахідний відмінок об'єктів (я тримав що? → знахідний)
+    cobj_acc_cup:'чашку', cobj_acc_bottle:'пляшку', cobj_acc_vase:'вазу', cobj_acc_book:'книгу',
+    cobj_acc_candle:'свічку', cobj_acc_glass:'келих', cobj_acc_phone:'телефон',
+    cobj_acc_key:'ключ', cobj_acc_envelope:'конверт', cobj_acc_knife:'ніж',
+    cobj_acc_magnifier:'лупу', cobj_acc_camera:'камеру', cobj_acc_drone:'дрон',
+    cobj_acc_cezve:'джезву', cobj_acc_whistle:'свисток',
+    cobj_acc_oscilloscope:'осцилограф', cobj_acc_watch:'годинник',
     ach_col_first:'Перша справа', ach_col_first_d:'Розкрий першу справу Коломбо',
     // long memory
     lm_mode_title:'Довга пам\'ять', lm_mode_desc:'Запам\'ятай сьогодні — відтвори через 12 годин',
@@ -933,4 +1002,3 @@ function pluralUK(n, f1, f2, f5) {
   if ([2, 3, 4].includes(m10) && ![12, 13, 14].includes(m100)) return f2;
   return f5;
 }
-

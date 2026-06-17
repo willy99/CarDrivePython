@@ -192,21 +192,55 @@ function colSettingDecor(m, P) {
     P.push(`<rect x="115" y="270" width="26" height="22" rx="4" fill="#2980b9" opacity="0.9"/>`);
     P.push(`<rect x="112" y="290" width="32" height="6" rx="3" fill="#34495e"/>`);
   } else if (s === 'cafe') {
-    // Espresso Machine on a low back-counter
-    P.push(`<rect x="96" y="250" width="92" height="80" rx="4" fill="#1c1006" stroke="#4a3418" stroke-width="2"/>`);
-    P.push(`<rect x="100" y="254" width="84" height="40" rx="2" fill="#120c04"/>`);
-    P.push(`<circle cx="124" cy="274" r="12" fill="#201408" stroke="#b8924c" stroke-width="2"/>`);
-    P.push(`<rect x="150" y="260" width="28" height="20" rx="2" fill="#2c1c0a"/>`);
-    P.push(`<circle cx="158" cy="268" r="4" fill="#d97706" opacity=".9"/><circle cx="170" cy="268" r="4" fill="#2e8b57" opacity=".9"/>`);
-    P.push(`<rect x="112" y="290" width="32" height="4" rx="1" fill="#38260e"/>`);
-    P.push(`<line x1="122" y1="294" x2="120" y2="304" stroke="#38260e" stroke-width="2" stroke-linecap="round"/>`);
-    P.push(`<line x1="130" y1="294" x2="128" y2="304" stroke="#38260e" stroke-width="2" stroke-linecap="round"/>`);
+    // ── Професійна еспресо-машина на дві групи ──
+    // Основний металевий корпус
+    P.push(`<rect x="96" y="240" width="88" height="70" rx="4" fill="#b0b5b9" stroke="#5d6569" stroke-width="2"/>`);
 
-    // Cafe Bar Counter
+    // Передня темна панель дисплея та кнопок
+    P.push(`<rect x="100" y="244" width="80" height="15" fill="#1f2428" rx="2"/>`);
+
+    // Підставка для підігріву чашок зверху
+    P.push(`<rect x="98" y="235" width="84" height="5" rx="2" fill="#d3d7da"/>`);
+
+    // Дві білі чашечки нагорі
+    P.push(`<path d="M106 240 v-7 h10 v7 z" fill="#fcfcfc"/><path d="M116 235 a3 3 0 0 1 0 4" fill="none" stroke="#fcfcfc" stroke-width="1.5"/>`);
+    P.push(`<path d="M124 240 v-7 h10 v7 z" fill="#fcfcfc"/><path d="M134 235 a3 3 0 0 1 0 4" fill="none" stroke="#fcfcfc" stroke-width="1.5"/>`);
+
+    // Датчик тиску (манометр)
+    P.push(`<circle cx="140" cy="251" r="5.5" fill="#f4f4f4"/><line x1="140" y1="251" x2="143" y2="249" stroke="#e74c3c" stroke-width="1"/>`);
+
+    // Кнопки (червоні та сині діоди)
+    P.push(`<circle cx="112" cy="251" r="2" fill="#e74c3c"/><circle cx="118" cy="251" r="2" fill="#3498db"/>`);
+    P.push(`<circle cx="162" cy="251" r="2" fill="#e74c3c"/><circle cx="168" cy="251" r="2" fill="#3498db"/>`);
+
+    // Тінь у робочій зоні під групами
+    P.push(`<rect x="96" y="265" width="88" height="25" fill="#899094"/>`);
+
+    // Піддон для крапель (решітка)
+    P.push(`<rect x="92" y="302" width="96" height="8" rx="2" fill="#111"/>`);
+    P.push(`<rect x="96" y="302" width="88" height="3" fill="#d3d7da"/>`);
+
+    // Ліва група (заварювальний вузол)
+    P.push(`<rect x="110" y="265" width="16" height="12" rx="2" fill="#d3d7da"/>`);
+    P.push(`<rect x="112" y="277" width="12" height="6" fill="#111"/>`); // Основа холдера
+    P.push(`<path d="M112 280 L98 286" stroke="#111" stroke-width="3" stroke-linecap="round"/>`); // Ручка холдера
+    P.push(`<path d="M116 283 v6 M120 283 v6" stroke="#5d6569" stroke-width="1.5"/>`); // Струмки кави/носики
+
+    // Права група
+    P.push(`<rect x="154" y="265" width="16" height="12" rx="2" fill="#d3d7da"/>`);
+    P.push(`<rect x="156" y="277" width="12" height="6" fill="#111"/>`);
+    P.push(`<path d="M156 280 L142 286" stroke="#111" stroke-width="3" stroke-linecap="round"/>`);
+    P.push(`<path d="M160 283 v6 M164 283 v6" stroke="#5d6569" stroke-width="1.5"/>`);
+
+    // Трубка стімера (капучинатор) та вентиль
+    P.push(`<path d="M176 265 Q186 280 180 295" fill="none" stroke="#d3d7da" stroke-width="2.5" stroke-linecap="round"/>`);
+    P.push(`<circle cx="178" cy="262" r="4" fill="#111"/>`);
+
+    // Барна стійка
     P.push(`<rect x="84" y="310" width="160" height="20" rx="2" fill="#5a3c1e" stroke="#6e4e2a" stroke-width="1.5"/>`);
     P.push(`<rect x="84" y="325" width="160" height="5" fill="#2e1808"/>`);
 
-    // Bar Stool
+    // Барний стілець
     P.push(`<path d="M200 330 L194 400 L198 400 L204 330 Z" fill="#7f8c8d"/><path d="M216 330 L222 400 L218 400 L212 330 Z" fill="#7f8c8d"/><ellipse cx="208" cy="330" rx="18" ry="6" fill="#e67e22"/>`);
   } else if (s === 'hotel') {
     // Velvet Lobby Sofa
@@ -563,6 +597,72 @@ function colObjEl(P,type,x,yb,hex){ P.push(`<ellipse cx="${x}" cy="${yb-1}" rx="
 function colName(kind,key){ return t('c'+kind+'_'+key) || key; }
 function colPickN(arr,n,rng,exclude){ const pool=arr.filter(x=>x!==exclude); const out=[]; while(out.length<n && pool.length){ out.push(pool.splice(Math.floor(rng()*pool.length),1)[0]); } return out; }
 
+function colBuildLineup(m, rng) {
+  if (!m.people.length) return null;
+  const pick = a => a[Math.floor(rng() * a.length)];
+  const target = JSON.parse(JSON.stringify(m.people[0]));
+  const decoys = [0,1,2].map(() => {
+    const d = JSON.parse(JSON.stringify(target));
+    let ns; do { ns = pick(COL_COLORS); } while (ns[0] === target.shirt[0]); d.shirt = ns;
+    if (rng() < 0.70) { let nh; do { nh = pick(COL_HAIR); } while (nh[0] === target.hair[0]); d.hair = nh; }
+    if (rng() < 0.55) d.glasses = !target.glasses;
+    if (rng() < 0.45) d.mustache = !target.mustache;
+    if (rng() < 0.50) d.hat = target.hat ? null : null;
+    d.hScale = 0.87 + rng() * 0.28; d.wScale = 0.82 + rng() * 0.38;
+    d.pose = Math.floor(rng() * 4);
+    if (rng() < 0.65) { const opts=[...COL_HELD.filter(h=>h!==target.holding),null,null]; d.holding=pick(opts); }
+    return d;
+  });
+  const correctIdx = Math.floor(rng() * 4);
+  const suspects = [...decoys.slice(0, correctIdx), target, ...decoys.slice(correctIdx)];
+  return { type:'lineup', q:t('colq_lineup'), a:String(correctIdx+1), _correctIdx:correctIdx, choices:suspects, accept:[String(correctIdx+1)], secret:false };
+}
+
+function colBuildAlibi(m, rng) {
+  const pick = a => a[Math.floor(rng() * a.length)];
+  const candidates = [];
+  if (m.people.length && m.people[0].holding) {
+    const correct=m.people[0].holding, wrong=pick(COL_HELD.filter(x=>x!==correct));
+    candidates.push({ trueText:t('colab_holding',correct), falseText:t('colab_holding',wrong), truth:true });
+  }
+  if (m.window.present && m.window.outside !== 'watcher') {
+    const correct=m.window.outside, alts=COL_OUTSIDE.filter(x=>x!==correct&&x!=='watcher');
+    if (alts.length) { const wrong=pick(alts); candidates.push({ trueText:t('colab_window_'+correct), falseText:t('colab_window_'+wrong), truth:true }); }
+  }
+  if (m.people.length) {
+    const correct=m.people[0].shirt[0]; let wrong; do { wrong=pick(COL_COLORS)[0]; } while (wrong===correct);
+    candidates.push({ trueText:t('colab_shirt',correct), falseText:t('colab_shirt',wrong), truth:true });
+  }
+  if (m.clock.present) {
+    const ah=m.clock.h, am=m.clock.m, correctStr=ah+':'+(am<10?'0'+am:am);
+    let wh,wm; do { wh=1+Math.floor(rng()*12); wm=pick([0,15,30,45]); } while (wh===ah&&wm===am);
+    candidates.push({ trueText:t('colab_clock',correctStr), falseText:t('colab_clock',wh+':'+(wm<10?'0'+wm:wm)), truth:true });
+  }
+  { const correct=m.timeOfDay, wrongs=['day','dusk','night'].filter(x=>x!==correct);
+    candidates.push({ trueText:t('colab_timeofday_'+correct), falseText:t('colab_timeofday_'+pick(wrongs)), truth:true }); }
+  if (m.people.length) {
+    const hasG=m.people.some(p=>p.glasses);
+    candidates.push({ trueText:t(hasG?'colab_glasses_yes':'colab_glasses_no'), falseText:t(hasG?'colab_glasses_no':'colab_glasses_yes'), truth:true });
+    const hasM=m.people.some(p=>p.mustache);
+    candidates.push({ trueText:t(hasM?'colab_mustache_yes':'colab_mustache_no'), falseText:t(hasM?'colab_mustache_no':'colab_mustache_yes'), truth:true });
+  }
+  if (!m.pal.outdoor) {
+    const petKey=m.pet||null;
+    const trueText=petKey?t('colab_pet_'+petKey):t('colab_pet_none');
+    const falseText=petKey?(petKey==='cat'?t('colab_pet_none'):t('colab_pet_none')):t('colab_pet_'+(rng()<.5?'cat':'dog'));
+    candidates.push({ trueText, falseText, truth:true });
+  }
+  const shuffled=candidates.sort(()=>rng()-.5).slice(0,3);
+  const numLies=1+(rng()<.38?1:0);
+  const lieIdxs=new Set();
+  while(lieIdxs.size<Math.min(numLies,shuffled.length)) lieIdxs.add(Math.floor(rng()*shuffled.length));
+  const finalClaims = shuffled.map((c, i) => ({
+    text: applyAccent(lieIdxs.has(i) ? c.falseText : c.trueText),
+    truth: !lieIdxs.has(i)
+  }));
+  return { type:'alibi', q:t('colq_alibi'), claims:finalClaims, a:finalClaims.map(c=>c.truth?t('col_truth'):t('col_lie')).join(', '), _expected:finalClaims.map(c=>c.truth?'truth':'lie'), choices:[], accept:[], secret:false };
+}
+
 function colQuestions(m,cfg){
   const rng=colMulberry((m.seed*2654435761)>>>0); const rnd=()=>rng();
   const clrKeys=COL_COLORS.map(c=>c[0]);
@@ -684,11 +784,19 @@ function colQuestions(m,cfg){
     }
   }
 
+  // Special question types: lineup and alibi (mixed randomly into quiz)
+  const special=[];
+  if(m.people.length>0 && rnd()<0.65){ const lq=colBuildLineup(m,rng); if(lq) special.push(lq); }
+  if(rnd()<0.55){ const aq=colBuildAlibi(m,rng); if(aq) special.push(aq); }
+
   // Збираємо: 1 питання завжди про кількість людей, решта ядро (перемішане), секрети в кінці
   const head=core[0]; const rest=core.slice(1).sort(()=>rnd()-.5);
   const secSel=secret.slice(0,3);
-  const coreNeeded=Math.max(1, cfg.questions - secSel.length);
-  return [head,...rest].slice(0,coreNeeded).concat(secSel);
+  const coreNeeded=Math.max(1, cfg.questions - secSel.length - special.length);
+  const coreQ=[head,...rest].slice(0,coreNeeded);
+  // Shuffle specials among core (but after head question)
+  const mixedRest=[...coreQ.slice(1),...special].sort(()=>rnd()-.5);
+  return [coreQ[0],...mixedRest].concat(secSel);
 }
 
 // ── game loop ──
@@ -779,6 +887,8 @@ function colStartQuiz(){
   const list=document.getElementById('col-quiz-list'); list.innerHTML='';
   questions.forEach((q,qi)=>{
     const card=document.createElement('div'); card.className='col-q-card'+(q.secret?' secret':'');
+    if(q.type==='lineup'){ colRenderLineupCard(q,qi,card); list.appendChild(card); return; }
+    if(q.type==='alibi'){ colRenderAlibiCard(q,qi,card); list.appendChild(card); return; }
     let inner=`<div class="col-q-num">${q.secret?'🔍 '+t('col_twist'):t('col_clue_n',qi+1)}</div><div class="col-q-text">${q.q}</div>`;
     if(colAnsStyle==='choice'){
       inner+=`<div class="col-choices">`+q.choices.map(c=>`<button class="col-choice" data-v="${escapeAttr(c)}">${c}</button>`).join('')+`</div>`;
@@ -792,11 +902,72 @@ function colStartQuiz(){
     list.appendChild(card);
   });
 }
+function colRenderLineupCard(q, qi, card) {
+  const W=800, H=460, positions=[100,300,500,700];
+  const P=[];
+  P.push(`<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" style="display:block;width:100%;border-radius:12px;">`);
+  P.push(`<rect x="0" y="0" width="${W}" height="${H}" fill="#1e2130"/>`);
+  // Height marker lines
+  [80,130,180,230,280,330,380,430].forEach((y,i)=>{
+    P.push(`<line x1="40" y1="${y}" x2="${W}" y2="${y}" stroke="rgba(255,255,255,0.05)" stroke-width="1"/>`);
+    P.push(`<text x="8" y="${y+4}" font-size="10" fill="rgba(255,255,255,0.2)" font-family="monospace">${7-i}'</text>`);
+  });
+  P.push(`<rect x="0" y="432" width="${W}" height="${H-432}" fill="rgba(0,0,0,.4)"/>`);
+  [1,2,3].forEach(i=>P.push(`<line x1="${W*i/4}" y1="0" x2="${W*i/4}" y2="${H}" stroke="rgba(255,255,255,0.06)" stroke-width="1"/>`));
+  positions.forEach((px,i)=>{
+    P.push(`<rect x="${px-38}" y="434" width="76" height="22" rx="4" fill="rgba(0,0,0,.5)"/>`);
+    P.push(`<text x="${px}" y="450" text-anchor="middle" font-size="13" font-weight="900" fill="rgba(255,255,255,.55)" font-family="monospace">#${i+1}</text>`);
+    colPerson(P, px, q.choices[i]);
+  });
+  P.push(`</svg>`);
+  const slotHtml=q.choices.map((_,i)=>`<div class="col-lineup-slot" data-idx="${i}"></div>`).join('');
+  card.innerHTML=`<div class="col-q-num">🚔 ${t('col_lineup_tag')}</div><div class="col-q-text">${q.q}</div><div class="col-lineup-wrap">${P.join('')}${slotHtml}</div>`;
+  card.querySelectorAll('.col-lineup-slot').forEach(slot=>{
+    slot.onclick=()=>{
+      card.querySelectorAll('.col-lineup-slot').forEach(s=>s.classList.remove('sel'));
+      slot.classList.add('sel');
+      colQuiz.answers[qi]=String(parseInt(slot.dataset.idx)+1);
+      colSndSelect();
+    };
+  });
+}
+
+function colRenderAlibiCard(q, qi, card) {
+  const playerVals=new Array(q.claims.length).fill(null);
+  const claimsHtml=q.claims.map((claim,ci)=>`
+    <div class="col-alibi-row">
+      <div class="col-alibi-fact">${claim.text}</div>
+      <div class="col-ab-btns">
+        <button class="col-ab-btn" data-val="truth" data-ci="${ci}">${t('col_truth')}</button>
+        <button class="col-ab-btn" data-val="lie" data-ci="${ci}">${t('col_lie')}</button>
+      </div>
+    </div>`).join('');
+  card.innerHTML=`<div class="col-q-num">🎭 ${t('col_alibi_tag')}</div><div class="col-q-text">${q.q}</div><div class="col-alibi-claims">${claimsHtml}</div>`;
+  card.querySelectorAll('.col-ab-btn').forEach(btn=>{
+    btn.onclick=()=>{
+      const ci=parseInt(btn.dataset.ci);
+      card.querySelectorAll(`.col-ab-btn[data-ci="${ci}"]`).forEach(b=>b.classList.remove('sel'));
+      btn.classList.add('sel');
+      playerVals[ci]=btn.dataset.val;
+      colQuiz.answers[qi]=playerVals.join(',');
+      colSndSelect();
+    };
+  });
+}
+
 function setColScroll(){ document.getElementById('screen-colombo').style.justifyContent='flex-start'; }
 function escapeAttr(s){ return String(s).replace(/"/g,'&quot;'); }
 
 function colNorm(s){ return String(s||'').toLowerCase().trim().replace(/\s+/g,' '); }
-function colCheck(q, ans){ if(ans==null) return false; const a=colNorm(ans); if(colAnsStyle==='choice') return a===colNorm(q.a); return q.accept.some(x=>colNorm(x)===a); }
+function colCheck(q, ans){
+  if(q.type==='lineup') return ans!=null && String(ans)===String(q.a);
+  if(q.type==='alibi'){
+    if(!ans) return false;
+    const pv=ans.split(','), exp=q._expected||q.claims.map(c=>c.truth?'truth':'lie');
+    return pv.filter((v,i)=>v===exp[i]).length>=Math.ceil(exp.length*0.67);
+  }
+  if(ans==null) return false; const a=colNorm(ans); if(colAnsStyle==='choice') return a===colNorm(q.a); return q.accept.some(x=>colNorm(x)===a);
+}
 
 function colSubmit(){
   if(!colQuiz) return;
@@ -829,12 +1000,32 @@ function colShowResults(animate){
   document.getElementById('col-verdict').textContent=t('col_solved_n',correct,questions.length)+' · '+verdict;
   const list=document.getElementById('col-result-list'); list.innerHTML='';
   const rows=questions.map((q,i)=>{ const ok=colCheck(q,answers[i]); const row=document.createElement('div'); row.className='col-result-q';
-    const yourAns = answers[i]==null||answers[i]===''?t('col_no_answer'):answers[i];
     const ico=document.createElement('div'); ico.className='rq-ico'; ico.textContent=ok?'✅':'❌';
     const body=document.createElement('div'); body.className='rq-body';
-    const qEl=document.createElement('div'); qEl.className='rq-q'; qEl.textContent=(q.secret?'🔍 ':'')+q.q;
+    const pfx=q.secret?'🔍 ':q.type==='lineup'?'🚔 ':q.type==='alibi'?'🎭 ':'';
+    const qEl=document.createElement('div'); qEl.className='rq-q'; qEl.textContent=pfx+q.q;
     const aEl=document.createElement('div'); aEl.className='rq-a '+(ok?'ok':'no');
-    aEl.textContent=ok?'✓ '+q.a : t('col_you_said')+' '+yourAns+' · '+t('col_answer_was')+' '+q.a;
+    if(q.type==='lineup'){
+      const yours=answers[i]||t('col_no_answer');
+      aEl.textContent=ok?'✓ '+t('col_lineup_correct',q.a):t('col_lineup_wrong',yours,q.a);
+    } else if(q.type==='alibi'){
+      const pv=answers[i]?answers[i].split(','):[];
+      const exp=q._expected||q.claims.map(c=>c.truth?'truth':'lie');
+      const numOk=exp.filter((ev,ci)=>pv[ci]===ev).length;
+      const verdictLine=`<div>${t('col_alibi_verdict',numOk,exp.length)}</div>`;
+      const claimLines=q.claims.map((claim,ci)=>{
+        const ev=exp[ci], player=pv[ci], match=player===ev;
+        const evLbl=ev==='truth'?t('col_truth'):t('col_lie');
+        const playerLbl=player?(player==='truth'?t('col_truth'):t('col_lie')):t('col_no_answer');
+        const ico=match?'✓':'✗';
+        const detail=match?` — ${evLbl} ${ico}`:`— ${t('col_you_said').toLowerCase()} ${playerLbl} · ${t('col_answer_was')} ${evLbl} ${ico}`;
+        return `<div class="col-alibi-result-row">${claim.text} ${detail}</div>`;
+      }).join('');
+      aEl.innerHTML=verdictLine+claimLines;
+    } else {
+      const yourAns=answers[i]==null||answers[i]===''?t('col_no_answer'):answers[i];
+      aEl.textContent=ok?'✓ '+q.a:t('col_you_said')+' '+yourAns+' · '+t('col_answer_was')+' '+q.a;
+    }
     body.appendChild(qEl); body.appendChild(aEl); row.appendChild(ico); row.appendChild(body);
     return {row, ok}; });
   if(animate){
@@ -1165,3 +1356,15 @@ function renderColStats(){
     <div class="stat-box"><div class="sv">${totalStars}/${COL_LEVELS.length*3}</div><div class="sl">⭐ Stars</div></div>`;
 }
 
+function applyAccent(text) {
+  const flavor = ["Слухай, ", "Чуєш, ", "Короче, ", "", "Та ти що, ", "Вай, ", "Ну йомайо, "];
+  const start = flavor[Math.floor(Math.random() * flavor.length)];
+
+  // Трохи змінюємо структуру під "акцент"
+  let result = text
+    .replace('На мені', 'На мені, значить,')
+    .replace('Я стояв', 'Я стояв собі')
+    .replace('Був', 'був');
+
+  return start + result.charAt(0).toLowerCase() + result.slice(1);
+}
