@@ -29,16 +29,21 @@ function applyLang() {
   // word memory static
   setTxt('wm-section-title', 'wm_section_title'); setTxt('wm-section-sub', 'wm_section_sub');
   setTxt('wm-training-head', 'wm_training_head');
-  const wmChg = document.getElementById('wm-change-btn'); if (wmChg) wmChg.textContent = t('spot_change_level');
+  const wmChg = document.getElementById('wm-change-btn'); if (wmChg) wmChg.textContent = '← ' + t('wm_recall_back_lbl');
   const wmRep = document.getElementById('wm-replay-btn'); if (wmRep) wmRep.textContent = t('math_replay');
   const wmNxt = document.getElementById('wm-next-btn'); if (wmNxt) wmNxt.textContent = t('math_next_level');
   const wmClr = document.getElementById('wm-clear-btn'); if (wmClr) wmClr.textContent = t('wm_clear');
   const wmSub = document.getElementById('wm-submit-btn'); if (wmSub) wmSub.textContent = t('wm_check');
+  const wmStopBtn = document.getElementById('wm-stop-btn'); if (wmStopBtn) wmStopBtn.innerHTML = '✕ ' + t('wm_stop_btn');
+  const wmRcBk = document.getElementById('wm-recall-back-lbl'); if (wmRcBk) wmRcBk.textContent = t('wm_recall_back_lbl');
+  const wmBwLbl = document.getElementById('wm-backwards-lbl'); if (wmBwLbl) wmBwLbl.textContent = t('wm_backwards_reminder');
+  const wmBwLbl2 = document.getElementById('wm-backwards-lbl-recall'); if (wmBwLbl2) wmBwLbl2.textContent = t('wm_backwards_reminder');
   // spot static
   setTxt('spot-section-title', 'spot_section_title'); setTxt('spot-section-sub', 'spot_section_sub');
   setTxt('spot-choose-pack-lbl', 'spot_choose_pack'); setTxt('spot-select-level-lbl', 'spot_select_level');
   setTxt('spot-streak-lbl', 'spot_streak_lbl');
   const spChg = document.getElementById('spot-change-btn'); if (spChg) spChg.textContent = t('spot_change_level');
+  const colReEx = document.getElementById('col-reexamine-lbl'); if (colReEx) colReEx.textContent = t('col_reexamine');
   // lobby static
   setTxt('lobby-title', 'pairs_lobby'); setTxt('lobby-conn-title', 'pairs_conn');
   setTxt('lobby-players-title', 'pairs_players'); setTxt('lobby-settings-title', 'pairs_settings');

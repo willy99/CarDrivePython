@@ -19,6 +19,12 @@ const SPOT_PACK_ICONS = {
   sports:'⚽', smileys:'😎', funpoop:'💩', cats:'😺',
 };
 
+function spotBack() {
+  try { clearInterval(spotTimer); spotTimer = null; } catch(e) {}
+  spotPhase = 'idle';
+  showSpotMenu();
+}
+
 function showSpotMenu() {
   showScreen('screen-spot');
   document.getElementById('spot-result-overlay').classList.remove('show');

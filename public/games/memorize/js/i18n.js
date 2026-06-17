@@ -29,6 +29,8 @@ const STRINGS = {
     wm_perfect:'✨ PERFECT RECALL! ✨', wm_sharp:'Sharp memory!', wm_keep:'Keep training!', wm_try:'Shake it off — try again!',
     wm_score_label:'Memory Score', wm_new_best:'NEW BEST!',
     wm_words_lbl:'words', wm_time_lbl:'s each',
+    wm_backwards_reminder:'Recall in REVERSE order!',
+    wm_start_btn:'Start', wm_type_badge:'Type mode', wm_stop_btn:'Stop',
     wm_day_streak:(n)=>`🔥 ${n} day streak`,
     wm_today:'Today', wm_recalled:'Recalled', wm_in_order:'In Order', wm_best_streak:'Best Streak',
     wm_wrong:'Wrong', wm_false_picks:'False Picks',
@@ -39,6 +41,7 @@ const STRINGS = {
     spot_section_title:'Object Spotting', spot_section_sub:'Memorize the scene — spot what\'s missing',
     spot_choose_pack:'CHOOSE PACK', spot_select_level:'SELECT LEVEL',
     spot_streak_lbl:'Streak', spot_change_level:'Change Level', spot_next_level:'Next Level →',
+    spot_back_lbl:'Levels', wm_recall_back_lbl:'Levels',
     spot_objects:'objects',
     spot_memorize_one:'Memorize the objects!', spot_memorize_multi:(n)=>`Memorize — find the ${n} missing!`,
     spot_eyes_closed:'Eyes closed!', spot_rearranging:'Objects are rearranging…',
@@ -191,7 +194,7 @@ const STRINGS = {
     diamond_hint_selected:(n,t)=>`${n} / ${t} dots`, diamond_clear:'Clear ↺',
     diamond_correct:'Pattern Matched! 💎', diamond_wrong:'Not quite…',
     diamond_correct_sub:(pts)=>`+${pts} XP · Difficulty up!`, diamond_wrong_sub:'Pattern shown — try again',
-    diamond_next:'Next Pattern →', diamond_menu:'Menu',
+    diamond_next:'Next Pattern →', diamond_next_level:'Next Level →', diamond_retry:'Try Again', diamond_menu:'Menu',
     diamond_stat_correct:'Correct', diamond_stat_total:'Total', diamond_stat_level:'Level', diamond_stat_grid:'Grid',
     // info popup for diamond
     info_diamond_title:'💎 Diamond',
@@ -212,6 +215,10 @@ const STRINGS = {
     col_daily_lbl:'Case of the Day', col_daily_open:'Open', col_daily_done:'Solved', col_daily_tag:'DAILY CASE',
     col_sec:'s', col_qmark:'Q',
     col_case_tag:(n)=>`CASE ${n}`, col_evidence_tag:'EVIDENCE',
+    col_crime_murder:(loc)=>`Murder at the ${loc}. Study every detail carefully.`,
+    col_crime_theft:(loc)=>`A theft was reported at the ${loc}. Inspect the scene.`,
+    col_crime_burglary:(loc)=>`Break-in at the ${loc}. What do you observe, detective?`,
+    col_back_quiz:'Back to questions',
     col_study_cap:'Take it all in, Lieutenant…', col_seen_enough:'I\'ve seen enough →',
     col_revealed_cap:'The scene, revealed', col_back_verdict:'Back to verdict',
     col_quiz_title:'The scene is gone.', col_quiz_sub:'What do you remember, detective?',
@@ -234,7 +241,7 @@ const STRINGS = {
     colq_door:'Was the door open or closed?',
     colq_setting:'Where did the scene take place?',
     colq_plant:'Was there a plant in the room?',
-    colq_pet:'Was there an animal in the room?',
+    colq_pet:'Was there an animal at the scene?',
     colq_glasses:'Was anyone wearing glasses?',
     colq_holding:'What was someone holding?',
     colq_rug:'What colour was the rug?',
@@ -243,7 +250,7 @@ const STRINGS = {
     colq_mirror_object:'The mirror revealed a hidden object. What was it?',
     colq_mirror_clock:'A clock was visible only in the mirror. What time did it show?',
     colq_watcher:'Someone was watching from outside the window. What colour was their coat?',
-    colq_clue:'What clue was left on the floor?',
+    colq_clue:'What clue was left at the scene?',
     colpos_only:'', colpos_left:'left-most', colpos_right:'right-most',
     // vocab: colours
     clr_red:'Red', clr_blue:'Blue', clr_green:'Green', clr_yellow:'Yellow', clr_purple:'Purple',
@@ -259,7 +266,7 @@ const STRINGS = {
     // vocab: painting
     cpaint_portrait:'A portrait', cpaint_landscape:'A landscape', cpaint_ship:'A ship', cpaint_abstract:'Abstract art',
     // vocab: setting
-    cset_lounge:'A lounge', cset_study:'A study', cset_cafe:'A café', cset_hotel:'A hotel room', cset_office:'An office',
+    cset_lounge:'lounge', cset_study:'study', cset_cafe:'café', cset_hotel:'hotel room', cset_office:'office', cset_street:'street', cset_park:'park',
     // vocab: pet
     cpet_cat:'A cat', cpet_dog:'A dog', cpet_none:'No animal',
     // vocab: clue
@@ -469,6 +476,8 @@ const STRINGS = {
     wm_perfect:'✨ ІДЕАЛЬНО! ✨', wm_sharp:'Чудово!', wm_keep:'Продовжуй тренуватись!', wm_try:'Спробуй ще раз!',
     wm_score_label:'Результат пам\'яті', wm_new_best:'НОВИЙ РЕКОРД!',
     wm_words_lbl:'слів', wm_time_lbl:'с кожне',
+    wm_backwards_reminder:'Відтворити У ЗВОРОТНОМУ порядку!',
+    wm_start_btn:'Старт', wm_type_badge:'Режим вводу', wm_stop_btn:'Стоп',
     wm_day_streak: (n) => `🔥 ${n} ${pluralUK(n, 'день', 'дні', 'днів')} поспіль`,
     wm_today:'Сьогодні', wm_recalled:'Відтворено', wm_in_order:'По порядку', wm_best_streak:'Найкраща серія',
     wm_wrong:'Помилки', wm_false_picks:'Зайві слова',
@@ -479,6 +488,7 @@ const STRINGS = {
     spot_section_title:'Знайди різницю', spot_section_sub:'Запам\'ятай сцену — знайди що зникло',
     spot_choose_pack:'ВИБЕРИ НАБІР', spot_select_level:'ВИБЕРИ РІВЕНЬ',
     spot_streak_lbl:'Серія', spot_change_level:'Змінити рівень', spot_next_level:'Наступний →',
+    spot_back_lbl:'Рівні', wm_recall_back_lbl:'Рівні',
     spot_objects:'об\'єктів',
     spot_memorize_one:'Запам\'ятай об\'єкти!', spot_memorize_multi:(n)=>`Запам\'ятай — знайди ${n} зниклих!`,
     spot_eyes_closed:'Заплющ очі!', spot_rearranging:'Переставляємо…',
@@ -631,7 +641,7 @@ const STRINGS = {
     diamond_hint_selected:(n,t)=>`${n} / ${t} точок`, diamond_clear:'Очистити ↺',
     diamond_correct:'Жест відтворено! 💎', diamond_wrong:'Не зовсім…',
     diamond_correct_sub:(pts)=>`+${pts} XP · Рівень підвищено!`, diamond_wrong_sub:'Дивись на правильний маршрут',
-    diamond_next:'Наступний →', diamond_menu:'Меню',
+    diamond_next:'Наступний →', diamond_next_level:'Наступний рівень →', diamond_retry:'Спробувати знов', diamond_menu:'Меню',
     diamond_stat_correct:'Правильно', diamond_stat_total:'Всього', diamond_stat_level:'Рівень', diamond_stat_grid:'Поле',
     // info popup for diamond
     info_diamond_title:'💎 Діамант',
@@ -652,6 +662,10 @@ const STRINGS = {
     col_daily_lbl:'Справа дня', col_daily_open:'Відкрити', col_daily_done:'Розкрито', col_daily_tag:'СПРАВА ДНЯ',
     col_sec:'с', col_qmark:'П',
     col_case_tag:(n)=>`СПРАВА ${n}`, col_evidence_tag:'ДОКАЗИ',
+    col_crime_murder:(loc)=>`Вбивство в ${loc}. Уважно вивчи кожну деталь.`,
+    col_crime_theft:(loc)=>`Крадіжка в ${loc}. Оглянь місце події.`,
+    col_crime_burglary:(loc)=>`Пограбування в ${loc}. Що помічаєш, детективе?`,
+    col_back_quiz:'Назад до питань',
     col_study_cap:'Роздивись усе, лейтенанте…', col_seen_enough:'Я побачив досить →',
     col_revealed_cap:'Сцена, відкрита', col_back_verdict:'До вироку',
     col_quiz_title:'Сцена зникла.', col_quiz_sub:'Що ти пам\'ятаєш, детективе?',
@@ -674,7 +688,7 @@ const STRINGS = {
     colq_door:'Двері були відчинені чи зачинені?',
     colq_setting:'Де відбувалася сцена?',
     colq_plant:'Чи була в кімнаті рослина?',
-    colq_pet:'Чи була в кімнаті тварина?',
+    colq_pet:'Чи була на місці події тварина?',
     colq_glasses:'Чи був хтось в окулярах?',
     colq_holding:'Що хтось тримав у руках?',
     colq_rug:'Якого кольору був килим?',
@@ -683,7 +697,7 @@ const STRINGS = {
     colq_mirror_object:'Дзеркало виявило прихований предмет. Що це було?',
     colq_mirror_clock:'Годинник було видно лише в дзеркалі. Котру годину він показував?',
     colq_watcher:'Хтось спостерігав знадвору. Якого кольору було його пальто?',
-    colq_clue:'Яку зачіпку залишили на підлозі?',
+    colq_clue:'Яку зачіпку знайшли на місці?',
     colpos_only:'цій', colpos_left:'крайній лівій', colpos_right:'крайній правій',
     // vocab: colours
     clr_red:'Червоний', clr_blue:'Синій', clr_green:'Зелений', clr_yellow:'Жовтий', clr_purple:'Фіолетовий',
@@ -699,7 +713,7 @@ const STRINGS = {
     // vocab: painting
     cpaint_portrait:'Портрет', cpaint_landscape:'Пейзаж', cpaint_ship:'Корабель', cpaint_abstract:'Абстракція',
     // vocab: setting
-    cset_lounge:'Вітальня', cset_study:'Кабінет', cset_cafe:'Кафе', cset_hotel:'Готельний номер', cset_office:'Офіс',
+    cset_lounge:'Вітальня', cset_study:'Кабінет', cset_cafe:'Кафе', cset_hotel:'Готельний номер', cset_office:'Офіс', cset_street:'Вулиця', cset_park:'Парк',
     // vocab: pet
     cpet_cat:'Кіт', cpet_dog:'Пес', cpet_none:'Тварини не було',
     // vocab: clue

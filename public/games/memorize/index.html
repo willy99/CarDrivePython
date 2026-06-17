@@ -242,7 +242,19 @@
       <button class="close-btn" onclick="goMenu()" title="← MemBrain">✕</button>
     </div>
     <div class="section-sub" id="wm-section-sub">Levels 1–6: pick the words · Levels 7–12: type them from memory</div>
-    <div class="level-grid" id="wm-level-grid"></div>
+    <!-- Level stepper -->
+    <div style="display:flex;align-items:center;justify-content:center;gap:18px;margin:24px 0 8px;">
+      <button class="btn" id="wm-level-down" onclick="wmStepLevel(-1)" style="width:48px;height:48px;font-size:1.4rem;padding:0;border-radius:50%;">▼</button>
+      <div style="text-align:center;">
+        <div id="wm-level-num" style="font-size:3.5rem;font-weight:900;line-height:1;color:var(--purpleL);">1</div>
+        <div id="wm-level-type-badge" style="font-size:.7rem;font-weight:800;color:var(--text3);letter-spacing:1px;margin-top:2px;"></div>
+      </div>
+      <button class="btn" id="wm-level-up" onclick="wmStepLevel(1)" style="width:48px;height:48px;font-size:1.4rem;padding:0;border-radius:50%;">▲</button>
+    </div>
+    <div id="wm-level-stars-row" style="text-align:center;margin-bottom:6px;font-size:1.1rem;"></div>
+    <div style="text-align:center;margin-bottom:18px;">
+      <button class="btn btn-primary" id="wm-start-btn" onclick="wmStartSelected()" style="padding:12px 40px;font-size:1rem;font-weight:900;">▶ <span id="wm-start-lbl">Start</span></button>
+    </div>
     <!-- Options toggle -->
     <div class="opts-toggle" onclick="toggleOpts('wm-opts')" id="wm-opts-toggle">
       <div class="opts-toggle-inner"><span>⚙️</span><span id="wm-opts-label">Options</span></div>
@@ -271,7 +283,11 @@
   </div>
   <!-- sub: memorize phase -->
   <div id="wm-memorize" style="display:none;width:100%;max-width:700px;padding:30px 20px;text-align:center;">
-    <button class="close-btn close-btn-float" onclick="backFromGame('wm')" title="← MemBrain">✕</button>
+    <div style="display:flex;gap:8px;justify-content:center;margin-bottom:12px;">
+      <button class="btn" id="wm-stop-btn" onclick="wmStop()" style="padding:6px 16px;font-size:.82rem;">✕ Stop</button>
+      <button class="btn" id="wm-home-btn" onclick="goMenu()" style="padding:6px 14px;font-size:.82rem;">🏠</button>
+    </div>
+    <div id="wm-backwards-banner" style="display:none;margin-bottom:10px;padding:6px 14px;background:rgba(124,58,237,.18);border-radius:8px;font-size:.82rem;font-weight:700;color:var(--purpleL);">↩️ <span id="wm-backwards-lbl">Recall BACKWARDS!</span></div>
     <div id="wm-title">GET READY</div>
     <div id="wm-word-display">&nbsp;</div>
     <div id="wm-progress"><div id="wm-progress-bar" style="width:0%"></div></div>
@@ -279,7 +295,11 @@
   </div>
   <!-- sub: recall phase -->
   <div id="wm-recall" style="display:none;width:100%;max-width:700px;padding:20px;text-align:center;">
-    <button class="close-btn close-btn-float" onclick="backFromGame('wm')" title="← MemBrain">✕</button>
+    <div style="display:flex;gap:8px;justify-content:center;margin-bottom:8px;">
+      <button class="btn" onclick="showWordMenu()" id="wm-recall-back-btn" style="padding:6px 16px;font-size:.82rem;">← <span id="wm-recall-back-lbl">Levels</span></button>
+      <button class="btn" onclick="goMenu()" style="padding:6px 14px;font-size:.82rem;">🏠</button>
+    </div>
+    <div id="wm-backwards-banner-recall" style="display:none;margin-bottom:8px;padding:5px 12px;background:rgba(124,58,237,.18);border-radius:8px;font-size:.82rem;font-weight:700;color:var(--purpleL);">↩️ <span id="wm-backwards-lbl-recall">Recall BACKWARDS!</span></div>
     <div class="section-title" style="margin-bottom:4px;" id="wm-recall-title">What did you see?</div>
     <div class="section-sub" id="wm-recall-sub">Click words in the order you remember them</div>
     <!-- pool mode -->
@@ -305,10 +325,9 @@
     <div class="stat-row" id="wm-stat-row"></div>
     <div class="compare-grid" id="wm-compare"></div>
     <div style="margin-top:20px;display:flex;gap:12px;justify-content:center;flex-wrap:wrap;">
-      <button class="btn" id="wm-change-btn" onclick="showWordMenu()">Change Level</button>
+      <button class="btn" id="wm-change-btn" onclick="showWordMenu()">← Levels</button>
       <button class="btn" id="wm-replay-btn" onclick="wmReplay()">Replay</button>
       <button class="btn btn-primary" id="wm-next-btn" onclick="wmNextLevel()">Next Level →</button>
-      <button class="share-btn" id="wm-share-btn" onclick="wmShareCard()">📤 Share</button>
     </div>
   </div>
 </div>
@@ -349,7 +368,7 @@
       <div style="display:flex;align-items:center;gap:8px;">
         <span style="font-size:.8rem;color:var(--text2);" id="spot-streak-lbl">Streak</span>
         <span style="font-weight:800;color:var(--goldL);" id="spot-streak">0</span>
-        <button class="close-btn" onclick="backFromGame('spot')" title="← MemBrain">✕</button>
+        <button class="close-btn" onclick="spotBack()" title="← Levels">✕</button>
       </div>
     </div>
     <div id="spot-canvas-wrap">
@@ -508,7 +527,6 @@
     <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap;">
       <button class="btn" id="spot-change-btn" onclick="showSpotMenu()">Change Level</button>
       <button class="btn btn-primary" id="spot-next-btn" onclick="spotNextLevel()">Next Level →</button>
-      <button class="share-btn" id="spot-share-btn" onclick="spotShareCard()">📤 Share</button>
     </div>
   </div>
 </div>
@@ -614,20 +632,14 @@
 <div id="screen-diamond" class="screen">
 
   <!-- Setup -->
-  <div id="diamond-select" style="text-align:center;padding:60px 20px 20px;width:100%;max-width:500px;margin:0 auto;">
+  <div id="diamond-select" style="text-align:center;padding:60px 20px 20px;width:100%;max-width:680px;margin:0 auto;">
     <div style="display:flex;align-items:center;justify-content:center;gap:6px;">
       <div class="section-title" id="diamond-section-title">Diamond</div>
       <button class="info-btn" onclick="showGameInfo('diamond')">ℹ</button>
       <button class="close-btn" onclick="goMenu()" title="← MemBrain">✕</button>
     </div>
     <div class="section-sub" id="diamond-section-sub">Memorize the gesture — trace it back from memory</div>
-    <div style="display:flex;gap:12px;justify-content:center;margin:24px 0 28px;flex-wrap:wrap;">
-      <div class="stat-box"><div class="sv" id="dmd-level-val">1</div><div class="sl" id="dmd-level-lbl">Level</div></div>
-      <div class="stat-box"><div class="sv" id="dmd-best-val">—</div><div class="sl" id="dmd-best-lbl">Best</div></div>
-      <div class="stat-box"><div class="sv" id="dmd-streak-val">0</div><div class="sl" id="dmd-streak-lbl">Streak</div></div>
-    </div>
-    <button class="btn btn-primary" onclick="diamondStart()" id="diamond-start-btn" style="width:100%;max-width:300px;padding:16px;font-size:1.05rem;font-weight:900;">▶ Start</button>
-    <div style="margin-top:14px;font-size:.78rem;color:var(--text3);" id="diamond-adapt-note">Difficulty adapts to your skill automatically</div>
+    <div class="level-grid" id="dmd-level-grid" style="margin-top:18px;"></div>
   </div>
 
   <!-- Game area -->
@@ -798,10 +810,11 @@
   <!-- sub: study phase -->
   <div id="col-study" style="display:none;width:100%;padding:14px 16px 20px;text-align:center;">
     <div class="col-stage-wrap">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
         <span class="tag tag-gold" id="col-case-tag">CASE 1</span>
-        <button class="close-btn" onclick="backFromGame('col')" title="← MemBrain">✕</button>
+        <button class="close-btn" onclick="showColomboMenu()" title="← Cases">✕</button>
       </div>
+      <div id="col-crime-lbl" style="font-size:.78rem;color:var(--goldL);font-style:italic;text-align:left;margin-bottom:6px;letter-spacing:.01em;"></div>
       <div class="col-scene-frame" id="col-scene"><div class="col-vignette"></div></div>
       <div class="col-timebar-wrap"><div class="col-timebar" id="col-timebar"></div></div>
       <div class="col-study-cap" id="col-study-cap">Take it all in…</div>
@@ -811,13 +824,14 @@
 
   <!-- sub: quiz phase -->
   <div id="col-quiz" style="display:none;width:100%;max-width:680px;margin:0 auto;padding:30px 18px 100px;text-align:center;">
-    <button class="close-btn close-btn-float" onclick="backFromGame('col')" title="← MemBrain">✕</button>
+    <button class="close-btn close-btn-float" onclick="showColomboMenu()" title="← Cases">✕</button>
     <div style="display:flex;align-items:center;justify-content:center;gap:6px;margin-bottom:4px;">
       <div class="section-title" id="col-quiz-title">The scene is gone.</div>
     </div>
     <div class="section-sub" id="col-quiz-sub" style="margin-bottom:18px;">What do you remember, detective?</div>
     <div id="col-quiz-list"></div>
-    <div style="margin-top:8px;">
+    <div style="margin-top:12px;display:flex;gap:10px;justify-content:center;flex-wrap:wrap;">
+      <button class="btn" id="col-reexamine-btn" onclick="colRevealFromQuiz()">👁 <span id="col-reexamine-lbl">Re-examine Scene</span></button>
       <button class="btn btn-primary" id="col-submit-btn" onclick="colSubmit()">Close the case →</button>
     </div>
   </div>
@@ -1020,23 +1034,23 @@
   </div>
 </div>
 
-<script src="js/i18n.js?v=5"></script>
-<script src="js/constants.js?v=5"></script>
-<script src="js/objects.js?v=5"></script>
-<script src="js/core.js?v=5"></script>
-<script src="js/word.js?v=5"></script>
-<script src="js/spot.js?v=5"></script>
-<script src="js/pairs.js?v=5"></script>
-<script src="js/math.js?v=5"></script>
-<script src="js/diamond.js?v=5"></script>
-<script src="js/longmemory.js?v=5"></script>
-<script src="js/systems.js?v=5"></script>
-<script src="js/pairs-ai.js?v=5"></script>
-<script src="js/math-extra.js?v=5"></script>
-<script src="js/colombo.js?v=5"></script>
-<script src="js/cipher.js?v=5"></script>
-<script src="js/waiter.js?v=5"></script>
-<script src="js/meeting.js?v=5"></script>
-<script src="js/init.js?v=5"></script>
+<script src="js/i18n.js?v=9"></script>
+<script src="js/constants.js?v=9"></script>
+<script src="js/objects.js?v=9"></script>
+<script src="js/core.js?v=9"></script>
+<script src="js/word.js?v=9"></script>
+<script src="js/spot.js?v=9"></script>
+<script src="js/pairs.js?v=9"></script>
+<script src="js/math.js?v=9"></script>
+<script src="js/diamond.js?v=9"></script>
+<script src="js/longmemory.js?v=9"></script>
+<script src="js/systems.js?v=9"></script>
+<script src="js/pairs-ai.js?v=9"></script>
+<script src="js/math-extra.js?v=9"></script>
+<script src="js/colombo.js?v=9"></script>
+<script src="js/cipher.js?v=9"></script>
+<script src="js/waiter.js?v=9"></script>
+<script src="js/meeting.js?v=9"></script>
+<script src="js/init.js?v=9"></script>
 </body>
 </html>

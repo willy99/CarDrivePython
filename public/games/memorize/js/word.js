@@ -1,7 +1,7 @@
 // ═══════════════════════════════════════════════════
 // WORD MEMORY MODE
 // ═══════════════════════════════════════════════════
-let wmLevel = 0, wmSequence = [], wmPool = [], wmSelected = [], wmTimers = [], wmMode = 'pool';
+let wmLevel = 0, wmSelectedLevel = 0, wmSequence = [], wmPool = [], wmSelected = [], wmTimers = [], wmMode = 'pool';
 let wordDiff = localStorage.getItem('membrain_wm_diff') || 'all';
 let wmRecallMode = localStorage.getItem('membrain_wm_recall') || 'normal';
 let wmAudioMode  = localStorage.getItem('membrain_wm_audio')  === 'on';
@@ -21,8 +21,6 @@ function showWordMenu() {
   document.getElementById('wm-recall').style.display = 'none';
   document.getElementById('wm-results').style.display = 'none';
   const stats = wmLoadStats();
-  const grid = document.getElementById('wm-level-grid');
-  grid.innerHTML = '';
 
   // Difficulty selector
   const diffLbl = document.getElementById('wm-diff-lbl');
@@ -88,20 +86,53 @@ function showWordMenu() {
   // Restore options panel open/close state
   restoreOpts('wm-opts');
 
-  WM_LEVELS.forEach((lv, i) => {
-    const stars = stats.stars?.[i] || 0;
-    const b = document.createElement('div');
-    b.className = 'level-btn' + (lv.mode === 'type' ? ' type-lv' : '');
-    b.onclick = () => wmStart(i);
-    let starStr = '';
-    for (let k = 0; k < 3; k++) starStr += `<span style="opacity:${k<stars?1:.25}">★</span>`;
-    b.innerHTML = `${lv.mode==='type'?'<span class="lv-badge">⌨️</span>':''}` +
-      `<span class="lv-num">${i+1}</span>` +
-      `<span class="lv-sub">${lv.words} ${t('wm_words_lbl')}<br>${(lv.time/1000).toFixed(1)} ${t('wm_time_lbl')}</span>` +
-      `<span class="lv-stars">${starStr}</span>`;
-    grid.appendChild(b);
-  });
+  wmUpdateStepper(stats);
   renderWmStats();
+}
+
+function wmUpdateStepper(stats) {
+  if (!stats) stats = wmLoadStats();
+  const i = wmSelectedLevel;
+  const lv = WM_LEVELS[i];
+  const stars = stats.stars?.[i] || 0;
+  const numEl = document.getElementById('wm-level-num');
+  const badgeEl = document.getElementById('wm-level-type-badge');
+  const starsEl = document.getElementById('wm-level-stars-row');
+  const downBtn = document.getElementById('wm-level-down');
+  const upBtn = document.getElementById('wm-level-up');
+  const startLbl = document.getElementById('wm-start-lbl');
+  if (numEl) numEl.textContent = i + 1;
+  if (badgeEl) badgeEl.textContent = lv.mode === 'type' ? '⌨️ ' + t('wm_type_badge') : '';
+  if (starsEl) {
+    let s = '';
+    for (let k = 0; k < 3; k++) s += `<span style="opacity:${k<stars?1:.2};color:var(--goldL);">★</span>`;
+    starsEl.innerHTML = s;
+  }
+  if (downBtn) downBtn.disabled = i === 0;
+  if (upBtn) upBtn.disabled = i === WM_LEVELS.length - 1;
+  if (startLbl) startLbl.textContent = t('wm_start_btn');
+}
+
+function wmStepLevel(dir) {
+  wmSelectedLevel = Math.max(0, Math.min(WM_LEVELS.length - 1, wmSelectedLevel + dir));
+  wmUpdateStepper();
+}
+
+function wmStartSelected() { wmStart(wmSelectedLevel); }
+
+function wmStop() {
+  wmTimers.forEach(clearTimeout); wmTimers = [];
+  speechSynthesis && speechSynthesis.cancel();
+  wmSelectedLevel = wmLevel;
+  showWordMenu();
+}
+
+function wmShowBackwardsBanner(show) {
+  const b1 = document.getElementById('wm-backwards-banner');
+  const b2 = document.getElementById('wm-backwards-banner-recall');
+  const lbl = t('wm_backwards_reminder');
+  if (b1) { b1.style.display = show ? '' : 'none'; const s = b1.querySelector('#wm-backwards-lbl'); if (s) s.textContent = lbl; }
+  if (b2) { b2.style.display = show ? '' : 'none'; const s = b2.querySelector('#wm-backwards-lbl-recall'); if (s) s.textContent = lbl; }
 }
 
 function wmStart(lvIdx) {
@@ -125,6 +156,7 @@ function wmStart(lvIdx) {
   document.getElementById('wm-memorize').style.display = 'block';
   document.getElementById('wm-recall').style.display = 'none';
   document.getElementById('wm-results').style.display = 'none';
+  wmShowBackwardsBanner(wmRecallMode === 'backwards');
 
   wmCountdown(() => wmRunMemorize(0, lv));
 }
@@ -190,6 +222,7 @@ function wmShowRecall() {
   setWordAlign(false);
   document.getElementById('wm-memorize').style.display = 'none';
   document.getElementById('wm-recall').style.display = 'block';
+  wmShowBackwardsBanner(wmRecallMode === 'backwards');
   const poolArea = document.getElementById('wm-pool-area');
   const typeArea = document.getElementById('wm-type-area');
   const clearBtn = document.getElementById('wm-clear-btn');
@@ -330,7 +363,6 @@ function wmSubmit() {
   document.getElementById('wm-stat-row').innerHTML = `
     <div class="stat-box"><div class="sv">${hits.length}/${seq.length}</div><div class="sl">${t('wm_recalled')}</div></div>
     <div class="stat-box"><div class="sv">${orderCorrect}</div><div class="sl">${t('wm_in_order')}</div></div>
-    <div class="stat-box"><div class="sv">×${bestStreak}</div><div class="sl">${t('wm_best_streak')}</div></div>
     <div class="stat-box"><div class="sv">${falsePos.length}</div><div class="sl">${wmMode==='type'?t('wm_wrong'):t('wm_false_picks')}</div></div>
   `;
   const compare = document.getElementById('wm-compare');
@@ -365,7 +397,7 @@ function wmSubmit() {
 }
 
 function wmReplay() { wmStart(wmLevel); }
-function wmNextLevel() { if (wmLevel < WM_LEVELS.length-1) wmStart(wmLevel+1); }
+function wmNextLevel() { if (wmLevel < WM_LEVELS.length-1) { wmSelectedLevel = wmLevel+1; wmStart(wmLevel+1); } }
 
 // ── word-mode local stats ──
 function wmLoadStats() { try { return JSON.parse(localStorage.getItem('membrain_word_v1')) || {}; } catch { return {}; } }

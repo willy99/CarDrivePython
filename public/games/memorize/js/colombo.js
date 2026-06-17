@@ -14,11 +14,13 @@ const COL_HELD=[
 const COL_OUTSIDE=['moon','tree','rain','city','watcher'];
 const COL_PAINT=['portrait','landscape','ship','abstract'];
 const COL_SETTINGS={
-  lounge:{wall:'#3a3550',floor:'#5a4434'},
-  study: {wall:'#46382c',floor:'#4a3526'},
-  cafe:  {wall:'#43505a',floor:'#6b5038'},
-  hotel: {wall:'#4a3a44',floor:'#574033'},
-  office:{wall:'#36424e',floor:'#52555c'},
+  lounge:{wall:'#56486a',floor:'#7a5848'},
+  study: {wall:'#6a5440',floor:'#6e4e38'},
+  cafe:  {wall:'#5a6e7c',floor:'#8c6848'},
+  hotel: {wall:'#6a4e60',floor:'#7a5648'},
+  office:{wall:'#4a5c6e',floor:'#6e7080'},
+  street:{wall:'#3a6898',floor:'#585e64',outdoor:true},
+  park:  {wall:'#3e7a64',floor:'#3a5e28',outdoor:true},
 };
 const COL_SETTING_KEYS=Object.keys(COL_SETTINGS);
 
@@ -59,9 +61,14 @@ function colBuild(seed, cfg){
   for(let i=0;i<nPeople;i++){
     people.push({
       skin: pick(COL_SKIN), hair: pick(COL_HAIR), hairStyle: Math.floor(rnd()*4),
-      shirt: pick(COL_COLORS), tie: chance(.32)?pick(COL_COLORS):null,
+      shirt: pick(COL_COLORS), pants: pick(COL_COLORS),
+      tie: chance(.28)?pick(COL_COLORS):null,
       glasses: chance(.3), mustache: chance(.22),
-      holding: chance(.4)?pick(COL_HELD):null,
+      holding: chance(.35)?pick(COL_HELD):null,
+      pose: Math.floor(rnd()*4),
+      hat: chance(.3) ? pick(['cap','fedora','beanie']) : null,
+      hScale: 0.88 + rnd() * 0.24, // Height: 0.88x to 1.12x
+      wScale: 0.85 + rnd() * 0.35, // Weight: 0.85x to 1.20x
     });
   }
   const clock = {present: chance(.82), h:1+Math.floor(rnd()*12), m:pick([0,15,30,45])};
@@ -85,9 +92,26 @@ let mirror = {present:false, reveals:null};
   const bag=[...COL_HELD]; const objects=[];
   for(let i=0;i<nObj && bag.length;i++){ const t=bag.splice(Math.floor(rnd()*bag.length),1)[0]; objects.push({type:t, color:pick(COL_COLORS)}); }
   const plant = chance(.6), lamp = chance(.5), pet = chance(.3)?pick(['cat','dog']):null, rug = {present:chance(.7), color:pick(COL_COLORS)};
-  let clue = {type:'none', color:pick(COL_COLORS), object:pick(COL_HELD)};
-  if(cfg.secret){ clue = {type:pick(['footprints','spill','dropped','none']), color:pick(COL_COLORS), object:pick(COL_HELD)}; }
-  return {seed,setting,pal,timeOfDay,people,clock,window:windo,painting,mirror,door,table:{objects},plant,lamp,pet,rug,clue,cfg};
+  const crimeType = pick(cfg.secret ? ['murder','theft','burglary'] : ['theft','burglary']);
+  let clue;
+  if (crimeType === 'murder') {
+    clue = {type: pick(['spill','dropped']), color: pick([['red','#c0392b'],['dark red','#8b0000']]), object: pick(['knife','glass','bottle'])};
+  } else if (crimeType === 'theft') {
+    clue = {type: pick(['footprints','dropped']), color: pick(COL_COLORS), object: pick(['key','envelope','watch','camera'])};
+  } else {
+    clue = {type: pick(['footprints','spill']), color: pick(COL_COLORS), object: pick(COL_HELD)};
+  }
+  return {seed,setting,pal,timeOfDay,people,
+    clock:     pal.outdoor ? {present:false} : clock,
+    window:    pal.outdoor ? {present:false} : windo,
+    painting:  pal.outdoor ? {present:false} : painting,
+    mirror:    pal.outdoor ? {present:false,reveals:null} : mirror,
+    door:      pal.outdoor ? {present:false} : door,
+    table:{objects},
+    plant:     pal.outdoor ? false : plant,
+    lamp, pet,
+    rug:       pal.outdoor ? {present:false} : rug,
+    clue, crime:crimeType, cfg};
 }
 
 // ── object drawer (sits on baseline yb) ──
@@ -214,6 +238,49 @@ function colSettingDecor(m, P) {
     P.push(`<rect x="580" y="230" width="140" height="100" fill="#ecf0f1" stroke="#bdc3c7" stroke-width="2"/><rect x="570" y="220" width="160" height="10" fill="#95a5a6"/><rect x="605" y="260" width="90" height="70" rx="4" fill="#2c3e50"/>`);
     P.push(`<path d="M650 330 Q630 290 650 270 Q670 290 650 330" fill="#e74c3c"/><path d="M650 330 Q640 300 650 290 Q660 300 650 330" fill="#f1c40f"/>`);
     P.push(`<rect x="625" y="320" width="50" height="10" rx="3" fill="#5d4037" transform="rotate(8 650 325)"/><rect x="625" y="320" width="50" height="10" rx="3" fill="#4e342e" transform="rotate(-8 650 325)"/>`);
+  } else if (s === 'street') {
+    // Left building
+    P.push(`<rect x="0" y="60" width="195" height="272" fill="#3a4858"/>`);
+    for(let wy=80;wy<310;wy+=44) for(let wx=18;wx<170;wx+=52){ const lit=(wy+wx)%88<58; P.push(`<rect x="${wx}" y="${wy}" width="32" height="22" rx="2" fill="${lit?'#f0d870':'#253040'}" opacity="${lit?.82:.65}"/>`); }
+    // Right building (taller)
+    P.push(`<rect x="590" y="30" width="210" height="302" fill="#2e3a4a"/>`);
+    for(let wy=52;wy<300;wy+=44) for(let wx=608;wx<785;wx+=52){ const lit=(wy*3+wx)%96<62; P.push(`<rect x="${wx}" y="${wy}" width="28" height="20" rx="2" fill="${lit?'#e8d060':'#1e2c3a'}" opacity="${lit?.78:.6}"/>`); }
+    // Mid building
+    P.push(`<rect x="310" y="130" width="175" height="202" fill="#344052"/>`);
+    for(let wy=150;wy<300;wy+=42) for(let wx=328;wx<465;wx+=46){ P.push(`<rect x="${wx}" y="${wy}" width="26" height="18" rx="2" fill="#f0d870" opacity=".68"/>`); }
+    // Street lamp
+    P.push(`<rect x="680" y="218" width="9" height="114" fill="#4a4a58"/>`);
+    P.push(`<path d="M689 218 q0 -32 32 -36" fill="none" stroke="#4a4a58" stroke-width="9" stroke-linecap="round"/>`);
+    P.push(`<ellipse cx="721" cy="182" rx="15" ry="9" fill="#ffe8a0" opacity=".88"/><ellipse cx="721" cy="176" rx="17" ry="5" fill="#5a5a68"/>`);
+    P.push(`<defs><radialGradient id="${m.seed}sg" cx=".5" cy=".5" r=".5"><stop offset="0" stop-color="rgba(255,230,140,.45)"/><stop offset="1" stop-color="rgba(255,230,140,0)"/></radialGradient></defs>`);
+    P.push(`<ellipse cx="721" cy="220" rx="90" ry="80" fill="url(#${m.seed}sg)"/>`);
+    // Bench
+    P.push(`<rect x="72" y="306" width="120" height="9" rx="3" fill="#8b6c3e"/><rect x="72" y="296" width="120" height="7" rx="3" fill="#9e7d4f"/>`);
+    P.push(`<rect x="76" y="315" width="9" height="22" rx="2" fill="#7a5c30"/><rect x="179" y="315" width="9" height="22" rx="2" fill="#7a5c30"/>`);
+  } else if (s === 'park') {
+    // Trees
+    const treeData=[[75,220,52,28],[185,200,60,30],[555,210,56,28],[670,195,64,32],[330,170,70,34]];
+    const treeGreen=['#2d7a32','#3a8c3e','#1c5e22','#4aaa50'];
+    treeData.forEach(([tx,ty,cr,th],i)=>{
+      P.push(`<rect x="${tx-5}" y="${ty}" width="10" height="${th+40}" fill="#5d4037"/>`);
+      P.push(`<ellipse cx="${tx}" cy="${ty-8}" rx="${cr}" ry="${cr*.68}" fill="${treeGreen[i%4]}" opacity=".92"/>`);
+      P.push(`<ellipse cx="${tx-12}" cy="${ty+12}" rx="${cr*.58}" ry="${cr*.44}" fill="${treeGreen[(i+2)%4]}" opacity=".72"/>`);
+      P.push(`<ellipse cx="${tx+10}" cy="${ty+8}" rx="${cr*.5}" ry="${cr*.38}" fill="${treeGreen[(i+1)%4]}" opacity=".6"/>`);
+    });
+    // Paved path
+    P.push(`<path d="M340 332 L295 500 L505 500 L460 332 Z" fill="#c8b98a" opacity=".38"/>`);
+    // Bench
+    P.push(`<rect x="108" y="302" width="125" height="9" rx="3" fill="#8b5e3c"/><rect x="108" y="292" width="125" height="7" rx="3" fill="#9e6d4a"/>`);
+    P.push(`<rect x="112" y="311" width="9" height="24" rx="2" fill="#7a4e2e"/><rect x="220" y="311" width="9" height="24" rx="2" fill="#7a4e2e"/>`);
+    // Flowers
+    [[185,308,'#ff6b9d'],[235,318,'#ffb700'],[578,312,'#ff5555'],[618,306,'#a855f7']].forEach(([fx,fy,fc])=>{
+      P.push(`<circle cx="${fx}" cy="${fy}" r="7" fill="${fc}" opacity=".82"/>`);
+      P.push(`<rect x="${fx-1.5}" y="${fy+4}" width="3" height="18" rx="1.5" fill="#2e7d32"/>`);
+    });
+    // Fountain (background center)
+    P.push(`<ellipse cx="490" cy="270" rx="36" ry="14" fill="#5aaccc" opacity=".55" stroke="#3e90b0" stroke-width="2"/>`);
+    P.push(`<rect x="487" y="240" width="6" height="30" fill="#8bb8c8"/>`);
+    P.push(`<path d="M490 240 q-10 -18 -14 -30 q8 2 14 8 q6 -6 14 -8 q-4 12 -14 30" fill="#5aaccc" opacity=".7"/>`);
   }
 }
 
@@ -228,8 +295,13 @@ function colRender(m){
     <clipPath id="${U}win"><rect x="98" y="58" width="120" height="138"/></clipPath></defs>`);
   P.push(`<rect x="0" y="0" width="${W}" height="${wallH}" fill="url(#${U}w)"/>`);
   P.push(`<rect x="0" y="${wallH}" width="${W}" height="${H-wallH}" fill="url(#${U}f)"/>`);
-  P.push(`<rect x="0" y="${wallH-12}" width="${W}" height="12" fill="${colShade(pal.wall,.62)}"/>`);
-  for(let x=70;x<W;x+=90) P.push(`<line x1="${x}" y1="${wallH}" x2="${x-46}" y2="${H}" stroke="${colShade(pal.floor,.6)}" stroke-width="2" opacity=".35"/>`);
+  if (!pal.outdoor) {
+    P.push(`<rect x="0" y="${wallH-12}" width="${W}" height="12" fill="${colShade(pal.wall,.62)}"/>`);
+    for(let x=70;x<W;x+=90) P.push(`<line x1="${x}" y1="${wallH}" x2="${x-46}" y2="${H}" stroke="${colShade(pal.floor,.6)}" stroke-width="2" opacity=".35"/>`);
+  } else {
+    P.push(`<rect x="0" y="${wallH-3}" width="${W}" height="5" fill="${colShade(pal.floor,1.5)}" opacity=".45"/>`);
+    if (m.setting==='street') for(let x=80;x<W;x+=130) P.push(`<rect x="${x}" y="${wallH+48}" width="72" height="7" rx="3" fill="#e4dfc0" opacity=".3"/>`);
+  }
 
   // ── wall décor ──
   if(m.window.present){
@@ -251,6 +323,7 @@ function colRender(m){
     const cx=292,cy=86,r=28; const ha=((m.clock.h%12)/12 + m.clock.m/720)*2*Math.PI - Math.PI/2; const ma=(m.clock.m/60)*2*Math.PI - Math.PI/2;
     P.push(`<circle cx="${cx}" cy="${cy}" r="${r+4}" fill="${colShade(pal.wall,.5)}"/><circle cx="${cx}" cy="${cy}" r="${r}" fill="#f6f3ea" stroke="#2a2a30" stroke-width="2.5"/>`);
     for(let i=0;i<12;i++){ const a=i/12*2*Math.PI; P.push(`<line x1="${cx+Math.cos(a)*(r-4)}" y1="${cy+Math.sin(a)*(r-4)}" x2="${cx+Math.cos(a)*(r-1)}" y2="${cy+Math.sin(a)*(r-1)}" stroke="#555" stroke-width="1.5"/>`); }
+    [[12,-Math.PI/2],[3,0],[6,Math.PI/2],[9,Math.PI]].forEach(([h,a])=>{ const nr=r-10; P.push(`<text x="${cx+Math.cos(a)*nr}" y="${cy+Math.sin(a)*nr}" text-anchor="middle" dominant-baseline="middle" fill="#333" font-size="7" font-weight="700" font-family="system-ui">${h}</text>`); });
     P.push(`<line x1="${cx}" y1="${cy}" x2="${cx+Math.cos(ha)*(r*0.5)}" y2="${cy+Math.sin(ha)*(r*0.5)}" stroke="#222" stroke-width="3.5" stroke-linecap="round"/>`);
     P.push(`<line x1="${cx}" y1="${cy}" x2="${cx+Math.cos(ma)*(r*0.8)}" y2="${cy+Math.sin(ma)*(r*0.8)}" stroke="#222" stroke-width="2" stroke-linecap="round"/><circle cx="${cx}" cy="${cy}" r="2.5" fill="#222"/>`);
   }
@@ -338,45 +411,135 @@ function colRender(m){
   else if(m.clue.type==='dropped') P.push(`<g opacity=".95">${colObj(m.clue.object,210,470,m.clue.color[1])}</g>`);
 
   // time-of-day overlay
-  if(m.timeOfDay==='night') P.push(`<rect x="0" y="0" width="${W}" height="${H}" fill="#0a1028" opacity=".42"/>`);
-  else if(m.timeOfDay==='dusk') P.push(`<rect x="0" y="0" width="${W}" height="${H}" fill="#3a1e44" opacity=".2"/>`);
-  if(m.lamp){ P.push(`<defs><radialGradient id="${U}lg" cx="0.5" cy="0.4" r="0.6"><stop offset="0" stop-color="rgba(255,224,150,.4)"/><stop offset="1" stop-color="rgba(255,224,150,0)"/></radialGradient></defs>`);
+  if(m.timeOfDay==='night') P.push(`<rect x="0" y="0" width="${W}" height="${H}" fill="#0a1028" opacity=".28"/>`);
+  else if(m.timeOfDay==='dusk') P.push(`<rect x="0" y="0" width="${W}" height="${H}" fill="#3a1e44" opacity=".13"/>`);
+  if(m.lamp && !pal.outdoor){ P.push(`<defs><radialGradient id="${U}lg" cx="0.5" cy="0.4" r="0.6"><stop offset="0" stop-color="rgba(255,224,150,.4)"/><stop offset="1" stop-color="rgba(255,224,150,0)"/></radialGradient></defs>`);
     P.push(`<ellipse cx="660" cy="300" rx="150" ry="170" fill="url(#${U}lg)"/>`);
     P.push(`<rect x="654" y="300" width="12" height="118" fill="#3a3a44"/><path d="M636 300 l48 0 l-10 -34 l-28 0 z" fill="#e6c264"/><ellipse cx="660" cy="420" rx="26" ry="7" fill="#2a2a34"/>`); }
   P.push(`</svg>`);
   return P.join('');
 }
 
-function colPerson(P,px,p){
-  const skin=p.skin, hair=p.hair[1], shirt=p.shirt[1];
-  const headY=250, headR=27;
-  P.push(`<ellipse cx="${px}" cy="432" rx="40" ry="9" fill="rgba(0,0,0,.26)"/>`);
-  // legs
-  P.push(`<rect x="${px-17}" y="360" width="13" height="72" rx="5" fill="#33323c"/><rect x="${px+4}" y="360" width="13" height="72" rx="5" fill="#33323c"/>`);
-  // arms behind
-  P.push(`<rect x="${px-38}" y="292" width="15" height="74" rx="7" fill="${colShade(shirt,.85)}"/>`);
-  // torso
-  P.push(`<path d="M${px-30} 300 q-2 -18 14 -22 l32 0 q16 4 14 22 l0 66 l-60 0 z" fill="${shirt}"/>`);
-  // collar
-  P.push(`<path d="M${px-12} 282 l12 16 l12 -16 l-6 -4 l-6 6 l-6 -6 z" fill="${colShade(shirt,1.15)}"/>`);
-  if(p.tie) P.push(`<path d="M${px} 290 l-5 8 l5 34 l5 -34 z" fill="${p.tie[1]}"/>`);
-  // right arm (holding?)
-  if(p.holding){ P.push(`<rect x="${px+24}" y="300" width="14" height="44" rx="7" fill="${shirt}" transform="rotate(28 ${px+24} 300)"/>`); P.push(`<g>${colObj(p.holding,px+48,352,COL_COLORS[6][1])}</g>`); }
-  else P.push(`<rect x="${px+23}" y="292" width="15" height="74" rx="7" fill="${colShade(shirt,.85)}"/>`);
-  // neck + head
-  P.push(`<rect x="${px-7}" y="270" width="14" height="20" fill="${skin}"/>`);
-  P.push(`<circle cx="${px-26}" cy="${headY}" r="5" fill="${skin}"/><circle cx="${px+26}" cy="${headY}" r="5" fill="${skin}"/>`);
+function colPerson(P, px, p) {
+  const skin = p.skin, hair = p.hair[1], shirt = p.shirt[1];
+  const pants = p.pants ? colShade(p.pants[1], 0.78) : '#33323c';
+
+  const hScale = p.hScale || 1.0;
+  const wScale = p.wScale || 1.0;
+  const pose = p.pose || 0;
+
+  const headY = 250;
+  const headR = 25; // Proportional head radius
+
+  // Dynamic joint anchors based on weight scale
+  const sX = 24 * wScale; // Shoulder distance from center
+  const sY = 282;         // Shoulder Y-height
+  const armW = Math.max(10, 14 * wScale);
+
+  // Shadow (Grounded)
+  P.push(`<ellipse cx="${px}" cy="432" rx="${Math.round(35 * wScale * hScale)}" ry="8" fill="rgba(0,0,0,.26)"/>`);
+
+  // Scale Group (Grounded at feet: 430)
+  P.push(`<g transform="translate(0,${Math.round(430 * (1 - hScale) * 10) / 10}) scale(1,${hScale})">`);
+
+  // 1. Back Hair (Drawn behind the body for long hair styles)
+  if (p.hairStyle === 1) {
+    P.push(`<path d="M${px-headR-2} ${headY} L${px-headR-4} ${headY+45} Q${px} ${headY+50} ${px+headR+4} ${headY+45} L${px+headR+2} ${headY}" fill="${hair}"/>`);
+  }
+
+  // 2. Legs
+  P.push(`<rect x="${px - 14 * wScale}" y="350" width="${12 * wScale}" height="82" rx="4" fill="${pants}"/>`);
+  P.push(`<rect x="${px + 2 * wScale}" y="350" width="${12 * wScale}" height="82" rx="4" fill="${pants}"/>`);
+
+  // 3. Arms (Kinematic Paths)
+  let lArm = '', rArm = '';
+  const elY = 320, wY = 356; // Elbow and Wrist Y-heights
+
+  if (pose === 0) { // Relaxed down
+    lArm = `<path d="M${px-sX} ${sY} Q${px-sX-8} ${elY} ${px-sX-3} ${wY}" fill="none" stroke="${colShade(shirt,.85)}" stroke-width="${armW}" stroke-linecap="round"/>`;
+    rArm = `<path d="M${px+sX} ${sY} Q${px+sX+8} ${elY} ${px+sX+3} ${wY}" fill="none" stroke="${colShade(shirt,.85)}" stroke-width="${armW}" stroke-linecap="round"/>`;
+  } else if (pose === 1) { // Left hand on hip
+    lArm = `<path d="M${px-sX} ${sY} L${px-sX-16} ${elY} L${px-sX+2} ${wY-14}" fill="none" stroke="${colShade(shirt,.85)}" stroke-width="${armW}" stroke-linecap="round" stroke-linejoin="round"/>`;
+    rArm = `<path d="M${px+sX} ${sY} Q${px+sX+8} ${elY} ${px+sX+3} ${wY}" fill="none" stroke="${colShade(shirt,.85)}" stroke-width="${armW}" stroke-linecap="round"/>`;
+  } else if (pose === 2) { // Arms Crossed
+    lArm = `<path d="M${px-sX} ${sY} L${px-sX-5} ${elY} L${px+8} ${elY+12}" fill="none" stroke="${colShade(shirt,.9)}" stroke-width="${armW}" stroke-linecap="round" stroke-linejoin="round"/>`;
+    rArm = `<path d="M${px+sX} ${sY} L${px+sX+5} ${elY} L${px-12} ${elY+18}" fill="none" stroke="${colShade(shirt,.8)}" stroke-width="${armW}" stroke-linecap="round" stroke-linejoin="round"/>`;
+  } else { // Both hands on hips
+    lArm = `<path d="M${px-sX} ${sY} L${px-sX-16} ${elY} L${px-sX+4} ${wY-14}" fill="none" stroke="${colShade(shirt,.85)}" stroke-width="${armW}" stroke-linecap="round" stroke-linejoin="round"/>`;
+    rArm = `<path d="M${px+sX} ${sY} L${px+sX+16} ${elY} L${px+sX-4} ${wY-14}" fill="none" stroke="${colShade(shirt,.85)}" stroke-width="${armW}" stroke-linecap="round" stroke-linejoin="round"/>`;
+  }
+
+  let holdingG = '';
+  if (p.holding) {
+    // Override right arm to naturally bend and hold the object
+    rArm = `<path d="M${px+sX} ${sY} L${px+sX+12} ${elY} L${px+sX+18} ${wY-24}" fill="none" stroke="${colShade(shirt,.85)}" stroke-width="${armW}" stroke-linecap="round" stroke-linejoin="round"/>`;
+    holdingG = `<g opacity="1">${colObj(p.holding, px+sX+22, wY-30, COL_COLORS[6][1])}</g>`;
+  }
+
+  P.push(lArm);
+  P.push(rArm);
+
+  // 4. Torso (Bridges the shoulders smoothly)
+  P.push(`<path d="M${px-sX-armW/4} ${sY} Q${px} ${sY-10} ${px+sX+armW/4} ${sY} L${px+sX-4} 355 L${px-sX+4} 355 Z" fill="${shirt}"/>`);
+
+  // Collar & Tie
+  P.push(`<path d="M${px-10} 276 L${px} 286 L${px+10} 276 Z" fill="${colShade(shirt,1.15)}"/>`);
+  if (p.tie) P.push(`<path d="M${px} 280 L${px-4} 286 L${px} 325 L${px+4} 286 Z" fill="${p.tie[1]}"/>`);
+
+  // Draw held object overlapping the torso
+  if (holdingG) P.push(holdingG);
+
+  // 5. Neck
+  P.push(`<rect x="${px-6}" y="260" width="12" height="20" fill="${skin}"/>`);
+
+  // 6. Head
   P.push(`<circle cx="${px}" cy="${headY}" r="${headR}" fill="${skin}"/>`);
-  // hair
-  if(p.hairStyle===0) P.push(`<path d="M${px-27} ${headY-2} q0 -30 27 -30 q27 0 27 30 q-14 -16 -27 -14 q-13 -2 -27 14 z" fill="${hair}"/>`);
-  else if(p.hairStyle===1){ P.push(`<path d="M${px-27} ${headY-2} q0 -30 27 -30 q27 0 27 30 q-14 -16 -27 -14 q-13 -2 -27 14 z" fill="${hair}"/>`); P.push(`<rect x="${px-30}" y="${headY-6}" width="9" height="42" rx="4" fill="${hair}"/><rect x="${px+21}" y="${headY-6}" width="9" height="42" rx="4" fill="${hair}"/>`); }
-  else if(p.hairStyle===3){ P.push(`<ellipse cx="${px}" cy="${headY-22}" rx="36" ry="8" fill="#2a2730"/><path d="M${px-19} ${headY-22} q0 -26 19 -26 q19 0 19 26 z" fill="#36323e"/><rect x="${px-19}" y="${headY-25}" width="38" height="6" fill="#1f1d25"/>`); }
-  // face
-  P.push(`<ellipse cx="${px-9}" cy="${headY-1}" rx="2.6" ry="3.4" fill="#1c1c24"/><ellipse cx="${px+9}" cy="${headY-1}" rx="2.6" ry="3.4" fill="#1c1c24"/>`);
-  P.push(`<path d="M${px-3} ${headY+5} q3 3 6 0" fill="none" stroke="${colShade(skin,.7)}" stroke-width="1.4"/>`);
-  P.push(`<path d="M${px-7} ${headY+12} q7 5 14 0" fill="none" stroke="#9b4a3a" stroke-width="1.8" stroke-linecap="round"/>`);
-  if(p.mustache) P.push(`<path d="M${px-8} ${headY+9} q8 4 16 0" fill="none" stroke="${hair}" stroke-width="3.4" stroke-linecap="round"/>`);
-  if(p.glasses) P.push(`<circle cx="${px-9}" cy="${headY-1}" r="7" fill="none" stroke="#20242c" stroke-width="1.6"/><circle cx="${px+9}" cy="${headY-1}" r="7" fill="none" stroke="#20242c" stroke-width="1.6"/><line x1="${px-2}" y1="${headY-1}" x2="${px+2}" y2="${headY-1}" stroke="#20242c" stroke-width="1.6"/>`);
+
+  // 7. Front Hair (Overlays the face)
+  if (p.hairStyle === 0) { // Buzz cut / Коротке волосся
+    P.push(`<path d="M${px-22} ${headY-12} A ${headR} ${headR} 0 0 1 ${px+22} ${headY-12} Q ${px} ${headY-20} ${px-22} ${headY-12}" fill="${hair}"/>`);
+  } else if (p.hairStyle === 1) { // Long hair bangs / Чубчик для довгого волосся
+    P.push(`<path d="M${px-24} ${headY-7} A ${headR} ${headR} 0 0 1 ${px+24} ${headY-7} Q ${px+12} ${headY-18} ${px} ${headY-14} Q ${px-12} ${headY-18} ${px-24} ${headY-7}" fill="${hair}"/>`);
+  } else if (p.hairStyle === 2) { // Curly / Афро
+    for(let a=0; a<7; a++) {
+      const aa = Math.PI + (a/6)*Math.PI;
+      P.push(`<circle cx="${px + Math.cos(aa)*20}" cy="${headY + Math.sin(aa)*15 - 5}" r="11" fill="${hair}"/>`);
+    }
+    P.push(`<circle cx="${px}" cy="${headY-16}" r="14" fill="${hair}"/>`);
+    // Легка лінія росту волосся, щоб не було залисин між кульками афро
+    P.push(`<path d="M${px-20} ${headY-14} Q ${px} ${headY-18} ${px+20} ${headY-14} L ${px} ${headY-25} Z" fill="${hair}"/>`);
+  } else if (p.hairStyle === 3) { // Flat top / Флет-топ (майданчик)
+    P.push(`<path d="M${px-21} ${headY-14} A ${headR} ${headR} 0 0 1 ${px+21} ${headY-14} L ${px+18} ${headY-26} L ${px-18} ${headY-26} Z" fill="${hair}"/>`);
+  }
+
+  // 8. Hat (Overrides top hair)
+  if (p.hat === 'cap') {
+    P.push(`<path d="M${px-24} ${headY-12} Q${px} ${headY-28} ${px+24} ${headY-12} Z" fill="${hair}"/>`);
+    P.push(`<rect x="${px-26}" y="${headY-12}" width="56" height="6" rx="3" fill="${colShade(hair,.82)}"/>`);
+    P.push(`<rect x="${px-26}" y="${headY-12}" width="20" height="5" rx="2" fill="${colShade(hair,.7)}"/>`);
+  } else if (p.hat === 'fedora') {
+    P.push(`<path d="M${px-18} ${headY-14} Q${px} ${headY-36} ${px+18} ${headY-14} Z" fill="${colShade(hair,.72)}"/>`);
+    P.push(`<rect x="${px-30}" y="${headY-14}" width="60" height="5" rx="2.5" fill="${colShade(hair,.80)}"/>`);
+    P.push(`<rect x="${px-18}" y="${headY-16}" width="36" height="4" fill="${colShade(hair,.62)}"/>`);
+  } else if (p.hat === 'beanie') {
+    P.push(`<path d="M${px-25} ${headY-4} Q${px} ${headY-34} ${px+25} ${headY-4} Z" fill="${hair}"/>`);
+    P.push(`<rect x="${px-26}" y="${headY-6}" width="52" height="8" rx="4" fill="${colShade(hair,.85)}"/>`);
+    P.push(`<circle cx="${px}" cy="${headY-24}" r="5" fill="${colShade(hair,1.12)}"/>`);
+  }
+
+  // 9. Face details
+  P.push(`<circle cx="${px-8}" cy="${headY+2}" r="2.5" fill="#1c1c24"/><circle cx="${px+8}" cy="${headY+2}" r="2.5" fill="#1c1c24"/>`);
+  P.push(`<path d="M${px-3} ${headY+8} Q${px} ${headY+12} ${px+3} ${headY+8}" fill="none" stroke="${colShade(skin,.6)}" stroke-width="1.5"/>`); // Nose
+  P.push(`<path d="M${px-6} ${headY+16} Q${px} ${headY+20} ${px+6} ${headY+16}" fill="none" stroke="#a35849" stroke-width="1.5" stroke-linecap="round"/>`); // Mouth
+
+  if (p.mustache) P.push(`<path d="M${px-10} ${headY+13} Q${px} ${headY+9} ${px+10} ${headY+13}" fill="none" stroke="${hair}" stroke-width="3" stroke-linecap="round"/>`);
+  if (p.glasses) {
+    P.push(`<circle cx="${px-8}" cy="${headY+2}" r="6" fill="none" stroke="#20242c" stroke-width="1.8"/>`);
+    P.push(`<circle cx="${px+8}" cy="${headY+2}" r="6" fill="none" stroke="#20242c" stroke-width="1.8"/>`);
+    P.push(`<line x1="${px-2}" y1="${headY+2}" x2="${px+2}" y2="${headY+2}" stroke="#20242c" stroke-width="1.8"/>`);
+  }
+
+  P.push(`</g>`);
 }
 function colObjEl(P,type,x,yb,hex){ P.push(`<ellipse cx="${x}" cy="${yb-1}" rx="17" ry="4" fill="rgba(0,0,0,.2)"/>`); P.push(colObj(type,x,yb,hex)); }
 
@@ -411,8 +574,8 @@ function colQuestions(m,cfg){
   if(m.door.present) core.push({q:t('colq_door'),a:m.door.open?t('col_open'):t('col_closed'),choices:[t('col_open'),t('col_closed')],accept:[(m.door.open?t('col_open'):t('col_closed')).toLowerCase()]});
   // setting
   core.push(poolQ(t('colq_setting'), m.setting, COL_SETTING_KEYS, k=>colName('set',k)));
-  // plant
-  core.push(ynQ(t('colq_plant'), m.plant));
+  // plant (skip for outdoor — plant is always absent and question is nonsensical)
+  if (!m.pal.outdoor) core.push(ynQ(t('colq_plant'), m.plant));
   // pet
   { const correct=m.pet||'none'; const choices=[t('cpet_cat'),t('cpet_dog'),t('cpet_none')]; core.push({q:t('colq_pet'),a:t('cpet_'+correct),choices,accept:[t('cpet_'+correct).toLowerCase()]}); }
   // glasses
@@ -522,6 +685,8 @@ function colStart(lvIdx, fixedSeed){
   document.getElementById('col-results').style.display='none';
   document.getElementById('col-case-tag').textContent = (fixedSeed!=null?t('col_daily_tag'):t('col_case_tag',(lvIdx==null?colLevel:lvIdx)+1));
   const frame=document.getElementById('col-scene'); frame.innerHTML=colRender(model)+'<div class="col-vignette"></div>';
+  const crimeLbl=document.getElementById('col-crime-lbl');
+  if(crimeLbl){ crimeLbl.textContent=t('col_crime_'+model.crime, t('cset_'+model.setting)); crimeLbl.style.display=''; }
   document.getElementById('col-study-cap').textContent=t('col_study_cap');
   document.getElementById('col-ready-btn').textContent=t('col_seen_enough');
   document.getElementById('col-ready-btn').onclick=colStartQuiz;
@@ -624,15 +789,31 @@ function colShowResults(animate){
   document.getElementById('col-next-btn').textContent=t('math_next_level');
 }
 
-function colReplayReveal(){
+function colShowStudyReveal(returnFn) {
   if(!colCurrent) return;
-  document.getElementById('col-results').style.display='none';
   document.getElementById('col-study').style.display='block';
   const frame=document.getElementById('col-scene'); frame.innerHTML=colRender(colCurrent.model)+'<div class="col-vignette"></div>';
   document.getElementById('col-timebar').parentElement.style.visibility='hidden';
+  const crimeLbl=document.getElementById('col-crime-lbl'); if(crimeLbl) crimeLbl.style.display='none';
   document.getElementById('col-study-cap').textContent=t('col_revealed_cap');
   document.getElementById('col-case-tag').textContent=t('col_evidence_tag');
-  const rb=document.getElementById('col-ready-btn'); rb.textContent=t('col_back_verdict'); rb.onclick=()=>{ document.getElementById('col-timebar').parentElement.style.visibility='visible'; colShowResults(); };
+  const rb=document.getElementById('col-ready-btn'); rb.textContent=t('col_back_verdict'); rb.onclick=returnFn;
+}
+
+function colReplayReveal(){
+  if(!colCurrent) return;
+  document.getElementById('col-results').style.display='none';
+  colShowStudyReveal(()=>{ document.getElementById('col-timebar').parentElement.style.visibility='visible'; colShowResults(); });
+}
+
+function colRevealFromQuiz(){
+  if(!colCurrent) return;
+  document.getElementById('col-quiz').style.display='none';
+  colShowStudyReveal(()=>{
+    document.getElementById('col-timebar').parentElement.style.visibility='visible';
+    document.getElementById('col-study').style.display='none';
+    document.getElementById('col-quiz').style.display='block';
+  });
 }
 function colNextCase(){ colLevel=Math.min(COL_LEVELS.length-1, (colCurrent?colCurrent.lvIdx:colLevel)+1); colStart(colLevel); }
 

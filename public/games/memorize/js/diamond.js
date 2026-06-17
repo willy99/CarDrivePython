@@ -2,14 +2,32 @@
 // DIAMOND GAME
 // ═══════════════════════════════════════════════════
 const DIAMOND_LEVELS = [
-  {grid:2,len:3,showMs:3500},{grid:2,len:4,showMs:3500},
-  {grid:3,len:4,showMs:3500},{grid:3,len:5,showMs:3000},{grid:3,len:6,showMs:3000},
-  {grid:3,len:7,showMs:2500},{grid:3,len:8,showMs:2500},{grid:3,len:9,showMs:2000},
-  {grid:4,len:6,showMs:3000},{grid:4,len:8,showMs:2800},{grid:4,len:10,showMs:2500},
-  {grid:4,len:12,showMs:2000},{grid:4,len:14,showMs:1800},{grid:4,len:16,showMs:1600},
-  {grid:5,len:8,showMs:3000},{grid:5,len:12,showMs:2500},{grid:5,len:16,showMs:2000},
-  {grid:5,len:20,showMs:1800},{grid:5,len:25,showMs:1500},
+  // 2×2 grid (1-2)
+  {grid:2,len:3,showMs:5000},{grid:2,len:4,showMs:5000},
+  // 3×3 grid (3-8)
+  {grid:3,len:3,showMs:5000},{grid:3,len:4,showMs:5000},
+  {grid:3,len:5,showMs:5000},{grid:3,len:6,showMs:4500},
+  {grid:3,len:7,showMs:4000},{grid:3,len:8,showMs:3500},
+  // 4×4 grid (9-15)
+  {grid:4,len:4,showMs:6000},{grid:4,len:5,showMs:5500},
+  {grid:4,len:6,showMs:5000},{grid:4,len:7,showMs:4500},
+  {grid:4,len:8,showMs:4000},{grid:4,len:9,showMs:3500},
+  {grid:4,len:10,showMs:3000},
+  // 5×5 grid (16-22)
+  {grid:5,len:5,showMs:6000},{grid:5,len:7,showMs:5500},
+  {grid:5,len:9,showMs:5000},{grid:5,len:11,showMs:4500},
+  {grid:5,len:13,showMs:4000},{grid:5,len:15,showMs:3500},
+  {grid:5,len:17,showMs:3000},
+  // 6×6 grid (23-27)
+  {grid:6,len:8,showMs:6000},{grid:6,len:11,showMs:5500},
+  {grid:6,len:14,showMs:5000},{grid:6,len:17,showMs:4500},
+  {grid:6,len:20,showMs:4000},
+  // 7×7 grid (28-30)
+  {grid:7,len:10,showMs:6500},{grid:7,len:15,showMs:6000},
+  {grid:7,len:20,showMs:5000},
 ];
+
+const DIAMOND_UNLOCK_FROM = 15;
 
 // ── SOUNDS (reuse the global playTone from pairs.js) ──
 function dmdSnd(fn){ try{ if(typeof playTone==='function') fn(); }catch(e){} }
@@ -42,7 +60,7 @@ function dmdPos(idx, grid, cw, ch) {
   return { x: ox + (idx % grid) * step, y: oy + Math.floor(idx / grid) * step };
 }
 
-function dmdR(grid) { return grid <= 2 ? 22 : grid <= 3 ? 18 : grid <= 4 ? 13 : 10; }
+function dmdR(grid) { return grid <= 2 ? 22 : grid <= 3 ? 18 : grid <= 4 ? 13 : grid <= 5 ? 10 : grid <= 6 ? 8 : 7; }
 
 function dmdGcd(a, b) { return b === 0 ? Math.abs(a) : dmdGcd(b, a % b); }
 function dmdBetween(a, b, grid) {
@@ -57,20 +75,47 @@ function dmdBetween(a, b, grid) {
   for (let s = 1; s < g; s++) res.push((ay + sy * s) * grid + (ax + sx * s));
   return res;
 }
+function dmdSegCross(ax, ay, bx, by, cx, cy, dx, dy) {
+  // True if segment (a→b) properly intersects (c→d), ignoring shared endpoints
+  const d1x = bx-ax, d1y = by-ay, d2x = dx-cx, d2y = dy-cy;
+  const denom = d1x*d2y - d1y*d2x;
+  if (denom === 0) return false;
+  const t = ((cx-ax)*d2y - (cy-ay)*d2x) / denom;
+  const u = ((cx-ax)*d1y - (cy-ay)*d1x) / denom;
+  return t > 0.01 && t < 0.99 && u > 0.01 && u < 0.99;
+}
+
 function dmdGenPattern(grid, len) {
   const total = grid * grid;
+  const gpos = i => [i % grid, Math.floor(i / grid)];
   const visited = new Set();
   const pat = [];
   let cur = Math.floor(Math.random() * total);
   visited.add(cur); pat.push(cur);
+
   while (pat.length < Math.min(len, total)) {
     const avail = [];
     for (let i = 0; i < total; i++) {
       if (!visited.has(i)) avail.push(i);
     }
     if (!avail.length) break;
-    const next = avail[Math.floor(Math.random() * avail.length)];
-    // Auto-insert any collinear intermediate dots so the finger naturally hits them
+
+    // Filter candidates that would visually cross an existing segment
+    const [cx, cy] = gpos(cur);
+    const noCross = avail.filter(next => {
+      const [nx, ny] = gpos(next);
+      for (let s = 0; s < pat.length - 1; s++) {
+        const [ax, ay] = gpos(pat[s]), [bx, by] = gpos(pat[s+1]);
+        // Skip segments sharing cur or next as endpoint
+        if (pat[s]===cur||pat[s+1]===cur||pat[s]===next||pat[s+1]===next) continue;
+        if (dmdSegCross(cx,cy,nx,ny, ax,ay,bx,by)) return false;
+      }
+      return true;
+    });
+
+    const candidates = noCross.length > 0 ? noCross : avail;
+    const next = candidates[Math.floor(Math.random() * candidates.length)];
+    // Auto-insert collinear intermediate dots so the finger naturally hits them
     const between = dmdBetween(cur, next, grid).filter(m => !visited.has(m));
     for (const m of between) { visited.add(m); pat.push(m); }
     visited.add(next); pat.push(next);
@@ -152,27 +197,46 @@ function dmdDraw(canvas, revealPat, userPat, phase, wrongAt, cursorXY) {
   }
 }
 
+function dmdIsUnlocked(idx, save) {
+  if (idx < DIAMOND_UNLOCK_FROM) return true;
+  return (save.completed || {})[idx - 1] === true;
+}
+
 function showDiamondMenu() {
   const s = dmdLoadSave();
-  dmdState.adaptLevel = s.level || 0;
-  dmdState.streak = 0;
-  const cfg = dmdCfg(dmdState.adaptLevel);
-  document.getElementById('dmd-level-val').textContent = dmdState.adaptLevel + 1;
-  document.getElementById('dmd-best-val').textContent = s.best !== undefined ? s.best + 1 : '—';
-  document.getElementById('dmd-streak-val').textContent = s.streak || 0;
-  document.getElementById('diamond-start-btn').textContent = t('diamond_start');
-  document.getElementById('diamond-adapt-note').textContent = t('diamond_adapt_note');
-  document.getElementById('dmd-level-lbl').textContent = t('diamond_level_lbl');
-  document.getElementById('dmd-best-lbl').textContent = t('diamond_best_lbl');
-  document.getElementById('dmd-streak-lbl').textContent = t('diamond_streak_lbl');
+  document.getElementById('diamond-section-title').textContent = t('diamond_mode_title');
+  document.getElementById('diamond-section-sub').textContent = t('diamond_section_sub');
   document.getElementById('diamond-game').style.display = 'none';
   document.getElementById('diamond-select').style.display = '';
+
+  const grid = document.getElementById('dmd-level-grid');
+  grid.innerHTML = '';
+  DIAMOND_LEVELS.forEach((lv, i) => {
+    const unlocked = dmdIsUnlocked(i, s);
+    const completed = (s.completed || {})[i];
+    const b = document.createElement('div');
+    b.className = 'level-btn' + (!unlocked ? ' dmd-locked' : '');
+    if (unlocked) {
+      b.onclick = () => diamondStartLevel(i);
+      const starHtml = completed ? '<span style="color:var(--goldL);font-size:.8rem;">★</span>' : '';
+      b.innerHTML = `<span class="lv-num">${i+1}</span><span class="lv-sub">${lv.grid}×${lv.grid}</span>${starHtml}`;
+    } else {
+      b.innerHTML = `<span class="lv-num" style="opacity:.35">🔒</span><span class="lv-sub" style="opacity:.35">${i+1}</span>`;
+    }
+    grid.appendChild(b);
+  });
+
   showScreen('screen-diamond');
+}
+
+function diamondStartLevel(idx) {
+  dmdState.chosenLevel = idx;
+  diamondStart();
 }
 
 function diamondStart() {
   const s = dmdLoadSave();
-  dmdState.adaptLevel = s.level || 0;
+  dmdState.adaptLevel = dmdState.chosenLevel !== undefined ? dmdState.chosenLevel : (s.level || 0);
   dmdState.streak = s.streak || 0;
   dmdState.roundsPlayed = 0; dmdState.roundsCorrect = 0;
   dmdState.userPat = [];
@@ -313,7 +377,7 @@ function dmdAnimateShow(canvas, cfg) {
     return;
   }
   // Each segment draws in segMs; total anim capped so longer patterns don't take forever
-  const segMs = Math.min(400, 2600 / (n - 1));
+  const segMs = Math.min(600, 3600 / (n - 1));
   const totalMs = segMs * (n - 1);
   let startTs = null;
   const tick = (ts) => {
@@ -421,22 +485,33 @@ function diamondCheckResult() {
 function diamondShowResult(correct) {
   (correct ? dmdSndCorrect() : dmdSndWrong());
   const cfg = dmdState.cfg;
+  dmdState.lastResult = correct ? 'win' : 'fail';
 
-  if (correct) {
-    dmdState.streak++;
-    dmdState.roundsCorrect++;
-    if (dmdState.streak >= 2) {
-      dmdState.adaptLevel = Math.min(DIAMOND_LEVELS.length - 1, dmdState.adaptLevel + 1);
-      dmdState.streak = 0;
-    }
-  } else {
+  const inChosenMode = dmdState.chosenLevel !== undefined;
+
+  if (inChosenMode) {
+    // In chosen-level mode: track correct count but don't adjust adaptLevel with streak
+    if (correct) { dmdState.roundsCorrect++; }
     dmdState.streak = 0;
-    dmdState.adaptLevel = Math.max(0, dmdState.adaptLevel - 1);
+  } else {
+    if (correct) {
+      dmdState.streak++;
+      dmdState.roundsCorrect++;
+      if (dmdState.streak >= 2) {
+        dmdState.adaptLevel = Math.min(DIAMOND_LEVELS.length - 1, dmdState.adaptLevel + 1);
+        dmdState.streak = 0;
+      }
+    } else {
+      dmdState.streak = 0;
+      dmdState.adaptLevel = Math.max(0, dmdState.adaptLevel - 1);
+    }
   }
 
   const saved = dmdLoadSave();
   const newBest = Math.max(saved.best || 0, dmdState.adaptLevel);
-  dmdSave({ level: dmdState.adaptLevel, best: newBest, streak: dmdState.streak });
+  const completed = Object.assign({}, saved.completed || {});
+  if (correct && inChosenMode) completed[dmdState.chosenLevel] = true;
+  dmdSave({ level: dmdState.adaptLevel, best: newBest, streak: dmdState.streak, completed });
 
   const xp = correct ? 8 + dmdState.adaptLevel * 2 : 0;
   if (correct) addXp(xp, t('diamond_mode_title'));
@@ -458,7 +533,18 @@ function diamondShowResult(correct) {
   em.textContent = correct ? '💎' : '❌';
   title.textContent = correct ? t('diamond_correct') : t('diamond_wrong');
   sub.textContent = correct ? t('diamond_correct_sub', xp) : t('diamond_wrong_sub');
-  nextBtn.textContent = t('diamond_next');
+  if (inChosenMode) {
+    if (correct) {
+      const nextIdx = dmdState.chosenLevel + 1;
+      const freshSave = dmdLoadSave();
+      const hasNext = nextIdx < DIAMOND_LEVELS.length && dmdIsUnlocked(nextIdx, freshSave);
+      nextBtn.textContent = hasNext ? t('diamond_next_level') : t('diamond_menu');
+    } else {
+      nextBtn.textContent = t('diamond_retry');
+    }
+  } else {
+    nextBtn.textContent = t('diamond_next');
+  }
   if (menuBtn) menuBtn.textContent = t('diamond_menu');
 
   stats.innerHTML = `
@@ -472,11 +558,27 @@ function diamondShowResult(correct) {
 
 function diamondNextRound() {
   document.getElementById('diamond-result').classList.remove('show');
-  diamondNewRound();
+
+  if (dmdState.chosenLevel !== undefined) {
+    if (dmdState.lastResult === 'win') {
+      const nextIdx = dmdState.chosenLevel + 1;
+      const save = dmdLoadSave();
+      if (nextIdx < DIAMOND_LEVELS.length && dmdIsUnlocked(nextIdx, save)) {
+        diamondStartLevel(nextIdx);
+      } else {
+        diamondGoSelect();
+      }
+    } else {
+      diamondStartLevel(dmdState.chosenLevel);
+    }
+  } else {
+    diamondNewRound();
+  }
 }
 
 function diamondGoSelect() {
   document.getElementById('diamond-result').classList.remove('show');
+  dmdState.chosenLevel = undefined;
   showDiamondMenu();
 }
 
