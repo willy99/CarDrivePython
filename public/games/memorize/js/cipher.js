@@ -68,6 +68,227 @@ const CPH_SVG = [
    <path d="M43,62 L57,62 L50,70Z" fill="#0f766e"/>`,
 ];
 
+
+
+// ═══════════════════════════════════════════════════════
+// CIPHER — Mnemonic Options (3 variants per digit)
+// ═══════════════════════════════════════════════════════
+// deprecated
+
+const CPH_OPTIONS = [
+  // ── 0 ──
+  [
+    { id: 'ring', svg:
+      `<circle cx="50" cy="50" r="28" fill="none" stroke="#a5b4fc" stroke-width="14"/>
+       <circle cx="38" cy="38" r="7" fill="#818cf8" opacity=".35"/>` },
+    { id: 'donut', svg:
+      `<circle cx="50" cy="50" r="32" fill="#d97706"/>
+       <path d="M22 45 Q30 20 50 18 Q70 20 78 45 Q80 65 65 75 Q50 82 35 75 Q20 65 22 45" fill="#f472b6"/>
+       <circle cx="50" cy="50" r="12" fill="#1e1b4b"/>
+       <rect x="35" y="30" width="8" height="3" rx="1.5" fill="#fff" transform="rotate(25 35 30)"/>
+       <rect x="60" y="35" width="8" height="3" rx="1.5" fill="#fef08a" transform="rotate(-40 60 35)"/>
+       <rect x="45" y="65" width="8" height="3" rx="1.5" fill="#67e8f9" transform="rotate(15 45 65)"/>` },
+    { id: 'egg', svg:
+      `<ellipse cx="50" cy="54" rx="30" ry="40" fill="#fef3c7"/>
+       <ellipse cx="42" cy="40" rx="10" ry="18" fill="#fff" opacity=".6" transform="rotate(-15 42 40)"/>` }
+  ],
+  // ── 1 ──
+  [
+    { id: 'candle', svg:
+      `<rect x="42" y="40" width="16" height="36" rx="3" fill="#fef9c3"/>
+       <path d="M50,11 C46,20 42,27 50,33 C58,27 54,20 50,11Z" fill="#f97316"/>
+       <line x1="50" y1="33" x2="50" y2="41" stroke="#94a3b8" stroke-width="2"/>
+       <ellipse cx="50" cy="76" rx="9" ry="3" fill="#9ca3af" opacity=".4"/>` },
+    { id: 'pencil', svg:
+      `<polygon points="40,65 60,65 50,88" fill="#fcd34d"/>
+       <polygon points="47,81 53,81 50,88" fill="#334155"/>
+       <rect x="40" y="25" width="20" height="40" fill="#facc15"/>
+       <line x1="46" y1="25" x2="46" y2="65" stroke="#eab308" stroke-width="2"/>
+       <line x1="54" y1="25" x2="54" y2="65" stroke="#eab308" stroke-width="2"/>
+       <rect x="40" y="18" width="20" height="7" fill="#94a3b8"/>
+       <rect x="40" y="10" width="20" height="8" rx="2" fill="#f43f5e"/>` },
+    { id: 'sword', svg:
+      `<polygon points="46,15 54,15 50,5" fill="#cbd5e1"/>
+       <rect x="46" y="15" width="8" height="55" fill="#cbd5e1"/>
+       <line x1="50" y1="15" x2="50" y2="70" stroke="#94a3b8" stroke-width="2"/>
+       <rect x="30" y="65" width="40" height="6" rx="3" fill="#fbbf24"/>
+       <rect x="45" y="71" width="10" height="16" rx="2" fill="#8b5cf6"/>
+       <circle cx="50" cy="90" r="5" fill="#fbbf24"/>` }
+  ],
+  // ── 2 ──
+  [
+    { id: 'swan', svg:
+      `<ellipse cx="50" cy="84" rx="38" ry="10" fill="#38bdf8" opacity=".35"/>
+       <path d="M24 84 Q37 80 50 84 Q63 88 76 84" fill="none" stroke="#38bdf8" stroke-width="1.5" opacity=".5"/>
+       <ellipse cx="58" cy="70" rx="27" ry="19" fill="#f8fafc"/>
+       <path d="M82 65 q10 -2 12 8 q-6 -2 -12 5 z" fill="#f0f9ff"/>
+       <path d="M44 56 Q32 40 38 22 Q44 10 52 9" fill="none" stroke="#f8fafc" stroke-width="13" stroke-linecap="round"/>
+       <circle cx="52" cy="11" r="12" fill="#f8fafc"/>
+       <path d="M60 11 Q75 8 73 16 Q69 21 60 17 z" fill="#f59e0b"/>
+       <circle cx="56" cy="8" r="3" fill="#1c1c24"/>` },
+    { id: 'hanger', svg:
+      `<path d="M50 35 C65 35 65 15 50 15 C45 15 45 20 48 24" fill="none" stroke="#94a3b8" stroke-width="5" stroke-linecap="round"/>
+       <polygon points="50,45 85,75 15,75" fill="none" stroke="#cbd5e1" stroke-width="6" stroke-linejoin="round"/>
+       <line x1="15" y1="75" x2="85" y2="75" stroke="#94a3b8" stroke-width="6" stroke-linecap="round"/>
+       <rect x="47" y="35" width="6" height="10" fill="#64748b"/>` },
+    { id: 'snake', svg:
+      `<path d="M30 25 C50 5 80 20 70 40 C60 60 30 50 40 70 C50 90 80 80 85 70" fill="none" stroke="#4ade80" stroke-width="14" stroke-linecap="round"/>
+       <circle cx="42" cy="22" r="3" fill="#111"/>
+       <path d="M30 20 L20 15 L22 22 Z" fill="#ef4444"/>` }
+  ],
+  // ── 3 ──
+  [
+    { id: 'heart', svg:
+      `<path d="M50,68 L17,40 A18,18,0,0,1,50,31 A18,18,0,0,1,83,40 Z" fill="#f43f5e"/>
+       <ellipse cx="35" cy="36" rx="11" ry="7" fill="#fb7185" opacity=".55"/>
+       <ellipse cx="65" cy="36" rx="11" ry="7" fill="#fb7185" opacity=".55"/>` },
+    { id: 'butterfly', svg:
+      `<path d="M50 50 C 90 10, 100 50, 50 50" fill="#c084fc"/>
+       <path d="M50 50 C 80 90, 100 50, 50 50" fill="#a855f7"/>
+       <path d="M50 50 C 10 10, 0 50, 50 50" fill="#c084fc"/>
+       <path d="M50 50 C 20 90, 0 50, 50 50" fill="#a855f7"/>
+       <rect x="46" y="25" width="8" height="50" rx="4" fill="#475569"/>
+       <path d="M48 25 Q35 15 30 20 M52 25 Q65 15 70 20" fill="none" stroke="#475569" stroke-width="3" stroke-linecap="round"/>` },
+    { id: 'glasses', svg:
+      `<rect x="15" y="40" width="30" height="20" rx="6" fill="none" stroke="#3b82f6" stroke-width="6"/>
+       <rect x="55" y="40" width="30" height="20" rx="6" fill="none" stroke="#3b82f6" stroke-width="6"/>
+       <path d="M45 45 Q50 38 55 45" fill="none" stroke="#3b82f6" stroke-width="5" stroke-linecap="round"/>
+       <line x1="15" y1="45" x2="5" y2="35" stroke="#3b82f6" stroke-width="5" stroke-linecap="round"/>
+       <line x1="85" y1="45" x2="95" y2="35" stroke="#3b82f6" stroke-width="5" stroke-linecap="round"/>
+       <rect x="18" y="43" width="24" height="14" rx="4" fill="#bae6fd" opacity=".4"/>
+       <rect x="58" y="43" width="24" height="14" rx="4" fill="#bae6fd" opacity=".4"/>` }
+  ],
+  // ── 4 ──
+  [
+    { id: 'flag', svg:
+      `<rect x="32" y="16" width="5" height="60" rx="2.5" fill="#94a3b8"/>
+       <path d="M37,16 L76,26 L70,42 L37,32Z" fill="#34d399"/>
+       <path d="M37,32 L70,42 L64,58 L37,48Z" fill="#10b981"/>
+       <circle cx="32" cy="78" r="4" fill="#475569"/>` },
+    { id: 'sailboat', svg:
+      `<path d="M55 10 L55 60 L85 60 Z" fill="#f8fafc"/>
+       <path d="M45 15 L15 60 L45 60 Z" fill="#e2e8f0"/>
+       <rect x="48" y="10" width="4" height="55" fill="#b45309"/>
+       <path d="M10 65 L90 65 L75 85 L25 85 Z" fill="#ef4444"/>
+       <path d="M0 80 Q25 70 50 80 T100 80" fill="none" stroke="#38bdf8" stroke-width="4" opacity=".6"/>` },
+    { id: 'chair', svg:
+      `<line x1="30" y1="20" x2="30" y2="80" stroke="#b45309" stroke-width="8" stroke-linecap="round"/>
+       <line x1="70" y1="50" x2="70" y2="80" stroke="#b45309" stroke-width="8" stroke-linecap="round"/>
+       <line x1="26" y1="50" x2="74" y2="50" stroke="#d97706" stroke-width="8" stroke-linecap="round"/>
+       <line x1="30" y1="35" x2="70" y2="35" stroke="#d97706" stroke-width="5" stroke-linecap="round"/>
+       <rect x="26" y="46" width="48" height="8" rx="4" fill="#fcd34d"/>` }
+  ],
+  // ── 5 ──
+  [
+    { id: 'hand', svg:
+      `<rect x="24" y="18" width="10" height="34" rx="5" fill="#fde68a"/>
+       <rect x="36" y="12" width="10" height="40" rx="5" fill="#fed7aa"/>
+       <rect x="48" y="10" width="10" height="42" rx="5" fill="#fde68a"/>
+       <rect x="60" y="14" width="10" height="38" rx="5" fill="#fed7aa"/>
+       <rect x="22" y="50" width="56" height="26" rx="12" fill="#fbbf24"/>
+       <rect x="70" y="40" width="10" height="26" rx="5" fill="#fde68a" transform="rotate(45 70 40)"/>` },
+    { id: 'hook', svg:
+      `<path d="M35 35 C35 15 65 15 65 35 C65 55 45 60 45 80" fill="none" stroke="#94a3b8" stroke-width="12" stroke-linecap="round"/>
+       <circle cx="45" cy="85" r="8" fill="#64748b"/>
+       <polygon points="35,35 25,35 35,20" fill="#94a3b8"/>
+       <line x1="25" y1="40" x2="50" y2="40" stroke="#cbd5e1" stroke-width="4" opacity=".5"/>` },
+    { id: 'star', svg:
+      `<polygon points="50,10 61,35 88,35 66,51 74,77 50,61 26,77 34,51 12,35 39,35" fill="#fbbf24" stroke="#f59e0b" stroke-width="2"/>
+       <polygon points="50,10 61,35 50,61 39,35" fill="#fde68a" opacity=".5"/>
+       <circle cx="43" cy="45" r="3" fill="#111"/><circle cx="57" cy="45" r="3" fill="#111"/>
+       <path d="M46 52 Q50 56 54 52" fill="none" stroke="#111" stroke-width="2" stroke-linecap="round"/>` }
+  ],
+  // ── 6 ──
+  [
+    { id: 'cherry', svg:
+      `<path d="M35,49 Q50,20 65,51" fill="none" stroke="#22c55e" stroke-width="4.5" stroke-linecap="round"/>
+       <path d="M50,29 Q61,16 67,21" fill="none" stroke="#16a34a" stroke-width="3.5" stroke-linecap="round"/>
+       <circle cx="31" cy="62" r="15" fill="#ef4444"/>
+       <circle cx="63" cy="66" r="15" fill="#dc2626"/>
+       <circle cx="26" cy="57" r="5" fill="#fca5a5" opacity=".55"/>
+       <circle cx="58" cy="61" r="5" fill="#fca5a5" opacity=".55"/>` },
+    { id: 'lock', svg:
+      `<path d="M30 45 L30 30 C30 10 70 10 70 30 L70 45" fill="none" stroke="#cbd5e1" stroke-width="12" stroke-linecap="round"/>
+       <rect x="20" y="45" width="60" height="40" rx="8" fill="#f59e0b"/>
+       <rect x="20" y="45" width="60" height="8" fill="#d97706" opacity=".5"/>
+       <circle cx="50" cy="60" r="6" fill="#1e293b"/>
+       <rect x="47" y="60" width="6" height="12" rx="3" fill="#1e293b"/>` },
+    { id: 'snail', svg:
+      `<path d="M20 75 Q40 85 75 75 Q85 70 70 65 L40 65" fill="#fbbf24" stroke="#d97706" stroke-width="8" stroke-linecap="round"/>
+       <circle cx="45" cy="45" r="24" fill="#a78bfa"/>
+       <path d="M45 45 L45 21 A24 24 0 0 1 69 45 A24 24 0 0 1 45 69 A24 24 0 0 1 21 45" fill="none" stroke="#8b5cf6" stroke-width="4"/>
+       <line x1="72" y1="68" x2="80" y2="55" stroke="#d97706" stroke-width="3" stroke-linecap="round"/>
+       <line x1="68" y1="70" x2="72" y2="52" stroke="#d97706" stroke-width="3" stroke-linecap="round"/>
+       <circle cx="80" cy="55" r="2" fill="#111"/><circle cx="72" cy="52" r="2" fill="#111"/>` }
+  ],
+  // ── 7 ──
+  [
+    { id: 'lightning', svg:
+      `<path d="M60,10 L30,52 L49,52 L40,86 L70,44 L51,44 Z" fill="#fde047" stroke="#a16207" stroke-width="1.5" stroke-linejoin="round"/>
+       <path d="M35,52 L48,52" stroke="#fef08a" stroke-width="2" opacity=".6"/>` },
+    { id: 'axe', svg:
+      `<rect x="42" y="20" width="8" height="65" rx="4" fill="#b45309" transform="rotate(-15 46 52)"/>
+       <path d="M45 15 L70 10 Q85 25 75 40 L40 35 Z" fill="#94a3b8" transform="rotate(-15 46 52)"/>
+       <path d="M65 12 Q80 25 70 38" fill="none" stroke="#cbd5e1" stroke-width="3" transform="rotate(-15 46 52)"/>` },
+    { id: 'golfclub', svg:
+      `<rect x="46" y="10" width="6" height="70" rx="3" fill="#cbd5e1"/>
+       <rect x="45" y="10" width="8" height="20" rx="2" fill="#1e293b"/>
+       <path d="M46 75 L20 85 L20 75 L52 65 Z" fill="#94a3b8"/>
+       <circle cx="75" cy="80" r="5" fill="#fff"/>
+       <line x1="70" y1="88" x2="80" y2="88" stroke="#4ade80" stroke-width="3"/>` }
+  ],
+  // ── 8 ──
+  [
+    { id: 'snowman', svg:
+      `<circle cx="50" cy="65" r="19" fill="white" stroke="#ddd6fe" stroke-width="1.5"/>
+       <circle cx="50" cy="37" r="15" fill="white" stroke="#ddd6fe" stroke-width="1.5"/>
+       <circle cx="44" cy="34" r="3" fill="#4b5563"/>
+       <circle cx="56" cy="34" r="3" fill="#4b5563"/>
+       <path d="M43,41 Q50,46 57,41" fill="none" stroke="#4b5563" stroke-width="2" stroke-linecap="round"/>
+       <rect x="35" y="21" width="30" height="9" rx="4.5" fill="#7c3aed"/>
+       <rect x="30" y="18" width="40" height="6" rx="3" fill="#6d28d9"/>
+       <rect x="43" y="58" width="5" height="14" rx="2.5" fill="#f97316"/>
+       <rect x="52" y="61" width="5" height="11" rx="2.5" fill="#f97316"/>` },
+    { id: 'hourglass', svg:
+      `<polygon points="30,15 70,15 50,45" fill="#bae6fd" opacity=".4"/>
+       <polygon points="50,55 30,85 70,85" fill="#bae6fd" opacity=".4"/>
+       <polygon points="35,75 65,75 50,55" fill="#fcd34d"/>
+       <path d="M30 15 L70 15 L55 45 L50 50 L45 45 Z" fill="#fcd34d"/>
+       <line x1="50" y1="50" x2="50" y2="60" stroke="#fcd34d" stroke-width="3"/>
+       <rect x="25" y="10" width="50" height="6" rx="2" fill="#78350f"/>
+       <rect x="25" y="85" width="50" height="6" rx="2" fill="#78350f"/>` },
+    { id: 'spider', svg:
+      `<circle cx="50" cy="55" r="16" fill="#1e293b"/>
+       <circle cx="50" cy="35" r="8" fill="#1e293b"/>
+       <path d="M45 35 Q20 15 15 35" fill="none" stroke="#334155" stroke-width="4" stroke-linecap="round"/>
+       <path d="M55 35 Q80 15 85 35" fill="none" stroke="#334155" stroke-width="4" stroke-linecap="round"/>
+       <path d="M40 45 Q15 45 15 65" fill="none" stroke="#334155" stroke-width="4" stroke-linecap="round"/>
+       <path d="M60 45 Q85 45 85 65" fill="none" stroke="#334155" stroke-width="4" stroke-linecap="round"/>
+       <path d="M40 55 Q10 65 20 85" fill="none" stroke="#334155" stroke-width="4" stroke-linecap="round"/>
+       <path d="M60 55 Q90 65 80 85" fill="none" stroke="#334155" stroke-width="4" stroke-linecap="round"/>
+       <circle cx="47" cy="33" r="2" fill="#ef4444"/><circle cx="53" cy="33" r="2" fill="#ef4444"/>` }
+  ],
+  // ── 9 ──
+  [
+    { id: 'balloon', svg:
+      `<ellipse cx="50" cy="36" rx="23" ry="28" fill="#2dd4bf"/>
+       <ellipse cx="43" cy="28" rx="10" ry="13" fill="#67e8f9" opacity=".5"/>
+       <path d="M50,64 Q48,72 50,76 Q52,80 50,86" fill="none" stroke="#94a3b8" stroke-width="2.5" stroke-linecap="round"/>
+       <path d="M43,62 L57,62 L50,70Z" fill="#0f766e"/>` },
+    { id: 'magnifier', svg:
+      `<circle cx="40" cy="40" r="20" fill="#bae6fd" opacity=".4" stroke="#94a3b8" stroke-width="8"/>
+       <line x1="55" y1="55" x2="75" y2="75" stroke="#334155" stroke-width="12" stroke-linecap="round"/>
+       <path d="M30 30 Q40 25 45 35" fill="none" stroke="#fff" stroke-width="4" stroke-linecap="round"/>
+       <circle cx="75" cy="75" r="6" fill="#ef4444"/>` },
+    { id: 'key', svg:
+      `<circle cx="35" cy="35" r="15" fill="none" stroke="#fbbf24" stroke-width="8"/>
+       <line x1="46" y1="46" x2="75" y2="75" stroke="#fbbf24" stroke-width="8" stroke-linecap="round"/>
+       <line x1="60" y1="60" x2="70" y2="50" stroke="#fbbf24" stroke-width="8" stroke-linecap="round"/>
+       <line x1="70" y1="70" x2="80" y2="60" stroke="#fbbf24" stroke-width="8" stroke-linecap="round"/>
+       <circle cx="35" cy="35" r="6" fill="#f59e0b" opacity=".5"/>` }
+  ]
+];
+
 const CPH_LEVELS = [
   {len:3, study:9000,  showLabel:true,  introKey:'cph_intro_learn'},
   {len:3, study:7000,  showLabel:true},
@@ -96,11 +317,32 @@ const CPH_LINKS = [
   { emoji:'⬆️', key:'cph_link_leap'  },
 ];
 
+// ─── Personal Cipher storage ───
+const CPH_CIPHER_LS = 'membrain_cipher_choice_v1';
+
+function cphGetChoices() {
+  try {
+    const c = JSON.parse(localStorage.getItem(CPH_CIPHER_LS));
+    if (Array.isArray(c) && c.length === 10) return c;
+  } catch(e) {}
+  return Array.from({length:10}, () => 0);
+}
+
+function cphSetChoices(arr) {
+  try { localStorage.setItem(CPH_CIPHER_LS, JSON.stringify(arr)); } catch(e) {}
+}
+
+function cphShapeName(digit) {
+  const choices = cphGetChoices();
+  const idx = choices[digit] || 0;
+  return t('cph_shape_' + CPH_OPTIONS[digit][Math.min(idx, CPH_OPTIONS[digit].length - 1)].id);
+}
+
 let cphState = {
-  level:0, digits:[], answer:[], links:[], tiles:[], timer:null, daily:false, showLabel:true
+  level:0, digits:[], answer:[], links:[], activeSlot:0, timer:null, daily:false, showLabel:true
 };
 let cphTimers = [];
-let cphDrag = null;
+let cphSetupDraft = null;
 
 // ── SOUNDS (reuse the global playTone from pairs.js) ──
 function cphSnd(fn){ try{ if(typeof playTone==='function') fn(); }catch(e){} }
@@ -140,16 +382,18 @@ function cphSavedData() {
   try { return JSON.parse(localStorage.getItem(CPH_LS_KEY) || '{}'); } catch(e) { return {}; }
 }
 
-// ── SVG helper ──
+// ── SVG helper — uses user's chosen icon from CPH_OPTIONS ──
 function cphIconSvg(digit, size, borderColor) {
+  const choices = cphGetChoices();
+  const idx = Math.min(choices[digit] || 0, CPH_OPTIONS[digit].length - 1);
   const bc = borderColor || (CPH_CLR[digit] + '44');
-  return `<svg viewBox="0 0 100 100" width="${size}" height="${size}" style="border-radius:50%;background:${CPH_BG[digit]};border:2px solid ${bc};display:block;flex-shrink:0">${CPH_SVG[digit]}</svg>`;
+  return `<svg viewBox="0 0 100 100" width="${size}" height="${size}" style="border-radius:50%;background:${CPH_BG[digit]};border:2px solid ${bc};display:block;flex-shrink:0">${CPH_OPTIONS[digit][idx].svg}</svg>`;
 }
 
 // ── Story generator ──
 function cphMakeStory(digits) {
   if (digits.length === 0) return '';
-  const names = digits.map(d => t('cph_shape_' + d));
+  const names = digits.map(d => cphShapeName(d));
   if (digits.length === 1) return names[0];
   if (digits.length === 2) {
     const idx = (digits[0] + digits[1]) % 5;
@@ -175,6 +419,60 @@ function cphMakeStory(digits) {
   // 4+ → split into chunks of 2-3
   const half = Math.floor(digits.length / 2);
   return cphMakeStory(digits.slice(0, half)) + ' · ' + cphMakeStory(digits.slice(half));
+}
+
+// ── Personal Cipher Setup ──
+function cphShowSetup() {
+  cphSetupDraft = [...cphGetChoices()];
+  document.getElementById('cipher-setup').style.display = '';
+  document.getElementById('cipher-menu').style.display  = 'none';
+  cphRenderSetup();
+}
+
+function cphRenderSetup() {
+  const el = document.getElementById('cipher-setup');
+  if (!el) return;
+  const houseIcon = `<svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>`;
+  el.innerHTML = `
+    <div class="cph-setup-head">
+      <button class="close-btn" onclick="cphSetupCancel()" title="${t('home_btn')}">${houseIcon}</button>
+      <div class="cph-setup-title">${t('cph_setup_title')}</div>
+    </div>
+    <div class="cph-setup-sub">${t('cph_setup_sub')}</div>
+    <div class="cph-setup-grid">
+      ${Array.from({length:10}, (_,d) => `
+        <div class="cph-setup-row">
+          <div class="cph-setup-digit" style="color:${CPH_CLR[d]}">${d}</div>
+          <div class="cph-setup-opts">
+            ${CPH_OPTIONS[d].map((opt,i) => `
+              <button class="cph-setup-opt ${cphSetupDraft[d]===i?'sel':''}"
+                      onclick="cphSetupPick(${d},${i})">
+                <svg viewBox="0 0 100 100" width="48" height="48"
+                     style="border-radius:50%;background:${CPH_BG[d]}">${opt.svg}</svg>
+                <span class="cph-setup-opt-name">${t('cph_shape_'+opt.id)}</span>
+              </button>`).join('')}
+          </div>
+        </div>`).join('')}
+    </div>
+    <button class="btn btn-primary" onclick="cphSaveSetup()"
+            style="width:100%;max-width:400px;margin:14px auto 0;display:block;">${t('cph_setup_save')}</button>
+  `;
+}
+
+function cphSetupPick(digit, optIdx) {
+  cphSetupDraft[digit] = optIdx;
+  cphRenderSetup();
+}
+
+function cphSaveSetup() {
+  cphSetChoices(cphSetupDraft);
+  cphSetupCancel();
+  cphBuildRefStrip();
+}
+
+function cphSetupCancel() {
+  document.getElementById('cipher-setup').style.display = 'none';
+  document.getElementById('cipher-menu').style.display  = '';
 }
 
 // ── Menu ──
@@ -206,10 +504,10 @@ function cphBuildRefStrip() {
   const row = document.getElementById('cipher-ref-strip');
   if (!row) return;
   row.innerHTML = Array.from({length:10}, (_,d) =>
-    `<div class="cph-ref-item">
+    `<div class="cph-ref-item" onclick="cphShowSetup()" title="${t('cph_setup_btn')}">
       ${cphIconSvg(d, 42)}
       <span class="cph-ref-digit" style="color:${CPH_CLR[d]}">${d}</span>
-      <span class="cph-ref-name" id="cph-ref-name-${d}">${t('cph_shape_'+d)}</span>
+      <span class="cph-ref-name" id="cph-ref-name-${d}">${cphShapeName(d)}</span>
     </div>`
   ).join('');
 }
@@ -418,15 +716,15 @@ function cphRenderChain(containerId, interactive, shapeSize) {
   digits.forEach((d, i) => {
     const isLocked = interactive && locked && locked[i];
     const shapeInner = interactive
-      ? `<div class="cph-morph" id="cph-morph-${i}">
-           ${showLabel ? `<span class="cph-morph-num" style="color:${CPH_CLR[d]}">${d}</span>` : ''}
+      ? `<div class="cph-digit-label" style="color:${CPH_CLR[d]}">${d}</div>
+         <div class="cph-morph" id="cph-morph-${i}">
            <span class="cph-morph-shape">${cphIconSvg(d, sz, CPH_CLR[d])}</span>
            ${isLocked ? '<span class="cph-lock-badge">✓</span>' : ''}
          </div>`
       : cphIconSvg(d, sz, CPH_CLR[d]);
     html += `<div class="cph-chain-shape ${interactive ? 'tappable' : ''} ${isLocked ? 'locked' : ''}" ${interactive ? `onclick="cphToggleLock(${i})"` : ''}>
       ${shapeInner}
-      ${interactive && showLabel ? `<div class="cph-icon-name" style="color:${CPH_CLR[d]}99">${t('cph_shape_'+d)}</div>` : ''}
+      ${interactive ? `<div class="cph-icon-name" style="color:${CPH_CLR[d]}99">${cphShapeName(d)}</div>` : ''}
     </div>`;
     if (i < digits.length - 1) {
       const lk = CPH_LINKS[links[i]];
@@ -504,154 +802,122 @@ function cphWarmupAnswer(picked, correct) {
   cphTimers.push(tid);
 }
 
-// ── Recall phase (drag / tap shapes into ordered slots) ──
+// ── Recall phase — dual row (digits + icons) with tap-to-fill panel ──
 function cphStartRecall() {
   cphTimers.forEach(clearTimeout); cphTimers = [];
-  cphState.answer = new Array(cphState.digits.length).fill(null);
-  cphBuildTiles();
+  const {digits} = cphState;
+  cphState.answer    = new Array(digits.length).fill(null);
+  cphState.activeSlot = 0;
 
   document.getElementById('cipher-study').style.display  = 'none';
   const recall = document.getElementById('cipher-recall');
   recall.style.display = '';
+  const houseIcon = `<svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>`;
   recall.innerHTML = `
-    <button class="close-btn close-btn-float" onclick="backFromGame('cipher')" title="← MemBrain">✕</button>
-    <div id="cipher-recall-title" class="cph-recall-title">${t('cph_recall_drag_title')}</div>
+    <button class="close-btn close-btn-float" onclick="backFromGame('cipher')" title="${t('home_btn')}">${houseIcon}</button>
+    <div class="cph-recall-title">${t('cph_recall_title')}</div>
     <div class="cph-recall-hint">${t('cph_recall_hint')}</div>
-    <div id="cipher-slots" class="cph-slots"></div>
-    <div id="cipher-tray" class="cph-tray"></div>
-    <button class="btn btn-primary" id="cipher-submit-btn" onclick="cphSubmit()" style="width:100%;max-width:320px;margin-top:8px;">${t('cph_submit_btn')}</button>`;
+    <div class="cph-dual-board" id="cph-dual-board"></div>
+    <div class="cph-input-panel" id="cph-input-panel"></div>
+    <div style="display:flex;justify-content:center;margin-top:12px;max-width:560px;margin-left:auto;margin-right:auto;">
+      <button class="btn btn-primary" id="cipher-submit-btn" onclick="cphSubmit()" style="width:100%;max-width:260px;" disabled>${t('cph_submit_btn')}</button>
+    </div>`;
 
   cphRenderRecall();
-}
-
-// Build the draggable tiles: one per digit (repeats included) plus a couple of
-// decoy shapes so the player must recall WHICH shapes appeared, not just order.
-function cphBuildTiles() {
-  const {digits} = cphState;
-  let id = 0;
-  const tiles = digits.map(d => ({ id: id++, digit: d, slot: null }));
-  const present = new Set(digits);
-  const pool = [];
-  for (let d = 0; d < 10; d++) if (!present.has(d)) pool.push(d);
-  const nDist = Math.min(digits.length <= 3 ? 1 : 2, pool.length);
-  for (let k = 0; k < nDist && pool.length; k++) {
-    const idx = Math.floor(Math.random() * pool.length);
-    tiles.push({ id: id++, digit: pool.splice(idx, 1)[0], slot: null });
-  }
-  // Fisher–Yates shuffle
-  for (let i = tiles.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [tiles[i], tiles[j]] = [tiles[j], tiles[i]];
-  }
-  cphState.tiles = tiles;
 }
 
 function cphRenderRecall() {
-  const {digits, tiles} = cphState;
-  const slots = document.getElementById('cipher-slots');
-  const tray  = document.getElementById('cipher-tray');
-  if (slots) {
-    slots.innerHTML = digits.map((_, i) => {
-      const tile = tiles.find(t => t.slot === i);
-      if (tile) return `<div class="cph-slot filled" data-slot="${i}" onclick="cphReturnTile(${i})">
-        <span class="cph-slot-idx">${i+1}</span>${cphIconSvg(tile.digit, 40, CPH_CLR[tile.digit])}</div>`;
-      return `<div class="cph-slot" data-slot="${i}"><span class="cph-slot-idx">${i+1}</span>?</div>`;
-    }).join('');
+  const {digits, answer, activeSlot} = cphState;
+
+  const board = document.getElementById('cph-dual-board');
+  if (board) {
+    const makeRow = (label, slotFn) =>
+      `<div class="cph-dual-row">
+         <div class="cph-dual-lbl">${label}</div>
+         <div class="cph-dual-slots">${digits.map((_,i) => slotFn(i)).join('')}</div>
+       </div>`;
+
+    const digitSlot = i => {
+      const d = answer[i];
+      const cls = `cph-ds${d!==null?' filled':''}${i===activeSlot?' active':''}`;
+      return `<div class="${cls}" onclick="cphSelectSlot(${i})">
+        <span class="cph-ds-idx">${i+1}</span>
+        ${d!==null ? `<span class="cph-ds-val" style="color:${CPH_CLR[d]}">${d}</span>` : ''}
+      </div>`;
+    };
+
+    const iconSlot = i => {
+      const d = answer[i];
+      const cls = `cph-ds${d!==null?' filled':''}${i===activeSlot?' active':''}`;
+      return `<div class="${cls}" onclick="cphSelectSlot(${i})">
+        <span class="cph-ds-idx">${i+1}</span>
+        ${d!==null ? cphIconSvg(d, 34, CPH_CLR[d]) : ''}
+      </div>`;
+    };
+
+    board.innerHTML =
+      makeRow(t('cph_row_digits'), digitSlot) +
+      makeRow(t('cph_row_icons'),  iconSlot);
   }
-  if (tray) {
-    const free = tiles.filter(t => t.slot === null);
-    tray.innerHTML = free.length
-      ? free.map(t => `<div class="cph-tile" data-tile="${t.id}">${cphIconSvg(t.digit, 40, CPH_CLR[t.digit])}</div>`).join('')
-      : `<div class="cph-tray-empty">✓</div>`;
-    cphAttachDrag();
+
+  const panel = document.getElementById('cph-input-panel');
+  if (panel) {
+    const makeKey = d =>
+      `<button class="cph-calc-key" onclick="cphInputDigit(${d})"
+               style="border-color:${CPH_CLR[d]}33;box-shadow:0 4px 12px rgba(0,0,0,.35),0 0 0 0 ${CPH_CLR[d]}00,inset 0 1px 0 rgba(255,255,255,.1);"
+               onmouseenter="this.style.boxShadow='0 8px 20px rgba(0,0,0,.4),0 0 16px ${CPH_CLR[d]}44,inset 0 1px 0 rgba(255,255,255,.15)'"
+               onmouseleave="this.style.boxShadow='0 4px 12px rgba(0,0,0,.35),0 0 0 0 ${CPH_CLR[d]}00,inset 0 1px 0 rgba(255,255,255,.1)'"
+      >
+         ${cphIconSvg(d, 44, CPH_CLR[d])}
+         <span class="cph-calc-key-digit" style="color:${CPH_CLR[d]}">${d}</span>
+       </button>`;
+    panel.innerHTML =
+      `<div class="cph-calc-grid">
+         ${[7,8,9,4,5,6,1,2,3].map(makeKey).join('')}
+         <div class="cph-calc-empty"></div>
+         ${makeKey(0)}
+         <button class="cph-calc-key cph-calc-del" onclick="cphClearActive()">⌫</button>
+       </div>`;
   }
-  // Sync answer + submit-enabled state
-  cphState.answer = digits.map((_, i) => { const tile = tiles.find(t => t.slot === i); return tile ? tile.digit : null; });
+
   const btn = document.getElementById('cipher-submit-btn');
-  if (btn) btn.disabled = cphState.answer.some(a => a === null);
+  if (btn) btn.disabled = answer.some(a => a === null);
 }
 
-function cphFirstEmptySlot() {
-  for (let i = 0; i < cphState.digits.length; i++) {
-    if (!cphState.tiles.find(t => t.slot === i)) return i;
+function cphSelectSlot(i) {
+  const wasActive = i === cphState.activeSlot;
+  cphState.activeSlot = i;
+  if (wasActive && cphState.answer[i] !== null) {
+    cphState.answer[i] = null; // tap filled active slot → clear it
   }
-  return null;
+  cphSndTick();
+  cphRenderRecall();
 }
 
-function cphPlaceTile(tileId, slotIdx) {
-  if (slotIdx === null || slotIdx === undefined) { cphRenderRecall(); return; }
-  const tiles = cphState.tiles;
-  const occ = tiles.find(t => t.slot === slotIdx); if (occ) occ.slot = null; // bump existing back to tray
-  const tile = tiles.find(t => t.id === tileId); if (tile) tile.slot = slotIdx;
+function cphInputDigit(d) {
+  const {answer, digits} = cphState;
+  const slot = cphState.activeSlot;
+  if (slot < 0 || slot >= digits.length) return;
+  answer[slot] = d;
   cphSndPlace();
+  cphState.activeSlot = cphNextEmpty(slot);
   cphRenderRecall();
 }
 
-function cphReturnTile(slotIdx) {
-  const tile = cphState.tiles.find(t => t.slot === slotIdx);
-  if (tile) tile.slot = null;
-  cphRenderRecall();
-}
-
-// Pointer-based drag (works for mouse + touch). A short press without movement
-// is treated as a tap → drops the tile into the first empty slot.
-function cphAttachDrag() {
-  document.querySelectorAll('#cipher-tray .cph-tile').forEach(el => {
-    el.addEventListener('pointerdown', cphPointerDown);
-  });
-}
-
-function cphPointerDown(e) {
-  e.preventDefault();
-  const el = e.currentTarget;
-  cphDrag = { tileId: parseInt(el.dataset.tile), el, startX: e.clientX, startY: e.clientY, clone: null, moved: false, overSlot: null };
-  document.addEventListener('pointermove', cphPointerMove);
-  document.addEventListener('pointerup', cphPointerUp);
-}
-
-function cphPointerMove(e) {
-  if (!cphDrag) return;
-  const dx = e.clientX - cphDrag.startX, dy = e.clientY - cphDrag.startY;
-  if (!cphDrag.moved && Math.hypot(dx, dy) < 8) return;
-  cphDrag.moved = true;
-  if (!cphDrag.clone) {
-    const c = cphDrag.el.cloneNode(true);
-    c.className = 'cph-tile cph-drag-clone';
-    document.body.appendChild(c);
-    cphDrag.clone = c;
-    cphDrag.el.classList.add('dragging');
-  }
-  cphDrag.clone.style.left = e.clientX + 'px';
-  cphDrag.clone.style.top  = e.clientY + 'px';
-  // Find the slot under the finger (hide clone so it isn't picked up)
-  cphDrag.clone.style.display = 'none';
-  const under = document.elementFromPoint(e.clientX, e.clientY);
-  cphDrag.clone.style.display = '';
-  const slotEl = under && under.closest('.cph-slot');
-  document.querySelectorAll('.cph-slot.over').forEach(s => s.classList.remove('over'));
-  cphDrag.overSlot = null;
-  if (slotEl && !slotEl.classList.contains('filled')) {
-    slotEl.classList.add('over');
-    cphDrag.overSlot = parseInt(slotEl.dataset.slot);
+function cphClearActive() {
+  const slot = cphState.activeSlot;
+  if (slot >= 0 && slot < cphState.digits.length) {
+    cphState.answer[slot] = null;
+    cphSndTick();
+    cphRenderRecall();
   }
 }
 
-function cphPointerUp() {
-  if (!cphDrag) return;
-  document.removeEventListener('pointermove', cphPointerMove);
-  document.removeEventListener('pointerup', cphPointerUp);
-  const { tileId, moved, overSlot, clone, el } = cphDrag;
-  if (clone) clone.remove();
-  el.classList.remove('dragging');
-  document.querySelectorAll('.cph-slot.over').forEach(s => s.classList.remove('over'));
-  if (!moved) {
-    cphPlaceTile(tileId, cphFirstEmptySlot());   // tap → first empty slot
-  } else if (overSlot !== null) {
-    cphPlaceTile(tileId, overSlot);
-  } else {
-    cphRenderRecall();                           // dropped on nothing → snap back
-  }
-  cphDrag = null;
+function cphNextEmpty(from) {
+  const {answer, digits} = cphState;
+  for (let i = from + 1; i < digits.length; i++) if (answer[i] === null) return i;
+  for (let i = 0; i < from; i++)               if (answer[i] === null) return i;
+  return from;
 }
 
 // ── Submit ──

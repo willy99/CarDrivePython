@@ -50,7 +50,10 @@ function startAiGame() {
   const eloEl = document.getElementById('go-elo-change');
   if (eloEl) eloEl.style.display = 'none';
   document.getElementById('lobby-back-btn').textContent = t('back_menu');
-  document.getElementById('lobby-back-btn').onclick = goMenu;
+  document.getElementById('lobby-back-btn').onclick = () => {
+    document.getElementById('gameover-overlay').classList.remove('show');
+    goMenu();
+  };
   showScreen('screen-pairs');
   renderPowerupBar(true);
   requestAnimationFrame(() => { renderPairsBoard(); updatePairsScores(); });

@@ -23,10 +23,10 @@ function renderPairsBoard() {
   const headerH = document.getElementById('pairs-header').offsetHeight;
   const vvh = window.visualViewport ? window.visualViewport.height : window.innerHeight;
   const maxW = wrap.clientWidth - 24;
-  const maxH = vvh - headerH - 28;
+  const maxH = vvh - headerH - 52; // 52px bottom breathing room
   const gap = 8;
-  const cardW = Math.floor(Math.min((maxW - (cols-1)*gap) / cols, (maxH - (rows-1)*gap) / rows / 1.38));
-  const cardH = Math.floor(cardW * 1.38);
+  const cardW = Math.floor(Math.min((maxW - (cols-1)*gap) / cols, (maxH - (rows-1)*gap) / rows));
+  const cardH = cardW; // square cards
   board.style.gridTemplateColumns = `repeat(${cols}, ${cardW}px)`;
   board.style.gridTemplateRows = `repeat(${rows}, ${cardH}px)`;
   board.style.width = 'fit-content';
@@ -249,7 +249,7 @@ function soundLose() {
 // ═══════════════════════════════════════════════════
 let ws = null;
 let pendingInvite = null;
-let selectedGrid = '2x4';
+let selectedGrid = '4x4';
 let selectedCollection = 'classic';
 let pendingFlip = false;
 

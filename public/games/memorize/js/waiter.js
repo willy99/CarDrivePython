@@ -50,6 +50,72 @@ const WTR_SHIRTS = [
 ];
 const WTR_SKINS = ['#f5c5a3','#e0a87c','#c68642','#a0694a','#8d5524','#f1dfc4'];
 
+// ── Face-detail helpers (proportional to head radius r) ─────────────────────
+function wtrHairBack(P, cx, hy, r, hair, style) {
+  if (style !== 1) return; // only long hair has a back part
+  P.push(`<path d="M${cx-r} ${hy} Q${cx-r-4} ${hy+r*1.8} ${cx} ${hy+r*2} Q${cx+r+4} ${hy+r*1.8} ${cx+r} ${hy}" fill="${hair}"/>`);
+}
+
+function wtrHairFront(P, cx, hy, r, hair, style) {
+  if (style === 0) {
+    P.push(`<path d="M${cx-r*.88} ${hy-r*.48} A${r} ${r} 0 0 1 ${cx+r*.88} ${hy-r*.48} Q${cx} ${hy-r*.8} ${cx-r*.88} ${hy-r*.48}" fill="${hair}"/>`);
+  } else if (style === 1) {
+    P.push(`<path d="M${cx-r*.96} ${hy-r*.28} A${r} ${r} 0 0 1 ${cx+r*.96} ${hy-r*.28} Q${cx+r*.48} ${hy-r*.72} ${cx} ${hy-r*.56} Q${cx-r*.48} ${hy-r*.72} ${cx-r*.96} ${hy-r*.28}" fill="${hair}"/>`);
+  } else if (style === 2) {
+    for (let a = 0; a < 7; a++) {
+      const aa = Math.PI + (a/6)*Math.PI;
+      P.push(`<circle cx="${Math.round(cx+Math.cos(aa)*r*.8)}" cy="${Math.round(hy+Math.sin(aa)*r*.6-r*.2)}" r="${Math.round(r*.44)}" fill="${hair}"/>`);
+    }
+    P.push(`<circle cx="${cx}" cy="${hy-r*.64}" r="${Math.round(r*.56)}" fill="${hair}"/>`);
+  } else if (style === 3) {
+    P.push(`<path d="M${cx-r*.84} ${hy-r*.56} A${r} ${r} 0 0 1 ${cx+r*.84} ${hy-r*.56} L${cx+r*.72} ${hy-r*1.04} L${cx-r*.72} ${hy-r*1.04} Z" fill="${hair}"/>`);
+  }
+}
+
+function wtrMustacheDraw(P, cx, hy, r, hair) {
+  P.push(`<path d="M${cx-r*.42} ${hy+r*.52} Q${cx} ${hy+r*.36} ${cx+r*.42} ${hy+r*.52}" fill="none" stroke="${hair}" stroke-width="${Math.max(1.5,r*.13)}" stroke-linecap="round"/>`);
+}
+
+function wtrGlassesDraw(P, cx, hy, r) {
+  const ey = hy - r*.12, sw = Math.max(1, r*.075), gr = r*.26;
+  P.push(`<circle cx="${cx-r*.28}" cy="${ey}" r="${gr}" fill="none" stroke="#20242c" stroke-width="${sw}"/>`);
+  P.push(`<circle cx="${cx+r*.28}" cy="${ey}" r="${gr}" fill="none" stroke="#20242c" stroke-width="${sw}"/>`);
+  P.push(`<line x1="${cx-r*.02}" y1="${ey}" x2="${cx+r*.02}" y2="${ey}" stroke="#20242c" stroke-width="${sw}"/>`);
+  P.push(`<line x1="${cx-r*.54}" y1="${ey}" x2="${cx-r*.7}" y2="${ey-r*.1}" stroke="#20242c" stroke-width="${sw}"/>`);
+  P.push(`<line x1="${cx+r*.54}" y1="${ey}" x2="${cx+r*.7}" y2="${ey-r*.1}" stroke="#20242c" stroke-width="${sw}"/>`);
+}
+
+function wtrPortraitSvg(c, sh, num) {
+  const P = [], W = 92, H = 112, cx = W/2, headY = 50, r = 22;
+  P.push(`<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" style="display:block;border-radius:14px;overflow:visible;">`);
+  P.push(`<rect width="${W}" height="${H}" rx="14" fill="${sh.clr}22"/>`);
+  const hair = (c.hair && c.hair[1]) || '#3d2b1f';
+  const style = c.hairStyle || 0;
+  const psw = r * 1.15, pnw = r * 0.22, pby = headY + r + 2;
+  // Arms
+  P.push(`<path d="M${cx-psw+3} ${pby+10} Q${cx-psw-4} ${pby+22} ${cx-psw-10} ${H}" fill="none" stroke="${colShade(sh.clr,0.82)}" stroke-width="${r*.46}" stroke-linecap="round"/>`);
+  P.push(`<path d="M${cx+psw-3} ${pby+10} Q${cx+psw+4} ${pby+22} ${cx+psw+10} ${H}" fill="none" stroke="${colShade(sh.clr,0.82)}" stroke-width="${r*.46}" stroke-linecap="round"/>`);
+  wtrHairBack(P, cx, headY, r, hair, style);
+  // Torso
+  P.push(`<path d="M${cx-psw} ${pby+10} Q${cx} ${pby-3} ${cx+psw} ${pby+10} L${cx+psw-5} ${H} L${cx-psw+5} ${H} Z" fill="${sh.clr}"/>`);
+  // Neck
+  P.push(`<rect x="${cx-pnw}" y="${headY+r-1}" width="${pnw*2}" height="${pby-headY-r+6}" rx="${pnw}" fill="${c.skin}"/>`);
+  // Collar
+  P.push(`<path d="M${cx-6} ${pby+3} L${cx} ${pby+11} L${cx+6} ${pby+3}" fill="none" stroke="${colShade(sh.clr,1.25)}" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>`);
+  P.push(`<circle cx="${cx}" cy="${headY}" r="${r}" fill="${c.skin}"/>`);
+  wtrHairFront(P, cx, headY, r, hair, style);
+  P.push(`<circle cx="${cx-r*.27}" cy="${headY-r*.12}" r="${r*.14}" fill="#1c1c24"/>`);
+  P.push(`<circle cx="${cx+r*.27}" cy="${headY-r*.12}" r="${r*.14}" fill="#1c1c24"/>`);
+  P.push(`<circle cx="${cx-r*.25}" cy="${headY-r*.2}" r="${r*.055}" fill="rgba(255,255,255,.55)"/>`);
+  P.push(`<path d="M${cx-r*.27} ${headY+r*.65} Q${cx} ${headY+r*.84} ${cx+r*.27} ${headY+r*.65}" fill="none" stroke="#a35849" stroke-width="${r*.06}" stroke-linecap="round"/>`);
+  if (c.mustache) wtrMustacheDraw(P, cx, headY, r, hair);
+  if (c.glasses)  wtrGlassesDraw(P, cx, headY, r);
+  P.push(`<circle cx="${cx+r*.9}" cy="${headY+r*.9}" r="${r*.5}" fill="${sh.dark}"/>`);
+  P.push(`<text x="${cx+r*.9}" y="${headY+r*.9+r*.18}" text-anchor="middle" font-size="${r*.46}" fill="white" font-family="sans-serif" font-weight="bold">${num}</text>`);
+  P.push('</svg>');
+  return P.join('');
+}
+
 // ── State ──────────────────────────────────────────────────────────────────
 let wtrLevel = 0;
 let wtrCurrent = null;
@@ -66,6 +132,7 @@ function wtrSndVerdict(stars){ wtrSnd(()=>{
   else { playTone(330,'sawtooth',0.16,0.24); playTone(247,'sawtooth',0.13,0.28,0.16); }
 }); }
 let wtrRecallIdx = 0;
+let wtrRecallOrder = [];
 
 // ── RNG ────────────────────────────────────────────────────────────────────
 function wtrRng(seed) {
@@ -98,8 +165,12 @@ function wtrBuild(lvIdx, seed) {
     return out;
   };
   const customers = WTR_SHIRTS.slice(0, Math.min(cfg.customers, WTR_SHIRTS.length)).map(() => ({
-    skin: WTR_SKINS[Math.floor(rng() * WTR_SKINS.length)],
-    items: pickN(WTR_MENU, cfg.items).map(m => m.id),
+    skin:      WTR_SKINS[Math.floor(rng() * WTR_SKINS.length)],
+    hair:      COL_HAIR[Math.floor(rng() * COL_HAIR.length)],
+    hairStyle: Math.floor(rng() * 4),
+    glasses:   rng() < 0.35,
+    mustache:  rng() < 0.28,
+    items:     pickN(WTR_MENU, cfg.items).map(m => m.id),
   }));
   return {customers, cfg, lvIdx, seed};
 }
@@ -139,48 +210,88 @@ function wtrDrawCustomer(P, cx, c, sh, showBubble, num, totalN) {
   const tableY = 320, bodyY = 265, headY = 238;
   const compact = totalN >= 6; // tight spacing
 
+  const r  = compact ? 19 : 24;
+  const sw = compact ? 20 : 26;  // shoulder half-width
+  const nw = compact ? 4  : 5;   // neck half-width
+  const hair = (c.hair && c.hair[1]) || '#3d2b1f';
+
+  // 1. Тінь на підлозі
   P.push(`<ellipse cx="${cx}" cy="354" rx="${compact ? 36 : 46}" ry="10" fill="rgba(0,0,0,.45)"/>`);
-  P.push(`<rect x="${cx - 5}" y="${tableY + 12}" width="10" height="28" fill="#5a3c08"/>`);
-  P.push(`<ellipse cx="${cx}" cy="${tableY + 8}" rx="${compact ? 42 : 54}" ry="13" fill="#7a5010"/>`);
-  P.push(`<ellipse cx="${cx}" cy="${tableY}" rx="${compact ? 42 : 54}" ry="13" fill="#c49a2a"/>`);
-  P.push(`<ellipse cx="${cx}" cy="${tableY - 3}" rx="${compact ? 40 : 52}" ry="11" fill="#d4aa32" opacity=".8"/>`);
-  P.push(`<rect x="${cx - (compact ? 18 : 24)}" y="${bodyY}" width="${compact ? 36 : 48}" height="${tableY - bodyY + 12}" rx="10" fill="${sh.clr}"/>`);
-  const r = compact ? 19 : 24;
-  P.push(`<circle cx="${cx}" cy="${headY}" r="${r}" fill="${c.skin}"/>`);
-  P.push(`<circle cx="${cx - 6}" cy="${headY - 3}" r="3" fill="#1c1c24"/>`);
-  P.push(`<circle cx="${cx + 6}" cy="${headY - 3}" r="3" fill="#1c1c24"/>`);
-  P.push(`<circle cx="${cx - 5}" cy="${headY - 5}" r="1.1" fill="rgba(255,255,255,.55)"/>`);
-  P.push(`<path d="M${cx - 6} ${headY + 10} q6 7 12 0" fill="none" stroke="#1c1c24" stroke-width="2" stroke-linecap="round"/>`);
+
+  // 2. ТІЛО КЛІЄНТА (Малюється ДО столу)
+  wtrHairBack(P, cx, headY, r, hair, c.hairStyle || 0);
+  P.push(`<path d="M${cx-sw} ${bodyY+12} Q${cx} ${bodyY-4} ${cx+sw} ${bodyY+12} L${cx+sw-5} ${tableY+25} L${cx-sw+5} ${tableY+25} Z" fill="${sh.clr}"/>`);
+  P.push(`<rect x="${cx-nw}" y="${headY+r-2}" width="${nw*2}" height="${bodyY-headY-r+8}" rx="${nw}" fill="${c.skin}"/>`);
+  P.push(`<path d="M${cx-7} ${bodyY+4} L${cx} ${bodyY+14} L${cx+7} ${bodyY+4}" fill="none" stroke="${colShade(sh.clr,1.25)}" stroke-width="${compact?1.5:2}" stroke-linecap="round" stroke-linejoin="round"/>`);
+
   const bx2 = compact ? cx + 12 : cx + 17;
   P.push(`<circle cx="${bx2}" cy="${bodyY + 9}" r="${compact ? 8 : 11}" fill="${sh.dark}"/>`);
   P.push(`<text x="${bx2}" y="${bodyY + 14}" text-anchor="middle" font-size="${compact ? 9 : 12}" fill="white" font-family="sans-serif" font-weight="bold">${num}</text>`);
 
+  P.push(`<circle cx="${cx}" cy="${headY}" r="${r}" fill="${c.skin}"/>`);
+  wtrHairFront(P, cx, headY, r, hair, c.hairStyle || 0);
+  P.push(`<circle cx="${cx - 6}" cy="${headY - 3}" r="3" fill="#1c1c24"/>`);
+  P.push(`<circle cx="${cx + 6}" cy="${headY - 3}" r="3" fill="#1c1c24"/>`);
+  P.push(`<circle cx="${cx - 5}" cy="${headY - 5}" r="1.1" fill="rgba(255,255,255,.55)"/>`);
+  P.push(`<path d="M${cx - 6} ${headY + 10} q6 7 12 0" fill="none" stroke="#1c1c24" stroke-width="2" stroke-linecap="round"/>`);
+  if (c.mustache) wtrMustacheDraw(P, cx, headY, r, hair);
+  if (c.glasses)  wtrGlassesDraw(P, cx, headY, r);
+
+  // 3. СТІЛ (Малюється ПІСЛЯ тіла)
+  P.push(`<rect x="${cx - 5}" y="${tableY + 12}" width="10" height="28" fill="#5a3c08"/>`);
+  P.push(`<ellipse cx="${cx}" cy="${tableY + 8}" rx="${compact ? 42 : 54}" ry="13" fill="#7a5010"/>`);
+  P.push(`<ellipse cx="${cx}" cy="${tableY}" rx="${compact ? 42 : 54}" ry="13" fill="#c49a2a"/>`);
+  P.push(`<ellipse cx="${cx}" cy="${tableY - 3}" rx="${compact ? 40 : 52}" ry="11" fill="#d4aa32" opacity=".8"/>`);
+  P.push(`<ellipse cx="${cx}" cy="${tableY - 4}" rx="${compact ? 24 : 32}" ry="5" fill="rgba(0,0,0,0.12)"/>`);
+  P.push(`<ellipse cx="${cx}" cy="${tableY + 2}" rx="${compact ? 16 : 22}" ry="4.5" fill="#fefefe" opacity="0.9"/>`);
+  P.push(`<ellipse cx="${cx}" cy="${tableY + 2}" rx="${compact ? 11 : 15}" ry="2.5" fill="#e2e8f0" opacity="0.5"/>`);
+
+  // 4. РУКИ (Малюються ПІСЛЯ столу)
+  if (!compact) {
+    const armClr = colShade(sh.clr, 0.82);
+    P.push(`<path d="M${cx-sw+4} ${bodyY+14} Q${cx-sw-6} ${bodyY+32} ${cx-20} ${tableY+4}" fill="none" stroke="${armClr}" stroke-width="10" stroke-linecap="round"/>`);
+    P.push(`<path d="M${cx+sw-4} ${bodyY+14} Q${cx+sw+6} ${bodyY+32} ${cx+20} ${tableY+4}" fill="none" stroke="${armClr}" stroke-width="10" stroke-linecap="round"/>`);
+  }
+
+  // 5. БУЛЬБАШКА З ЗАМОВЛЕННЯМ (Повністю перероблений адаптивний масштаб)
   if (showBubble && c.items && c.items.length) {
     const nItems = c.items.length;
-    // Compact bubbles for crowded scenes
-    const smallMode = totalN >= 6;
-    const lineH = smallMode ? 28 : 38;
-    const bubH  = (smallMode ? 16 : 20) + nItems * lineH;
-    const bubW  = smallMode ? Math.max(58, 50 + nItems * 8) : Math.max(86, 76 + nItems * 12);
+    const smallMode = totalN >= 6; // Мало місця по горизонталі
+    const isCrowded = nItems >= 4; // Мало місця по вертикалі (багато страв)
+
+    // Значно розширюємо саму бульбашку для тексту
+    const bubW = smallMode ? 96 : 124;
+
+    // Динамічний розрахунок розмірів
+    const lineH = isCrowded ? (smallMode ? 34 : 40) : (smallMode ? 46 : 56);
+    const emSize = isCrowded ? (smallMode ? 20 : 26) : (smallMode ? 32 : 40);
+    const txtSize = isCrowded ? (smallMode ? 11 : 13) : (smallMode ? 13 : 15);
+    const textGap = isCrowded ? 12 : 16; // Відступ тексту від емодзі вниз
+
+    const bubH = (isCrowded ? 12 : 16) + nItems * lineH;
+
     let bx = cx - bubW / 2;
-    bx = Math.max(4, Math.min(WTR_W - bubW - 4, bx));
-    const by    = Math.max(4, headY - bubH - (compact ? 20 : 26));
+    bx = Math.max(4, Math.min(WTR_W - bubW - 4, bx)); // Щоб не вилізла за краї екрана
+
+    const by = Math.max(4, headY - bubH - (compact ? 36 : 45));
     const tailX = Math.min(Math.max(cx, bx + 14), bx + bubW - 14);
 
     P.push(`<rect x="${bx + 3}" y="${by + 3}" width="${bubW}" height="${bubH}" rx="12" fill="rgba(0,0,0,.2)"/>`);
     P.push(`<rect x="${bx}" y="${by}" width="${bubW}" height="${bubH}" rx="12" fill="rgba(255,255,255,.97)" stroke="${sh.clr}" stroke-width="2"/>`);
-    P.push(`<path d="M${tailX - 6} ${by + bubH} l6 16 l6 -16 z" fill="rgba(255,255,255,.97)"/>`);
-    P.push(`<path d="M${tailX - 6} ${by + bubH} l6 16 l6 -16 z" fill="none" stroke="${sh.clr}" stroke-width="2"/>`);
+
+    P.push(`<path d="M${tailX - 6} ${by + bubH} l6 14 l6 -14 z" fill="rgba(255,255,255,.97)"/>`);
+    P.push(`<path d="M${tailX - 6} ${by + bubH} l6 14 l6 -14 z" fill="none" stroke="${sh.clr}" stroke-width="2"/>`);
     P.push(`<rect x="${tailX - 7}" y="${by + bubH - 2}" width="14" height="5" fill="rgba(255,255,255,.97)"/>`);
 
     c.items.forEach((itemId, j) => {
       const item = WTR_MENU.find(m => m.id === itemId);
-      const iy   = by + (smallMode ? 16 : 22) + j * lineH;
-      const lc   = bx + bubW / 2;
-      P.push(`<text x="${lc}" y="${iy + 2}" text-anchor="middle" font-size="${smallMode ? 17 : 21}" font-family="Apple Color Emoji,Segoe UI Emoji,serif">${item.emoji}</text>`);
-      if (!smallMode) {
-        P.push(`<text x="${lc}" y="${iy + 20}" text-anchor="middle" font-size="10" fill="#2a2a2a" font-family="system-ui,sans-serif">${t('wtr_' + item.id)}</text>`);
-      }
+      const iy = by + (isCrowded ? 24 : 34) + j * lineH;
+      const lc = bx + bubW / 2;
+
+      P.push(`<text x="${lc}" y="${iy}" text-anchor="middle" font-size="${emSize}" font-family="Apple Color Emoji,Segoe UI Emoji,serif">${item.emoji}</text>`);
+
+      // Текст тепер відображається завжди, зроблений жирнішим і крупнішим
+      P.push(`<text x="${lc}" y="${iy + textGap}" text-anchor="middle" font-size="${txtSize}" font-weight="700" fill="#2a2a2a" font-family="system-ui,sans-serif">${t('wtr_' + item.id)}</text>`);
     });
   }
 }
@@ -203,53 +314,48 @@ function wtrResultSceneSvg(results) {
     const compact = n >= 6;
     const headR  = compact ? 18 : 22;
 
-    // Shadow + table
+    // Тінь під столом
     P.push(`<ellipse cx="${cx}" cy="${H * 0.86}" rx="${compact ? 34 : 40}" ry="8" fill="rgba(0,0,0,.38)"/>`);
-    P.push(`<rect x="${cx - 4}" y="${tableY + 8}" width="8" height="20" fill="#5a3c08"/>`);
-    P.push(`<ellipse cx="${cx}" cy="${tableY + 5}" rx="${compact ? 38 : 46}" ry="10" fill="#7a5010"/>`);
-    P.push(`<ellipse cx="${cx}" cy="${tableY}" rx="${compact ? 38 : 46}" ry="10" fill="#c49a2a"/>`);
 
-    // Body
-    P.push(`<rect x="${cx - (compact ? 16 : 20)}" y="${bodyY}" width="${compact ? 32 : 40}" height="${tableY - bodyY + 8}" rx="8" fill="${sh.clr}"/>`);
-
-    // Head
+    // 1. ТІЛО ТА ГОЛОВА (Малюємо ДО столу)
+    P.push(`<rect x="${cx - (compact ? 16 : 20)}" y="${bodyY}" width="${compact ? 32 : 40}" height="${tableY - bodyY + 16}" rx="8" fill="${sh.clr}"/>`);
     P.push(`<circle cx="${cx}" cy="${headY}" r="${headR}" fill="${r.c.skin}"/>`);
 
     if (pct === 1) {
-      // Happy: wide smile, happy eyes
+      // Щасливий клієнт
       P.push(`<circle cx="${cx - 6}" cy="${headY - 3}" r="2.8" fill="#1c1c24"/>`);
       P.push(`<circle cx="${cx + 6}" cy="${headY - 3}" r="2.8" fill="#1c1c24"/>`);
       P.push(`<circle cx="${cx - 5}" cy="${headY - 5}" r="1" fill="rgba(255,255,255,.6)"/>`);
       P.push(`<path d="M${cx - 8} ${headY + 8} q8 11 16 0" fill="none" stroke="#1c1c24" stroke-width="2.2" stroke-linecap="round"/>`);
-      // Rosy cheeks
       P.push(`<ellipse cx="${cx - headR + 4}" cy="${headY + 5}" rx="5" ry="3" fill="rgba(255,150,130,.4)"/>`);
       P.push(`<ellipse cx="${cx + headR - 4}" cy="${headY + 5}" rx="5" ry="3" fill="rgba(255,150,130,.4)"/>`);
-      // Star above
       P.push(`<text x="${cx}" y="${headY - headR - 8}" text-anchor="middle" font-size="${compact ? 16 : 20}" font-family="Apple Color Emoji,serif">⭐</text>`);
     } else if (pct === 0) {
-      // Angry: frown, angry eyebrows
+      // Злий клієнт
       P.push(`<circle cx="${cx - 6}" cy="${headY - 3}" r="2.8" fill="#1c1c24"/>`);
       P.push(`<circle cx="${cx + 6}" cy="${headY - 3}" r="2.8" fill="#1c1c24"/>`);
-      // Angry eyebrows
       P.push(`<line x1="${cx - 10}" y1="${headY - 11}" x2="${cx - 3}" y2="${headY - 7}" stroke="#3a2010" stroke-width="2" stroke-linecap="round"/>`);
       P.push(`<line x1="${cx + 3}" y1="${headY - 7}" x2="${cx + 10}" y2="${headY - 11}" stroke="#3a2010" stroke-width="2" stroke-linecap="round"/>`);
-      // Frown
       P.push(`<path d="M${cx - 7} ${headY + 12} q7 -9 14 0" fill="none" stroke="#1c1c24" stroke-width="2.2" stroke-linecap="round"/>`);
-      // Anger mark
       P.push(`<text x="${cx}" y="${headY - headR - 8}" text-anchor="middle" font-size="${compact ? 14 : 18}" font-family="Apple Color Emoji,serif">💢</text>`);
     } else {
-      // Partial: neutral mouth, slight frown
+      // Розгублений (частковий успіх)
       P.push(`<circle cx="${cx - 6}" cy="${headY - 3}" r="2.8" fill="#1c1c24"/>`);
       P.push(`<circle cx="${cx + 6}" cy="${headY - 3}" r="2.8" fill="#1c1c24"/>`);
       P.push(`<line x1="${cx - 7}" y1="${headY + 10}" x2="${cx + 7}" y2="${headY + 10}" stroke="#1c1c24" stroke-width="2" stroke-linecap="round"/>`);
-      // Question mark above
       P.push(`<text x="${cx}" y="${headY - headR - 6}" text-anchor="middle" font-size="${compact ? 14 : 18}" font-family="sans-serif" fill="rgba(255,255,255,.5)">?</text>`);
     }
+
+    // 2. СТІЛ (Малюємо ПІСЛЯ тіла, щоб він перекривав нижню частину)
+    P.push(`<rect x="${cx - 4}" y="${tableY + 8}" width="8" height="20" fill="#5a3c08"/>`);
+    P.push(`<ellipse cx="${cx}" cy="${tableY + 5}" rx="${compact ? 38 : 46}" ry="10" fill="#7a5010"/>`);
+    P.push(`<ellipse cx="${cx}" cy="${tableY}" rx="${compact ? 38 : 46}" ry="10" fill="#c49a2a"/>`);
   });
 
   P.push('</svg>');
   return P.join('');
 }
+
 
 // ── Menu screen ────────────────────────────────────────────────────────────
 function showWaiterMenu() {
@@ -320,8 +426,9 @@ function wtrStart(lvIdx, fixedSeed) {
   const seed  = fixedSeed != null ? fixedSeed : Math.floor(Math.random() * 2147483647);
   wtrCurrent  = wtrBuild(wtrLevel, seed);
   wtrCurrent.daily = fixedSeed != null;
-  wtrAnswers  = wtrCurrent.customers.map(() => []);
-  wtrRecallIdx = 0;
+  wtrAnswers   = wtrCurrent.customers.map(() => []);
+  wtrRecallIdx  = 0;
+  wtrRecallOrder = wtrCurrent.customers.map((_, i) => i);
 
   showScreen('screen-waiter');
   document.getElementById('wtr-select').style.display  = 'none';
@@ -352,6 +459,11 @@ function wtrStartDaily() {
 function wtrStartRecall() {
   wtrTimers.forEach(clearTimeout); wtrTimers = [];
   wtrRecallIdx = 0;
+  // shuffle recall order
+  for (let i = wtrRecallOrder.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [wtrRecallOrder[i], wtrRecallOrder[j]] = [wtrRecallOrder[j], wtrRecallOrder[i]];
+  }
   document.getElementById('wtr-study').style.display  = 'none';
   document.getElementById('wtr-recall').style.display = 'block';
   wtrRenderRecall();
@@ -359,19 +471,24 @@ function wtrStartRecall() {
 
 function wtrRenderRecall() {
   const {customers, cfg} = wtrCurrent;
-  const i     = wtrRecallIdx;
-  const c     = customers[i];
-  const sh    = WTR_SHIRTS[i];
+  const i      = wtrRecallOrder[wtrRecallIdx]; // actual customer index (random order)
+  const c      = customers[i];
+  const sh     = WTR_SHIRTS[i];
   const nItems = cfg.items;
-  const mine  = wtrAnswers[i];
+  const mine   = wtrAnswers[i];
 
-  document.getElementById('wtr-recall-dots').innerHTML = customers.map((_, ci) => {
+  document.getElementById('wtr-recall-dots').innerHTML = wtrRecallOrder.map((ci, pos) => {
     const s = WTR_SHIRTS[ci];
-    return `<div class="wtr-dot${ci === i ? ' active' : ci < i ? ' done' : ''}" style="background:${ci === i ? s.clr : ci < i ? '#4ade80' : 'rgba(255,255,255,.15)'}"></div>`;
+    const isDone   = pos < wtrRecallIdx;
+    const isActive = pos === wtrRecallIdx;
+    return `<div class="wtr-dot${isActive ? ' active' : isDone ? ' done' : ''}"
+                 style="background:${isActive ? s.clr : isDone ? '#4ade80' : 'rgba(255,255,255,.15)'}">
+              <span style="font-size:.65rem;font-weight:900;color:${isActive?'white':'rgba(255,255,255,.5)'};line-height:1">${ci+1}</span>
+            </div>`;
   }).join('');
 
   document.getElementById('wtr-recall-q').innerHTML = `
-    <div class="wtr-avatar-big" style="background:${sh.clr};border-color:${sh.dark}">${i + 1}</div>
+    <div class="wtr-portrait-wrap">${wtrPortraitSvg(c, sh, i + 1)}</div>
     <div class="wtr-recall-text">${t('wtr_question', i + 1)}</div>
   `;
 
@@ -394,7 +511,7 @@ function wtrRenderRecall() {
     </button>`;
   }).join('');
 
-  const isLast     = i === customers.length - 1;
+  const isLast     = wtrRecallIdx === customers.length - 1;
   const canProceed = mine.length === nItems;
   document.getElementById('wtr-recall-action').innerHTML =
     `<button class="btn btn-primary" onclick="${isLast ? 'wtrSubmit()' : 'wtrNextCustomer()'}" ${canProceed ? '' : 'disabled'} style="min-width:150px">
@@ -403,7 +520,7 @@ function wtrRenderRecall() {
 }
 
 function wtrPickItem(itemId) {
-  const mine   = wtrAnswers[wtrRecallIdx];
+  const mine   = wtrAnswers[wtrRecallOrder[wtrRecallIdx]];
   const nItems = wtrCurrent.cfg.items;
   if (mine.length >= nItems || mine.includes(itemId)) return;
   mine.push(itemId);
@@ -412,7 +529,7 @@ function wtrPickItem(itemId) {
 }
 
 function wtrClearSlot(si) {
-  const mine = wtrAnswers[wtrRecallIdx];
+  const mine = wtrAnswers[wtrRecallOrder[wtrRecallIdx]];
   if (mine[si] !== undefined) { mine.splice(si, 1); wtrRenderRecall(); }
 }
 

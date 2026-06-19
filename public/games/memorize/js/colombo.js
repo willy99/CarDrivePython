@@ -43,6 +43,8 @@ let colAnsStyle = localStorage.getItem('membrain_col_ans') || 'choice';
 let colSecretOpt = localStorage.getItem('membrain_col_secret') !== 'off';
 let colTimers = [];
 let colQuiz = null;
+let colAlibiPortraitUpdate = null;
+let colQuizHasLineup = false;
 let _colGid = 0;
 
 function colCfg(lvIdx){
@@ -98,15 +100,22 @@ let mirror = {present:false, reveals:null};
   const crimeType = pick(cfg.secret ? ['murder','theft','burglary'] : ['theft','burglary']);
   let clue;
   if (crimeType === 'murder') {
-    clue = {type: pick(['spill','dropped']), color: pick([['red','#c0392b'],['dark red','#8b0000']]), object: pick(['knife','glass','bottle'])};
+    clue = {type: pick(['spill','dropped']), color: pick([['red','#c0392b'],['crimson','#8b0000']]), object: pick(['knife','glass','bottle'])};
   } else if (crimeType === 'theft') {
     clue = {type: pick(['footprints','dropped']), color: pick(COL_COLORS), object: pick(['key','envelope','watch','camera'])};
   } else {
     clue = {type: pick(['footprints','spill']), color: pick(COL_COLORS), object: pick(COL_HELD)};
   }
-  return {seed,setting,pal,timeOfDay,people,
+  // Align timeOfDay with what's visually shown through the window
+  const windowVisible = windo.present && !pal.outdoor && setting!=='bank' && setting!=='casino' && setting!=='train';
+  const finalTimeOfDay = windowVisible
+    ? (outside==='moon'||outside==='city'||outside==='watcher') ? 'night'
+      : outside==='tree' ? (timeOfDay==='night'?'dusk':timeOfDay) // tree+night → dusk
+      : timeOfDay // rain: any time
+    : timeOfDay;
+  return {seed,setting,pal,timeOfDay:finalTimeOfDay,people,
     clock:     pal.outdoor ? {present:false} : clock,
-    window:    (pal.outdoor || setting==='bank' || setting==='casino') ? {present:false} : windo,
+    window:    (pal.outdoor || setting==='bank' || setting==='casino') ? {present:false} : {...windo, showView: setting!=='train'},
     painting:  (pal.outdoor || setting==='bank') ? {present:false} : painting,
     mirror:    pal.outdoor ? {present:false,reveals:null} : mirror,
     door:      pal.outdoor ? {present:false} : door,
@@ -150,7 +159,10 @@ function colObj(type,x,yb,hex){
 // ── window outside view (clipped region) ──
 function colWindowView(m,U,ix,iy,iw,ih){
   const o=m.window.outside; const P=[];
-  const sky = o==='rain'?'#3a4250':(o==='tree'?'#7fa8c9':(o==='city'||o==='moon'||o==='watcher')?'#10162e':'#7fa8c9');
+  const sky = o==='rain' ? '#3a4250'
+    : m.timeOfDay==='night' ? '#10162e'
+    : m.timeOfDay==='dusk'  ? '#c47830'
+    : '#7fa8c9';
   P.push(`<rect x="${ix}" y="${iy}" width="${iw}" height="${ih}" fill="${sky}"/>`);
   if(o==='moon'){ P.push(`<circle cx="${ix+iw*0.68}" cy="${iy+ih*0.3}" r="16" fill="#f4f0d8"/><circle cx="${ix+iw*0.62}" cy="${iy+ih*0.28}" r="13" fill="${sky}"/>`); for(let i=0;i<6;i++) P.push(`<circle cx="${ix+(i*53%iw)+8}" cy="${iy+((i*37)%(ih-20))+8}" r="1.4" fill="#fff" opacity=".8"/>`); }
   else if(o==='tree'){ P.push(`<rect x="${ix+iw*0.55}" y="${iy+ih*0.5}" width="9" height="${ih*0.5}" fill="#5b3a22"/><circle cx="${ix+iw*0.6}" cy="${iy+ih*0.42}" r="26" fill="#2e7d44"/><circle cx="${ix+iw*0.35}" cy="${iy+ih*0.55}" r="18" fill="#36994f"/>`); }
@@ -864,7 +876,7 @@ function colBuildAlibi(m, rng) {
     const correct=m.people[0].holding, wrong=pick(COL_HELD.filter(x=>x!==correct));
     candidates.push({ trueText:t('colab_holding',correct), falseText:t('colab_holding',wrong), truth:true });
   }
-  if (m.window.present && m.window.outside !== 'watcher') {
+  if (m.window.present && m.window.showView && m.window.outside !== 'watcher') {
     const correct=m.window.outside, alts=COL_OUTSIDE.filter(x=>x!==correct&&x!=='watcher');
     if (alts.length) { const wrong=pick(alts); candidates.push({ trueText:t('colab_window_'+correct), falseText:t('colab_window_'+wrong), truth:true }); }
   }
@@ -877,13 +889,14 @@ function colBuildAlibi(m, rng) {
     let wh,wm; do { wh=1+Math.floor(rng()*12); wm=pick([0,15,30,45]); } while (wh===ah&&wm===am);
     candidates.push({ trueText:t('colab_clock',correctStr), falseText:t('colab_clock',wh+':'+(wm<10?'0'+wm:wm)), truth:true });
   }
-  { const correct=m.timeOfDay, wrongs=['day','dusk','night'].filter(x=>x!==correct);
-    candidates.push({ trueText:t('colab_timeofday_'+correct), falseText:t('colab_timeofday_'+pick(wrongs)), truth:true }); }
+  if (m.window.present) {
+    const correct=m.timeOfDay, wrongs=['day','dusk','night'].filter(x=>x!==correct);
+    candidates.push({ trueText:t('colab_timeofday_'+correct), falseText:t('colab_timeofday_'+pick(wrongs)), truth:true });
+  }
   if (m.people.length) {
-    const hasG=m.people.some(p=>p.glasses);
-    candidates.push({ trueText:t(hasG?'colab_glasses_yes':'colab_glasses_no'), falseText:t(hasG?'colab_glasses_no':'colab_glasses_yes'), truth:true });
-    const hasM=m.people.some(p=>p.mustache);
-    candidates.push({ trueText:t(hasM?'colab_mustache_yes':'colab_mustache_no'), falseText:t(hasM?'colab_mustache_no':'colab_mustache_yes'), truth:true });
+    const p0=m.people[0];
+    candidates.push({ trueText:t(p0.glasses?'colab_glasses_yes':'colab_glasses_no'), falseText:t(p0.glasses?'colab_glasses_no':'colab_glasses_yes'), truth:true });
+    candidates.push({ trueText:t(p0.mustache?'colab_mustache_yes':'colab_mustache_no'), falseText:t(p0.mustache?'colab_mustache_no':'colab_mustache_yes'), truth:true });
   }
   if (!m.pal.outdoor) {
     const petKey=m.pet||null;
@@ -899,7 +912,7 @@ function colBuildAlibi(m, rng) {
     text: (()=>{ const raw=lieIdxs.has(i)?c.falseText:c.trueText; return rng()<0.3?applyAccent(raw):raw; })(),
     truth: !lieIdxs.has(i)
   }));
-  return { type:'alibi', q:t('colq_alibi'), claims:finalClaims, a:finalClaims.map(c=>c.truth?t('col_truth'):t('col_lie')).join(', '), _expected:finalClaims.map(c=>c.truth?'truth':'lie'), choices:[], accept:[], secret:false };
+  return { type:'alibi', q:t('colq_alibi'), suspect: m.people.length ? m.people[0] : null, claims:finalClaims, a:finalClaims.map(c=>c.truth?t('col_truth'):t('col_lie')).join(', '), _expected:finalClaims.map(c=>c.truth?'truth':'lie'), choices:[], accept:[], secret:false };
 }
 
 function colQuestions(m,cfg){
@@ -917,8 +930,8 @@ function colQuestions(m,cfg){
   // Кількість людей
   core.push(countQ(t('colq_people'), m.people.length));
 
-  // Час доби
-  core.push(poolQ(t('colq_timeofday'), m.timeOfDay, ['day','dusk','night'], k=>t('ctime_'+k)));
+  // Час доби — лише якщо є вікно (без вікна не видно, день чи ніч)
+  if (m.window.present) core.push(poolQ(t('colq_timeofday'), m.timeOfDay, ['day','dusk','night'], k=>t('ctime_'+k)));
 
   // Деталі людей
   if(m.people.length){
@@ -985,7 +998,7 @@ function colQuestions(m,cfg){
     core.push(ynQ(t('colq_lamp'), m.lamp));
   }
   if(m.rug.present) core.push(colorQ('colq_rug', m.rug.color[0]));
-  if(m.window.present) core.push(poolQ(t('colq_window'), m.window.outside, COL_OUTSIDE, k=>colName('out',k)));
+  if(m.window.present && m.window.showView) core.push(poolQ(t('colq_window'), m.window.outside, COL_OUTSIDE, k=>colName('out',k)));
 
   // Домашня тварина
   const petCor=m.pet||'none';
@@ -1004,7 +1017,7 @@ function colQuestions(m,cfg){
         secret.push({ q: t('colq_mirror_clock'), a: realA, choices: [...opts].sort(() => rnd() - .5), accept: [realA, realA.replace(':', '.'), realA.replace(':', 'h')], secret: true });
       }
     }
-    if(m.window.outside==='watcher') secret.push(colorQ('colq_watcher', m.window.watcher[0], true));
+    if(m.window.showView && m.window.outside==='watcher') secret.push(colorQ('colq_watcher', m.window.watcher[0], true));
 
     if(m.clue && m.clue.type!=='none'){
       const correctClue=m.clue.type;
@@ -1016,17 +1029,22 @@ function colQuestions(m,cfg){
         const disClr=colPickN(clrKeys,3,rng,m.clue.color[0]);
         secret.push({q: qClueClr, a: clrName(m.clue.color[0]), choices:[...disClr,m.clue.color[0]].sort(()=>rnd()-.5).map(clrName), accept: [clrName(m.clue.color[0]).toLowerCase()], secret: true});
       }
-      if(m.clue.object) {
+      if(m.clue.object && m.clue.type === 'dropped') {
         const qClueObj = t('colq_clue_obj', colName('clue', correctClue));
         secret.push(poolQ(qClueObj, m.clue.object, COL_HELD, k=>colName('obj',k), true));
       }
     }
   }
 
-  // Special question types: lineup and alibi (mixed randomly into quiz)
+  // Special question types: lineup (with optional embedded alibi)
   const special=[];
-  if(m.people.length>0 && rnd()<0.65){ const lq=colBuildLineup(m,rng); if(lq) special.push(lq); }
-  if(rnd()<0.55){ const aq=colBuildAlibi(m,rng); if(aq) special.push(aq); }
+  if(m.people.length>0 && rnd()<0.65){
+    const lq=colBuildLineup(m,rng);
+    if(lq){
+      if(rnd()<0.70){ const aq=colBuildAlibi(m,rng); if(aq) lq._alibi=aq; }
+      special.push(lq);
+    }
+  }
 
   // Збираємо: 1 питання завжди про кількість людей, решта ядро (перемішане), секрети в кінці
   const head=core[0]; const rest=core.slice(1).sort(()=>rnd()-.5);
@@ -1123,11 +1141,12 @@ function colStartQuiz(){
   document.getElementById('col-quiz-title').textContent=t('col_quiz_title');
   document.getElementById('col-quiz-sub').textContent=t('col_quiz_sub');
   document.getElementById('col-submit-btn').textContent=t('col_submit');
+  colAlibiPortraitUpdate = null;
+  colQuiz.alibiAnswers = {};
   const list=document.getElementById('col-quiz-list'); list.innerHTML='';
   questions.forEach((q,qi)=>{
     const card=document.createElement('div'); card.className='col-q-card'+(q.secret?' secret':'');
     if(q.type==='lineup'){ colRenderLineupCard(q,qi,card); list.appendChild(card); return; }
-    if(q.type==='alibi'){ colRenderAlibiCard(q,qi,card); list.appendChild(card); return; }
     let inner=`<div class="col-q-num">${q.secret?'🔍 '+t('col_twist'):t('col_clue_n',qi+1)}</div><div class="col-q-text">${q.q}</div>`;
     if(colAnsStyle==='choice'){
       inner+=`<div class="col-choices">`+q.choices.map(c=>`<button class="col-choice" data-v="${escapeAttr(c)}">${c}</button>`).join('')+`</div>`;
@@ -1165,12 +1184,57 @@ function colRenderLineupCard(q, qi, card) {
     slot.onclick=()=>{
       card.querySelectorAll('.col-lineup-slot').forEach(s=>s.classList.remove('sel'));
       slot.classList.add('sel');
-      colQuiz.answers[qi]=String(parseInt(slot.dataset.idx)+1);
+      const idx = parseInt(slot.dataset.idx);
+      colQuiz.answers[qi]=String(idx+1);
+      if (colAlibiPortraitUpdate) colAlibiPortraitUpdate(q.choices[idx]);
       colSndSelect();
     };
   });
+  if (q._alibi) {
+    const alibi = q._alibi;
+    const playerVals = new Array(alibi.claims.length).fill(null);
+    const claimsHtml = alibi.claims.map((claim,ci)=>`
+      <div class="col-alibi-row">
+        <div class="col-alibi-fact">${claim.text}</div>
+        <div class="col-ab-btns">
+          <button class="col-ab-btn" data-val="truth" data-ci="${ci}">${t('col_truth')}</button>
+          <button class="col-ab-btn" data-val="lie" data-ci="${ci}">${t('col_lie')}</button>
+        </div>
+      </div>`).join('');
+    const alibiSec = document.createElement('div');
+    alibiSec.className = 'col-alibi-embedded';
+    alibiSec.innerHTML = `
+      <div class="col-q-num">🎭 ${t('col_alibi_tag')}</div>
+      <div class="col-q-text">${alibi.q}</div>
+      <div class="col-alibi-who" id="col-alibi-who-box"><div class="col-alibi-pick-hint">${t('col_alibi_pick_hint')}</div></div>
+      <div class="col-alibi-claims">${claimsHtml}</div>`;
+    card.appendChild(alibiSec);
+    colAlibiPortraitUpdate = (personObj) => {
+      const box = document.getElementById('col-alibi-who-box');
+      if (box) box.innerHTML = `<div class="col-alibi-portrait">${colAlibiPortrait(personObj)}</div><div class="col-alibi-who-lbl">${t('col_alibi_who')}</div>`;
+    };
+    alibiSec.querySelectorAll('.col-ab-btn').forEach(btn=>{
+      btn.onclick=()=>{
+        const ci=parseInt(btn.dataset.ci);
+        alibiSec.querySelectorAll(`.col-ab-btn[data-ci="${ci}"]`).forEach(b=>b.classList.remove('sel'));
+        btn.classList.add('sel');
+        playerVals[ci]=btn.dataset.val;
+        colQuiz.alibiAnswers[qi]=playerVals.join(',');
+        colSndSelect();
+      };
+    });
+  }
 }
 
+function colAlibiPortrait(p) {
+  if (!p) return '';
+  const P = [];
+  P.push(`<svg viewBox="0 0 200 450" xmlns="http://www.w3.org/2000/svg" style="display:block;width:72px;height:auto;border-radius:10px;background:#1e2130;border:1.5px solid rgba(255,255,255,.1);flex-shrink:0">`);
+  P.push(`<rect width="200" height="450" fill="#1e2130"/>`);
+  colPerson(P, 100, p);
+  P.push(`</svg>`);
+  return P.join('');
+}
 function colRenderAlibiCard(q, qi, card) {
   const playerVals=new Array(q.claims.length).fill(null);
   const claimsHtml=q.claims.map((claim,ci)=>`
@@ -1181,7 +1245,19 @@ function colRenderAlibiCard(q, qi, card) {
         <button class="col-ab-btn" data-val="lie" data-ci="${ci}">${t('col_lie')}</button>
       </div>
     </div>`).join('');
-  card.innerHTML=`<div class="col-q-num">🎭 ${t('col_alibi_tag')}</div><div class="col-q-text">${q.q}</div><div class="col-alibi-claims">${claimsHtml}</div>`;
+  let portraitHtml;
+  if (colQuizHasLineup) {
+    portraitHtml = `<div class="col-alibi-who" id="col-alibi-who-box"><div class="col-alibi-pick-hint">${t('col_alibi_pick_hint')}</div></div>`;
+    colAlibiPortraitUpdate = (personObj) => {
+      const box = document.getElementById('col-alibi-who-box');
+      if (box) box.innerHTML = `<div class="col-alibi-portrait">${colAlibiPortrait(personObj)}</div><div class="col-alibi-who-lbl">${t('col_alibi_who')}</div>`;
+    };
+  } else if (q.suspect) {
+    portraitHtml = `<div class="col-alibi-who"><div class="col-alibi-portrait">${colAlibiPortrait(q.suspect)}</div><div class="col-alibi-who-lbl">${t('col_alibi_who')}</div></div>`;
+  } else {
+    portraitHtml = '';
+  }
+  card.innerHTML=`<div class="col-q-num">🎭 ${t('col_alibi_tag')}</div><div class="col-q-text">${q.q}</div>${portraitHtml}<div class="col-alibi-claims">${claimsHtml}</div>`;
   card.querySelectorAll('.col-ab-btn').forEach(btn=>{
     btn.onclick=()=>{
       const ci=parseInt(btn.dataset.ci);
@@ -1198,23 +1274,28 @@ function setColScroll(){ document.getElementById('screen-colombo').style.justify
 function escapeAttr(s){ return String(s).replace(/"/g,'&quot;'); }
 
 function colNorm(s){ return String(s||'').toLowerCase().trim().replace(/\s+/g,' '); }
+function colCheckAlibi(alibi, ans){
+  if(!ans) return false;
+  const pv=ans.split(','), exp=alibi._expected||alibi.claims.map(c=>c.truth?'truth':'lie');
+  return pv.filter((v,i)=>v===exp[i]).length>=Math.ceil(exp.length*0.67);
+}
 function colCheck(q, ans){
   if(q.type==='lineup') return ans!=null && String(ans)===String(q.a);
-  if(q.type==='alibi'){
-    if(!ans) return false;
-    const pv=ans.split(','), exp=q._expected||q.claims.map(c=>c.truth?'truth':'lie');
-    return pv.filter((v,i)=>v===exp[i]).length>=Math.ceil(exp.length*0.67);
-  }
   if(ans==null) return false; const a=colNorm(ans); if(colAnsStyle==='choice') return a===colNorm(q.a); return q.accept.some(x=>colNorm(x)===a);
 }
 
 function colSubmit(){
   if(!colQuiz) return;
-  const {questions,answers}=colQuiz;
-  let correct=0; questions.forEach((q,i)=>{ if(colCheck(q,answers[i])) correct++; });
-  const total=questions.length; const score=Math.round(correct/total*100);
+  const {questions,answers,alibiAnswers}=colQuiz;
+  let correct=0, total=0;
+  questions.forEach((q,i)=>{
+    total++;
+    if(colCheck(q,answers[i])) correct++;
+    if(q._alibi){ total++; if(colCheckAlibi(q._alibi,alibiAnswers[i])) correct++; }
+  });
+  const score=Math.round(correct/total*100);
   const stars = score>=90?3:score>=70?2:score>=50?1:0;
-  colQuiz.correct=correct; colQuiz.score=score; colQuiz.stars=stars;
+  colQuiz.correct=correct; colQuiz.score=score; colQuiz.stars=stars; colQuiz.total=total;
   // save stats
   const stats=colLoadStats(); const tk=mathTodayKey();
   stats.days=stats.days||{}; stats.days[tk]=stats.days[tk]||{cases:0,score:0,best:0};
@@ -1231,36 +1312,45 @@ function colShowResults(animate){
   document.getElementById('col-study').style.display='none';
   document.getElementById('col-quiz').style.display='none';
   document.getElementById('col-results').style.display='block';
-  const {questions,answers,correct,score,stars}=colQuiz;
+  const {questions,answers,alibiAnswers,correct,score,stars,total}=colQuiz;
   const starEl=document.getElementById('col-stars'); starEl.innerHTML=''; for(let k=0;k<3;k++){ const s=document.createElement('span'); s.textContent='★'; s.style.opacity=k<stars?1:.22; starEl.appendChild(s); }
   document.getElementById('col-score-pct').textContent=score+'%';
   document.getElementById('col-result-label').textContent=t('col_result_label');
   const verdict = score>=90?t('col_verdict_3'):score>=70?t('col_verdict_2'):score>=50?t('col_verdict_1'):t('col_verdict_0');
-  document.getElementById('col-verdict').textContent=t('col_solved_n',correct,questions.length)+' · '+verdict;
+  document.getElementById('col-verdict').textContent=t('col_solved_n',correct,total||questions.length)+' · '+verdict;
   const list=document.getElementById('col-result-list'); list.innerHTML='';
   const rows=questions.map((q,i)=>{ const ok=colCheck(q,answers[i]); const row=document.createElement('div'); row.className='col-result-q';
     const ico=document.createElement('div'); ico.className='rq-ico'; ico.textContent=ok?'✅':'❌';
     const body=document.createElement('div'); body.className='rq-body';
-    const pfx=q.secret?'🔍 ':q.type==='lineup'?'🚔 ':q.type==='alibi'?'🎭 ':'';
+    const pfx=q.secret?'🔍 ':q.type==='lineup'?'🚔 ':'';
     const qEl=document.createElement('div'); qEl.className='rq-q'; qEl.textContent=pfx+q.q;
     const aEl=document.createElement('div'); aEl.className='rq-a '+(ok?'ok':'no');
     if(q.type==='lineup'){
       const yours=answers[i]||t('col_no_answer');
       aEl.textContent=ok?'✓ '+t('col_lineup_correct',q.a):t('col_lineup_wrong',yours,q.a);
-    } else if(q.type==='alibi'){
-      const pv=answers[i]?answers[i].split(','):[];
-      const exp=q._expected||q.claims.map(c=>c.truth?'truth':'lie');
-      const numOk=exp.filter((ev,ci)=>pv[ci]===ev).length;
-      const verdictLine=`<div>${t('col_alibi_verdict',numOk,exp.length)}</div>`;
-      const claimLines=q.claims.map((claim,ci)=>{
-        const ev=exp[ci], player=pv[ci], match=player===ev;
-        const evLbl=ev==='truth'?t('col_truth'):t('col_lie');
-        const playerLbl=player?(player==='truth'?t('col_truth'):t('col_lie')):t('col_no_answer');
-        const ico=match?'✓':'✗';
-        const detail=match?` — ${evLbl} ${ico}`:`— ${t('col_you_said').toLowerCase()} ${playerLbl} · ${t('col_answer_was')} ${evLbl} ${ico}`;
-        return `<div class="col-alibi-result-row">${claim.text} ${detail}</div>`;
-      }).join('');
-      aEl.innerHTML=verdictLine+claimLines;
+      if(q._alibi){
+        const alibiOk=colCheckAlibi(q._alibi,alibiAnswers[i]);
+        const pv=(alibiAnswers[i]||'').split(',');
+        const exp=q._alibi._expected||q._alibi.claims.map(c=>c.truth?'truth':'lie');
+        const numOk=exp.filter((ev,ci)=>pv[ci]===ev).length;
+        const alibiDiv=document.createElement('div'); alibiDiv.className='col-alibi-result-block';
+        const alibiIco=document.createElement('div'); alibiIco.className='rq-ico'; alibiIco.textContent=alibiOk?'✅':'❌';
+        const alibiBody=document.createElement('div'); alibiBody.className='rq-body';
+        const alibiQ=document.createElement('div'); alibiQ.className='rq-q'; alibiQ.textContent='🎭 '+q._alibi.q;
+        const alibiA=document.createElement('div'); alibiA.className='rq-a '+(alibiOk?'ok':'no');
+        alibiA.innerHTML=`<div>${t('col_alibi_verdict',numOk,exp.length)}</div>`+
+          q._alibi.claims.map((claim,ci)=>{
+            const ev=exp[ci], player=pv[ci], match=player===ev;
+            const evLbl=ev==='truth'?t('col_truth'):t('col_lie');
+            const playerLbl=player?(player==='truth'?t('col_truth'):t('col_lie')):t('col_no_answer');
+            return `<div class="col-alibi-result-row">${claim.text} — ${match?evLbl+' ✓':t('col_you_said').toLowerCase()+' '+playerLbl+' · '+t('col_answer_was')+' '+evLbl+' ✗'}</div>`;
+          }).join('');
+        alibiBody.appendChild(alibiQ); alibiBody.appendChild(alibiA);
+        alibiDiv.appendChild(alibiIco); alibiDiv.appendChild(alibiBody);
+        body.appendChild(qEl); body.appendChild(aEl); body.appendChild(alibiDiv);
+        row.appendChild(ico); row.appendChild(body);
+        return {row, ok};
+      }
     } else {
       const yourAns=answers[i]==null||answers[i]===''?t('col_no_answer'):answers[i];
       aEl.textContent=ok?'✓ '+q.a:t('col_you_said')+' '+yourAns+' · '+t('col_answer_was')+' '+q.a;

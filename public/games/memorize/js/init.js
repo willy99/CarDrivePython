@@ -23,6 +23,7 @@ function applyLang() {
   document.querySelectorAll('.back-btn').forEach(b => { b.innerHTML = '<svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>'; b.title = t('home_btn'); });
   // options toggle labels
   ['wm-opts-label','spot-opts-label','math-opts-label','col-opts-label','cipher-opts-label'].forEach(id => setTxt(id, 'opts_label'));
+  setTxt('cipher-setup-btn-lbl', 'cph_setup_btn');
   // colombo static
   setTxt('col-section-title', 'col_section_title'); setTxt('col-section-sub', 'col_section_sub');
   setTxt('col-training-head', 'col_training_head');

@@ -5,9 +5,9 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; connect-src 'none'; object-src 'none'; base-uri 'self';">
 <title>MemBrain</title>
-  <link rel="stylesheet" href="css/base.css?v=5">
-  <link rel="stylesheet" href="css/components.css?v=5">
-  <link rel="stylesheet" href="css/games.css?v=14">
+  <link rel="stylesheet" href="css/base.css?v=6">
+  <link rel="stylesheet" href="css/components.css?v=6">
+  <link rel="stylesheet" href="css/games.css?v=28">
 </head>
 <body>
 
@@ -324,7 +324,7 @@
     <div class="result-label" id="wm-result-label">Memory Score</div>
     <div class="stat-row" id="wm-stat-row"></div>
     <div class="compare-grid" id="wm-compare"></div>
-    <div style="margin-top:20px;display:flex;gap:12px;justify-content:center;flex-wrap:wrap;">
+    <div style="margin-top:20px;padding-bottom:max(20px,calc(16px + env(safe-area-inset-bottom)));display:flex;gap:12px;justify-content:center;flex-wrap:wrap;">
       <button class="btn" id="wm-change-btn" onclick="showWordMenu()">← Levels</button>
       <button class="btn" id="wm-replay-btn" onclick="wmReplay()">Replay</button>
       <button class="btn btn-primary" id="wm-next-btn" onclick="wmNextLevel()">Next Level →</button>
@@ -451,8 +451,8 @@
         <div class="coll-options" id="coll-options"></div>
         <div style="font-size:.8rem;color:var(--text2);margin:14px 0 8px;" id="lobby-grid-label">Grid size for your invitation:</div>
         <div class="grid-options">
-          <div class="grid-opt active" data-grid="2x4" onclick="selectGrid(this)">2×4</div>
-          <div class="grid-opt" data-grid="4x4" onclick="selectGrid(this)">4×4</div>
+          <div class="grid-opt" data-grid="2x4" onclick="selectGrid(this)">2×4</div>
+          <div class="grid-opt active" data-grid="4x4" onclick="selectGrid(this)">4×4</div>
           <div class="grid-opt" data-grid="4x6" onclick="selectGrid(this)">4×6</div>
           <div class="grid-opt" data-grid="4x8" onclick="selectGrid(this)">4×8</div>
           <div class="grid-opt" data-grid="6x6" onclick="selectGrid(this)">6×6</div>
@@ -472,7 +472,6 @@
 
 <!-- ══ PAIRS GAME ROOM ══ -->
 <div id="screen-pairs" class="screen">
-  <button class="back-btn" onclick="backFromGame('pairs')"><svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg></button>
   <div id="pairs-header">
     <div class="score-block" id="score-p1">
       <div class="sb-name" id="p1-name">Player 1</div>
@@ -487,6 +486,9 @@
       <div class="sb-name" id="p2-name">Player 2</div>
       <div class="sb-pairs" id="p2-pairs">0</div>
       <div class="sb-holes" id="p2-holes">holes: 0</div>
+    </div>
+    <div class="pairs-exit-col">
+      <button class="pairs-exit-btn" onclick="backFromGame('pairs')" title="Exit">✕</button>
     </div>
   </div>
   <div id="pairs-powerup-bar">
@@ -520,7 +522,7 @@
     <div id="gameover-sub"></div>
     <div class="go-scores" id="go-scores"></div>
     <div id="go-elo-change" style="display:none;text-align:center;margin:6px 0 2px;font-size:.85rem;font-weight:800;"></div>
-    <div style="display:flex;gap:12px;justify-content:center;">
+    <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;">
       <button class="btn" id="lobby-back-btn" onclick="showLobby()">← Lobby</button>
       <button class="btn btn-primary" id="rematch-btn" onclick="requestRematch()">Rematch!</button>
     </div>
@@ -982,8 +984,10 @@
       <button class="close-btn" onclick="goMenu()" title="Home"><svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg></button>
     </div>
     <div class="section-sub" id="cipher-section-sub">Learn the shape code · encode numbers into stories · recall them</div>
-    <!-- Shape reference strip (0–9) -->
-    <div id="cipher-ref-strip" class="cph-ref-strip"></div>
+    <!-- Shape reference strip (0–9) — tap any icon to open setup -->
+    <div id="cipher-ref-strip" class="cph-ref-strip" style="cursor:pointer;"></div>
+    <button class="btn" onclick="cphShowSetup()" id="cipher-setup-btn"
+            style="margin:6px auto 12px;display:block;font-size:.78rem;padding:5px 14px;">🔧 <span id="cipher-setup-btn-lbl">Customize my code</span></button>
     <!-- Level grid -->
     <div class="level-grid" id="cipher-level-grid"></div>
     <!-- Daily Code card -->
@@ -1007,6 +1011,9 @@
       <div class="math-stat-grid" id="cipher-daily-stats"></div>
     </div>
   </div>
+
+  <!-- PERSONAL CIPHER SETUP -->
+  <div id="cipher-setup" style="display:none;width:100%;max-width:680px;margin:0 auto;padding:16px 20px;overflow-y:auto;"></div>
 
   <!-- STUDY PHASE -->
   <div id="cipher-study" style="display:none;">
@@ -1044,23 +1051,23 @@
   </div>
 </div>
 
-<script src="js/i18n.js?v=14"></script>
-<script src="js/constants.js?v=14"></script>
-<script src="js/objects.js?v=14"></script>
-<script src="js/core.js?v=14"></script>
-<script src="js/word.js?v=14"></script>
-<script src="js/spot.js?v=14"></script>
-<script src="js/pairs.js?v=14"></script>
-<script src="js/math.js?v=14"></script>
-<script src="js/diamond.js?v=14"></script>
-<script src="js/longmemory.js?v=14"></script>
-<script src="js/systems.js?v=14"></script>
-<script src="js/pairs-ai.js?v=14"></script>
-<script src="js/math-extra.js?v=14"></script>
-<script src="js/colombo.js?v=14"></script>
-<script src="js/cipher.js?v=14"></script>
-<script src="js/waiter.js?v=14"></script>
-<script src="js/meeting.js?v=14"></script>
-<script src="js/init.js?v=14"></script>
+<script src="js/i18n.js?v=27"></script>
+<script src="js/constants.js?v=27"></script>
+<script src="js/objects.js?v=27"></script>
+<script src="js/core.js?v=27"></script>
+<script src="js/word.js?v=27"></script>
+<script src="js/spot.js?v=27"></script>
+<script src="js/pairs.js?v=27"></script>
+<script src="js/math.js?v=27"></script>
+<script src="js/diamond.js?v=27"></script>
+<script src="js/longmemory.js?v=27"></script>
+<script src="js/systems.js?v=27"></script>
+<script src="js/pairs-ai.js?v=27"></script>
+<script src="js/math-extra.js?v=27"></script>
+<script src="js/colombo.js?v=27"></script>
+<script src="js/cipher.js?v=27"></script>
+<script src="js/waiter.js?v=29"></script>
+<script src="js/meeting.js?v=27"></script>
+<script src="js/init.js?v=27"></script>
 </body>
 </html>
