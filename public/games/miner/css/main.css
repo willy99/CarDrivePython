@@ -38,6 +38,12 @@ html, body {
   white-space: nowrap;
 }
 .btn:hover { background: #25513a; }
+.icon-btn {
+  padding: 7px 10px;
+  font-size: 16px;
+  min-width: 36px;
+  text-align: center;
+}
 
 #hud { display: flex; gap: 12px; }
 #hud .stat {
@@ -856,10 +862,16 @@ html, body {
   filter: drop-shadow(0 1px 2px rgba(0,0,0,0.5));
 }
 
+/* Flag-mode active state */
+.flag-mode-active {
+  background: #5a2020 !important;
+  border-color: #e23b3b !important;
+  box-shadow: 0 0 6px rgba(226,59,59,.5);
+}
+
 @media (max-width: 600px) {
   #topbar .title { display: none; }
-  /* Hide theme toggle to make room for lang button on narrow screens */
-  #theme-toggle { display: none; }
+  /* On mobile: theme toggle is condensed to icon via JS updateThemeBtn() */
   #hud .stat { font-size: 13px; }
   #hud .stat:nth-child(2) { display: none; } /* hide flag count on very narrow */
   .btn { padding: 6px 9px; font-size: 12px; }

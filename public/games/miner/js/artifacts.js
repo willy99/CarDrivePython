@@ -58,8 +58,8 @@ export const ARTIFACTS = {
   detector: {
     id: 'detector', icon: '🔍', svg: _S.detector, active: false,
     en: 'Metal detector', uk: 'Металодетектор',
-    descEn: 'Passive — saves you from the first mine you step on this op.',
-    descUk: 'Пасивний — рятує від першого підриву за цю операцію.',
+    descEn: 'Auto-trigger (equip to activate) — saves from the first mine stepped on.',
+    descUk: 'Авто-тригер (потрібно екіпірувати) — рятує від першого підриву.',
   },
   arm: {
     id: 'arm', icon: '🦾', svg: _S.arm, active: 'target', range: 2,
@@ -100,8 +100,8 @@ export const ARTIFACTS = {
   vest: {
     id: 'vest', icon: '🛡️', svg: _S.vest, active: false,
     en: 'Ballistic vest', uk: 'Бронежилет',
-    descEn: 'Passive — survives one mine step. Sapper gets wounded but lives.',
-    descUk: 'Пасивний — переживає один підрив. Сапер поранений, але живий.',
+    descEn: 'Auto-trigger (equip to activate) — sapper survives one mine step.',
+    descUk: 'Авто-тригер (потрібно екіпірувати) — сапер переживає один підрив.',
   },
   relay: {
     id: 'relay', icon: '📡', svg: _S.relay, active: 'self',

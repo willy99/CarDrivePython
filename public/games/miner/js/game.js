@@ -42,7 +42,7 @@ class Game {
 
     this._wire();
     this.renderer.resize();
-    window.addEventListener('resize', () => this.renderer.resize());
+    window.addEventListener('resize', () => { this.renderer.resize(); this.updateThemeBtn(); });
     this.applyLang();
     this.showSelect();
   }
@@ -50,6 +50,8 @@ class Game {
   _wire() {
     $('btn-back').onclick = () => this.showSelect();
     $('btn-restart').onclick = () => { Sound.click(); if (this.level) this.startLevel(this.level); };
+    $('btn-howto-open').onclick = () => { Sound.click(); this.showHowTo(); };
+    $('btn-flag-mode').onclick = () => { this._toggleFlagMode(); };
     $('mute-toggle').onclick = () => { const m = toggleMute(); if (!m) Sound.click(); this.updateMuteBtn(); };
     $('lang-toggle').onclick = () => { Sound.click(); toggleLang(); this.applyLang(); this.renderSelect(); };
     $('theme-toggle').onclick = () => {
@@ -66,9 +68,9 @@ class Game {
     $('btn-stash-close').onclick = () => this.hideStashModal();
     $('stash-modal').onclick = e => { if (e.target === $('stash-modal')) this.hideStashModal(); };
     $('btn-howto-close').onclick = () => this.hideHowTo();
-    $('howto-modal').onclick = e => { if (e.target === $('howto-modal')) this.hideHowTo(); };
+    $('howto-modal').onclick  = e => { if (e.target === $('howto-modal'))  this.hideHowTo(); };
     $('btn-ach-close').onclick = () => this.hideAchievementsModal();
-    $('ach-modal').onclick = e => { if (e.target === $('ach-modal')) this.hideAchievementsModal(); };
+    $('ach-modal').onclick    = e => { if (e.target === $('ach-modal'))    this.hideAchievementsModal(); };
     this._cheatBuf = '';
     window.addEventListener('keydown', e => {
       this._cheatBuf = (this._cheatBuf + e.key).toLowerCase().slice(-5);
@@ -76,6 +78,8 @@ class Game {
         this._cheatBuf = '';
         if (this.state === 'PLAYING') {
           for (const id of ARTIFACT_IDS) { this.loadout.push(id); this.toolUses.push(true); }
+          this.detectorReady = true;
+          this.vestReady = true;
           this.renderTools();
           this.showToast('💀 IDDQD — всі артефакти в рюкзаку!');
         }
@@ -117,6 +121,12 @@ class Game {
 
   hideAchievementsModal() {
     $('ach-modal').classList.remove('open');
+  }
+
+  _toggleFlagMode() {
+    this._flagMode = !this._flagMode;
+    $('btn-flag-mode').classList.toggle('flag-mode-active', this._flagMode);
+    Sound.click();
   }
 
   _equipSkin(id) {
@@ -385,7 +395,7 @@ class Game {
   applyLang() {
     $('title').textContent = t('title');
     $('btn-back').textContent = t('back');
-    $('btn-restart').textContent = t('restart');
+    // btn-restart is now a fixed ↺ icon, no text to translate
     $('lang-toggle').textContent = t('langBtn');
     $('select-title').textContent = t('pickLevel');
     this.updateThemeBtn();
@@ -394,7 +404,8 @@ class Game {
   }
 
   updateThemeBtn() {
-    $('theme-toggle').textContent = '🎨 ' + THEMES[this.themeId].name[lang];
+    const name = THEMES[this.themeId].name[lang];
+    $('theme-toggle').textContent = window.innerWidth <= 600 ? '🎨' : `🎨 ${name}`;
   }
 
   updateMuteBtn() { $('mute-toggle').textContent = isMuted() ? '🔇' : '🔊'; }
@@ -410,6 +421,9 @@ class Game {
     $('hud').style.visibility = 'hidden';
     $('hint').style.display = 'none';
     $('tools').style.display = 'none';
+    $('btn-restart').style.display = 'none';
+    $('btn-flag-mode').style.display = 'none';
+    this._flagMode = false;
     this.renderSelect();
   }
 
@@ -443,7 +457,6 @@ class Game {
     const hasUnequipped = ARTIFACT_IDS.some(id => stash[id] > 0) && equip.length === 0;
     toolbar.innerHTML = `
       <button class="gear-btn${hasUnequipped ? ' gear-btn-pulse' : ''}" id="btn-stash-open">${t('gear')}</button>
-      <button class="ht-howto-btn" id="btn-howto-open">${t('howToPlay')}</button>
       <button class="ach-btn" id="btn-ach-open">🏅 ${t('achievements')}</button>
       <div class="mode-pill" id="mode-pill" data-mode="${mode}">
         <div class="mode-pill-slider"></div>
@@ -451,7 +464,6 @@ class Game {
         <button class="mode-pill-opt${mode === 'arcade' ? ' active' : ''}" data-mode="arcade">${t('arcadeMode')}</button>
       </div>`;
     $('btn-stash-open').onclick = () => { Sound.click(); this.showStashModal(); };
-    $('btn-howto-open').onclick = () => { Sound.click(); this.showHowTo(); };
     $('btn-ach-open').onclick = () => { Sound.click(); this.showAchievementsModal(); };
     toolbar.querySelectorAll('.mode-pill-opt').forEach(btn => {
       btn.onclick = () => {
@@ -490,6 +502,10 @@ class Game {
     $('select').style.display = 'none';
     $('overlay').style.display = 'none';
     $('hud').style.visibility = 'visible';
+    $('btn-restart').style.display = '';
+    $('btn-flag-mode').style.display = '';
+    this._flagMode = false;
+    $('btn-flag-mode').classList.remove('flag-mode-active');
     $('hint').textContent = t(this._getMode() === 'classic' ? 'hintFirstClassic' : 'hintFirst');
     $('hint').style.display = 'block';
     this.renderTools();
@@ -515,6 +531,7 @@ class Game {
 
   primaryAction(c, r) {
     if (this.state !== 'PLAYING' || this.sapper.moving || this._busy) return;
+    if (this._flagMode && this.board.minesPlaced) { this.flagAction(c, r); return; }
     if (this._getMode() === 'classic') { this._primaryClassic(c, r); return; }
     const b = this.board;
     const cell = b.get(c, r);
