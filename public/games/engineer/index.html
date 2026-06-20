@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Інженер — Bridge Builder</title>
+<link rel="stylesheet" href="css/main.css">
+</head>
+<body>
+
+<!-- Top bar -->
+<div id="topbar">
+  <span class="title">🌉 Інженер</span>
+  <div class="sep"></div>
+
+  <!-- Materials -->
+  <button class="btn" id="btn-wood">
+    <span class="dot dot-wood"></span> Дерево
+  </button>
+  <button class="btn active" id="btn-steel">
+    <span class="dot dot-steel"></span> Сталь
+  </button>
+  <button class="btn" id="btn-cable">
+    <span class="dot dot-cable"></span> Трос
+  </button>
+
+  <div class="sep"></div>
+  <button class="btn" id="btn-del">🗑</button>
+  <button class="btn btn-clear" id="btn-clear">✕</button>
+
+  <div class="sep" id="veh-sep"></div>
+  <!-- Vehicle picker -->
+  <button class="btn veh"        id="veh-car"   title="Легковик">🚗</button>
+  <button class="btn veh active" id="veh-truck" title="Вантажівка">🚚</button>
+  <button class="btn veh"        id="veh-bus"   title="Автобус">🚌</button>
+
+  <div class="sep"></div>
+  <button class="btn btn-test" id="btn-test">▶ Тест</button>
+  <button class="btn btn-back" id="btn-back" style="display:none">↺ Назад</button>
+
+  <div class="spacer"></div>
+
+  <!-- HUD -->
+  <div id="hud">
+    <div class="hud-block">
+      <span class="hud-label">Вартість</span>
+      <span class="hud-value" id="hud-cost">0</span>
+    </div>
+    <div class="hud-block">
+      <span class="hud-label">Елементів</span>
+      <span class="hud-value" id="hud-edges">0</span>
+    </div>
+  </div>
+
+  <div class="sep"></div>
+  <span id="mode-badge">БУДІВНИЦТВО</span>
+</div>
+
+<!-- Canvas -->
+<canvas id="c"></canvas>
+
+<!-- Bottom bar -->
+<div id="botbar">
+  <span id="hint">Клікни між опорами щоб додати вузол. Тягни між вузлами щоб з'єднати.</span>
+  <div class="legend">
+    <div class="leg-item"><div class="leg-bar" style="background:#3b82f6"></div>стиск</div>
+    <div class="leg-item"><div class="leg-bar" style="background:#64748b"></div>норма</div>
+    <div class="leg-item"><div class="leg-bar" style="background:#f97316"></div>навантаження</div>
+    <div class="leg-item"><div class="leg-bar" style="background:#ef4444"></div>критично</div>
+  </div>
+</div>
+
+<!-- Result overlay -->
+<div id="overlay">
+  <div id="ov-icon"></div>
+  <h2  id="ov-title"></h2>
+  <p   id="ov-text"></p>
+  <button class="big-btn" id="ov-btn"></button>
+</div>
+
+<script type="module" src="js/game.js"></script>
+</body>
+</html>

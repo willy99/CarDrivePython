@@ -9,6 +9,7 @@ const GAME_PATHS = {
   cardrive: '/games/cardrive/index.html',
   hanoi:    '/games/hanoi/index.html',
   memorize: '/games/memorize/index.html',
+  engineer: '/games/engineer/index.html',
 }
 
 export default function GamePage() {
