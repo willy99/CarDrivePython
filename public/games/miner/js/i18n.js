@@ -44,6 +44,7 @@ const STRINGS = {
     aimArm: 'Tap a cell within 2 of your sapper for the manipulator.',
     aimUgv: 'Tap a cut-off cell to ride the platform to.',
     aimDroneX: 'Tap any cell — the drone will fly over and defuse it.',
+    aimDetonator: 'Tap any cell to safely detonate or open it.',
     noUses: 'Nothing left to use.',
   },
   uk: {
@@ -89,6 +90,7 @@ const STRINGS = {
     aimArm: 'Тицьни клітинку в радіусі 2 від сапера для маніпулятора.',
     aimUgv: 'Тицьни відрізану клітинку, куди переїхати на платформі.',
     aimDroneX: 'Тицьни будь-яку клітинку — дрон долетить і знешкодить.',
+    aimDetonator: 'Тицьни клітинку — безпечно підірве міну або відкриє.',
     noUses: 'Більше нічого використати.',
   },
 };

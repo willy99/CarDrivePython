@@ -1,12 +1,12 @@
-import { SAPPER_SPEED, T } from './constants.js';
-import { t, levelName, toggleLang, lang } from './i18n.js';
-import { LEVELS, LEVEL_COUNT, loadProgress, markCompleted, isUnlocked } from './levels.js';
-import { Board } from './board.js';
-import { PixiRenderer } from './pixiRenderer.js';
-import { THEMES, loadTheme, saveTheme, nextTheme } from './themes.js';
-import { Sound, isMuted, toggleMute } from './audio.js';
-import { loadClears, addClear, rankFor, rankName, rankStars } from './ranks.js';
-import { ARTIFACTS, ARTIFACT_IDS, artifactName, artifactDesc, loadStash, addArtifact, consumeArtifact, loadEquip, toggleEquip } from './artifacts.js';
+import { SAPPER_SPEED, T } from './constants.js?v=3';
+import { t, levelName, toggleLang, lang } from './i18n.js?v=3';
+import { LEVELS, LEVEL_COUNT, loadProgress, markCompleted, isUnlocked } from './levels.js?v=3';
+import { Board } from './board.js?v=3';
+import { PixiRenderer } from './pixiRenderer.js?v=3';
+import { THEMES, loadTheme, saveTheme, nextTheme } from './themes.js?v=3';
+import { Sound, isMuted, toggleMute } from './audio.js?v=3';
+import { loadClears, addClear, rankFor, rankName, rankStars } from './ranks.js?v=3';
+import { ARTIFACTS, ARTIFACT_IDS, artifactName, artifactDesc, loadStash, addArtifact, consumeArtifact, loadEquip, toggleEquip } from './artifacts.js?v=3';
 
 const $ = id => document.getElementById(id);
 
@@ -68,9 +68,11 @@ class Game {
       this._cheatBuf = (this._cheatBuf + e.key).toLowerCase().slice(-5);
       if (this._cheatBuf === 'iddqd') {
         this._cheatBuf = '';
-        for (const id of ARTIFACT_IDS) addArtifact(id, 3);
-        this.showToast('💀 IDDQD — всі артефакти отримано!');
-        if (this.state === 'SELECT') this.renderSelect();
+        if (this.state === 'PLAYING') {
+          for (const id of ARTIFACT_IDS) { this.loadout.push(id); this.toolUses.push(true); }
+          this.renderTools();
+          this.showToast('💀 IDDQD — всі артефакти в рюкзаку!');
+        }
       }
     });
   }
@@ -181,6 +183,7 @@ class Game {
     this.probeArmed = false;
     this._busy = false;
     this.detectorReady = this.loadout.includes('detector');
+    this.vestReady = this.loadout.includes('vest');
     this.renderer.buildLevel(this.board, THEMES[this.themeId]);
     $('select').style.display = 'none';
     $('overlay').style.display = 'none';
@@ -372,9 +375,23 @@ class Game {
         if (!cell.flagged) { cell.flagged = true; this.renderer.setFlag(cell); }
         const sp = this.sapper, back = sp.prevCell || sp.cell;
         sp.cell = back; sp.px = back.c; sp.pr = back.r;
-        this.renderer.setSapper(back.c, back.r, false, 0);
+        if (this._getMode() !== 'classic') this.renderer.setSapper(back.c, back.r, false, 0);
         Sound.save();
         this.showToast('🔍 ' + t('detectorSaved'));
+        this.updateHUD();
+        return;
+      }
+      if (this.vestReady) {                    // ballistic vest — one extra life
+        this.vestReady = false;
+        this._spendTool('vest');
+        if (!cell.flagged) { cell.flagged = true; this.renderer.setFlag(cell); }
+        if (this._getMode() !== 'classic') {
+          const sp = this.sapper, back = sp.prevCell || sp.cell;
+          sp.cell = back; sp.px = back.c; sp.pr = back.r;
+          this.renderer.setSapper(back.c, back.r, false, 0);
+        }
+        Sound.save();
+        this.showToast('🛡️ ' + (lang === 'uk' ? 'Бронежилет врятував!' : 'Ballistic vest saved you!'));
         this.updateHUD();
         return;
       }
@@ -497,15 +514,19 @@ class Game {
     const id = this.loadout[idx], art = ARTIFACTS[id];
     if (art.active === false) return;                      // passive (detector)
     if (!this.board.minesPlaced || !this.sapper.cell) { Sound.deny(); this._flashHint(t('needSapper')); return; }
-    if (art.active === 'self') {                           // echo: fire now
-      this._useEcho(art);
+    if (art.active === 'self') {
+      if (id === 'echo') this._useEcho(art);
+      else if (id === 'thermal') this._useThermal();
+      else if (id === 'autosap') this._useAutoSap();
+      else if (id === 'relay') this._useRelay();
+      else if (id === 'sniper') this._useSniper();
       this._spendTool(id);
-    } else {                                               // drone / probe: arm a tap
+    } else {                                               // target tools: arm a tap
       this.targetMode = (this.targetMode === id) ? null : id;
       this.renderTools();
       Sound.click();
       if (this.targetMode) {
-        const hk = { drone: 'aimDrone', probe: 'aimProbe', arm: 'aimArm', ugv: 'aimUgv', dronex: 'aimDroneX' };
+        const hk = { drone: 'aimDrone', probe: 'aimProbe', arm: 'aimArm', ugv: 'aimUgv', dronex: 'aimDroneX', detonator: 'aimDetonator' };
         $('hint').textContent = t(hk[id] || 'aimProbe');
         $('hint').style.display = 'block';
       }
@@ -559,6 +580,7 @@ class Game {
     else if (mode === 'arm') this._useArm(c, r);
     else if (mode === 'ugv') this._useUGV(c, r);
     else if (mode === 'dronex') this._useDroneX(c, r);
+    else if (mode === 'detonator') this._useDetonator(c, r);
   }
 
   // re-arm a target tool and nudge the player when they picked an invalid cell
@@ -623,6 +645,98 @@ class Game {
     sp.target = cell;
     sp.moving = true;
     this.renderer.setPlatform(true);
+  }
+
+  _useThermal() {
+    const b = this.board;
+    // Flash all unrevealed cells (mines=red, safe=green) like a global echo
+    const marks = b.cells
+      .filter(c => c.type === T.LAND && !c.revealed)
+      .map(c => ({ c: c.c, r: c.r, mine: c.mine }));
+    this.renderer.echoPing(marks, 4.0);
+    // Compute row/col mine counts and show overlay
+    const rowC = {}, colC = {};
+    for (const cell of b.cells) {
+      if (cell.type !== T.LAND || cell.revealed || !cell.mine) continue;
+      rowC[cell.r] = (rowC[cell.r] || 0) + 1;
+      colC[cell.c] = (colC[cell.c] || 0) + 1;
+    }
+    this.renderer.thermalPing(rowC, colC, b.cols, b.rows);
+    Sound.echo();
+  }
+
+  _useAutoSap() {
+    const b = this.board;
+    const safe = b.cells.filter(c => c.type === T.LAND && !c.mine && !c.revealed && !c.flagged);
+    for (let i = safe.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [safe[i], safe[j]] = [safe[j], safe[i]];
+    }
+    const picks = safe.slice(0, 5);
+    const revealed = [];
+    for (const cell of picks) {
+      const out = b.reveal(cell.c, cell.r);
+      this.renderer.onReveal(out);
+      revealed.push(...out);
+    }
+    this._collect(revealed);
+    Sound.reveal();
+    this.showToast('🤖 ' + picks.length + ' ' + (lang === 'uk' ? 'клітинок відкрито' : 'cells revealed'));
+    this.updateHUD();
+    if (b.isWon()) this._win();
+  }
+
+  _useRelay() {
+    const b = this.board;
+    const marks = b.cells
+      .filter(c => c.type === T.LAND && !c.revealed)
+      .map(c => ({ c: c.c, r: c.r, mine: c.mine }));
+    this.renderer.echoPing(marks, 3.5);
+    Sound.echo();
+    this.showToast('📡 ' + (lang === 'uk' ? 'Всі міни на екрані' : 'All mines revealed'));
+  }
+
+  _useSniper() {
+    const b = this.board, sp = this.sapper.cell;
+    const revealed = [];
+    for (const cell of b.cells) {
+      if (cell.type !== T.LAND || cell.revealed || cell.flagged) continue;
+      if (cell.r !== sp.r && cell.c !== sp.c) continue;
+      if (cell.mine) {
+        cell.flagged = true; this.renderer.setFlag(cell);
+      } else {
+        const out = b.reveal(cell.c, cell.r);
+        this.renderer.onReveal(out);
+        revealed.push(...out);
+      }
+    }
+    this._collect(revealed);
+    Sound.reveal();
+    this.updateHUD();
+    if (b.isWon()) this._win();
+  }
+
+  _useDetonator(c, r) {
+    const b = this.board, cell = b.get(c, r);
+    if (!cell || cell.type !== T.LAND || cell.revealed) { this._reAim('detonator', 'aimDetonator'); return; }
+    this._spendTool('detonator');
+    if (cell.mine) {
+      cell.mine = false;
+      b.mineCount = Math.max(0, b.mineCount - 1);
+      b._computeAdj();
+      const out = b.reveal(c, r);
+      this.renderer.onReveal(out);
+      this._collect(out);
+      Sound.probe();
+      this.showToast('⚡ 💣 ' + (lang === 'uk' ? 'знешкоджено!' : 'defused!'));
+    } else {
+      const out = b.reveal(c, r);
+      this.renderer.onReveal(out);
+      this._collect(out);
+      Sound.reveal();
+    }
+    this.updateHUD();
+    if (b.isWon()) this._win();
   }
 
   _spendTool(id) {

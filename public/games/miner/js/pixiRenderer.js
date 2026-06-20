@@ -1,6 +1,6 @@
-import { T } from './constants.js';
-import { toInt } from './themes.js';
-import { buildHeightField, contourAt, clusters, mulberry32 } from './mapgen.js';
+import { T } from './constants.js?v=3';
+import { toInt } from './themes.js?v=3';
+import { buildHeightField, contourAt, clusters, mulberry32 } from './mapgen.js?v=3';
 
 const BASE = 48; // world units per cell; camera scales to fit
 
@@ -640,7 +640,7 @@ export class PixiRenderer {
 
   // ── artifact effects ──────────────────────────────────────────────────────
   // marks: [{c,r,mine}] — red ✗ over mines, green ○ over clear cells, fade out.
-  echoPing(marks) {
+  echoPing(marks, life = 2.2) {
     for (const m of marks) {
       const x = (m.c + 0.5) * BASE, y = (m.r + 0.5) * BASE, rr = BASE * 0.3;
       const g = new PIXI.Graphics();
@@ -653,9 +653,40 @@ export class PixiRenderer {
         g.lineStyle({ width: 3, color: 0x35d07f });
         g.drawCircle(x, y, rr);
       }
-      g._ping = true; g._life = 2.2;
+      g._ping = true; g._life = life;
       this.entityC.addChild(g); this.particles.push(g);
     }
+  }
+
+  thermalPing(rowCounts, colCounts, cols, rows) {
+    const style = new PIXI.TextStyle({ fontSize: BASE * 0.44, fill: 0xffd24a, fontWeight: 'bold', dropShadow: true, dropShadowDistance: 2, dropShadowColor: 0x000000, dropShadowAlpha: 0.8 });
+    const labels = [];
+    for (let r = 0; r < rows; r++) {
+      const n = rowCounts[r];
+      if (!n) continue;
+      const t = new PIXI.Text(String(n), style);
+      t.anchor.set(1, 0.5);
+      t.x = -4; t.y = (r + 0.5) * BASE;
+      this.world.addChild(t); labels.push(t);
+    }
+    for (let c = 0; c < cols; c++) {
+      const n = colCounts[c];
+      if (!n) continue;
+      const t = new PIXI.Text(String(n), style);
+      t.anchor.set(0.5, 1);
+      t.x = (c + 0.5) * BASE; t.y = -4;
+      this.world.addChild(t); labels.push(t);
+    }
+    // fade out after 4 seconds
+    let age = 0;
+    const ticker = PIXI.Ticker.shared;
+    const fn = () => {
+      age += ticker.deltaMS / 1000;
+      const alpha = Math.max(0, 1 - Math.max(0, age - 2.5) / 1.5);
+      for (const l of labels) l.alpha = alpha;
+      if (age > 4) { for (const l of labels) { l.parent && l.parent.removeChild(l); l.destroy(); } ticker.remove(fn); }
+    };
+    ticker.add(fn);
   }
 
   // telescoping manipulator arm extending from sapper to a target cell

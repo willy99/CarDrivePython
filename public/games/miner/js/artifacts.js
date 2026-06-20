@@ -18,6 +18,18 @@ const _S = {
   ugv: `<svg viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg"><rect x="13" y="5" width="22" height="13" rx="3" fill="#1e3422"/><rect x="14" y="6" width="20" height="11" rx="2" fill="#142a18"/><circle cx="20" cy="11.5" r="2.5" fill="#080e0a"/><circle cx="20" cy="11.5" r="1.5" fill="#1a5080"/><circle cx="28" cy="11.5" r="2.5" fill="#080e0a"/><circle cx="28" cy="11.5" r="1.5" fill="#1a5080"/><rect x="4" y="15" width="40" height="18" rx="3" fill="#2e4a2e"/><rect x="5" y="16" width="38" height="16" rx="2" fill="#3e6040"/><rect x="8" y="21" width="32" height="5" rx="1" fill="#c4a862" opacity="0.28"/><line x1="11" y1="21" x2="8" y2="26" stroke="#c4a862" stroke-width="1.2" opacity="0.5"/><line x1="16" y1="21" x2="12" y2="26" stroke="#c4a862" stroke-width="1.2" opacity="0.5"/><line x1="21" y1="21" x2="17" y2="26" stroke="#c4a862" stroke-width="1.2" opacity="0.5"/><line x1="26" y1="21" x2="22" y2="26" stroke="#c4a862" stroke-width="1.2" opacity="0.5"/><line x1="31" y1="21" x2="27" y2="26" stroke="#c4a862" stroke-width="1.2" opacity="0.5"/><line x1="36" y1="21" x2="32" y2="26" stroke="#c4a862" stroke-width="1.2" opacity="0.5"/><rect x="2" y="29" width="44" height="14" rx="7" fill="#1e2e20"/><circle cx="9" cy="36" r="5.5" fill="#121e14" stroke="#2e4830" stroke-width="1.5"/><circle cx="9" cy="36" r="2.5" fill="#3e5840"/><circle cx="20" cy="36" r="3.5" fill="#121e14" stroke="#2e4830" stroke-width="1"/><circle cx="20" cy="36" r="1.5" fill="#3e5840"/><circle cx="30" cy="36" r="3.5" fill="#121e14" stroke="#2e4830" stroke-width="1"/><circle cx="30" cy="36" r="1.5" fill="#3e5840"/><circle cx="39" cy="36" r="5.5" fill="#121e14" stroke="#2e4830" stroke-width="1.5"/><circle cx="39" cy="36" r="2.5" fill="#3e5840"/></svg>`,
 
   dronex: `<svg viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg"><ellipse cx="24" cy="45" rx="8" ry="3" fill="#d86030" opacity="0.18"/><line x1="24" y1="34" x2="24" y2="44" stroke="#d86030" stroke-width="2.5" stroke-linecap="round" opacity="0.9"/><circle cx="24" cy="44" r="2.5" fill="#d86030" opacity="0.65"/><circle cx="24" cy="44" r="1.2" fill="#ffcc44"/><ellipse cx="24" cy="28" rx="21" ry="8" fill="#3e5850"/><ellipse cx="24" cy="27" rx="21" ry="8" fill="#4e6860"/><path d="M6,24 Q6,8 24,6 Q42,8 42,24Z" fill="#6e8888"/><path d="M9,23 Q9,11 24,9 Q39,11 39,23Z" fill="#8eaaa8"/><ellipse cx="24" cy="17" rx="9" ry="5.5" fill="#0a1c2a"/><ellipse cx="21" cy="16" rx="4" ry="3" fill="#165078" opacity="0.75"/><ellipse cx="21" cy="16" rx="2" ry="1.5" fill="#6898c8" opacity="0.5"/><ellipse cx="24" cy="27" rx="21" ry="8" fill="none" stroke="#c4a862" stroke-width="1.5" stroke-dasharray="4,4.5"/><circle cx="3" cy="27" r="3" fill="#c4a862"/><circle cx="45" cy="27" r="3" fill="#c4a862"/><circle cx="11" cy="34" r="2" fill="#c4a862" opacity="0.65"/><circle cx="37" cy="34" r="2" fill="#c4a862" opacity="0.65"/></svg>`,
+
+  thermal: `<svg viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg"><rect x="3" y="14" width="34" height="22" rx="4" fill="#2e4a2e"/><rect x="4" y="15" width="32" height="20" rx="3" fill="#14221a"/><circle cx="13" cy="25" r="8" fill="#0a1408" stroke="#4e7855" stroke-width="1.5"/><circle cx="13" cy="25" r="5.5" fill="#0a1020"/><circle cx="13" cy="25" r="3" fill="#ff4400" opacity="0.75"/><circle cx="11.5" cy="23.5" r="1.2" fill="#ff9966" opacity="0.6"/><rect x="24" y="17" width="11" height="16" rx="1.5" fill="#0a1408"/><rect x="25" y="18" width="3.5" height="3.5" rx="0.5" fill="#d86030" opacity="0.95"/><rect x="29.5" y="18" width="3.5" height="3.5" rx="0.5" fill="#c4a862" opacity="0.8"/><rect x="25" y="22.5" width="3.5" height="3.5" rx="0.5" fill="#35d07f" opacity="0.55"/><rect x="29.5" y="22.5" width="3.5" height="3.5" rx="0.5" fill="#d86030" opacity="0.9"/><rect x="25" y="27" width="3.5" height="3.5" rx="0.5" fill="#c4a862" opacity="0.65"/><rect x="29.5" y="27" width="3.5" height="3.5" rx="0.5" fill="#35d07f" opacity="0.4"/><rect x="37" y="19" width="8" height="13" rx="3" fill="#3e5248"/><rect x="38" y="23" width="6" height="5" rx="1.5" fill="#2e3e34"/></svg>`,
+
+  detonator: `<svg viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg"><rect x="8" y="3" width="32" height="7" rx="3.5" fill="#3e5248"/><rect x="9" y="4" width="30" height="5" rx="2.5" fill="#5e7868"/><rect x="20" y="8" width="8" height="18" rx="3" fill="#4e6858"/><rect x="21.5" y="9" width="5" height="16" rx="2" fill="#8aa49e"/><rect x="12" y="24" width="24" height="20" rx="4" fill="#2e4a2e"/><rect x="13" y="25" width="22" height="18" rx="3" fill="#1a3020"/><rect x="16" y="28" width="16" height="8" rx="2" fill="#d86030" opacity="0.85"/><line x1="18" y1="30" x2="22" y2="34" stroke="#c4a862" stroke-width="1.2" opacity="0.7"/><line x1="22" y1="30" x2="26" y2="34" stroke="#c4a862" stroke-width="1.2" opacity="0.7"/><line x1="26" y1="30" x2="30" y2="34" stroke="#c4a862" stroke-width="1.2" opacity="0.7"/><circle cx="24" cy="39" r="2.5" fill="#35d07f" opacity="0.9"/><path d="M36,44 Q44,44 44,36 Q44,28 38,28" stroke="#d86030" stroke-width="2" fill="none" stroke-linecap="round"/></svg>`,
+
+  autosap: `<svg viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg"><rect x="4" y="30" width="40" height="14" rx="7" fill="#1e2e20"/><circle cx="11" cy="37" r="5" fill="#121e14" stroke="#2e4830" stroke-width="1.5"/><circle cx="11" cy="37" r="2.5" fill="#3e5840"/><circle cx="37" cy="37" r="5" fill="#121e14" stroke="#2e4830" stroke-width="1.5"/><circle cx="37" cy="37" r="2.5" fill="#3e5840"/><circle cx="24" cy="37" r="3" fill="#2e4030" stroke="#2e4830" stroke-width="1"/><rect x="10" y="17" width="28" height="16" rx="4" fill="#2e4a30"/><rect x="11" y="18" width="26" height="14" rx="3" fill="#3e6040"/><rect x="14" y="6" width="20" height="14" rx="4" fill="#1e3422"/><rect x="15" y="7" width="18" height="12" rx="3" fill="#142a18"/><circle cx="21" cy="12" r="3.5" fill="#0a1408" stroke="#4e7855" stroke-width="1"/><circle cx="21" cy="12" r="2" fill="#1a5080"/><circle cx="19.5" cy="10.5" r="0.9" fill="#80b0e8" opacity="0.7"/><circle cx="29" cy="12" r="3" fill="#0a1408" stroke="#4e7855" stroke-width="1"/><circle cx="29" cy="12" r="1.6" fill="#d86030" opacity="0.9"/><rect x="38" y="21" width="8" height="3" rx="1.5" fill="#c4a862"/><polygon points="44,18 48,22.5 44,27" fill="#c4a862"/></svg>`,
+
+  vest: `<svg viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg"><path d="M8,10 L8,42 Q8,46 12,46 L36,46 Q40,46 40,42 L40,10 L34,6 L24,10 L14,6 Z" fill="#2e4a2e"/><path d="M9,11 L9,42 Q9,45 12,45 L36,45 Q39,45 39,42 L39,11 L33,7 L24,11 L15,7 Z" fill="#3e6040"/><path d="M24,11 L24,46" stroke="#2e4a2e" stroke-width="2"/><rect x="12" y="16" width="10" height="8" rx="2" fill="#1e3422"/><rect x="13" y="17" width="8" height="6" rx="1.5" fill="#4e7855"/><rect x="26" y="16" width="10" height="8" rx="2" fill="#1e3422"/><rect x="27" y="17" width="8" height="6" rx="1.5" fill="#4e7855"/><rect x="12" y="27" width="10" height="6" rx="1.5" fill="#1e3422"/><rect x="26" y="27" width="10" height="6" rx="1.5" fill="#1e3422"/><path d="M14,6 Q14,2 24,2 Q34,2 34,6" fill="#3e5248" stroke="#5e7868" stroke-width="1"/><circle cx="24" cy="13" r="3" fill="#c4a862"/><circle cx="24" cy="13" r="1.5" fill="#f0d890"/></svg>`,
+
+  relay: `<svg viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg"><rect x="21" y="36" width="6" height="10" rx="2" fill="#2e3e34"/><rect x="16" y="32" width="16" height="6" rx="2" fill="#3e5248"/><rect x="22" y="10" width="4" height="24" rx="2" fill="#4e6858"/><rect x="22.5" y="11" width="3" height="22" rx="1.5" fill="#8aa49e"/><rect x="14" y="10" width="20" height="5" rx="2" fill="#3e5248"/><rect x="15" y="11" width="18" height="3" rx="1.5" fill="#5e7868"/><circle cx="24" cy="9" r="3.5" fill="#c4a862"/><circle cx="24" cy="9" r="2" fill="#f0d890"/><path d="M16 16 Q10 16 8 22" stroke="#c4a862" stroke-width="2" fill="none" stroke-linecap="round"/><path d="M32 16 Q38 16 40 22" stroke="#c4a862" stroke-width="2" fill="none" stroke-linecap="round"/><path d="M14 21 Q6 21 4 30" stroke="#c4a862" stroke-width="1.5" fill="none" stroke-linecap="round" opacity="0.6"/><path d="M34 21 Q42 21 44 30" stroke="#c4a862" stroke-width="1.5" fill="none" stroke-linecap="round" opacity="0.6"/><line x1="24" y1="5" x2="24" y2="2" stroke="#c4a862" stroke-width="2" stroke-linecap="round"/><circle cx="24" cy="1" r="1.5" fill="#c4a862" opacity="0.7"/></svg>`,
+
+  sniper: `<svg viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg"><rect x="2" y="22" width="44" height="5" rx="2.5" fill="#2e4a2e"/><rect x="3" y="23" width="42" height="3" rx="1.5" fill="#4e7855"/><rect x="28" y="16" width="18" height="17" rx="3" fill="#1e3422"/><rect x="29" y="17" width="16" height="15" rx="2" fill="#0a1408"/><circle cx="37" cy="24.5" r="6" fill="#0a0e12" stroke="#4e7855" stroke-width="1.5"/><circle cx="37" cy="24.5" r="4" fill="#0a1220"/><line x1="37" y1="19.5" x2="37" y2="29.5" stroke="#c4a862" stroke-width="0.8" opacity="0.9"/><line x1="32" y1="24.5" x2="42" y2="24.5" stroke="#c4a862" stroke-width="0.8" opacity="0.9"/><circle cx="37" cy="24.5" r="1.2" fill="#d86030"/><rect x="6" y="18" width="10" height="13" rx="2" fill="#2e4a2e"/><rect x="7" y="19" width="8" height="11" rx="1.5" fill="#3e6040"/><rect x="18" y="14" width="4" height="6" rx="1" fill="#3e5248"/><rect x="19" y="10" width="2" height="5" rx="1" fill="#5e7868"/></svg>`,
 };
 
 export const ARTIFACTS = {
@@ -62,6 +74,42 @@ export const ARTIFACTS = {
     en: 'Defuser drone', uk: 'Дрон-розмінувач',
     descEn: 'Flies to any cell on the field and defuses or opens it remotely.',
     descUk: 'Летить до будь-якої клітинки на полі й дистанційно знешкоджує або відкриває її.',
+  },
+  thermal: {
+    id: 'thermal', icon: '🌡️', svg: _S.thermal, active: 'self',
+    en: 'Thermoscope', uk: 'Тепловізор',
+    descEn: 'Flashes all mines and overlays mine counts per row & column for 4 sec.',
+    descUk: 'Підсвічує всі міни і показує їх кількість по рядках та стовпцях на 4 сек.',
+  },
+  detonator: {
+    id: 'detonator', icon: '⚡', svg: _S.detonator, active: 'target',
+    en: 'Safe detonator', uk: 'Підривник',
+    descEn: 'Tap any cell — safely defuses a mine there or reveals if clear.',
+    descUk: 'Тицьни клітинку — безпечно знешкоджує міну або відкриває якщо безпечна.',
+  },
+  autosap: {
+    id: 'autosap', icon: '🤖', svg: _S.autosap, active: 'self',
+    en: 'Auto-sapper', uk: 'Авто-сапер',
+    descEn: 'Automatically opens 5 random safe cells anywhere on the map.',
+    descUk: 'Автоматично відкриває 5 випадкових безпечних клітинок по всій карті.',
+  },
+  vest: {
+    id: 'vest', icon: '🛡️', svg: _S.vest, active: false,
+    en: 'Ballistic vest', uk: 'Бронежилет',
+    descEn: 'Passive — survives one mine step. Sapper gets wounded but lives.',
+    descUk: 'Пасивний — переживає один підрив. Сапер поранений, але живий.',
+  },
+  relay: {
+    id: 'relay', icon: '📡', svg: _S.relay, active: 'self',
+    en: 'Signal relay', uk: 'Ретранслятор',
+    descEn: 'Flashes ALL mines across the entire map for 3 seconds.',
+    descUk: 'Підсвічує ВСІ міни по всій карті на 3 секунди.',
+  },
+  sniper: {
+    id: 'sniper', icon: '🎯', svg: _S.sniper, active: 'self',
+    en: 'Sniper scan', uk: 'Снайпер',
+    descEn: 'Reveals all safe cells in your sapper\'s row and column. Mines get flagged.',
+    descUk: 'Відкриває всі безпечні клітинки в рядку і стовпці сапера. Міни позначає.',
   },
 };
 export const ARTIFACT_IDS = Object.keys(ARTIFACTS);

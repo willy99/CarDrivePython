@@ -1,5 +1,5 @@
-import { T } from './constants.js';
-import { ARTIFACT_IDS } from './artifacts.js';
+import { T } from './constants.js?v=3';
+import { ARTIFACT_IDS } from './artifacts.js?v=3';
 
 // Small seeded PRNG so each level's *shape* looks consistent run to run.
 // (Mine placement still uses Math.random, so every replay differs.)
