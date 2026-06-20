@@ -2,45 +2,63 @@
 // active:'self'  → used immediately on the sapper (echo)
 // active:'target'→ arms a tap target (drone, probe)
 // active:false   → passive, triggers automatically (detector)
+
+// Hand-drawn SVG icons — military/tactical aesthetic, 48×48 viewBox.
+const _S = {
+  echo: `<svg viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg"><rect x="20" y="31" width="8" height="11" rx="2" fill="#4a5e52"/><rect x="13" y="41" width="22" height="5" rx="2.5" fill="#2e3e34"/><path d="M8,31 Q8,10 24,8 Q40,10 40,31Z" fill="#3e5248"/><path d="M12,30 Q12,13 24,11 Q36,13 36,30Z" fill="#5e7868"/><path d="M17,30 Q17,18 24,16 Q31,18 31,30Z" fill="#8aa49e"/><line x1="24" y1="31" x2="24" y2="22" stroke="#2e3e34" stroke-width="1.5"/><circle cx="24" cy="20" r="3.5" fill="#c4a862"/><circle cx="24" cy="20" r="1.8" fill="#f0d890"/><path d="M31 8 Q41 18 31 28" stroke="#c4a862" stroke-width="2.5" fill="none" stroke-linecap="round"/><path d="M34 5 Q46 18 34 31" stroke="#c4a862" stroke-width="2" fill="none" stroke-linecap="round" opacity="0.55"/><path d="M37 2 Q48 18 37 34" stroke="#c4a862" stroke-width="1.5" fill="none" stroke-linecap="round" opacity="0.28"/></svg>`,
+
+  drone: `<svg viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg"><line x1="14" y1="14" x2="24" y2="24" stroke="#2e4a30" stroke-width="5" stroke-linecap="round"/><line x1="34" y1="14" x2="24" y2="24" stroke="#2e4a30" stroke-width="5" stroke-linecap="round"/><line x1="14" y1="34" x2="24" y2="24" stroke="#2e4a30" stroke-width="5" stroke-linecap="round"/><line x1="34" y1="34" x2="24" y2="24" stroke="#2e4a30" stroke-width="5" stroke-linecap="round"/><ellipse cx="10" cy="10" rx="8" ry="2.5" fill="#5e8e62" opacity="0.82" transform="rotate(-45 10 10)"/><ellipse cx="38" cy="10" rx="8" ry="2.5" fill="#5e8e62" opacity="0.82" transform="rotate(45 38 10)"/><ellipse cx="10" cy="38" rx="8" ry="2.5" fill="#5e8e62" opacity="0.82" transform="rotate(45 10 38)"/><ellipse cx="38" cy="38" rx="8" ry="2.5" fill="#5e8e62" opacity="0.82" transform="rotate(-45 38 38)"/><circle cx="10" cy="10" r="3.2" fill="#c4a862"/><circle cx="38" cy="10" r="3.2" fill="#c4a862"/><circle cx="10" cy="38" r="3.2" fill="#c4a862"/><circle cx="38" cy="38" r="3.2" fill="#c4a862"/><rect x="18" y="18" width="12" height="12" rx="3" fill="#3e6640"/><rect x="20" y="20" width="8" height="8" rx="2" fill="#1e3e22"/><circle cx="24" cy="24" r="3.5" fill="#0a1408"/><circle cx="24" cy="24" r="2" fill="#1e5888"/><circle cx="22.5" cy="22.5" r="0.9" fill="#80b0e8" opacity="0.85"/></svg>`,
+
+  probe: `<svg viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg"><path d="M2,33 Q14,31 24,32 Q34,31 46,33 L46,48 L2,48Z" fill="#344830"/><path d="M2,33 Q14,30 24,31 Q34,30 46,33" stroke="#445a3a" stroke-width="1.5" fill="none"/><rect x="15" y="3" width="18" height="7" rx="3.5" fill="#3e5248"/><rect x="16" y="4" width="16" height="5" rx="2.5" fill="#5e7868"/><rect x="21" y="8" width="6" height="27" rx="3" fill="#6e8878"/><rect x="22.5" y="9" width="3" height="25" rx="1.5" fill="#9eb8ae"/><polygon points="24,37 21,32 27,32" fill="#c4a862"/><circle cx="24" cy="33" r="11" fill="none" stroke="#c4a862" stroke-width="1.5" stroke-dasharray="3,3" opacity="0.65"/><circle cx="24" cy="33" r="6.5" fill="none" stroke="#c4a862" stroke-width="1" opacity="0.5"/><circle cx="24" cy="33" r="2.5" fill="none" stroke="#d86030" stroke-width="2.2"/></svg>`,
+
+  detector: `<svg viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg"><path d="M34,4 Q38,4 38,8 L38,18 Q38,22 34,22 L30,22" fill="none" stroke="#2e3e34" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/><path d="M34,4 Q38,4 38,8 L38,18 Q38,22 34,22 L30,22" fill="none" stroke="#5e7868" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/><line x1="32" y1="15" x2="12" y2="42" stroke="#3e5248" stroke-width="4.5" stroke-linecap="round"/><line x1="32" y1="15" x2="12" y2="42" stroke="#7e9a8e" stroke-width="2.5" stroke-linecap="round"/><ellipse cx="8" cy="43" rx="10" ry="5" fill="none" stroke="#3e5248" stroke-width="3"/><ellipse cx="8" cy="43" rx="10" ry="5" fill="none" stroke="#c4a862" stroke-width="2"/><ellipse cx="8" cy="43" rx="5.5" ry="2.5" fill="none" stroke="#c4a862" stroke-width="1" opacity="0.5"/><ellipse cx="8" cy="46.5" rx="8" ry="2" fill="#c4a862" opacity="0.14"/><path d="M31 6 Q35 12 31 18" stroke="#d86030" stroke-width="2.2" fill="none" stroke-linecap="round"/><path d="M34 3 Q41 12 34 21" stroke="#d86030" stroke-width="1.6" fill="none" stroke-linecap="round" opacity="0.5"/></svg>`,
+
+  arm: `<svg viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg"><rect x="1" y="18" width="10" height="14" rx="3" fill="#2e3e34"/><circle cx="7" cy="25" r="5" fill="#1e2e24" stroke="#4e6858" stroke-width="1.5"/><circle cx="7" cy="25" r="2.5" fill="#6e8878"/><rect x="10" y="21" width="18" height="8" rx="3" fill="#4e6858"/><rect x="11" y="22" width="16" height="6" rx="2" fill="#8aa49e"/><rect x="26" y="22" width="14" height="6" rx="3" fill="#3e5850"/><rect x="27" y="23" width="12" height="4" rx="2" fill="#6e8878"/><circle cx="27" cy="25" r="3.2" fill="#c4a862" stroke="#f0d890" stroke-width="0.8"/><path d="M39,21 L47,15 L44.5,21Z" fill="#c4a862"/><path d="M39,29 L47,35 L44.5,29Z" fill="#c4a862"/><rect x="37" y="22" width="4" height="6" rx="1.5" fill="#7e9a8e"/><line x1="14" y1="23" x2="14" y2="27" stroke="#c4a862" stroke-width="1" opacity="0.6"/><line x1="18" y1="23" x2="18" y2="27" stroke="#c4a862" stroke-width="1" opacity="0.6"/><line x1="22" y1="23" x2="22" y2="27" stroke="#c4a862" stroke-width="1" opacity="0.6"/></svg>`,
+
+  ugv: `<svg viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg"><rect x="13" y="5" width="22" height="13" rx="3" fill="#1e3422"/><rect x="14" y="6" width="20" height="11" rx="2" fill="#142a18"/><circle cx="20" cy="11.5" r="2.5" fill="#080e0a"/><circle cx="20" cy="11.5" r="1.5" fill="#1a5080"/><circle cx="28" cy="11.5" r="2.5" fill="#080e0a"/><circle cx="28" cy="11.5" r="1.5" fill="#1a5080"/><rect x="4" y="15" width="40" height="18" rx="3" fill="#2e4a2e"/><rect x="5" y="16" width="38" height="16" rx="2" fill="#3e6040"/><rect x="8" y="21" width="32" height="5" rx="1" fill="#c4a862" opacity="0.28"/><line x1="11" y1="21" x2="8" y2="26" stroke="#c4a862" stroke-width="1.2" opacity="0.5"/><line x1="16" y1="21" x2="12" y2="26" stroke="#c4a862" stroke-width="1.2" opacity="0.5"/><line x1="21" y1="21" x2="17" y2="26" stroke="#c4a862" stroke-width="1.2" opacity="0.5"/><line x1="26" y1="21" x2="22" y2="26" stroke="#c4a862" stroke-width="1.2" opacity="0.5"/><line x1="31" y1="21" x2="27" y2="26" stroke="#c4a862" stroke-width="1.2" opacity="0.5"/><line x1="36" y1="21" x2="32" y2="26" stroke="#c4a862" stroke-width="1.2" opacity="0.5"/><rect x="2" y="29" width="44" height="14" rx="7" fill="#1e2e20"/><circle cx="9" cy="36" r="5.5" fill="#121e14" stroke="#2e4830" stroke-width="1.5"/><circle cx="9" cy="36" r="2.5" fill="#3e5840"/><circle cx="20" cy="36" r="3.5" fill="#121e14" stroke="#2e4830" stroke-width="1"/><circle cx="20" cy="36" r="1.5" fill="#3e5840"/><circle cx="30" cy="36" r="3.5" fill="#121e14" stroke="#2e4830" stroke-width="1"/><circle cx="30" cy="36" r="1.5" fill="#3e5840"/><circle cx="39" cy="36" r="5.5" fill="#121e14" stroke="#2e4830" stroke-width="1.5"/><circle cx="39" cy="36" r="2.5" fill="#3e5840"/></svg>`,
+
+  dronex: `<svg viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg"><ellipse cx="24" cy="45" rx="8" ry="3" fill="#d86030" opacity="0.18"/><line x1="24" y1="34" x2="24" y2="44" stroke="#d86030" stroke-width="2.5" stroke-linecap="round" opacity="0.9"/><circle cx="24" cy="44" r="2.5" fill="#d86030" opacity="0.65"/><circle cx="24" cy="44" r="1.2" fill="#ffcc44"/><ellipse cx="24" cy="28" rx="21" ry="8" fill="#3e5850"/><ellipse cx="24" cy="27" rx="21" ry="8" fill="#4e6860"/><path d="M6,24 Q6,8 24,6 Q42,8 42,24Z" fill="#6e8888"/><path d="M9,23 Q9,11 24,9 Q39,11 39,23Z" fill="#8eaaa8"/><ellipse cx="24" cy="17" rx="9" ry="5.5" fill="#0a1c2a"/><ellipse cx="21" cy="16" rx="4" ry="3" fill="#165078" opacity="0.75"/><ellipse cx="21" cy="16" rx="2" ry="1.5" fill="#6898c8" opacity="0.5"/><ellipse cx="24" cy="27" rx="21" ry="8" fill="none" stroke="#c4a862" stroke-width="1.5" stroke-dasharray="4,4.5"/><circle cx="3" cy="27" r="3" fill="#c4a862"/><circle cx="45" cy="27" r="3" fill="#c4a862"/><circle cx="11" cy="34" r="2" fill="#c4a862" opacity="0.65"/><circle cx="37" cy="34" r="2" fill="#c4a862" opacity="0.65"/></svg>`,
+};
+
 export const ARTIFACTS = {
   echo: {
-    id: 'echo', icon: '📡', active: 'self', radius: 2,
+    id: 'echo', icon: '📡', svg: _S.echo, active: 'self', radius: 2,
     en: 'Echo sounder', uk: 'Ехолокатор',
     descEn: 'Reveals mines within 2 cells of your sapper for a moment.',
     descUk: 'На кілька секунд показує міни в радіусі 2 клітинок від сапера.',
   },
   drone: {
-    id: 'drone', icon: '🚁', active: 'target',
+    id: 'drone', icon: '🚁', svg: _S.drone, active: 'target',
     en: 'Recon drone', uk: 'Розвідувальний дрон',
     descEn: 'Tap a spot — scans 3×3 and flags every mine it finds.',
     descUk: 'Тицьни місце — сканує 3×3 і позначає всі знайдені міни.',
   },
   probe: {
-    id: 'probe', icon: '🎯', active: 'target',
+    id: 'probe', icon: '🎯', svg: _S.probe, active: 'target',
     en: 'Safe probe', uk: 'Щуп',
     descEn: 'Tap one cell to open it safely — a mine there is flagged, not triggered.',
     descUk: 'Тицьни клітинку, щоб безпечно відкрити — міну там позначить, а не підірве.',
   },
   detector: {
-    id: 'detector', icon: '🔍', active: false,
+    id: 'detector', icon: '🔍', svg: _S.detector, active: false,
     en: 'Metal detector', uk: 'Металодетектор',
     descEn: 'Passive — saves you from the first mine you step on this op.',
     descUk: 'Пасивний — рятує від першого підриву за цю операцію.',
   },
   arm: {
-    id: 'arm', icon: '🦾', active: 'target', range: 2,
+    id: 'arm', icon: '🦾', svg: _S.arm, active: 'target', range: 2,
     en: 'Manipulator arm', uk: 'Маніпулятор',
     descEn: 'Telescoping arm reaches up to 2 cells (over a mine) and opens it safely.',
     descUk: 'Висувна штанга дотягується на 2 клітинки (через міну) і безпечно відкриває клітину.',
   },
   ugv: {
-    id: 'ugv', icon: '🛻', active: 'target',
+    id: 'ugv', icon: '🛻', svg: _S.ugv, active: 'target',
     en: 'High-clearance UGV', uk: 'НРК на платформі',
     descEn: 'Ride the platform across mines to a cut-off cell — mines pass under you.',
     descUk: 'Переїдь на платформі через міни до відрізаної клітинки — міни проходять під тобою.',
   },
   dronex: {
-    id: 'dronex', icon: '🛸', active: 'target',
+    id: 'dronex', icon: '🛸', svg: _S.dronex, active: 'target',
     en: 'Defuser drone', uk: 'Дрон-розмінувач',
     descEn: 'Flies to any cell on the field and defuses or opens it remotely.',
     descUk: 'Летить до будь-якої клітинки на полі й дистанційно знешкоджує або відкриває її.',

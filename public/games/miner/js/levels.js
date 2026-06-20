@@ -19,22 +19,22 @@ export const LEVELS = [
   { id: 1,  cols: 8,  rows: 8,  shape: 'rect', density: 0.12, terrain: {} },
   { id: 2,  cols: 9,  rows: 9,  shape: 'rect', density: 0.14, terrain: {} },
   { id: 3,  cols: 10, rows: 10, shape: 'rect', density: 0.15, terrain: {} },
-  { id: 4,  cols: 11, rows: 11, shape: 'rect', density: 0.16, terrain: {} },
+  { id: 4,  cols: 13, rows: 13, shape: 'rect', density: 0.14, terrain: {} },
   // ── 5-7 : squares, first terrain (trees, then a river) ──
-  { id: 5,  cols: 11, rows: 11, shape: 'rect', density: 0.15, terrain: { trees: 8 } },
-  { id: 6,  cols: 12, rows: 12, shape: 'rect', density: 0.16, terrain: { trees: 14 } },
-  { id: 7,  cols: 12, rows: 12, shape: 'rect', density: 0.16, terrain: { trees: 8, river: true } },
+  { id: 5,  cols: 14, rows: 13, shape: 'rect', density: 0.14, terrain: { trees: 7 } },
+  { id: 6,  cols: 14, rows: 14, shape: 'rect', density: 0.15, terrain: { trees: 10 } },
+  { id: 7,  cols: 15, rows: 14, shape: 'rect', density: 0.15, terrain: { trees: 7, river: true } },
   // ── 8-10 : squares, mixed terrain ──
-  { id: 8,  cols: 13, rows: 12, shape: 'rect', density: 0.16, terrain: { trees: 10, lake: 1 } },
-  { id: 9,  cols: 13, rows: 13, shape: 'rect', density: 0.17, terrain: { trees: 10, mountains: 2 } },
-  { id: 10, cols: 14, rows: 13, shape: 'rect', density: 0.17, terrain: { trees: 12, river: true, mountains: 1 } },
+  { id: 8,  cols: 15, rows: 14, shape: 'rect', density: 0.15, terrain: { trees: 8, lake: 1 } },
+  { id: 9,  cols: 16, rows: 15, shape: 'rect', density: 0.16, terrain: { trees: 8, mountains: 2 } },
+  { id: 10, cols: 17, rows: 15, shape: 'rect', density: 0.16, terrain: { trees: 10, river: true, mountains: 1 } },
   // ── 11-16 : LOCKED — asymmetric map shapes + full terrain ──
-  { id: 11, cols: 15, rows: 13, shape: 'blob',   density: 0.17, terrain: { trees: 12, river: true } },
-  { id: 12, cols: 16, rows: 14, shape: 'island', density: 0.17, terrain: { trees: 10, sea: 'all', lake: 1 } },
-  { id: 13, cols: 16, rows: 14, shape: 'blob',   density: 0.18, terrain: { trees: 12, mountains: 3 } },
-  { id: 14, cols: 17, rows: 15, shape: 'blob',   density: 0.18, terrain: { trees: 14, lake: 2, river: true } },
-  { id: 15, cols: 18, rows: 14, shape: 'island', density: 0.18, terrain: { trees: 12, sea: 'all', mountains: 2 } },
-  { id: 16, cols: 18, rows: 16, shape: 'blob',   density: 0.19, terrain: { trees: 16, river: true, mountains: 3, lake: 1 } },
+  { id: 11, cols: 18, rows: 16, shape: 'blob',   density: 0.16, terrain: { trees: 10, river: true } },
+  { id: 12, cols: 19, rows: 17, shape: 'island', density: 0.16, terrain: { trees: 9, sea: 'all', lake: 1 } },
+  { id: 13, cols: 19, rows: 17, shape: 'blob',   density: 0.17, terrain: { trees: 10, mountains: 3 } },
+  { id: 14, cols: 20, rows: 18, shape: 'blob',   density: 0.17, terrain: { trees: 11, lake: 2, river: true } },
+  { id: 15, cols: 21, rows: 17, shape: 'island', density: 0.17, terrain: { trees: 10, sea: 'all', mountains: 2 } },
+  { id: 16, cols: 21, rows: 19, shape: 'blob',   density: 0.18, terrain: { trees: 13, river: true, mountains: 3, lake: 1 } },
 ];
 
 export const LEVEL_COUNT = LEVELS.length - 1;

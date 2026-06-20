@@ -124,6 +124,7 @@ export class PixiRenderer {
     this.board = null;
     this.fog.clear(); this.markers.clear(); this.flags.clear();
     this.particles = []; this.anims = []; this.sapperC = null; this.platform = null;
+    this._waterRipple = null; this._clouds = null; this._cloudW = 0;
   }
 
   buildLevel(board, theme) {
@@ -239,7 +240,10 @@ export class PixiRenderer {
     this.world.addChild(labels);
     }
 
-    // 9. dynamic layers
+    // 9. water ripple animation overlay (below fog)
+    this._buildWaterAnim(board, TH);
+
+    // 10. dynamic layers (fog, markers, sapper)
     this.markersC = new PIXI.Container(); this.world.addChild(this.markersC);
     this.fogC = new PIXI.Container(); this.world.addChild(this.fogC);
     this.entityC = new PIXI.Container(); this.world.addChild(this.entityC);
@@ -247,6 +251,9 @@ export class PixiRenderer {
     for (const cell of board.cells) if (cell.type === T.LAND) this._addFog(cell, TH);
 
     this._buildSapper(TH);
+
+    // 11. clouds — above all terrain, fog, and sapper so they're always visible
+    this._buildClouds(board, TH);
     this._fitCamera();
   }
 
@@ -424,6 +431,82 @@ export class PixiRenderer {
     }
     water.lineStyle();
     this.world.addChild(water);
+  }
+
+  // Animated ripple overlay — a small tiling diagonal-wave pattern shifted each frame.
+  _buildWaterAnim(board, TH) {
+    const watercells = board.cells.filter(c => c.type === T.WATER || c.type === T.BRIDGE);
+    if (!watercells.length) return;
+
+    // Build a 32×32 ripple tile on a Canvas (diagonal dashes, two-tone)
+    const SZ = 32;
+    const cnv = document.createElement('canvas');
+    cnv.width = cnv.height = SZ;
+    const ctx = cnv.getContext('2d');
+    // White diagonal ripple stripes — SCREEN blend makes them pop as bright highlights
+    ctx.strokeStyle = '#ffffff';
+    ctx.globalAlpha = 0.55;
+    ctx.lineWidth = 1.8;
+    for (let i = -SZ; i < SZ * 2; i += 10) {
+      ctx.beginPath();
+      ctx.moveTo(i, 0);
+      ctx.lineTo(i + SZ, SZ);
+      ctx.stroke();
+    }
+    ctx.globalAlpha = 0.28;
+    ctx.lineWidth = 0.9;
+    for (let i = -SZ; i < SZ * 2; i += 10) {
+      ctx.beginPath();
+      ctx.moveTo(i + 5, 0);
+      ctx.lineTo(i + SZ + 5, SZ);
+      ctx.stroke();
+    }
+
+    const tex = PIXI.Texture.from(cnv);
+
+    // Mask: water+bridge cells with 1px overlap to avoid visible grid seams
+    const wmask = new PIXI.Graphics().beginFill(0xffffff);
+    for (const c of watercells) wmask.drawRect(c.c * BASE - 0.5, c.r * BASE - 0.5, BASE + 1, BASE + 1);
+    wmask.endFill();
+
+    const W = board.cols * BASE, H = board.rows * BASE;
+    const ts = new PIXI.TilingSprite(tex, W, H);
+    ts.mask = wmask;
+    ts.blendMode = PIXI.BLEND_MODES.ADD;
+    ts.alpha = TH.pixel ? 0.22 : 0.18;
+    this.world.addChild(wmask);
+    this.world.addChild(ts);
+    this._waterRipple = ts;
+  }
+
+  // Soft drifting clouds — 3 semi-transparent puffs floating across the map.
+  _buildClouds(board, TH) {
+    const W = board.cols * BASE, H = board.rows * BASE;
+    this._cloudW = W;
+    const rng = mulberry32((board.seed * 3571 + 99) >>> 0);
+    this._clouds = [];
+    const count = 3;
+    for (let i = 0; i < count; i++) {
+      const g = new PIXI.Container();
+      const gfx = new PIXI.Graphics();
+      const r = (28 + rng() * 22) | 0;
+      gfx.beginFill(0xffffff, 0.45);
+      gfx.drawEllipse(0, 0, r * 1.8, r * 0.65);
+      gfx.drawEllipse(r * 0.5, -r * 0.28, r * 1.1, r * 0.55);
+      gfx.drawEllipse(-r * 0.45, -r * 0.22, r, r * 0.5);
+      gfx.endFill();
+      // subtle dark underside
+      gfx.beginFill(0x000000, 0.12);
+      gfx.drawEllipse(0, r * 0.35, r * 1.6, r * 0.25);
+      gfx.endFill();
+      g.addChild(gfx);
+      g.x = rng() * W * 1.4 - W * 0.2;
+      g.y = rng() * H * 0.38 + r;
+      g._spd = 0.28 + rng() * 0.38;
+      g._r = r;
+      this.world.addChild(g);
+      this._clouds.push(g);
+    }
   }
 
   _noiseTexture() {
@@ -638,6 +721,19 @@ export class PixiRenderer {
   _tick() {
     const dt = this.app.ticker.deltaMS / 1000;
     for (const cb of this.tickCbs) cb(dt);
+
+    // river / water ripple animation
+    if (this._waterRipple) {
+      this._waterRipple.tilePosition.x += dt * 18;
+      this._waterRipple.tilePosition.y += dt * 9;
+    }
+    // drifting clouds
+    if (this._clouds) {
+      for (const c of this._clouds) {
+        c.x += c._spd;
+        if (c.x > this._cloudW + c._r * 2) c.x = -c._r * 2;
+      }
+    }
 
     // fog fade-out
     for (const [key, f] of this.fog) {

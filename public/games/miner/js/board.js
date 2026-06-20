@@ -204,25 +204,41 @@ export class Board {
   // ── mines ─────────────────────────────────────────────────────────────────
   placeMines(safeC, safeR) {
     const safe = new Set();
+    // Safe zone: start cell + 8 neighbours
     safe.add(this.idx(safeC, safeR));
     for (const [dc, dr] of DIRS8) {
       if (this.inB(safeC + dc, safeR + dr)) safe.add(this.idx(safeC + dc, safeR + dr));
     }
+    // Protect land cells directly touching bridges — mines there make bridges uncrossable
+    for (const cell of this.cells) {
+      if (cell.type === T.BRIDGE) {
+        for (const [dc, dr] of DIRS4) {
+          const n = this.get(cell.c + dc, cell.r + dr);
+          if (n && n.type === T.LAND) safe.add(this.idx(n.c, n.r));
+        }
+      }
+    }
     const candidates = this._landCells().filter(c => !safe.has(this.idx(c.c, c.r)) && !c.artifact);
     let count = Math.round((this.level.density || 0.15) * this.landTotal);
     count = Math.max(1, Math.min(count, candidates.length));
-    // Re-roll the layout until every non-mine cell is physically reachable from
-    // the safe start (mines must never wall off a region you have to clear).
-    for (let attempt = 0; attempt < 40; attempt++) {
-      for (const c of candidates) c.mine = false;
-      for (let i = candidates.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [candidates[i], candidates[j]] = [candidates[j], candidates[i]];
+
+    // Re-roll until every non-mine cell is physically reachable from the safe start.
+    // If 40 attempts fail at current density, reduce mine count by 1 and retry —
+    // guarantees a valid layout is always found (worst case: 0 mines).
+    let found = false;
+    while (!found && count >= 0) {
+      for (let attempt = 0; attempt < 40; attempt++) {
+        for (const c of candidates) c.mine = false;
+        for (let i = candidates.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [candidates[i], candidates[j]] = [candidates[j], candidates[i]];
+        }
+        for (let i = 0; i < count; i++) candidates[i].mine = true;
+        if (this._allSafeReachable(safeC, safeR)) { found = true; break; }
       }
-      for (let i = 0; i < count; i++) candidates[i].mine = true;
-      if (this._allSafeReachable(safeC, safeR)) break;
+      if (!found) count--;
     }
-    this.mineCount = count;
+    this.mineCount = Math.max(0, count);
     this.minesPlaced = true;
     this._computeAdj();
   }
@@ -243,6 +259,46 @@ export class Board {
       }
     }
     return this.cells.every(c => c.type !== T.LAND || c.mine || seen.has(this.idx(c.c, c.r)));
+  }
+
+  // Returns one representative cell per isolated region (connected component of safe
+  // LAND cells unreachable by normal walking from (sc, sr)). One probe per region suffices.
+  isolatedRegions(sc, sr) {
+    // BFS from start to find the reachable set
+    const reachable = new Set([this.idx(sc, sr)]);
+    const q = [this.get(sc, sr)];
+    while (q.length) {
+      const cur = q.shift();
+      for (const [dc, dr] of DIRS4) {
+        const n = this.get(cur.c + dc, cur.r + dr);
+        if (!n || reachable.has(this.idx(n.c, n.r))) continue;
+        if (n.type === T.BRIDGE || (n.type === T.LAND && !n.mine)) {
+          reachable.add(this.idx(n.c, n.r)); q.push(n);
+        }
+      }
+    }
+    // Flood-fill isolated cells into connected components; return one rep per component
+    const unreached = this.cells.filter(c => c.type === T.LAND && !c.mine && !reachable.has(this.idx(c.c, c.r)));
+    const componentSeen = new Set();
+    const reps = [];
+    for (const seed of unreached) {
+      const key = this.idx(seed.c, seed.r);
+      if (componentSeen.has(key)) continue;
+      reps.push(seed); // representative for this component
+      const cq = [seed];
+      componentSeen.add(key);
+      while (cq.length) {
+        const cur = cq.shift();
+        for (const [dc, dr] of DIRS4) {
+          const n = this.get(cur.c + dc, cur.r + dr);
+          if (!n || componentSeen.has(this.idx(n.c, n.r))) continue;
+          if (n.type === T.LAND && !n.mine) {
+            componentSeen.add(this.idx(n.c, n.r)); cq.push(n);
+          }
+        }
+      }
+    }
+    return reps;
   }
 
   _computeAdj() {

@@ -157,20 +157,31 @@ html, body {
   display: flex;
   align-items: center;
   gap: 8px;
-  background: rgba(12, 28, 19, 0.88);
+  background: rgba(10, 22, 14, 0.92);
   border: 1px solid #2c5840;
   border-radius: 12px;
   padding: 8px 12px;
   color: #e8eee9;
   cursor: pointer;
-  min-width: 132px;
+  min-width: 136px;
   transition: background 0.12s, transform 0.1s, opacity 0.15s;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.45);
 }
-.tool:hover { background: rgba(34, 68, 48, 0.95); transform: translateY(-1px); }
-.tool.armed { border-color: #ffd24a; box-shadow: 0 0 0 2px rgba(255, 210, 74, 0.35); }
+.tool:hover { background: rgba(28, 56, 36, 0.97); transform: translateY(-1px); }
+.tool.armed {
+  border-color: #c4a862;
+  box-shadow: 0 0 0 2px rgba(196, 168, 98, 0.35), 0 2px 8px rgba(0,0,0,0.45);
+}
 .tool.passive { cursor: default; opacity: 0.9; }
-.tool.spent { opacity: 0.35; pointer-events: none; }
-.tool-ico { font-size: 22px; line-height: 1; }
+.tool.spent { opacity: 0.32; pointer-events: none; }
+.tool.bonus {
+  border-color: #c47a30;
+  box-shadow: 0 0 0 1px rgba(196,122,48,0.3), 0 2px 8px rgba(0,0,0,0.45);
+}
+.tool.bonus.armed { border-color: #c4a862; }
+.tool-bonus-tag { color: #d86030; font-size: 12px; }
+.tool-ico { width: 30px; height: 30px; flex-shrink: 0; display: flex; align-items: center; }
+.tool-ico svg { width: 100%; height: 100%; }
 .tool-name { font-size: 13px; font-weight: 700; }
 .tool-sub { font-size: 11px; opacity: 0.7; }
 
@@ -215,50 +226,254 @@ html, body {
 .rank-bar { flex: 1; height: 8px; background: #0d1f17; border-radius: 999px; overflow: hidden; min-width: 80px; }
 .rank-bar > span { display: block; height: 100%; background: linear-gradient(90deg, #3aa15f, #7ee0a0); }
 
+/* ── stash panel: backpack + wooden shelf ── */
 #stash-panel {
   width: 100%;
   max-width: 720px;
-  background: #14291c;
-  border: 1px solid #244532;
-  border-radius: 14px;
-  padding: 12px 16px;
+  background: linear-gradient(180deg, #0e1e14 0%, #111e16 100%);
+  border: 1px solid #1e3828;
+  border-radius: 16px;
+  /* No overflow:hidden — it would clip badge top:-7px & shelf edge */
   margin-bottom: 18px;
 }
-.stash-head { font-size: 13px; font-weight: 700; opacity: 0.85; margin-bottom: 10px; }
-#stash-items { display: flex; flex-wrap: wrap; gap: 10px; }
-.stash-empty { font-size: 13px; opacity: 0.6; }
-.art {
-  position: relative;
+
+/* Backpack section */
+.bp-section {
+  padding: 14px 16px 16px;
+  border-bottom: 1px solid #1a3020;
+}
+.bp-section-title {
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: #c4a862;
+  opacity: 0.7;
+  margin-bottom: 12px;
+}
+.bp-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+}
+.bp-bag-wrap {
+  width: 110px;
+  flex-shrink: 0;
+  filter: drop-shadow(0 4px 12px rgba(0,0,0,0.5));
+}
+.bp-bag-wrap svg { width: 100%; height: auto; }
+.bp-slots {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  justify-content: center;
+  padding-top: 4px;
+}
+.bp-slot {
   display: flex;
   align-items: center;
-  gap: 8px;
-  background: #1a3526;
-  border: 1px solid #2c5840;
+  gap: 10px;
+  height: 58px;
   border-radius: 10px;
-  padding: 8px 12px 8px 10px;
+  padding: 6px 12px;
+  transition: background 0.15s, transform 0.1s;
+}
+.bp-slot-empty {
+  border: 2px dashed rgba(196,168,98,0.2);
+  background: rgba(8,18,12,0.5);
+}
+.bp-slot-filled {
+  border: 1px solid rgba(196,168,98,0.5);
+  background: rgba(14,28,18,0.85);
   cursor: pointer;
-  transition: background 0.12s, border-color 0.12s, transform 0.1s;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.04);
 }
-.art:hover { background: #224430; transform: translateY(-1px); }
-.art.equipped { border-color: #ffd24a; box-shadow: 0 0 0 2px rgba(255, 210, 74, 0.3); }
-.art.zero { opacity: 0.4; cursor: default; pointer-events: none; }
-.art-ico { font-size: 22px; }
-.art-txt { display: flex; flex-direction: column; }
-.art-name { font-size: 13px; font-weight: 700; }
-.art-desc { font-size: 11px; opacity: 0.7; max-width: 200px; }
-.art-count {
-  font-size: 12px; font-weight: 800; color: #0d1f17;
-  background: #7ee0a0; border-radius: 999px; padding: 1px 7px; margin-left: 2px;
+.bp-slot-filled:hover {
+  background: rgba(28,54,34,0.95);
+  transform: translateX(2px);
+  border-color: #c4a862;
 }
-.art-eqtag {
-  position: absolute; top: -8px; right: -8px;
-  font-size: 10px; font-weight: 800; color: #0d1f17;
-  background: #ffd24a; border-radius: 999px; padding: 1px 6px;
+.bp-slot-ico {
+  width: 36px; height: 36px; flex-shrink: 0;
+}
+.bp-slot-ico svg { width: 100%; height: 100%; }
+.bp-slot-ico-emoji { font-size: 28px; line-height: 1; }
+.bp-slot-label {
+  flex: 1;
+}
+.bp-slot-name {
+  font-size: 13px; font-weight: 700; color: #d8eedd;
+}
+.bp-slot-sub {
+  font-size: 11px; opacity: 0.5; margin-top: 1px;
+}
+.bp-slot-remove {
+  font-size: 14px; opacity: 0.35; flex-shrink: 0;
+}
+.bp-slot-plus {
+  font-size: 26px; font-weight: 200; opacity: 0.2; width: 36px; text-align: center;
+}
+.bp-slot-hint {
+  font-size: 12px; color: rgba(255,255,255,0.25); font-style: italic;
+}
+
+/* Wooden shelf section */
+.shelf-section {
+  padding: 14px 16px 16px;
+}
+.shelf-section-title {
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: #c4a862;
+  opacity: 0.65;
+  margin-bottom: 12px;
+}
+.shelf-wrap {
+  position: relative;
+  border-radius: 8px;
+  overflow: hidden;
+  padding: 16px 12px 20px;
+  background:
+    repeating-linear-gradient(90deg,
+      transparent, transparent 119px,
+      rgba(0,0,0,0.1) 119px, rgba(0,0,0,0.1) 120px),
+    linear-gradient(180deg,
+      #3a2410 0%,
+      #5c3a18 30%,
+      #4a2e12 60%,
+      #3a220e 100%);
+  box-shadow:
+    inset 0 3px 6px rgba(0,0,0,0.45),
+    inset 0 -1px 0 rgba(255,255,255,0.04);
+  border: 1px solid #5a3a14;
+}
+/* shelf front edge */
+.shelf-wrap::after {
+  content: '';
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  height: 6px;
+  background: linear-gradient(180deg, #7a5020, #4a2e0e);
+  border-radius: 0 0 8px 8px;
+}
+/* top highlight (wood grain) */
+.shelf-wrap::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 3px;
+  background: linear-gradient(90deg,
+    #8a601e, #c4882a, #8a601e, #c4882a, #8a601e);
+  border-radius: 8px 8px 0 0;
+}
+.shelf-items {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  padding-top: 8px; /* room for top-hanging count badges */
+}
+.shelf-empty {
+  font-size: 13px;
+  color: rgba(196,168,98,0.4);
+  padding: 8px 4px;
+  font-style: italic;
+}
+
+/* Artifact cards on the shelf */
+.art-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 7px;
+  width: 80px;
+  padding: 12px 8px 10px;
+  background: rgba(8,18,12,0.75);
+  border: 1px solid rgba(196,168,98,0.18);
+  border-radius: 10px;
+  cursor: pointer;
+  text-align: center;
+  transition: background 0.12s, border-color 0.12s, transform 0.12s, box-shadow 0.15s;
+  box-shadow:
+    0 3px 8px rgba(0,0,0,0.5),
+    inset 0 1px 0 rgba(255,255,255,0.04);
+}
+.art-card:hover {
+  background: rgba(20,44,28,0.92);
+  border-color: rgba(196,168,98,0.45);
+  transform: translateY(-4px);
+  box-shadow:
+    0 8px 18px rgba(0,0,0,0.55),
+    inset 0 1px 0 rgba(255,255,255,0.06);
+}
+.art-card-equipped {
+  border-color: #c4a862;
+  background: rgba(12,26,16,0.9);
+  box-shadow:
+    0 0 0 2px rgba(196,168,98,0.28),
+    0 4px 12px rgba(0,0,0,0.5),
+    inset 0 1px 0 rgba(196,168,98,0.08);
+}
+.art-card-icon {
+  width: 46px; height: 46px;
+}
+.art-card-icon svg { width: 100%; height: 100%; }
+.art-card-name {
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 1.25;
+  color: #c4d8c0;
+  letter-spacing: 0.2px;
+}
+.art-card-count {
+  position: absolute;
+  top: -7px; right: -7px;
+  font-size: 11px; font-weight: 800;
+  background: #5ecc80;
+  color: #0a1a0e;
+  border-radius: 999px;
+  padding: 0px 6px;
+  min-width: 18px;
+  text-align: center;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.4);
+}
+.art-card-eqtag {
+  position: absolute;
+  top: -8px; left: -6px;
+  font-size: 15px;
+  filter: drop-shadow(0 1px 2px rgba(0,0,0,0.5));
 }
 
 @media (max-width: 600px) {
   #topbar .title { display: none; }
   #hud .stat { font-size: 13px; }
   .btn { padding: 6px 9px; font-size: 12px; }
-  .art-desc { display: none; }
+
+  /* Stash panel — compact on mobile */
+  .bp-bag-wrap { width: 80px; }
+  .bp-slot { height: 50px; padding: 5px 9px; gap: 8px; }
+  .bp-slot-ico { width: 28px; height: 28px; }
+  .bp-slot-name { font-size: 12px; }
+  .bp-slot-sub { display: none; }
+
+  /* Shelf cards — smaller on mobile */
+  .art-card { width: 68px; padding: 10px 5px 8px; }
+  .art-card-icon { width: 36px; height: 36px; }
+  .art-card-name { font-size: 9px; }
+
+  /* In-play tools toolbar */
+  .tool { min-width: 110px; padding: 6px 9px; }
+  .tool-ico { width: 24px; height: 24px; }
+  .tool-name { font-size: 12px; }
+}
+
+@media (max-width: 400px) {
+  .bp-row { flex-wrap: wrap; }
+  .bp-bag-wrap { width: 100%; display: flex; justify-content: center; }
+  .bp-bag-wrap svg { width: 100px; }
+  .bp-slots { width: 100%; flex-direction: row; gap: 6px; }
+  .bp-slot { flex: 1; }
 }

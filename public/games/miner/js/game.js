@@ -128,6 +128,7 @@ class Game {
     // carry the chosen backpack into the op; each slot is one use
     this.loadout = loadEquip();
     this.toolUses = this.loadout.map(() => true);
+    this._loadoutBase = this.loadout.length; // bonus probes added after this index
     this.targetMode = null;
     this.probeArmed = false;
     this._busy = false;
@@ -167,6 +168,23 @@ class Game {
     if (!b.minesPlaced) {
       if (cell.type !== T.LAND) return;
       b.placeMines(c, r);
+      // Issue one emergency probe per isolated region (connected component of unreachable safe cells)
+      const regions = b.isolatedRegions(c, r);
+      if (regions.length > 0) {
+        for (let i = 0; i < regions.length; i++) {
+          this.loadout.push('probe');
+          this.toolUses.push(true);
+        }
+        const n = regions.length;
+        const word = lang === 'uk'
+          ? `відрізан${n === 1 ? 'а ділянка' : 'их ділянок'}`
+          : `isolated region${n === 1 ? '' : 's'}`;
+        const given = lang === 'uk'
+          ? `видано ${n} щуп${n === 1 ? '' : n < 5 ? 'и' : 'ів'}`
+          : `${n} probe${n === 1 ? '' : 's'} issued`;
+        this.showToast(`⚠ ${n} ${word} — ${given}`);
+        this.renderTools();
+      }
       this.startTime = this.elapsed;
       this.sapper.px = c; this.sapper.pr = r; this.sapper.cell = cell;
       this.renderer.setSapper(c, r, false, 0);
@@ -518,8 +536,10 @@ class Game {
 
   _spendTool(id) {
     const idx = this.loadout.findIndex((x, i) => x === id && this.toolUses[i]);
-    if (idx >= 0) this.toolUses[idx] = false;
-    consumeArtifact(id);
+    if (idx < 0) return;
+    this.toolUses[idx] = false;
+    // Bonus probes (idx >= _loadoutBase) are free — don't consume from stash
+    if (idx < this._loadoutBase) consumeArtifact(id);
     this.renderTools();
   }
 
@@ -530,11 +550,20 @@ class Game {
     el.style.display = 'flex';
     this.loadout.forEach((id, idx) => {
       const art = ARTIFACTS[id], spent = !this.toolUses[idx], passive = art.active === false;
+      const isBonus = idx >= this._loadoutBase;
       const div = document.createElement('div');
-      div.className = 'tool' + (spent ? ' spent' : '') + (passive ? ' passive' : '') +
+      div.className = 'tool' +
+        (spent ? ' spent' : '') +
+        (passive ? ' passive' : '') +
+        (isBonus ? ' bonus' : '') +
         (this.targetMode === id && !spent ? ' armed' : '');
-      div.innerHTML = `<span class="tool-ico">${art.icon}</span>` +
-        `<span class="tool-name">${artifactName(id, lang)}</span>`;
+      const ico = art.svg
+        ? `<span class="tool-ico">${art.svg}</span>`
+        : `<span class="tool-ico" style="font-size:24px;line-height:1">${art.icon}</span>`;
+      const label = isBonus
+        ? `<span class="tool-name">${artifactName(id, lang)} <span class="tool-bonus-tag">⚠</span></span>`
+        : `<span class="tool-name">${artifactName(id, lang)}</span>`;
+      div.innerHTML = ico + label;
       if (!passive && !spent) div.onclick = () => this.useTool(idx);
       el.appendChild(div);
     });
@@ -557,23 +586,94 @@ class Game {
   }
 
   renderStashPanel() {
-    $('backpack-head').textContent = t('backpack');
-    const stash = loadStash(), equip = loadEquip(), wrap = $('stash-items');
-    wrap.innerHTML = '';
+    const panel = $('stash-panel');
+    const stash = loadStash(), equip = loadEquip();
     const owned = ARTIFACT_IDS.filter(id => stash[id] > 0);
-    if (!owned.length) { wrap.innerHTML = `<div class="stash-empty">${t('stashEmpty')}</div>`; return; }
+
+    // Military backpack SVG
+    const BP = `<svg viewBox="0 0 140 170" xmlns="http://www.w3.org/2000/svg">
+      <ellipse cx="70" cy="165" rx="50" ry="5" fill="#000" opacity="0.22"/>
+      <path d="M18,38 Q18,20 36,20 L104,20 Q122,20 122,38 L122,148 Q122,162 108,162 L32,162 Q18,162 18,148Z" fill="#304a28"/>
+      <path d="M18,38 Q18,20 36,20 L104,20 Q122,20 122,38 L122,82 Q70,70 18,82Z" fill="#3e6032" opacity="0.45"/>
+      <path d="M21,38 Q21,23 36,23 L104,23 Q119,23 119,38 L119,148 Q119,159 108,159 L32,159 Q21,159 21,148Z" fill="none" stroke="#3e6032" stroke-width="1.5" stroke-dasharray="5,4"/>
+      <path d="M54,12 Q54,3 70,3 Q86,3 86,12" stroke="#1e3018" stroke-width="9" fill="none" stroke-linecap="round"/>
+      <path d="M54,12 Q54,5 70,5 Q86,5 86,12" stroke="#2e4826" stroke-width="5" fill="none" stroke-linecap="round"/>
+      <rect x="14" y="70" width="6" height="38" rx="3" fill="#1a2e14" opacity="0.8"/>
+      <rect x="120" y="70" width="6" height="38" rx="3" fill="#1a2e14" opacity="0.8"/>
+      <rect x="12" y="84" width="10" height="10" rx="3" fill="#c4a862" opacity="0.7"/>
+      <rect x="118" y="84" width="10" height="10" rx="3" fill="#c4a862" opacity="0.7"/>
+      <rect x="34" y="26" width="72" height="20" rx="5" fill="#1e3018"/>
+      <rect x="36" y="28" width="68" height="16" rx="4" fill="#142410"/>
+      <text x="70" y="40" font-size="11" fill="#c4a862" text-anchor="middle" font-family="Georgia,serif">★ ★ ★</text>
+      <rect x="22" y="54" width="96" height="70" rx="10" fill="#1e3018"/>
+      <rect x="24" y="56" width="92" height="66" rx="9" fill="#243820"/>
+      <rect x="34" y="55" width="72" height="3" rx="1.5" fill="#c4a862" opacity="0.6"/>
+      <rect x="66" y="49" width="8" height="9" rx="2.5" fill="#c4a862"/>
+      <circle cx="70" cy="55" r="2" fill="#1e3018"/>
+      <rect x="22" y="133" width="96" height="28" rx="8" fill="#1e3018"/>
+      <rect x="24" y="135" width="92" height="24" rx="7" fill="#243820"/>
+      <rect x="47" y="143" width="46" height="8" rx="4" fill="#c4a862"/>
+      <rect x="53" y="145" width="34" height="4" rx="2" fill="#1e3018"/>
+    </svg>`;
+
+    const slotHTML = (idx) => {
+      const id = equip[idx];
+      if (!id) return `<div class="bp-slot bp-slot-empty">
+        <span class="bp-slot-plus">+</span>
+        <span class="bp-slot-hint">${lang === 'uk' ? 'Порожньо' : 'Empty'}</span>
+      </div>`;
+      const art = ARTIFACTS[id];
+      const ico = art.svg
+        ? `<span class="bp-slot-ico">${art.svg}</span>`
+        : `<span class="bp-slot-ico-emoji">${art.icon}</span>`;
+      return `<div class="bp-slot bp-slot-filled" data-equip-id="${id}">
+        ${ico}
+        <span class="bp-slot-label">
+          <span class="bp-slot-name">${artifactName(id, lang)}</span>
+          <span class="bp-slot-sub">${artifactDesc(id, lang)}</span>
+        </span>
+        <span class="bp-slot-remove">✕</span>
+      </div>`;
+    };
+
+    panel.innerHTML = `
+      <div class="bp-section">
+        <div class="bp-section-title">${t('backpack')}</div>
+        <div class="bp-row">
+          <div class="bp-bag-wrap">${BP}</div>
+          <div class="bp-slots">${slotHTML(0)}${slotHTML(1)}</div>
+        </div>
+      </div>
+      <div class="shelf-section">
+        <div class="shelf-section-title">${t('stashTitle')}</div>
+        <div class="shelf-wrap">
+          <div class="shelf-items" id="shelf-items">
+            ${!owned.length ? `<div class="shelf-empty">${t('stashEmpty')}</div>` : ''}
+          </div>
+        </div>
+      </div>`;
+
+    // Wire up slot clicks (remove from loadout)
+    panel.querySelectorAll('.bp-slot-filled').forEach(el => {
+      el.onclick = () => { toggleEquip(el.dataset.equipId); Sound.click(); this.renderStashPanel(); };
+    });
+
+    // Build shelf artifact cards
+    const shelf = panel.querySelector('#shelf-items');
     for (const id of owned) {
       const art = ARTIFACTS[id], eqCount = equip.filter(x => x === id).length;
-      const div = document.createElement('div');
-      div.className = 'art' + (eqCount ? ' equipped' : '');
-      div.innerHTML =
-        `<span class="art-ico">${art.icon}</span>` +
-        `<span class="art-txt"><span class="art-name">${artifactName(id, lang)}</span>` +
-        `<span class="art-desc">${artifactDesc(id, lang)}</span></span>` +
-        `<span class="art-count">×${stash[id]}</span>` +
-        (eqCount ? `<span class="art-eqtag">${eqCount > 1 ? eqCount + '× ' : ''}🎒</span>` : '');
-      div.onclick = () => { toggleEquip(id); Sound.click(); this.renderStashPanel(); };
-      wrap.appendChild(div);
+      const card = document.createElement('div');
+      card.className = 'art-card' + (eqCount ? ' art-card-equipped' : '');
+      const ico = art.svg
+        ? `<span class="art-card-icon">${art.svg}</span>`
+        : `<span class="art-card-icon" style="font-size:36px;line-height:1;display:flex;align-items:center;justify-content:center">${art.icon}</span>`;
+      card.innerHTML =
+        `<span class="art-card-count">×${stash[id]}</span>` +
+        (eqCount ? `<span class="art-card-eqtag">🎒</span>` : '') +
+        ico +
+        `<span class="art-card-name">${artifactName(id, lang)}</span>`;
+      card.onclick = () => { toggleEquip(id); Sound.click(); this.renderStashPanel(); };
+      shelf.appendChild(card);
     }
   }
 
