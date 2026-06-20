@@ -19,6 +19,7 @@
     <span class="stat" id="stat-time">⏱ 00:00</span>
   </div>
   <div class="spacer"></div>
+  <button class="btn" id="mute-toggle">🔊</button>
   <button class="btn" id="theme-toggle">🎨</button>
   <button class="btn" id="btn-restart">↻ Заново</button>
   <button class="btn" id="lang-toggle">🇬🇧 EN</button>
@@ -27,12 +28,23 @@
 <!-- Pixi canvas mounts here -->
 <div id="stage"></div>
 
+<!-- Equipped artifacts (during play) -->
+<div id="tools"></div>
+
 <!-- Hint -->
 <div id="hint"></div>
 
+<!-- Transient toast (pickups, saves, promotions) -->
+<div id="toast"></div>
+
 <!-- Level select -->
 <div id="select">
+  <div id="rank-card"></div>
   <h2 id="select-title">Вибери операцію</h2>
+  <div id="stash-panel">
+    <div class="stash-head" id="backpack-head"></div>
+    <div id="stash-items"></div>
+  </div>
   <div id="level-grid"></div>
 </div>
 

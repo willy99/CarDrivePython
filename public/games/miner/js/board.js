@@ -1,4 +1,5 @@
 import { T } from './constants.js';
+import { ARTIFACT_IDS } from './artifacts.js';
 
 // Small seeded PRNG so each level's *shape* looks consistent run to run.
 // (Mine placement still uses Math.random, so every replay differs.)
@@ -75,6 +76,20 @@ export class Board {
     if (ter.sea) this._carveSea();
     if (ter.mountains) for (let i = 0; i < ter.mountains; i++) this._carveBlobOf(T.MOUNTAIN, 1 + Math.floor(this.rng() * 2));
     if (ter.trees) this._scatter(T.TREE, ter.trees);
+    this._scatterArtifacts();
+  }
+
+  // Sometimes hide 1-2 artifacts on plain land; you collect them by clearing
+  // the cell. They never sit on a mine, so a found cell is always reachable.
+  _scatterArtifacts() {
+    let n = this.rng() < 0.55 ? 1 : 0;
+    if (n && this.rng() < 0.3) n = 2;
+    for (let i = 0; i < n; i++) {
+      const land = this._landCells().filter(c => !c.artifact);
+      if (land.length < 6) return;
+      const cell = this._pick(land);
+      if (cell) cell.artifact = ARTIFACT_IDS[Math.floor(this.rng() * ARTIFACT_IDS.length)];
+    }
   }
 
   _carveRiver() {
@@ -193,7 +208,7 @@ export class Board {
     for (const [dc, dr] of DIRS8) {
       if (this.inB(safeC + dc, safeR + dr)) safe.add(this.idx(safeC + dc, safeR + dr));
     }
-    const candidates = this._landCells().filter(c => !safe.has(this.idx(c.c, c.r)));
+    const candidates = this._landCells().filter(c => !safe.has(this.idx(c.c, c.r)) && !c.artifact);
     let count = Math.round((this.level.density || 0.15) * this.landTotal);
     count = Math.max(1, Math.min(count, candidates.length));
     // Re-roll the layout until every non-mine cell is physically reachable from
@@ -290,6 +305,33 @@ export class Board {
           prev.set(k, [cc, rr]);
           q.push([nc, nr]);
         }
+      }
+    }
+    return null;
+  }
+
+  // Path for the UGV: rides over ANY land/bridge (mines + flags included), so
+  // it can cross a mine wall to a cut-off cell. Water/rock/forest still block.
+  pathCross(sc, sr, tc, tr) {
+    if (sc === tc && sr === tr) return [[tc, tr]];
+    const ok = cell => cell && (cell.type === T.LAND || cell.type === T.BRIDGE);
+    const prev = new Map();
+    prev.set(this.idx(sc, sr), null);
+    const q = [[sc, sr]];
+    while (q.length) {
+      const [cc, rr] = q.shift();
+      for (const [dc, dr] of DIRS4) {
+        const nc = cc + dc, nr = rr + dr;
+        if (!this.inB(nc, nr)) continue;
+        const k = this.idx(nc, nr);
+        if (prev.has(k)) continue;
+        const cell = this.get(nc, nr);
+        if (nc === tc && nr === tr) {
+          if (!ok(cell)) return null;
+          prev.set(k, [cc, rr]);
+          return this._reconstruct(prev, [tc, tr]);
+        }
+        if (ok(cell)) { prev.set(k, [cc, rr]); q.push([nc, nr]); }
       }
     }
     return null;

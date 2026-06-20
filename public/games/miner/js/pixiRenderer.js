@@ -28,6 +28,7 @@ export class PixiRenderer {
     this.markers = new Map();  // cellIndex → DisplayObject
     this.flags = new Map();    // cellIndex → Graphics
     this.particles = [];
+    this.anims = [];           // timed tween animations (arm extend, drone flight)
     this.sapperC = null;
     this.tickCbs = [];
 
@@ -122,7 +123,7 @@ export class PixiRenderer {
     this.world.removeChildren().forEach(c => c.destroy({ children: true }));
     this.board = null;
     this.fog.clear(); this.markers.clear(); this.flags.clear();
-    this.particles = []; this.sapperC = null;
+    this.particles = []; this.anims = []; this.sapperC = null; this.platform = null;
   }
 
   buildLevel(board, theme) {
@@ -515,11 +516,20 @@ export class PixiRenderer {
     body.beginFill(toInt(TH.sapperHelmet)).drawRect(-7.5 * u, -9 * u, 15 * u, 2 * u).endFill();
     body.lineStyle({ width: 2 * u, color: 0x2a2a2a }).moveTo(5 * u, 2 * u).lineTo(15 * u, 9 * u);
     body.lineStyle({ width: 2 * u, color: 0xcccccc }).drawEllipse(16 * u, 11 * u, 4.2 * u, 2 * u);
-    c.addChild(sh, body);
+    // high-clearance platform (shown only while the UGV crosses a minefield)
+    const plat = new PIXI.Graphics();
+    plat.beginFill(0x2a2a2a).drawRoundedRect(-13 * u, 11 * u, 26 * u, 5 * u, 2 * u).endFill();
+    plat.beginFill(0xffcf3a).drawRect(-13 * u, 11 * u, 26 * u, 1.6 * u).endFill();
+    for (const wx of [-9, -3, 3, 9]) {
+      plat.beginFill(0x111111).drawCircle(wx * u, 18 * u, 3.6 * u).endFill();
+      plat.beginFill(0x555555).drawCircle(wx * u, 18 * u, 1.5 * u).endFill();
+    }
+    plat.visible = false;
+    c.addChild(sh, plat, body);
     c.visible = false;
     c.scale.set(0.66);
     this.entityC.addChild(c);
-    this.sapperC = c; this.sapperBody = body;
+    this.sapperC = c; this.sapperBody = body; this.platform = plat;
   }
 
   setSapper(px, pr, moving, anim) {
@@ -545,6 +555,85 @@ export class PixiRenderer {
     }
   }
 
+  // ── artifact effects ──────────────────────────────────────────────────────
+  // marks: [{c,r,mine}] — red ✗ over mines, green ○ over clear cells, fade out.
+  echoPing(marks) {
+    for (const m of marks) {
+      const x = (m.c + 0.5) * BASE, y = (m.r + 0.5) * BASE, rr = BASE * 0.3;
+      const g = new PIXI.Graphics();
+      if (m.mine) {
+        g.lineStyle({ width: 4, color: 0xff3b30 });
+        g.drawCircle(x, y, rr);
+        g.moveTo(x - rr * 0.6, y - rr * 0.6).lineTo(x + rr * 0.6, y + rr * 0.6);
+        g.moveTo(x + rr * 0.6, y - rr * 0.6).lineTo(x - rr * 0.6, y + rr * 0.6);
+      } else {
+        g.lineStyle({ width: 3, color: 0x35d07f });
+        g.drawCircle(x, y, rr);
+      }
+      g._ping = true; g._life = 2.2;
+      this.entityC.addChild(g); this.particles.push(g);
+    }
+  }
+
+  // telescoping manipulator arm extending from sapper to a target cell
+  armExtend(fc, fr, tc, tr, onDone) {
+    const g = new PIXI.Graphics();
+    this.entityC.addChild(g);
+    const x0 = (fc + 0.5) * BASE, y0 = (fr + 0.45) * BASE;
+    const x1 = (tc + 0.5) * BASE, y1 = (tr + 0.5) * BASE;
+    this.anims.push({
+      t: 0, dur: 0.6, gfx: g,
+      update: (p) => {
+        const e = p < 0.65 ? p / 0.65 : 1;                 // extend, then hold
+        const xx = x0 + (x1 - x0) * e, yy = y0 + (y1 - y0) * e;
+        g.clear();
+        g.lineStyle({ width: 6, color: 0x4a4a4a }); g.moveTo(x0, y0); g.lineTo(xx, yy);
+        g.lineStyle({ width: 3, color: 0xc8c8c8 }); g.moveTo(x0, y0); g.lineTo(xx, yy);
+        g.lineStyle({ width: 3, color: 0x888888 });
+        g.beginFill(0x999999).drawCircle(xx, yy, 8).endFill();              // claw head
+        const grip = p > 0.55 ? 1 + Math.sin(p * 40) * 0.25 : 1;            // little clamp at the end
+        g.beginFill(0xffd24a).drawCircle(xx, yy, 3.4 * grip).endFill();
+      },
+      done: onDone,
+    });
+  }
+
+  // recon/defuser drone flying along an arc from sapper to a target cell
+  flyDrone(fc, fr, tc, tr, onDone) {
+    const t = new PIXI.Text('🛸', { fontSize: 22 });
+    t.anchor.set(0.5);
+    this.entityC.addChild(t);
+    const x0 = (fc + 0.5) * BASE, y0 = (fr + 0.4) * BASE;
+    const x1 = (tc + 0.5) * BASE, y1 = (tr + 0.5) * BASE;
+    const arc = -BASE * (0.7 + Math.min(3, Math.hypot(tc - fc, tr - fr)) * 0.15);
+    this.anims.push({
+      t: 0, dur: 0.75, gfx: t,
+      update: (p) => {
+        t.x = x0 + (x1 - x0) * p;
+        t.y = y0 + (y1 - y0) * p + Math.sin(Math.PI * p) * arc;
+        t.scale.set(1 - 0.18 * Math.sin(Math.PI * p));
+      },
+      done: () => { const x = (tc + 0.5) * BASE, y = (tr + 0.5) * BASE; this._dropFlash(x, y); if (onDone) onDone(); },
+    });
+  }
+
+  _dropFlash(x, y) {
+    const f = new PIXI.Graphics().beginFill(0xbfe8ff).drawCircle(x, y, BASE * 0.4).endFill();
+    f._flash = true; f._life = 1;
+    this.entityC.addChild(f); this.particles.push(f);
+  }
+
+  setPlatform(on) { if (this.platform) this.platform.visible = on; }
+
+  // a found-artifact icon floating up from a cell
+  showPickup(c, r, icon) {
+    const t = new PIXI.Text(icon, { fontSize: 26 });
+    t.anchor.set(0.5);
+    t.position.set((c + 0.5) * BASE, (r + 0.4) * BASE);
+    t._float = true; t._life = 1.4; t._vy = -BASE * 0.012;
+    this.entityC.addChild(t); this.particles.push(t);
+  }
+
   // ── per-frame ───────────────────────────────────────────────────────────
   _tick() {
     const dt = this.app.ticker.deltaMS / 1000;
@@ -557,11 +646,21 @@ export class PixiRenderer {
     // particles
     if (this.particles.length) {
       for (const p of this.particles) {
+        if (p._ping) { p._life -= dt; p.alpha = Math.max(0, Math.min(1, p._life)); continue; }
+        if (p._float) { p._life -= dt; p.y += p._vy; p.alpha = Math.max(0, Math.min(1, p._life)); continue; }
         p._life -= dt * (p._flash ? 3 : 1.5);
         if (p._flash) { p.scale.set(1 + (1 - p._life) * 1.4); p.alpha = Math.max(0, p._life); }
         else { p.x += p._vx; p.y += p._vy; p._vy += 0.18; p.alpha = Math.max(0, p._life); }
       }
       this.particles = this.particles.filter(p => { if (p._life <= 0) { p.destroy(); return false; } return true; });
+    }
+    // timed tween animations
+    if (this.anims.length) {
+      for (const a of this.anims) { a.t += dt; a.update(Math.min(1, a.t / a.dur)); }
+      this.anims = this.anims.filter(a => {
+        if (a.t >= a.dur) { if (a.gfx) a.gfx.destroy(); if (a.done) a.done(); return false; }
+        return true;
+      });
     }
   }
 }
