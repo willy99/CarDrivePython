@@ -71,6 +71,8 @@ class Game {
     $('howto-modal').onclick  = e => { if (e.target === $('howto-modal'))  this.hideHowTo(); };
     $('btn-ach-close').onclick = () => this.hideAchievementsModal();
     $('ach-modal').onclick    = e => { if (e.target === $('ach-modal'))    this.hideAchievementsModal(); };
+    $('btn-editor-close').onclick = () => this.hideEditorModal();
+    $('editor-modal').onclick = e => { if (e.target === $('editor-modal')) this.hideEditorModal(); };
     this._cheatBuf = '';
     window.addEventListener('keydown', e => {
       this._cheatBuf = (this._cheatBuf + e.key).toLowerCase().slice(-5);
@@ -121,6 +123,128 @@ class Game {
 
   hideAchievementsModal() {
     $('ach-modal').classList.remove('open');
+  }
+
+  // ── Level Editor ──────────────────────────────────────────────────────────
+  showEditorModal() {
+    $('editor-title').textContent = t('editorTitle');
+    $('editor-body').innerHTML = this._buildEditorHTML();
+    this._wireEditorForm();
+    $('editor-modal').classList.add('open');
+  }
+
+  hideEditorModal() { $('editor-modal').classList.remove('open'); }
+
+  _buildEditorHTML() {
+    const sl = (id, min, max, val, unit='') =>
+      `<input type="range" id="${id}" min="${min}" max="${max}" value="${val}">
+       <span class="ed-val" id="${id}-val">${val}${unit}</span>`;
+    return `
+      <div class="ed-section">
+        <div class="ed-label">${t('editorSize')}</div>
+        <div class="ed-row"><label>${t('editorCols')}</label>${sl('ed-cols',8,25,14)}</div>
+        <div class="ed-row"><label>${t('editorRows')}</label>${sl('ed-rows',6,20,12)}</div>
+      </div>
+      <div class="ed-section">
+        <div class="ed-label">${t('editorShape')}</div>
+        <div class="ed-shape-row">
+          <button class="ed-shape-btn active" data-shape="rect">${t('editorShapeRect')}</button>
+          <button class="ed-shape-btn" data-shape="blob">${t('editorShapeBlob')}</button>
+          <button class="ed-shape-btn" data-shape="island">${t('editorShapeIsland')}</button>
+        </div>
+      </div>
+      <div class="ed-section">
+        <div class="ed-label">${t('editorDensity')}</div>
+        <div class="ed-row"><label>${t('editorDensity')}</label>${sl('ed-density',10,25,15,'%')}</div>
+      </div>
+      <div class="ed-section">
+        <div class="ed-label">${t('editorTerrain')}</div>
+        <div class="ed-row"><label>🌲 ${t('editorTrees')}</label>${sl('ed-trees',0,20,7)}</div>
+        <div class="ed-row"><label>⛰ ${t('editorMountains')}</label>${sl('ed-mountains',0,6,0)}</div>
+        <div class="ed-row"><label>🌊 ${t('editorLake')}</label>${sl('ed-lakes',0,4,0)}</div>
+        <div class="ed-row"><label>🛤 ${t('editorPaths')}</label>${sl('ed-paths',0,4,0)}</div>
+        <div class="ed-check-row">
+          <label class="ed-check"><input type="checkbox" id="ed-river"> 〜 ${t('editorRiver')}</label>
+          <div class="ed-row" style="gap:8px">
+            <label style="font-size:13px;color:#c8dace">🌊 ${t('editorSea')}</label>
+            <select class="ed-select" id="ed-sea">
+              <option value="none">${t('editorSeaNone')}</option>
+              <option value="N">N ↑</option><option value="S">S ↓</option>
+              <option value="E">E →</option><option value="W">W ←</option>
+            </select>
+          </div>
+        </div>
+      </div>
+      <div class="ed-section">
+        <div class="ed-label">${t('editorExtras')}</div>
+        <div class="ed-check-row">
+          <label class="ed-check"><input type="checkbox" id="ed-fog"> 🌫 ${t('editorFog')}</label>
+          <label class="ed-check"><input type="checkbox" id="ed-night"> 🌙 ${t('editorNight')}</label>
+        </div>
+        <div class="ed-row">
+          <label>⏱ ${t('editorTime')}</label>
+          <select class="ed-select" id="ed-time">
+            <option value="0">${t('editorTimeNone')}</option>
+            <option value="120">2 min</option>
+            <option value="180">3 min</option>
+            <option value="240">4 min</option>
+            <option value="300">5 min</option>
+          </select>
+        </div>
+      </div>
+      <button id="ed-play">${t('editorPlay')}</button>`;
+  }
+
+  _wireEditorForm() {
+    [['ed-cols',''], ['ed-rows',''], ['ed-trees',''], ['ed-mountains',''], ['ed-lakes',''], ['ed-paths','']].forEach(([id]) => {
+      const el = $(id); if (!el) return;
+      el.oninput = () => { $(`${id}-val`).textContent = el.value; };
+    });
+    const densEl = $('ed-density');
+    if (densEl) densEl.oninput = () => { $('ed-density-val').textContent = densEl.value + '%'; };
+
+    document.querySelectorAll('.ed-shape-btn').forEach(btn => {
+      btn.onclick = () => {
+        document.querySelectorAll('.ed-shape-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+      };
+    });
+
+    $('ed-play').onclick = () => {
+      Sound.click();
+      this._playCustomLevel();
+      this.hideEditorModal();
+    };
+  }
+
+  _playCustomLevel() {
+    const gi = id => parseInt($(id).value, 10);
+    const shape = (document.querySelector('.ed-shape-btn.active') || {}).dataset?.shape || 'rect';
+    const sea = $('ed-sea').value;
+    const timeLimit = gi('ed-time') || undefined;
+
+    const terrain = {};
+    const trees = gi('ed-trees'); if (trees > 0) terrain.trees = trees;
+    const mountains = gi('ed-mountains'); if (mountains > 0) terrain.mountains = mountains;
+    const lakes = gi('ed-lakes'); if (lakes > 0) terrain.lake = lakes;
+    const paths = gi('ed-paths'); if (paths > 0) terrain.paths = paths;
+    if ($('ed-river').checked) terrain.river = true;
+    if (sea !== 'none') terrain.sea = sea;
+
+    const customLevel = {
+      id: 0,
+      custom: true,
+      cols: gi('ed-cols'),
+      rows: gi('ed-rows'),
+      shape,
+      density: gi('ed-density') / 100,
+      terrain,
+      fog: $('ed-fog').checked || undefined,
+      night: $('ed-night').checked || undefined,
+      timeLimit,
+      name: { en: 'Custom Op', uk: 'Кастомна операція' },
+    };
+    this.startLevel(customLevel);
   }
 
   _toggleFlagMode() {
@@ -458,6 +582,7 @@ class Game {
     toolbar.innerHTML = `
       <button class="gear-btn${hasUnequipped ? ' gear-btn-pulse' : ''}" id="btn-stash-open">${t('gear')}</button>
       <button class="ach-btn" id="btn-ach-open">🏅 ${t('achievements')}</button>
+      <button class="ach-btn ed-btn" id="btn-editor-open">${t('editor')}</button>
       <div class="mode-pill" id="mode-pill" data-mode="${mode}">
         <div class="mode-pill-slider"></div>
         <button class="mode-pill-opt${mode === 'classic' ? ' active' : ''}" data-mode="classic">${t('classicMode')}</button>
@@ -465,6 +590,7 @@ class Game {
       </div>`;
     $('btn-stash-open').onclick = () => { Sound.click(); this.showStashModal(); };
     $('btn-ach-open').onclick = () => { Sound.click(); this.showAchievementsModal(); };
+    $('btn-editor-open').onclick = () => { Sound.click(); this.showEditorModal(); };
     toolbar.querySelectorAll('.mode-pill-opt').forEach(btn => {
       btn.onclick = () => {
         const m = btn.dataset.mode;
@@ -706,6 +832,7 @@ class Game {
     sp.pathI = 1;
     sp.target = b.get(best[best.length - 1][0], best[best.length - 1][1]);
     sp.moving = best.length > 1;
+    if (!sp.moving) this._arrive(); // sapper already adjacent — flag immediately
     if (!sp.moving) this._arrive();
   }
 
@@ -809,9 +936,9 @@ class Game {
 
   _win() {
     this.state = 'OVER';
-    markCompleted(this.level.id);
+    if (!this.level.custom) markCompleted(this.level.id);
     const before = rankFor(loadClears()).index;
-    const clears = addClear();
+    const clears = this.level.custom ? loadClears() : addClear();
     const after = rankFor(clears);
     this._promoted = after.index > before ? after.rank : null;
     Sound.win();
@@ -897,7 +1024,7 @@ class Game {
       this._promoted = null;
     }
     $('ov-text').textContent = txt;
-    const hasNext = won && this.level.id < LEVEL_COUNT && isUnlocked(this.level.id + 1);
+    const hasNext = won && !this.level.custom && this.level.id < LEVEL_COUNT && isUnlocked(this.level.id + 1);
     $('ov-next').style.display = hasNext ? 'inline-block' : 'none';
     $('ov-next').textContent = t('next');
     $('ov-again').textContent = t('again');
