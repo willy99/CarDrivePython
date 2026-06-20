@@ -61,6 +61,31 @@ class Game {
     $('ov-next').onclick = () => this.nextLevel();
     $('ov-again').onclick = () => this.startLevel(this.level);
     $('ov-map').onclick = () => this.showSelect();
+    $('btn-stash-close').onclick = () => this.hideStashModal();
+    $('stash-modal').onclick = e => { if (e.target === $('stash-modal')) this.hideStashModal(); };
+    this._cheatBuf = '';
+    window.addEventListener('keydown', e => {
+      this._cheatBuf = (this._cheatBuf + e.key).toLowerCase().slice(-5);
+      if (this._cheatBuf === 'iddqd') {
+        this._cheatBuf = '';
+        for (const id of ARTIFACT_IDS) addArtifact(id, 3);
+        this.showToast('💀 IDDQD — всі артефакти отримано!');
+        if (this.state === 'SELECT') this.renderSelect();
+      }
+    });
+  }
+
+  _getMode() { return localStorage.getItem('miner_mode') || 'arcade'; }
+  _setMode(m) { localStorage.setItem('miner_mode', m); }
+
+  showStashModal() {
+    $('stash-modal-title').textContent = t('gear');
+    this.renderStashPanel();
+    $('stash-modal').classList.add('open');
+  }
+
+  hideStashModal() {
+    $('stash-modal').classList.remove('open');
   }
 
   applyLang() {
@@ -97,7 +122,7 @@ class Game {
   renderSelect() {
     $('select-title').textContent = t('pickLevel');
     this.renderRankCard();
-    this.renderStashPanel();
+    this._renderSelectToolbar();
     const done = loadProgress();
     const grid = $('level-grid');
     grid.innerHTML = '';
@@ -114,6 +139,29 @@ class Game {
       if (unlocked) card.onclick = () => this.startLevel(LEVELS[id]);
       grid.appendChild(card);
     }
+  }
+
+  _renderSelectToolbar() {
+    const mode = this._getMode();
+    const toolbar = $('select-toolbar');
+    toolbar.innerHTML = `
+      <button class="gear-btn" id="btn-stash-open">${t('gear')}</button>
+      <div class="mode-pill" id="mode-pill" data-mode="${mode}">
+        <div class="mode-pill-slider"></div>
+        <button class="mode-pill-opt${mode === 'classic' ? ' active' : ''}" data-mode="classic">${t('classicMode')}</button>
+        <button class="mode-pill-opt${mode === 'arcade' ? ' active' : ''}" data-mode="arcade">${t('arcadeMode')}</button>
+      </div>`;
+    $('btn-stash-open').onclick = () => { Sound.click(); this.showStashModal(); };
+    toolbar.querySelectorAll('.mode-pill-opt').forEach(btn => {
+      btn.onclick = () => {
+        const m = btn.dataset.mode;
+        if (m === this._getMode()) return;
+        Sound.click();
+        this._setMode(m);
+        $('mode-pill').dataset.mode = m;
+        toolbar.querySelectorAll('.mode-pill-opt').forEach(b => b.classList.toggle('active', b.dataset.mode === m));
+      };
+    });
   }
 
   // ── play ──────────────────────────────────────────────────────────────────
@@ -137,7 +185,7 @@ class Game {
     $('select').style.display = 'none';
     $('overlay').style.display = 'none';
     $('hud').style.visibility = 'visible';
-    $('hint').textContent = t('hintFirst');
+    $('hint').textContent = t(this._getMode() === 'classic' ? 'hintFirstClassic' : 'hintFirst');
     $('hint').style.display = 'block';
     this.renderTools();
     this.updateHUD();
@@ -161,6 +209,7 @@ class Game {
 
   primaryAction(c, r) {
     if (this.state !== 'PLAYING' || this.sapper.moving || this._busy) return;
+    if (this._getMode() === 'classic') { this._primaryClassic(c, r); return; }
     const b = this.board;
     const cell = b.get(c, r);
     if (!cell) return;
@@ -214,11 +263,53 @@ class Game {
     if (!this.sapper.moving) this._arrive();
   }
 
+  _primaryClassic(c, r) {
+    const b = this.board;
+    const cell = b.get(c, r);
+    if (!cell) return;
+    if (!b.minesPlaced) {
+      if (cell.type !== T.LAND) return;
+      b.placeMines(c, r);
+      const regions = b.isolatedRegions(c, r);
+      if (regions.length > 0) {
+        for (let i = 0; i < regions.length; i++) { this.loadout.push('probe'); this.toolUses.push(true); }
+        const n = regions.length;
+        const word = lang === 'uk' ? `відрізан${n === 1 ? 'а ділянка' : 'их ділянок'}` : `isolated region${n === 1 ? '' : 's'}`;
+        const given = lang === 'uk' ? `видано ${n} щуп${n === 1 ? '' : n < 5 ? 'и' : 'ів'}` : `${n} probe${n === 1 ? '' : 's'} issued`;
+        this.showToast(`⚠ ${n} ${word} — ${given}`);
+        this.renderTools();
+      }
+      this.startTime = this.elapsed;
+      this.sapper.cell = cell;
+      this._revealAt(c, r);
+      $('hint').textContent = t('hintMoveClassic');
+      this.updateHUD();
+      return;
+    }
+    if (this.targetMode) {
+      const mode = this.targetMode;
+      this.targetMode = null;
+      this.renderTools();
+      this._useTargetTool(mode, c, r);
+      return;
+    }
+    if (cell.type !== T.LAND || cell.revealed || cell.flagged) return;
+    this.sapper.cell = cell;
+    this._revealAt(c, r);
+  }
+
   flagAction(c, r) {
     if (this.state !== 'PLAYING' || !this.board.minesPlaced || this.sapper.moving || this._busy) return;
     const b = this.board;
     const cell = b.get(c, r);
     if (!cell || cell.type !== T.LAND || cell.revealed) return;
+    if (this._getMode() === 'classic') {
+      cell.flagged = !cell.flagged;
+      this.renderer.setFlag(cell);
+      cell.flagged ? Sound.flag() : Sound.unflag();
+      this.updateHUD();
+      return;
+    }
     // un-flagging is instant; flagging walks the sapper up to a bordering cell
     // so he never steps onto the cell he suspects is mined.
     if (cell.flagged) { cell.flagged = false; this.renderer.setFlag(cell); Sound.unflag(); this.updateHUD(); return; }
