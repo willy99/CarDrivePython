@@ -9,6 +9,7 @@ const TRANSLATIONS = {
     hanoi: { title: 'Tower of Hanoi', description: '8 levels: from tutorial to Legend with countdown timers. (PC only version)' },
     memorize: { title: 'MemBrain', description: 'Word recall, object spotting, math drills & multiplayer pairs battle. (PC/Mobile versions)' },
     engineer: { title: 'Engineer', description: 'Build bridges from beams and cables, then send a truck across. Physics sandbox — will it hold?' },
+    miner: { title: 'Miner', description: 'Topographic minesweeper: send your sapper across cleared ground, dodge mines, work up from squares to wild map shapes.' },
     footer: 'Built with Python + Pygame + React',
     langBtn: '🇺🇦 UA',
   },
@@ -19,6 +20,7 @@ const TRANSLATIONS = {
     hanoi: { title: 'Ханойська Вежа', description: '8 рівнів: від навчання до Легенди з таймерами зворотного відліку. (версія тільки для ПК)' },
     memorize: { title: 'Ботанік', description: 'Тут можна скинути іржопхану з мозку з математичними та іншими вправами. (версії для ПК/мобільних)' },
     engineer: { title: 'Інженер', description: 'Будуй мости з балок і тросів, пускай вантажівку — фізичний пісочниця. Чи витримає?' },
+    miner: { title: 'Бабах', description: 'Топографічний сапер: веди сапера по розмінованому, обходь міни, рости від квадратів до диких карт.' },
     footer: 'Створено на Python + Pygame + React',
     langBtn: '🇬🇧 EN',
   },
@@ -26,7 +28,7 @@ const TRANSLATIONS = {
 
 // ─── Game registry ───────────────────────────────────────────────────────────
 // Add new games here.  Each entry becomes one card on the home screen.
-const GAME_IDS = ['cardrive', 'hanoi', 'memorize', 'engineer']
+const GAME_IDS = ['cardrive', 'hanoi', 'memorize', 'engineer', 'miner']
 
 export default function HomePage() {
   const [lang, setLang] = useState('en')
@@ -48,6 +50,7 @@ export default function HomePage() {
     { id: 'cardrive', emoji: '🏎️', color: 'bg-blue-700', available: true, landing: '/games/cardrive/landing.html', ...t.cardrive },
     { id: 'hanoi', emoji: '🗼', color: 'bg-purple-700', available: true, landing: '/games/hanoi/landing.html', ...t.hanoi },
     { id: 'memorize', emoji: '🧠', color: 'bg-violet-700', available: true, landing: '/games/memorize/landing.html', ...t.memorize },
+    { id: 'miner', emoji: '💥', color: 'bg-emerald-700', available: true, ...t.miner },
     // { id: 'engineer', emoji: '🌉', color: 'bg-orange-700', available: true, landing: '/games/engineer/index.html', ...t.engineer },
   ]
 

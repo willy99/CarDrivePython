@@ -10,6 +10,7 @@ const GAME_PATHS = {
   hanoi:    '/games/hanoi/index.html',
   memorize: '/games/memorize/index.html',
   engineer: '/games/engineer/index.html',
+  miner:    '/games/miner/index.html',
 }
 
 export default function GamePage() {

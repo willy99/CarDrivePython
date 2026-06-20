@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Бабах — Miner</title>
+<link rel="stylesheet" href="css/main.css">
+</head>
+<body>
+
+<!-- Top bar -->
+<div id="topbar">
+  <span class="title" id="title">💥 Бабах</span>
+  <button class="btn" id="btn-back">← Мапа</button>
+  <div class="sep"></div>
+  <div id="hud">
+    <span class="stat" id="stat-mines">💣 0</span>
+    <span class="stat" id="stat-flags">🚩 0</span>
+    <span class="stat" id="stat-time">⏱ 00:00</span>
+  </div>
+  <div class="spacer"></div>
+  <button class="btn" id="theme-toggle">🎨</button>
+  <button class="btn" id="btn-restart">↻ Заново</button>
+  <button class="btn" id="lang-toggle">🇬🇧 EN</button>
+</div>
+
+<!-- Pixi canvas mounts here -->
+<div id="stage"></div>
+
+<!-- Hint -->
+<div id="hint"></div>
+
+<!-- Level select -->
+<div id="select">
+  <h2 id="select-title">Вибери операцію</h2>
+  <div id="level-grid"></div>
+</div>
+
+<!-- Result overlay -->
+<div id="overlay">
+  <div id="ov-icon"></div>
+  <h2 id="ov-title"></h2>
+  <p id="ov-text"></p>
+  <div class="ov-btns">
+    <button class="big-btn" id="ov-next"></button>
+    <button class="big-btn alt" id="ov-again"></button>
+    <button class="big-btn ghost" id="ov-map"></button>
+  </div>
+</div>
+
+<script src="js/pixi.min.js"></script>
+<script type="module" src="js/game.js"></script>
+</body>
+</html>
