@@ -30,6 +30,10 @@ const _S = {
   relay: `<svg viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg"><rect x="21" y="36" width="6" height="10" rx="2" fill="#2e3e34"/><rect x="16" y="32" width="16" height="6" rx="2" fill="#3e5248"/><rect x="22" y="10" width="4" height="24" rx="2" fill="#4e6858"/><rect x="22.5" y="11" width="3" height="22" rx="1.5" fill="#8aa49e"/><rect x="14" y="10" width="20" height="5" rx="2" fill="#3e5248"/><rect x="15" y="11" width="18" height="3" rx="1.5" fill="#5e7868"/><circle cx="24" cy="9" r="3.5" fill="#c4a862"/><circle cx="24" cy="9" r="2" fill="#f0d890"/><path d="M16 16 Q10 16 8 22" stroke="#c4a862" stroke-width="2" fill="none" stroke-linecap="round"/><path d="M32 16 Q38 16 40 22" stroke="#c4a862" stroke-width="2" fill="none" stroke-linecap="round"/><path d="M14 21 Q6 21 4 30" stroke="#c4a862" stroke-width="1.5" fill="none" stroke-linecap="round" opacity="0.6"/><path d="M34 21 Q42 21 44 30" stroke="#c4a862" stroke-width="1.5" fill="none" stroke-linecap="round" opacity="0.6"/><line x1="24" y1="5" x2="24" y2="2" stroke="#c4a862" stroke-width="2" stroke-linecap="round"/><circle cx="24" cy="1" r="1.5" fill="#c4a862" opacity="0.7"/></svg>`,
 
   sniper: `<svg viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg"><rect x="2" y="22" width="44" height="5" rx="2.5" fill="#2e4a2e"/><rect x="3" y="23" width="42" height="3" rx="1.5" fill="#4e7855"/><rect x="28" y="16" width="18" height="17" rx="3" fill="#1e3422"/><rect x="29" y="17" width="16" height="15" rx="2" fill="#0a1408"/><circle cx="37" cy="24.5" r="6" fill="#0a0e12" stroke="#4e7855" stroke-width="1.5"/><circle cx="37" cy="24.5" r="4" fill="#0a1220"/><line x1="37" y1="19.5" x2="37" y2="29.5" stroke="#c4a862" stroke-width="0.8" opacity="0.9"/><line x1="32" y1="24.5" x2="42" y2="24.5" stroke="#c4a862" stroke-width="0.8" opacity="0.9"/><circle cx="37" cy="24.5" r="1.2" fill="#d86030"/><rect x="6" y="18" width="10" height="13" rx="2" fill="#2e4a2e"/><rect x="7" y="19" width="8" height="11" rx="1.5" fill="#3e6040"/><rect x="18" y="14" width="4" height="6" rx="1" fill="#3e5248"/><rect x="19" y="10" width="2" height="5" rx="1" fill="#5e7868"/></svg>`,
+
+  flashlight: `<svg viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg"><rect x="19" y="28" width="10" height="16" rx="5" fill="#3e5248"/><rect x="20.5" y="29" width="7" height="14" rx="3.5" fill="#5e7868"/><rect x="15" y="18" width="18" height="13" rx="3" fill="#2e4a2e"/><rect x="16" y="19" width="16" height="11" rx="2" fill="#1a3020"/><ellipse cx="24" cy="16" rx="12" ry="7" fill="#3e5248"/><ellipse cx="24" cy="15" rx="12" ry="7" fill="#4e6858"/><ellipse cx="24" cy="14" rx="9" ry="5" fill="#f5e090" opacity="0.95"/><ellipse cx="24" cy="13.5" rx="6" ry="3.5" fill="#fff8c0"/><ellipse cx="22" cy="12.5" rx="2" ry="1.5" fill="#ffffff" opacity="0.6"/><path d="M12 8 Q6 12 8 20" stroke="#f5e090" stroke-width="1.5" fill="none" stroke-linecap="round" opacity="0.6"/><path d="M36 8 Q42 12 40 20" stroke="#f5e090" stroke-width="1.5" fill="none" stroke-linecap="round" opacity="0.6"/><path d="M9 5 Q2 12 5 22" stroke="#f5e090" stroke-width="1" fill="none" stroke-linecap="round" opacity="0.3"/><path d="M39 5 Q46 12 43 22" stroke="#f5e090" stroke-width="1" fill="none" stroke-linecap="round" opacity="0.3"/><line x1="24" y1="3" x2="24" y2="8" stroke="#f5e090" stroke-width="1.5" stroke-linecap="round" opacity="0.5"/></svg>`,
+
+  spotlight: `<svg viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg"><rect x="18" y="2" width="12" height="8" rx="3" fill="#2e4a2e"/><rect x="19" y="3" width="10" height="6" rx="2" fill="#3e5248"/><rect x="14" y="8" width="20" height="14" rx="4" fill="#3e5248"/><rect x="15" y="9" width="18" height="12" rx="3" fill="#4e6858"/><path d="M4 22 L12 18 L36 18 L44 22 L42 48 L6 48 Z" fill="#f5e090" opacity="0.12"/><path d="M6 22 L13 19 L35 19 L42 22" fill="none" stroke="#f5e090" stroke-width="1" opacity="0.4"/><ellipse cx="24" cy="16" rx="10" ry="6" fill="#ffe060" opacity="0.9"/><ellipse cx="24" cy="15.5" rx="7" ry="4" fill="#fff8c0"/><ellipse cx="22" cy="14.5" rx="2.5" ry="1.8" fill="#ffffff" opacity="0.7"/><circle cx="24" cy="36" r="14" fill="#f5e090" opacity="0.08"/><circle cx="24" cy="38" r="10" fill="#f5e090" opacity="0.05"/></svg>`,
 };
 
 export const ARTIFACTS = {
@@ -110,6 +114,18 @@ export const ARTIFACTS = {
     en: 'Sniper scan', uk: 'Снайпер',
     descEn: 'Reveals all safe cells in your sapper\'s row and column. Mines get flagged.',
     descUk: 'Відкриває всі безпечні клітинки в рядку і стовпці сапера. Міни позначає.',
+  },
+  flashlight: {
+    id: 'flashlight', icon: '🔦', svg: _S.flashlight, active: 'target',
+    en: 'Flashlight', uk: 'Ліхтарик',
+    descEn: 'Tap any cell to reveal a 3×3 area around it (mines get flagged).',
+    descUk: 'Тицьни клітинку — розкриє 3×3 навколо неї (міни позначить прапорцем).',
+  },
+  spotlight: {
+    id: 'spotlight', icon: '💡', svg: _S.spotlight, active: 'self',
+    en: 'Spotlight', uk: 'Прожектор',
+    descEn: 'One-time burst — reveals a 5×5 area around your sapper.',
+    descUk: 'Одноразово — розкриває область 5×5 навколо сапера.',
   },
 };
 export const ARTIFACT_IDS = Object.keys(ARTIFACTS);

@@ -1,5 +1,5 @@
-import { T } from './constants.js?v=3';
-import { ARTIFACT_IDS } from './artifacts.js?v=3';
+import { T } from './constants.js?v=4';
+import { ARTIFACT_IDS } from './artifacts.js?v=4';
 
 // Small seeded PRNG so each level's *shape* looks consistent run to run.
 // (Mine placement still uses Math.random, so every replay differs.)
@@ -76,14 +76,36 @@ export class Board {
     if (ter.sea) this._carveSea();
     if (ter.mountains) for (let i = 0; i < ter.mountains; i++) this._carveBlobOf(T.MOUNTAIN, 1 + Math.floor(this.rng() * 2));
     if (ter.trees) this._scatter(T.TREE, ter.trees);
+    if (ter.paths) this._carvePaths(ter.paths);
     this._scatterArtifacts();
   }
 
-  // Sometimes hide 1-2 artifacts on plain land; you collect them by clearing
-  // the cell. They never sit on a mine, so a found cell is always reachable.
+  // Dirt tracks that meander across the map — walkable like LAND, faster feel.
+  _carvePaths(count) {
+    for (let p = 0; p < count; p++) {
+      const land = this.cells.filter(c => c.type === T.LAND);
+      if (!land.length) return;
+      const start = this._pick(land);
+      const horiz = this.rng() < 0.5;
+      let c = start.c, r = start.r;
+      const steps = Math.floor((horiz ? this.cols : this.rows) * (0.5 + this.rng() * 0.35));
+      for (let i = 0; i < steps; i++) {
+        const cell = this.get(c, r);
+        if (cell && cell.type === T.LAND) cell.type = T.PATH;
+        if (horiz) { c++; if (this.rng() < 0.22) r += this.rng() < 0.5 ? 1 : -1; }
+        else        { r++; if (this.rng() < 0.22) c += this.rng() < 0.5 ? 1 : -1; }
+        c = Math.max(0, Math.min(this.cols - 1, c));
+        r = Math.max(0, Math.min(this.rows - 1, r));
+        if (!this.inB(c, r)) break;
+      }
+    }
+  }
+
+  // Always drop 1-3 artifacts per level (was 0-2).
   _scatterArtifacts() {
-    let n = this.rng() < 0.55 ? 1 : 0;
-    if (n && this.rng() < 0.3) n = 2;
+    let n = 1;
+    if (this.rng() < 0.55) n++;
+    if (n === 2 && this.rng() < 0.30) n++;
     for (let i = 0; i < n; i++) {
       const land = this._landCells().filter(c => !c.artifact);
       if (land.length < 6) return;
@@ -170,7 +192,7 @@ export class Board {
   }
 
   // ── keep only the largest connected walkable region ──────────────────────
-  _isStandableType(cell) { return cell && (cell.type === T.LAND || cell.type === T.BRIDGE); }
+  _isStandableType(cell) { return cell && (cell.type === T.LAND || cell.type === T.BRIDGE || cell.type === T.PATH); }
 
   _pruneToMainComponent() {
     const seen = new Array(this.cells.length).fill(false);
@@ -218,7 +240,7 @@ export class Board {
         }
       }
     }
-    const candidates = this._landCells().filter(c => !safe.has(this.idx(c.c, c.r)) && !c.artifact);
+    const candidates = this._landCells().filter(c => c.type === T.LAND && !safe.has(this.idx(c.c, c.r)) && !c.artifact);
     let count = Math.round((this.level.density || 0.15) * this.landTotal);
     count = Math.max(1, Math.min(count, candidates.length));
 
@@ -253,7 +275,7 @@ export class Board {
       for (const [dc, dr] of DIRS4) {
         const n = this.get(cur.c + dc, cur.r + dr);
         if (!n || seen.has(this.idx(n.c, n.r))) continue;
-        if (n.type === T.BRIDGE || (n.type === T.LAND && !n.mine)) {
+        if (n.type === T.BRIDGE || n.type === T.PATH || (n.type === T.LAND && !n.mine)) {
           seen.add(this.idx(n.c, n.r)); q.push(n);
         }
       }
@@ -278,7 +300,7 @@ export class Board {
       }
     }
     // Flood-fill isolated cells into connected components; return one rep per component
-    const unreached = this.cells.filter(c => c.type === T.LAND && !c.mine && !reachable.has(this.idx(c.c, c.r)));
+    const unreached = this.cells.filter(c => (c.type === T.LAND) && !c.mine && !reachable.has(this.idx(c.c, c.r)));
     const componentSeen = new Set();
     const reps = [];
     for (const seed of unreached) {
@@ -335,7 +357,8 @@ export class Board {
 
   // ── pathfinding for the sapper ───────────────────────────────────────────
   standable(cell) {
-    return cell && (cell.type === T.BRIDGE || (cell.type === T.LAND && cell.revealed && !cell.flagged));
+    return cell && (cell.type === T.BRIDGE || cell.type === T.PATH ||
+      (cell.type === T.LAND && cell.revealed && !cell.flagged));
   }
 
   // BFS over already-cleared ground; the target may be a hidden land cell that
@@ -366,11 +389,11 @@ export class Board {
     return null;
   }
 
-  // Path for the UGV: rides over ANY land/bridge (mines + flags included), so
+  // Path for the UGV: rides over ANY land/bridge/path (mines + flags included), so
   // it can cross a mine wall to a cut-off cell. Water/rock/forest still block.
   pathCross(sc, sr, tc, tr) {
     if (sc === tc && sr === tr) return [[tc, tr]];
-    const ok = cell => cell && (cell.type === T.LAND || cell.type === T.BRIDGE);
+    const ok = cell => cell && (cell.type === T.LAND || cell.type === T.BRIDGE || cell.type === T.PATH);
     const prev = new Map();
     prev.set(this.idx(sc, sr), null);
     const q = [[sc, sr]];

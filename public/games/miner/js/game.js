@@ -1,12 +1,13 @@
-import { SAPPER_SPEED, T } from './constants.js?v=3';
-import { t, levelName, toggleLang, lang } from './i18n.js?v=3';
-import { LEVELS, LEVEL_COUNT, loadProgress, markCompleted, isUnlocked } from './levels.js?v=3';
-import { Board } from './board.js?v=3';
-import { PixiRenderer } from './pixiRenderer.js?v=3';
-import { THEMES, loadTheme, saveTheme, nextTheme } from './themes.js?v=3';
-import { Sound, isMuted, toggleMute } from './audio.js?v=3';
-import { loadClears, addClear, rankFor, rankName, rankStars } from './ranks.js?v=3';
-import { ARTIFACTS, ARTIFACT_IDS, artifactName, artifactDesc, loadStash, addArtifact, consumeArtifact, loadEquip, toggleEquip, removeEquip } from './artifacts.js?v=3';
+import { SAPPER_SPEED, T } from './constants.js?v=4';
+import { t, levelName, toggleLang, lang } from './i18n.js?v=4';
+import { LEVELS, LEVEL_COUNT, loadProgress, markCompleted, isUnlocked } from './levels.js?v=4';
+import { Board } from './board.js?v=4';
+import { PixiRenderer } from './pixiRenderer.js?v=4';
+import { THEMES, loadTheme, saveTheme, nextTheme } from './themes.js?v=4';
+import { Sound, isMuted, toggleMute } from './audio.js?v=4';
+import { loadClears, addClear, rankFor, rankName, rankStars } from './ranks.js?v=4';
+import { ARTIFACTS, ARTIFACT_IDS, artifactName, artifactDesc, loadStash, addArtifact, consumeArtifact, loadEquip, toggleEquip, removeEquip } from './artifacts.js?v=4';
+import { ACHIEVEMENTS, loadAchievements, unlockAchievement, getCleanStreak, setCleanStreak, addCorrectFlags, SKINS, loadSkin, saveSkin, isSkinUnlocked } from './achievements.js?v=5';
 
 const $ = id => document.getElementById(id);
 
@@ -32,6 +33,7 @@ class Game {
 
     this.renderer.onCellTap = (c, r) => this.primaryAction(c, r);
     this.renderer.onCellFlag = (c, r) => this.flagAction(c, r);
+    this.renderer.onSapperArrow = (dx, dy) => this._arrowMove(dx, dy);
     this.renderer.onTick = null;
     this.renderer.tickCbs.push(dt => this._update(dt));
 
@@ -63,6 +65,10 @@ class Game {
     $('ov-map').onclick = () => this.showSelect();
     $('btn-stash-close').onclick = () => this.hideStashModal();
     $('stash-modal').onclick = e => { if (e.target === $('stash-modal')) this.hideStashModal(); };
+    $('btn-howto-close').onclick = () => this.hideHowTo();
+    $('howto-modal').onclick = e => { if (e.target === $('howto-modal')) this.hideHowTo(); };
+    $('btn-ach-close').onclick = () => this.hideAchievementsModal();
+    $('ach-modal').onclick = e => { if (e.target === $('ach-modal')) this.hideAchievementsModal(); };
     this._cheatBuf = '';
     window.addEventListener('keydown', e => {
       this._cheatBuf = (this._cheatBuf + e.key).toLowerCase().slice(-5);
@@ -88,6 +94,292 @@ class Game {
 
   hideStashModal() {
     $('stash-modal').classList.remove('open');
+  }
+
+  showHowTo() {
+    $('howto-title').textContent = t('howToPlay');
+    $('howto-body').innerHTML = this._buildHowToHTML();
+    $('howto-modal').classList.add('open');
+  }
+
+  hideHowTo() {
+    $('howto-modal').classList.remove('open');
+  }
+
+  showAchievementsModal() {
+    $('ach-title').textContent = t('achTitle');
+    $('ach-body').innerHTML = this._buildAchievementsHTML();
+    $('ach-modal').classList.add('open');
+    $('ach-body').querySelectorAll('.skin-card[data-skin]').forEach(btn => {
+      btn.onclick = () => this._equipSkin(btn.dataset.skin);
+    });
+  }
+
+  hideAchievementsModal() {
+    $('ach-modal').classList.remove('open');
+  }
+
+  _equipSkin(id) {
+    saveSkin(id);
+    this.renderer.currentSkin = id;
+    if (this.board && this.renderer.entityC) {
+      this.renderer.rebuildSapperSkin();
+      if (this.sapper && this.sapper.cell) {
+        this.renderer.setSapper(this.sapper.px, this.sapper.pr, false, 0);
+      }
+    }
+    Sound.click();
+    $('ach-body').innerHTML = this._buildAchievementsHTML();
+    $('ach-body').querySelectorAll('.skin-card[data-skin]').forEach(btn => {
+      btn.onclick = () => this._equipSkin(btn.dataset.skin);
+    });
+  }
+
+  _buildAchievementsHTML() {
+    const achieved = loadAchievements();
+    const achCards = ACHIEVEMENTS.map(a => {
+      const unlocked = !!achieved[a.id];
+      const name = lang === 'uk' ? a.uk : a.en;
+      const desc = lang === 'uk' ? a.descUk : a.descEn;
+      return `<div class="ach-card ${unlocked ? 'ach-unlocked' : 'ach-locked'}">
+        <div class="ach-card-icon">${unlocked ? a.icon : '🔒'}</div>
+        <div class="ach-card-info">
+          <div class="ach-card-name">${name}</div>
+          <div class="ach-card-desc">${desc}</div>
+        </div>
+      </div>`;
+    }).join('');
+
+    const currentSkin = loadSkin();
+    const skinCards = SKINS.map(s => {
+      const unlocked = isSkinUnlocked(s.id);
+      const name = lang === 'uk' ? s.uk : s.en;
+      const isEquipped = currentSkin === s.id;
+      const clickAttr = unlocked && !isEquipped ? ` data-skin="${s.id}"` : '';
+      const cls = ['skin-card', unlocked ? '' : 'skin-locked', isEquipped ? 'skin-equipped' : ''].filter(Boolean).join(' ');
+      return `<div class="${cls}"${clickAttr}>
+        <div class="skin-preview">${this._skinSvg(s.id)}</div>
+        <div class="skin-name">${s.icon} ${name}</div>
+        <div class="skin-status">${isEquipped ? t('skinEquipped') : unlocked ? t('skinEquip') : t('skinLocked')}</div>
+      </div>`;
+    }).join('');
+
+    return `
+<div class="ach-section">
+  <h3 class="ach-section-title">🏅 ${lang === 'uk' ? 'Досягнення' : 'Achievements'}</h3>
+  <div class="ach-grid">${achCards}</div>
+</div>
+<div class="ht-divider"></div>
+<div class="ach-section">
+  <h3 class="ach-section-title">🥷 ${t('skinsTitle')}</h3>
+  <div class="skin-grid">${skinCards}</div>
+</div>`;
+  }
+
+  _skinSvg(skinId) {
+    const P = {
+      default:   { body: '#3a6b40', face: '#e8c080', helmet: '#2a5030' },
+      ghost:     { body: '#5080c0', face: '#d0e8ff', helmet: '#3060a0' },
+      ninja:     { body: '#111', face: '#111', helmet: '#1a1a1a' },
+      racer:     { body: '#d06010', face: '#f0b870', helmet: '#e09020' },
+      soldier:   { body: '#2a4520', face: '#e0b090', helmet: '#1a3010' },
+      phantom:   { body: '#2a0850', face: '#c030d0', helmet: '#4a0870' },
+      iron:      { body: '#606070', face: '#b0b8c0', helmet: '#404858' },
+      commander: { body: '#3a2000', face: '#f0c060', helmet: '#b08000' },
+    };
+    const p = P[skinId] || P.default;
+    const alpha = skinId === 'ghost' ? ' opacity="0.8"' : '';
+    const extra = skinId === 'ninja'
+      ? `<rect x="15" y="16.5" width="10" height="2" fill="#ff8c00"/>`
+      : skinId === 'commander'
+      ? `<polygon points="13,15 15,11 17,15 19,11 21,15 23,11 25,15 27,15 13,15" fill="#ffd700"/>`
+      : skinId === 'phantom'
+      ? `<circle cx="23" cy="12" r="3" fill="#c0a0ff"/><circle cx="24.5" cy="11" r="2.2" fill="${p.helmet}"/>`
+      : skinId === 'racer'
+      ? `<rect x="19" y="22" width="2" height="18" fill="rgba(255,255,255,0.3)"/>`
+      : skinId === 'soldier'
+      ? `<ellipse cx="17" cy="28" rx="3.5" ry="2.5" fill="#1a3010" opacity="0.7"/><ellipse cx="24" cy="32" rx="2.5" ry="2" fill="#1a3010" opacity="0.7"/>`
+      : skinId === 'iron'
+      ? `<circle cx="14" cy="23" r="1.5" fill="#d0d8e0"/><circle cx="26" cy="23" r="1.5" fill="#d0d8e0"/><circle cx="14" cy="37" r="1.5" fill="#d0d8e0"/><circle cx="26" cy="37" r="1.5" fill="#d0d8e0"/>`
+      : '';
+    return `<svg viewBox="0 0 40 50" xmlns="http://www.w3.org/2000/svg"${alpha}>
+      <rect x="12" y="22" width="16" height="18" rx="3" fill="${p.body}"/>
+      ${extra}
+      <circle cx="20" cy="17" r="8" fill="${p.face}"/>
+      ${skinId === 'ninja' ? `<circle cx="20" cy="17" r="8" fill="${p.helmet}"/>` : ''}
+      <path d="M13 14 A7 7 0 0 1 27 14 Z" fill="${p.helmet}"/>
+      <rect x="12" y="13" width="16" height="2.5" rx="1" fill="${p.helmet}"/>
+    </svg>`;
+  }
+
+  _buildHowToHTML() {
+    const arts = ARTIFACT_IDS.map(id => {
+      const a = ARTIFACTS[id];
+      const name = a[lang] || a.en;
+      const desc = lang === 'uk' ? a.descUk : a.descEn;
+      return `<div class="ht-art"><div class="ht-art-icon">${a.icon}</div><div><div class="ht-art-name">${name}</div><div class="ht-art-desc">${desc}</div></div></div>`;
+    }).join('');
+
+    const ranks = [
+      ['🪖', lang === 'uk' ? 'Рекрут' : 'Recruit'],
+      ['⭐', lang === 'uk' ? 'Сапер' : 'Sapper'],
+      ['⭐⭐', lang === 'uk' ? 'Сержант' : 'Sergeant'],
+      ['⭐⭐⭐', lang === 'uk' ? 'Лейтенант' : 'Lieutenant'],
+      ['🎖️', lang === 'uk' ? 'Капітан' : 'Captain'],
+      ['🏅', lang === 'uk' ? 'Майор' : 'Major'],
+      ['🎗️', lang === 'uk' ? 'Полковник' : 'Colonel'],
+      ['👑', lang === 'uk' ? 'Генерал' : 'General'],
+    ].map(([ico, name]) => `<span class="ht-rank-chip">${ico} ${name}</span>`).join('');
+
+    return `
+<div class="ht-section">
+  <h2>❓ ${t('htWhatTitle')}</h2>
+  <p>${t('htWhatP1')}</p>
+  <p>${t('htWhatP2')}</p>
+  <div class="ht-screenshots">
+    ${this._shotRiver()} ${this._shotPath()} ${this._shotFog()} ${this._shotNight()}
+  </div>
+</div>
+<div class="ht-divider"></div>
+<div class="ht-section">
+  <h2>🎮 ${t('htControlsTitle')}</h2>
+  <div class="ht-controls">
+    <div class="ht-key">${t('htCtrlPlace')}</div><div class="ht-desc">${t('htCtrlPlaceD')}</div>
+    <div class="ht-key">${t('htCtrlReveal')}</div><div class="ht-desc">${t('htCtrlRevealD')}</div>
+    <div class="ht-key">${t('htCtrlFlag')}</div><div class="ht-desc">${t('htCtrlFlagD')}</div>
+    <div class="ht-key">${t('htCtrlArrows')}</div><div class="ht-desc">${t('htCtrlArrowsD')}</div>
+    <div class="ht-key">${t('htCtrlPinch')}</div><div class="ht-desc">${t('htCtrlPinchD')}</div>
+  </div>
+  <p><strong>${lang === 'uk' ? 'Класичний' : 'Classic'}:</strong> ${t('htModeClassic')}</p>
+  <p><strong>${lang === 'uk' ? 'Аркада' : 'Arcade'}:</strong> ${t('htModeArcade')}</p>
+</div>
+<div class="ht-divider"></div>
+<div class="ht-section">
+  <h2>🎒 ${t('htGearTitle')}</h2>
+  <p>${t('htGearP')}</p>
+</div>
+<div class="ht-section">
+  <h2>🧰 ${t('htArtifactsTitle')}</h2>
+  <div class="ht-artifacts">${arts}</div>
+</div>
+<div class="ht-divider"></div>
+<div class="ht-section">
+  <h2>⭐ ${t('htRanksTitle')}</h2>
+  <p>${t('htRanksP')}</p>
+  <div class="ht-rank-row">${ranks}</div>
+</div>
+<div class="ht-divider"></div>
+<div class="ht-section">
+  <h2>⏱ ${t('htTimedTitle')}</h2>
+  <p>${t('htTimedP')}</p>
+</div>
+<div class="ht-section">
+  <h2>🌫 ${t('htFogTitle')}</h2>
+  <p>${t('htFogP')}</p>
+</div>`;
+  }
+
+  // Mini SVG map illustrations ─────────────────────────────────────────────
+  _shotWrap(svgContent, label) {
+    return `<div class="ht-shot"><svg viewBox="0 0 160 110" xmlns="http://www.w3.org/2000/svg">${svgContent}</svg><div class="ht-shot-label">${label}</div></div>`;
+  }
+
+  _shotRiver() {
+    // Green land with a blue river and bridge
+    const bg = '#1a3a20'; const water = '#3a7bc8'; const bridge = '#8a6040'; const grid = '#2a5030';
+    let cells = '';
+    const W = 20, cols = 8, rows = 5;
+    for (let r = 0; r < rows; r++) for (let c = 0; c < cols; c++) {
+      const x = c * W, y = r * W + 5;
+      const isRiver = c === 3;
+      const isBridge = isRiver && r === 2;
+      const fill = isBridge ? bridge : isRiver ? water : bg;
+      cells += `<rect x="${x+1}" y="${y+1}" width="${W-2}" height="${W-2}" rx="3" fill="${fill}"/>`;
+    }
+    // Grid lines
+    let grid2 = '';
+    for (let c = 0; c <= cols; c++) grid2 += `<line x1="${c*W}" y1="5" x2="${c*W}" y2="${rows*W+5}" stroke="${grid}" stroke-width="0.5"/>`;
+    for (let r = 0; r <= rows; r++) grid2 += `<line x1="0" y1="${r*W+5}" x2="${cols*W}" y2="${r*W+5}" stroke="${grid}" stroke-width="0.5"/>`;
+    // Sapper
+    const sp = `<circle cx="${1.5*W+W*0.5}" cy="${1*W+5+W*0.5}" r="6" fill="#e8c040" stroke="#b09000" stroke-width="1.5"/>`;
+    // Numbers
+    const nums = [[0,0,'2'],[1,0,'1'],[4,0,'1'],[5,0,'2'],[0,1,'🚩'],[2,1,'1'],[4,2,'1']];
+    const labels = nums.map(([c,r,n]) => `<text x="${c*W+W*0.5}" y="${r*W+5+W*0.65}" text-anchor="middle" font-size="7" fill="#8ecf9a">${n}</text>`).join('');
+    return this._shotWrap(`<rect width="160" height="110" fill="#0d1f17"/>${cells}${grid2}${sp}${labels}`, t('htShotRiver'));
+  }
+
+  _shotPath() {
+    // Green terrain with a dirt road
+    const bg = '#1a3a20'; const path = '#c8a87a'; const grid = '#2a5030';
+    let cells = '';
+    const W = 20, cols = 8, rows = 5;
+    for (let r = 0; r < rows; r++) for (let c = 0; c < cols; c++) {
+      const x = c * W, y = r * W + 5;
+      const isPath = c === 2 || (r === 2 && c >= 2 && c <= 5);
+      cells += `<rect x="${x+1}" y="${y+1}" width="${W-2}" height="${W-2}" rx="${isPath ? 5 : 3}" fill="${isPath ? path : bg}"/>`;
+    }
+    let grid2 = '';
+    for (let c = 0; c <= cols; c++) grid2 += `<line x1="${c*W}" y1="5" x2="${c*W}" y2="${rows*W+5}" stroke="${grid}" stroke-width="0.5"/>`;
+    for (let r = 0; r <= rows; r++) grid2 += `<line x1="0" y1="${r*W+5}" x2="${cols*W}" y2="${r*W+5}" stroke="${grid}" stroke-width="0.5"/>`;
+    // grass tufts alongside path
+    let tufts = '';
+    [[1,0],[1,1],[1,2],[6,2],[7,2],[1,3],[1,4]].forEach(([c,r]) => {
+      const x = c*W + W*0.8, y = r*W + 5 + W*0.4;
+      tufts += `<line x1="${x}" y1="${y+4}" x2="${x-2}" y2="${y}" stroke="#4d7a3f" stroke-width="1.2"/>`;
+      tufts += `<line x1="${x}" y1="${y+4}" x2="${x+2}" y2="${y+1}" stroke="#4d7a3f" stroke-width="1"/>`;
+    });
+    const sp = `<circle cx="${2*W+W*0.5}" cy="${0*W+5+W*0.5}" r="6" fill="#e8c040" stroke="#b09000" stroke-width="1.5"/>`;
+    return this._shotWrap(`<rect width="160" height="110" fill="#0d1f17"/>${cells}${grid2}${tufts}${sp}`, t('htShotPath'));
+  }
+
+  _shotFog() {
+    // Partially visible map with dark overlay
+    const bg = '#1a3a20'; const fog = '#0d1f17'; const grid = '#2a5030';
+    let cells = '';
+    const W = 20, cols = 8, rows = 5;
+    const sc = 4, sr = 2; // sapper pos
+    for (let r = 0; r < rows; r++) for (let c = 0; c < cols; c++) {
+      const x = c * W, y = r * W + 5;
+      const dist = Math.max(Math.abs(c - sc), Math.abs(r - sr));
+      const inFow = dist > 2;
+      cells += `<rect x="${x+1}" y="${y+1}" width="${W-2}" height="${W-2}" rx="3" fill="${inFow ? fog : bg}" opacity="${inFow ? 0.9 : 1}"/>`;
+      if (!inFow && dist > 0) {
+        cells += `<text x="${x+W*0.5}" y="${y+W*0.65}" text-anchor="middle" font-size="8" fill="#8ecf9a">${Math.floor(Math.random()*3)}</text>`;
+      }
+    }
+    let grid2 = '';
+    for (let c = 0; c <= cols; c++) grid2 += `<line x1="${c*W}" y1="5" x2="${c*W}" y2="${rows*W+5}" stroke="${grid}" stroke-width="0.5" opacity="0.5"/>`;
+    for (let r = 0; r <= rows; r++) grid2 += `<line x1="0" y1="${r*W+5}" x2="${cols*W}" y2="${r*W+5}" stroke="${grid}" stroke-width="0.5" opacity="0.5"/>`;
+    const sp = `<circle cx="${sc*W+W*0.5}" cy="${sr*W+5+W*0.5}" r="6" fill="#e8c040" stroke="#b09000" stroke-width="1.5"/>`;
+    // fog edge glow
+    const glow = `<radialGradient id="fg" cx="${(sc*W+W*0.5)/160}" cy="${(sr*W+5+W*0.5)/110}" r="0.35" gradientUnits="objectBoundingBox"><stop offset="0%" stop-color="#0d1f17" stop-opacity="0"/><stop offset="100%" stop-color="#0d1f17" stop-opacity="0.8"/></radialGradient><rect width="160" height="110" fill="url(#fg)"/>`;
+    return this._shotWrap(`<rect width="160" height="110" fill="#0d1f17"/>${cells}${grid2}${glow}${sp}`, t('htShotFog'));
+  }
+
+  _shotNight() {
+    // Dark blue sky, moon, tiny visible zone
+    const bg = '#0a1228'; const landVis = '#152240'; const grid = '#1a2a50';
+    let cells = '';
+    const W = 20, cols = 8, rows = 5;
+    const sc = 4, sr = 2;
+    for (let r = 0; r < rows; r++) for (let c = 0; c < cols; c++) {
+      const x = c * W, y = r * W + 5;
+      const dist = Math.max(Math.abs(c - sc), Math.abs(r - sr));
+      const vis = dist <= 1;
+      cells += `<rect x="${x}" y="${y}" width="${W}" height="${W}" fill="${vis ? '#1a3a20' : bg}"/>`;
+    }
+    // stars
+    const stars = [[15,8],[40,12],[70,6],[100,15],[130,9],[145,20],[20,95],[50,100],[110,90],[155,80]].map(
+      ([x,y]) => `<circle cx="${x}" cy="${y}" r="${0.8+Math.random()*0.8}" fill="white" opacity="${0.4+Math.random()*0.6}"/>`
+    ).join('');
+    // moon
+    const moon = `<circle cx="140" cy="20" r="9" fill="#fffdd0"/><circle cx="144" cy="17" r="7" fill="${bg}"/>`;
+    let grid2 = '';
+    for (let c = 0; c <= cols; c++) grid2 += `<line x1="${c*W}" y1="5" x2="${c*W}" y2="${rows*W+5}" stroke="${grid}" stroke-width="0.5" opacity="0.4"/>`;
+    for (let r = 0; r <= rows; r++) grid2 += `<line x1="0" y1="${r*W+5}" x2="${cols*W}" y2="${r*W+5}" stroke="${grid}" stroke-width="0.5" opacity="0.4"/>`;
+    const sp = `<circle cx="${sc*W+W*0.5}" cy="${sr*W+5+W*0.5}" r="6" fill="#e8c040" stroke="#b09000" stroke-width="1.5"/>`;
+    const spot = `<radialGradient id="nl" cx="${(sc*W+W*0.5)/160}" cy="${(sr*W+5+W*0.5)/110}" r="0.22" gradientUnits="objectBoundingBox"><stop offset="0%" stop-color="#e8f0a0" stop-opacity="0.15"/><stop offset="100%" stop-color="#e8f0a0" stop-opacity="0"/></radialGradient><rect width="160" height="110" fill="url(#nl)"/>`;
+    return this._shotWrap(`<rect width="160" height="110" fill="${bg}"/>${stars}${moon}${cells}${grid2}${spot}${sp}`, t('htShotNight'));
   }
 
   applyLang() {
@@ -146,14 +438,21 @@ class Game {
   _renderSelectToolbar() {
     const mode = this._getMode();
     const toolbar = $('select-toolbar');
+    const stash = loadStash();
+    const equip = loadEquip();
+    const hasUnequipped = ARTIFACT_IDS.some(id => stash[id] > 0) && equip.length === 0;
     toolbar.innerHTML = `
-      <button class="gear-btn" id="btn-stash-open">${t('gear')}</button>
+      <button class="gear-btn${hasUnequipped ? ' gear-btn-pulse' : ''}" id="btn-stash-open">${t('gear')}</button>
+      <button class="ht-howto-btn" id="btn-howto-open">${t('howToPlay')}</button>
+      <button class="ach-btn" id="btn-ach-open">🏅 ${t('achievements')}</button>
       <div class="mode-pill" id="mode-pill" data-mode="${mode}">
         <div class="mode-pill-slider"></div>
         <button class="mode-pill-opt${mode === 'classic' ? ' active' : ''}" data-mode="classic">${t('classicMode')}</button>
         <button class="mode-pill-opt${mode === 'arcade' ? ' active' : ''}" data-mode="arcade">${t('arcadeMode')}</button>
       </div>`;
     $('btn-stash-open').onclick = () => { Sound.click(); this.showStashModal(); };
+    $('btn-howto-open').onclick = () => { Sound.click(); this.showHowTo(); };
+    $('btn-ach-open').onclick = () => { Sound.click(); this.showAchievementsModal(); };
     toolbar.querySelectorAll('.mode-pill-opt').forEach(btn => {
       btn.onclick = () => {
         const m = btn.dataset.mode;
@@ -184,6 +483,9 @@ class Game {
     this._busy = false;
     this.detectorReady = this.loadout.includes('detector');
     this.vestReady = this.loadout.includes('vest');
+    this._mineHitThisLevel = false;
+    this._usedArtifactThisLevel = false;
+    this.renderer.currentSkin = loadSkin();
     this.renderer.buildLevel(this.board, THEMES[this.themeId]);
     $('select').style.display = 'none';
     $('overlay').style.display = 'none';
@@ -196,6 +498,7 @@ class Game {
 
   // rebuild map visuals (theme change) and replay board state
   _rebuildScene() {
+    this.renderer.currentSkin = loadSkin();
     this.renderer.buildLevel(this.board, THEMES[this.themeId]);
     const revealed = this.board.cells.filter(c => c.type === T.LAND && c.revealed);
     if (revealed.length) this.renderer.onReveal(revealed);
@@ -240,8 +543,12 @@ class Game {
       this.startTime = this.elapsed;
       this.sapper.px = c; this.sapper.pr = r; this.sapper.cell = cell;
       this.renderer.setSapper(c, r, false, 0);
+      this.renderer.updateFoW(c, r);
       this._revealAt(c, r);
-      $('hint').textContent = t('hintMove');
+      const lv = b.level;
+      if (lv.fog) $('hint').textContent = t('fogHint');
+      else if (lv.night) $('hint').textContent = t('nightHint');
+      else $('hint').textContent = t('hintMove');
       this.updateHUD();
       return;
     }
@@ -255,6 +562,20 @@ class Game {
       return;
     }
 
+    // Tap on already-revealed cell (or PATH/BRIDGE) = move sapper there without revealing
+    if ((cell.type === T.LAND && cell.revealed && !cell.flagged) ||
+        cell.type === T.BRIDGE || cell.type === T.PATH) {
+      if (!this.sapper.cell || (cell.c === this.sapper.cell.c && cell.r === this.sapper.cell.r)) return;
+      const path = b.pathTo(this.sapper.cell.c, this.sapper.cell.r, c, r);
+      if (!path) { this._flashHint(); return; }
+      this.sapper.action = 'walk';
+      this.sapper.path = path;
+      this.sapper.pathI = 1;
+      this.sapper.target = cell;
+      this.sapper.moving = path.length > 1;
+      if (!this.sapper.moving) this._arriveWalk();
+      return;
+    }
     if (cell.type !== T.LAND || cell.revealed || cell.flagged) return;
     const path = b.pathTo(this.sapper.cell.c, this.sapper.cell.r, c, r);
     if (!path) { this._flashHint(); return; }
@@ -264,6 +585,42 @@ class Game {
     this.sapper.target = cell;
     this.sapper.moving = path.length > 1;
     if (!this.sapper.moving) this._arrive();
+  }
+
+  _arriveWalk() {
+    const sp = this.sapper;
+    const tgt = sp.target;
+    sp.prevCell = sp.cell;
+    sp.cell = tgt; sp.px = tgt.c; sp.pr = tgt.r;
+    sp.moving = false; sp.path = null; sp.action = null;
+    this.renderer.setSapper(tgt.c, tgt.r, false, 0);
+    this.renderer.updateFoW(tgt.c, tgt.r);
+  }
+
+  _arrowMove(dx, dy) {
+    if (this.state !== 'PLAYING' || !this.sapper.cell || this.sapper.moving || this._busy) return;
+    if (!this.board.minesPlaced) return;
+    const nc = this.sapper.cell.c + dx, nr = this.sapper.cell.r + dy;
+    const cell = this.board.get(nc, nr);
+    if (!cell) return;
+    // On revealed/path/bridge cells: walk without revealing
+    if (this.board.standable(cell)) {
+      this.sapper.action = 'walk';
+      this.sapper.path = [[this.sapper.cell.c, this.sapper.cell.r], [nc, nr]];
+      this.sapper.pathI = 1;
+      this.sapper.target = cell;
+      this.sapper.moving = true;
+      return;
+    }
+    // On unrevealed land: reveal it (normal move)
+    if (cell.type === T.LAND && !cell.flagged) {
+      const path = [[this.sapper.cell.c, this.sapper.cell.r], [nc, nr]];
+      this.sapper.action = 'reveal';
+      this.sapper.path = path;
+      this.sapper.pathI = 1;
+      this.sapper.target = cell;
+      this.sapper.moving = true;
+    }
   }
 
   _primaryClassic(c, r) {
@@ -284,6 +641,7 @@ class Game {
       }
       this.startTime = this.elapsed;
       this.sapper.cell = cell;
+      this.renderer.updateFoW(c, r);
       this._revealAt(c, r);
       $('hint').textContent = t('hintMoveClassic');
       this.updateHUD();
@@ -342,11 +700,13 @@ class Game {
     sp.px = tgt.c; sp.pr = tgt.r;
     sp.moving = false; sp.path = null;
     this.renderer.setSapper(tgt.c, tgt.r, false, 0);
+    this.renderer.updateFoW(tgt.c, tgt.r);
     if (sp.action === 'flag') {
       const fc = sp.flagTarget; sp.flagTarget = null; sp.action = null;
       if (fc && !fc.revealed) { fc.flagged = true; this.renderer.setFlag(fc); Sound.flag(); this.updateHUD(); }
       return;
     }
+    if (sp.action === 'walk') { sp.action = null; return; }
     if (sp.action === 'cross') {            // UGV ride finished
       sp.action = null;
       this.renderer.setPlatform(false);
@@ -371,6 +731,7 @@ class Game {
     if (cell.mine) {
       if (this.detectorReady) {                 // metal detector forgives one mine
         this.detectorReady = false;
+        this._mineHitThisLevel = true;
         this._spendTool('detector');
         if (!cell.flagged) { cell.flagged = true; this.renderer.setFlag(cell); }
         const sp = this.sapper, back = sp.prevCell || sp.cell;
@@ -383,6 +744,7 @@ class Game {
       }
       if (this.vestReady) {                    // ballistic vest — one extra life
         this.vestReady = false;
+        this._mineHitThisLevel = true;
         this._spendTool('vest');
         if (!cell.flagged) { cell.flagged = true; this.renderer.setFlag(cell); }
         if (this._getMode() !== 'classic') {
@@ -420,6 +782,8 @@ class Game {
   _boom(c, r) {
     this.state = 'OVER';
     this.board.lost = true;
+    this._mineHitThisLevel = true;
+    setCleanStreak(0);
     Sound.boom();
     this.renderer.spawnExplosion(c, r);
     this.renderer.setLost();
@@ -435,7 +799,74 @@ class Game {
     this._promoted = after.index > before ? after.rank : null;
     Sound.win();
     if (this._promoted) setTimeout(() => Sound.rankup(), 650);
+    this._checkAchievements(clears);
     this._showOverlay(true);
+  }
+
+  _checkAchievements(clears) {
+    const level = this.level;
+    const elapsed = this.startTime >= 0 ? this.elapsed - this.startTime : 9999;
+    const newAch = [];
+
+    // Pacifist: 3 clean levels in a row (no mine hit, no detector/vest trigger)
+    if (!this._mineHitThisLevel) {
+      const streak = getCleanStreak() + 1;
+      setCleanStreak(streak);
+      if (streak >= 3 && unlockAchievement('pacifist')) newAch.push('pacifist');
+    }
+
+    // Minimalist: cleared without spending any loadout artifact
+    if (!this._usedArtifactThisLevel && unlockAchievement('minimalist')) newAch.push('minimalist');
+
+    // Lightning: cleared in under 60 seconds
+    if (elapsed < 60 && unlockAchievement('lightning')) newAch.push('lightning');
+
+    // Veteran: 10 total clears
+    if (clears >= 10 && unlockAchievement('veteran')) newAch.push('veteran');
+
+    // Explorer: all 24 operations
+    if (clears >= 24 && unlockAchievement('explorer')) newAch.push('explorer');
+
+    // Night Owl: clear a night operation
+    if (level.night && unlockAchievement('nightowl')) newAch.push('nightowl');
+
+    // Fog Walker: clear a fog level
+    if (level.fog && unlockAchievement('fogwalker')) newAch.push('fogwalker');
+
+    // Blitz: beat a timed operation
+    if (level.timeLimit && unlockAchievement('blitz')) newAch.push('blitz');
+
+    // Iron Sapper: high-density level cleared with no artifacts
+    if ((level.density || 0) >= 0.18 && !this._usedArtifactThisLevel && unlockAchievement('iron')) newAch.push('iron');
+
+    // Strategist: 10 correct flags cumulative
+    const correctNow = this.board.cells.filter(c => c.flagged && c.mine).length;
+    const totalFlags = addCorrectFlags(correctNow);
+    if (totalFlags >= 10 && unlockAchievement('strategist')) newAch.push('strategist');
+
+    for (let i = 0; i < newAch.length; i++) {
+      const a = ACHIEVEMENTS.find(x => x.id === newAch[i]);
+      if (!a) continue;
+      const name = lang === 'uk' ? a.uk : a.en;
+      setTimeout(() => this.showToast(`${a.icon} ${t('achUnlocked')} ${name}!`), 1200 * (i + 1));
+    }
+  }
+
+  _timeLose() {
+    if (this.state !== 'PLAYING') return;
+    this.state = 'LOSE';
+    Sound.boom();
+    this.showToast('⏱ ' + t('timeUp'));
+    setTimeout(() => {
+      $('overlay').style.display = 'flex';
+      $('tools').style.display = 'none';
+      $('ov-icon').textContent = '⏱';
+      $('ov-title').textContent = t('timeUp');
+      $('ov-text').textContent = t('loseSub');
+      $('ov-next').style.display = 'none';
+      $('ov-again').textContent = t('again');
+      $('ov-map').textContent = t('toMap');
+    }, 600);
   }
 
   _showOverlay(won) {
@@ -469,7 +900,17 @@ class Game {
     const mines = b && b.minesPlaced ? Math.max(0, b.mineCount - b.flagCount()) : (b ? '?' : 0);
     $('stat-mines').textContent = `💣 ${mines}`;
     $('stat-flags').textContent = `🚩 ${b ? b.flagCount() : 0}`;
-    $('stat-time').textContent = `⏱ ${this._fmt(this.startTime < 0 ? 0 : this.elapsed - this.startTime)}`;
+    const gameTime = this.startTime < 0 ? 0 : this.elapsed - this.startTime;
+    const tl = b && b.level && b.level.timeLimit;
+    if (tl) {
+      const rem = Math.max(0, tl - gameTime);
+      const ts = $('stat-time');
+      ts.textContent = `⏱ ${this._fmt(rem)}`;
+      ts.style.color = rem < 30 ? '#e23b3b' : rem < 60 ? '#d98a00' : '';
+    } else {
+      $('stat-time').textContent = `⏱ ${this._fmt(gameTime)}`;
+      $('stat-time').style.color = '';
+    }
   }
 
   _fmt(sec) {
@@ -482,6 +923,12 @@ class Game {
       this.elapsed += dt;
       this._hudAcc = (this._hudAcc || 0) + dt;
       if (this._hudAcc > 0.25) { this._hudAcc = 0; this.updateHUD(); }
+      // Countdown timer — lose if time runs out
+      const tl = this.board && this.board.level && this.board.level.timeLimit;
+      if (tl && (this.elapsed - this.startTime) >= tl) {
+        this._timeLose();
+        return;
+      }
     }
 
     const sp = this.sapper;
@@ -520,13 +967,14 @@ class Game {
       else if (id === 'autosap') this._useAutoSap();
       else if (id === 'relay') this._useRelay();
       else if (id === 'sniper') this._useSniper();
+      else if (id === 'spotlight') this._useSpotlight();
       this._spendTool(id);
     } else {                                               // target tools: arm a tap
       this.targetMode = (this.targetMode === id) ? null : id;
       this.renderTools();
       Sound.click();
       if (this.targetMode) {
-        const hk = { drone: 'aimDrone', probe: 'aimProbe', arm: 'aimArm', ugv: 'aimUgv', dronex: 'aimDroneX', detonator: 'aimDetonator' };
+        const hk = { drone: 'aimDrone', probe: 'aimProbe', arm: 'aimArm', ugv: 'aimUgv', dronex: 'aimDroneX', detonator: 'aimDetonator', flashlight: 'aimFlashlight' };
         $('hint').textContent = t(hk[id] || 'aimProbe');
         $('hint').style.display = 'block';
       }
@@ -581,6 +1029,7 @@ class Game {
     else if (mode === 'ugv') this._useUGV(c, r);
     else if (mode === 'dronex') this._useDroneX(c, r);
     else if (mode === 'detonator') this._useDetonator(c, r);
+    else if (mode === 'flashlight') this._useFlashlight(c, r);
   }
 
   // re-arm a target tool and nudge the player when they picked an invalid cell
@@ -739,12 +1188,51 @@ class Game {
     if (b.isWon()) this._win();
   }
 
+  _useFlashlight(c, r) {
+    const b = this.board;
+    this._spendTool('flashlight');
+    const out = [];
+    for (let dr = -1; dr <= 1; dr++) for (let dc = -1; dc <= 1; dc++) {
+      const cell = b.get(c + dc, r + dr);
+      if (!cell || cell.type !== T.LAND || cell.revealed || cell.flagged) continue;
+      if (cell.mine) { cell.flagged = true; this.renderer.setFlag(cell); }
+      else { const revealed = b.reveal(cell.c, cell.r); out.push(...revealed); }
+    }
+    if (out.length) { this.renderer.onReveal(out); this._collect(out); }
+    this.renderer.echoPing([{c, r, mine: false}], 2.5);
+    Sound.reveal();
+    this.updateHUD();
+    if (b.isWon()) this._win();
+  }
+
+  _useSpotlight() {
+    const b = this.board, sp = this.sapper;
+    const out = [];
+    for (let dr = -2; dr <= 2; dr++) for (let dc = -2; dc <= 2; dc++) {
+      const cell = b.get(sp.cell.c + dc, sp.cell.r + dr);
+      if (!cell || cell.type !== T.LAND || cell.revealed || cell.flagged) continue;
+      if (cell.mine) { cell.flagged = true; this.renderer.setFlag(cell); }
+      else { const revealed = b.reveal(cell.c, cell.r); out.push(...revealed); }
+    }
+    if (out.length) { this.renderer.onReveal(out); this._collect(out); }
+    const marks = b.cells.filter(c => c.type === T.LAND && !c.revealed)
+      .filter(c => Math.max(Math.abs(c.c - sp.cell.c), Math.abs(c.r - sp.cell.r)) <= 2)
+      .map(c => ({ c: c.c, r: c.r, mine: c.mine }));
+    this.renderer.echoPing(marks, 3.0);
+    Sound.echo();
+    this.updateHUD();
+    if (b.isWon()) this._win();
+  }
+
   _spendTool(id) {
     const idx = this.loadout.findIndex((x, i) => x === id && this.toolUses[i]);
     if (idx < 0) return;
     this.toolUses[idx] = false;
     // Bonus probes (idx >= _loadoutBase) are free — don't consume from stash
-    if (idx < this._loadoutBase) consumeArtifact(id);
+    if (idx < this._loadoutBase) {
+      consumeArtifact(id);
+      this._usedArtifactThisLevel = true;
+    }
     this.renderTools();
   }
 

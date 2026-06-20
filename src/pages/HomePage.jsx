@@ -50,7 +50,7 @@ export default function HomePage() {
     { id: 'cardrive', emoji: '🏎️', color: 'bg-blue-700', available: true, landing: '/games/cardrive/landing.html', ...t.cardrive },
     { id: 'hanoi', emoji: '🗼', color: 'bg-purple-700', available: true, landing: '/games/hanoi/landing.html', ...t.hanoi },
     { id: 'memorize', emoji: '🧠', color: 'bg-violet-700', available: true, landing: '/games/memorize/landing.html', ...t.memorize },
-    { id: 'miner', emoji: '💥', color: 'bg-emerald-700', available: true, ...t.miner },
+    { id: 'miner', emoji: '💥', color: 'bg-emerald-700', available: true, landing: '/games/miner/landing.html', ...t.miner },
     // { id: 'engineer', emoji: '🌉', color: 'bg-orange-700', available: true, landing: '/games/engineer/index.html', ...t.engineer },
   ]
 

@@ -10,10 +10,11 @@ export const T = {
   WATER:    'water',    // river / lake / sea — impassable, no mine
   MOUNTAIN: 'mountain', // rock — impassable, no mine
   BRIDGE:   'bridge',   // passable crossing over water — never a mine, always "open"
+  PATH:     'path',     // dirt track — walkable, can hold mines, moves faster
 };
 
 // Cells the sapper can stand on / walk through (once revealed where relevant).
-export const WALKABLE = new Set([T.LAND, T.BRIDGE]);
+export const WALKABLE = new Set([T.LAND, T.BRIDGE, T.PATH]);
 // Cells that can hold a mine and a number.
 export const MINEABLE = new Set([T.LAND]);
 

@@ -1,6 +1,6 @@
-import { T } from './constants.js?v=3';
-import { toInt } from './themes.js?v=3';
-import { buildHeightField, contourAt, clusters, mulberry32 } from './mapgen.js?v=3';
+import { T } from './constants.js?v=4';
+import { toInt } from './themes.js?v=4';
+import { buildHeightField, contourAt, clusters, mulberry32 } from './mapgen.js?v=4';
 
 const BASE = 48; // world units per cell; camera scales to fit
 
@@ -30,6 +30,7 @@ export class PixiRenderer {
     this.particles = [];
     this.anims = [];           // timed tween animations (arm extend, drone flight)
     this.sapperC = null;
+    this.currentSkin = 'default';
     this.tickCbs = [];
 
     this._wireInput();
@@ -65,37 +66,76 @@ export class PixiRenderer {
   _wireInput() {
     const v = this.app.view;
     let down = null, lp = null, handled = false, panning = false;
+    // pinch zoom state
+    const _ptrs = new Map(); // pointerId → {x,y}
+    let _pinchDist = 0;
     const center = e => ({ x: e.clientX, y: e.clientY });
+    const ptDist = () => {
+      const pts = [..._ptrs.values()];
+      return Math.hypot(pts[0].x - pts[1].x, pts[0].y - pts[1].y);
+    };
+    const ptCenter = () => {
+      const pts = [..._ptrs.values()];
+      return { x: (pts[0].x + pts[1].x) / 2, y: (pts[0].y + pts[1].y) / 2 };
+    };
 
     v.addEventListener('pointerdown', e => {
+      _ptrs.set(e.pointerId, { x: e.clientX, y: e.clientY });
+      if (_ptrs.size === 2) {
+        clearTimeout(lp); lp = null; down = null; panning = false; handled = true;
+        _pinchDist = ptDist();
+        return;
+      }
       down = center(e); handled = false; panning = false;
       this._lastPan = down;
       if (this.board) lp = setTimeout(() => {
         handled = true;
         const c = this.cellAt(e.clientX, e.clientY);
         this.onCellFlag && this.onCellFlag(c.c, c.r);
-      }, 420);
+      }, 380);
     });
+
     v.addEventListener('pointermove', e => {
+      _ptrs.set(e.pointerId, { x: e.clientX, y: e.clientY });
+      if (_ptrs.size === 2 && _pinchDist > 0) {
+        const newDist = ptDist();
+        const ratio = newDist / _pinchDist;
+        _pinchDist = newDist;
+        if (!this.board) return;
+        const mid = ptCenter();
+        const r = v.getBoundingClientRect();
+        const before = this.world.toLocal(new PIXI.Point(mid.x - r.left, mid.y - r.top));
+        this.zoom = Math.max(0.6, Math.min(3.5, this.zoom * ratio));
+        const s = this.fitScale * this.zoom;
+        this.world.scale.set(s);
+        const after = this.world.toLocal(new PIXI.Point(mid.x - r.left, mid.y - r.top));
+        this.world.position.x += (after.x - before.x) * s;
+        this.world.position.y += (after.y - before.y) * s;
+        return;
+      }
       if (!down) return;
       const dx = e.clientX - down.x, dy = e.clientY - down.y;
-      if (!panning && Math.hypot(dx, dy) > 9) { panning = true; clearTimeout(lp); }
+      // Only cancel long-press on real movement (> 14px) — minor tremor keeps timer alive
+      if (!panning && Math.hypot(dx, dy) > 14) { panning = true; clearTimeout(lp); lp = null; }
       if (panning) {
         this.world.position.x += e.clientX - this._lastPan.x;
         this.world.position.y += e.clientY - this._lastPan.y;
         this._lastPan = center(e);
       }
     });
+
     const end = e => {
-      clearTimeout(lp);
+      _ptrs.delete(e.pointerId);
+      if (_ptrs.size < 2) _pinchDist = 0;
+      clearTimeout(lp); lp = null;
       if (down && !handled && !panning && this.board) {
         const c = this.cellAt(e.clientX, e.clientY);
         this.onCellTap && this.onCellTap(c.c, c.r);
       }
-      down = null; panning = false;
+      if (_ptrs.size === 0) { down = null; panning = false; }
     };
     v.addEventListener('pointerup', end);
-    v.addEventListener('pointercancel', () => { clearTimeout(lp); down = null; });
+    v.addEventListener('pointercancel', e => { _ptrs.delete(e.pointerId); clearTimeout(lp); lp = null; down = null; });
     v.addEventListener('contextmenu', e => {
       e.preventDefault();
       if (!this.board) return;
@@ -114,6 +154,15 @@ export class PixiRenderer {
       this.world.position.x += (after.x - before.x) * s;
       this.world.position.y += (after.y - before.y) * s;
     }, { passive: false });
+
+    // Arrow keys — emit direction as a synthetic tap on the cell next to sapper
+    window.addEventListener('keydown', e => {
+      const dirs = { ArrowUp: [0,-1], ArrowDown: [0,1], ArrowLeft: [-1,0], ArrowRight: [1,0] };
+      const d = dirs[e.key];
+      if (!d || !this.board || !this.onSapperArrow) return;
+      e.preventDefault();
+      this.onSapperArrow(d[0], d[1]);
+    });
   }
 
   // ── scene assembly ──────────────────────────────────────────────────────
@@ -125,6 +174,8 @@ export class PixiRenderer {
     this.fog.clear(); this.markers.clear(); this.flags.clear();
     this.particles = []; this.anims = []; this.sapperC = null; this.platform = null;
     this._waterRipple = null; this._clouds = null; this._cloudW = 0;
+    this.fowC = null; this._fowRadius = 0; this._fowCells = new Map();
+    this.fowC = null; this._fowRadius = 0; this._fowCells = new Map();
   }
 
   buildLevel(board, theme) {
@@ -138,8 +189,8 @@ export class PixiRenderer {
     if (TH.pixel) {
       this._buildPixelTerrain(board, TH);
     } else {
-    // land mask (dry land = land/tree/mountain/bridge) for relief + grid clip
-    const isDry = c => c.type === T.LAND || c.type === T.TREE || c.type === T.MOUNTAIN || c.type === T.BRIDGE;
+    // land mask (dry land) for relief + grid clip
+    const isDry = c => c.type === T.LAND || c.type === T.TREE || c.type === T.MOUNTAIN || c.type === T.BRIDGE || c.type === T.PATH;
     const mask = new PIXI.Graphics().beginFill(0xffffff);
     for (const cell of board.cells) if (isDry(cell)) mask.drawRect(cell.c * BASE, cell.r * BASE, BASE, BASE);
     mask.endFill();
@@ -190,6 +241,9 @@ export class PixiRenderer {
       br.lineStyle();
     }
     this.world.addChild(br);
+
+    // 5b. dirt paths — rounded like river, grass verge on sides
+    this._buildPaths(board, TH);
 
     // 6. mountains (one hill symbol per massif)
     const mtn = new PIXI.Graphics();
@@ -250,9 +304,30 @@ export class PixiRenderer {
 
     for (const cell of board.cells) if (cell.type === T.LAND) this._addFog(cell, TH);
 
+    // 10b. Fog-of-war layer — dark overlay outside sapper's sight radius.
+    // Populated on first sapper placement; updated via updateFoW().
+    this.fowC = new PIXI.Container(); this.world.addChild(this.fowC);
+    this._fowRadius = board.level.night ? 3 : (board.level.fog ? 5 : 0);
+    this._fowCells = new Map(); // idx → Graphics — dark overlay per cell
+
+    if (this._fowRadius > 0) {
+      for (const cell of board.cells) {
+        if (cell.type === T.VOID) continue;
+        const g = new PIXI.Graphics();
+        g.beginFill(board.level.night ? 0x010408 : 0x0a1208, board.level.night ? 0.97 : 0.9);
+        g.drawRect(cell.c * BASE, cell.r * BASE, BASE, BASE);
+        g.endFill();
+        this.fowC.addChild(g);
+        this._fowCells.set(this.board.idx(cell.c, cell.r), g);
+      }
+    }
+
+    // 10c. Night: moon and stars above terrain but below fog-of-war
+    if (board.level.night) this._buildNightSky(board, TH);
+
     this._buildSapper(TH);
 
-    // 11. clouds — above all terrain, fog, and sapper so they're always visible
+    // 11. clouds — above terrain, below fog-of-war on night levels
     this._buildClouds(board, TH);
     this._fitCamera();
   }
@@ -433,6 +508,95 @@ export class PixiRenderer {
     this.world.addChild(water);
   }
 
+  _buildPaths(board, TH) {
+    const isP = (c, r) => { const o = board.get(c, r); return !!o && o.type === T.PATH; };
+    const cells = board.cells.filter(c => c.type === T.PATH);
+    if (!cells.length) return;
+
+    const flags = c => ({
+      tl: !isP(c.c - 1, c.r) && !isP(c.c, c.r - 1),
+      tr: !isP(c.c + 1, c.r) && !isP(c.c, c.r - 1),
+      br: !isP(c.c + 1, c.r) && !isP(c.c, c.r + 1),
+      bl: !isP(c.c - 1, c.r) && !isP(c.c, c.r + 1),
+    });
+
+    const R = BASE * 0.40;
+    const B = BASE * 0.09; // grass shoulder overhang
+    const rng = mulberry32((board.seed * 5381 + 47) >>> 0);
+
+    // 1. Grass shoulder — slightly wider, green tint under the dirt
+    const shoulder = new PIXI.Graphics();
+    for (const c of cells) {
+      const x = c.c * BASE, y = c.r * BASE, f = flags(c);
+      shoulder.beginFill(toInt(TH.tree || '#4d7a3f'), 0.55);
+      this._roundedCell(shoulder, x - B, y - B, BASE + 2 * B, R + B, f);
+      shoulder.endFill();
+    }
+    this.world.addChild(shoulder);
+
+    // 2. Dirt fill (rounded)
+    const dirt = new PIXI.Graphics();
+    for (const c of cells) {
+      const x = c.c * BASE, y = c.r * BASE, f = flags(c);
+      dirt.beginFill(toInt(TH.pathFill || '#c8a87a'));
+      this._roundedCell(dirt, x, y, BASE, R, f);
+      dirt.endFill();
+    }
+    // 3. Tyre tracks — direction-aware parallel lines
+    dirt.lineStyle({ width: 1.5, color: toInt(TH.pathEdge || '#a0845a'), alpha: 0.38 });
+    for (const c of cells) {
+      const x = c.c * BASE, y = c.r * BASE;
+      const hasT = isP(c.c, c.r - 1), hasB = isP(c.c, c.r + 1);
+      const hasL = isP(c.c - 1, c.r), hasR = isP(c.c + 1, c.r);
+      const vert = hasT || hasB;
+      const horiz = hasL || hasR;
+      // vertical tracks
+      if (vert || !horiz) {
+        const y0 = hasT ? y : y + BASE * 0.28, y1 = hasB ? y + BASE : y + BASE * 0.72;
+        dirt.moveTo(x + BASE * 0.28, y0).lineTo(x + BASE * 0.28, y1);
+        dirt.moveTo(x + BASE * 0.72, y0).lineTo(x + BASE * 0.72, y1);
+      }
+      // horizontal tracks
+      if (horiz || !vert) {
+        const x0 = hasL ? x : x + BASE * 0.28, x1 = hasR ? x + BASE : x + BASE * 0.72;
+        dirt.moveTo(x0, y + BASE * 0.28).lineTo(x1, y + BASE * 0.28);
+        dirt.moveTo(x0, y + BASE * 0.72).lineTo(x1, y + BASE * 0.72);
+      }
+    }
+    dirt.lineStyle();
+    this.world.addChild(dirt);
+
+    // 4. Grass tufts on the verge edges
+    const grass = new PIXI.Graphics();
+    const gc = toInt(TH.tree || '#4d7a3f');
+    for (const c of cells) {
+      const x = c.c * BASE, y = c.r * BASE;
+      const sides = [];
+      if (!isP(c.c - 1, c.r)) sides.push('L');
+      if (!isP(c.c + 1, c.r)) sides.push('R');
+      if (!isP(c.c, c.r - 1)) sides.push('T');
+      if (!isP(c.c, c.r + 1)) sides.push('B');
+      for (const side of sides) {
+        const n = 2 + Math.floor(rng() * 2); // 2-3 tufts per edge
+        for (let i = 0; i < n; i++) {
+          let gx, gy;
+          if (side === 'L')      { gx = x + BASE * (0.02 + rng() * 0.09); gy = y + BASE * (0.15 + rng() * 0.7); }
+          else if (side === 'R') { gx = x + BASE * (0.89 + rng() * 0.09); gy = y + BASE * (0.15 + rng() * 0.7); }
+          else if (side === 'T') { gx = x + BASE * (0.15 + rng() * 0.7);  gy = y + BASE * (0.02 + rng() * 0.09); }
+          else                   { gx = x + BASE * (0.15 + rng() * 0.7);  gy = y + BASE * (0.89 + rng() * 0.09); }
+          const h = BASE * (0.12 + rng() * 0.11);
+          const alpha = 0.6 + rng() * 0.4;
+          grass.lineStyle({ width: 1.3, color: gc, alpha });
+          grass.moveTo(gx, gy).lineTo(gx - BASE * 0.04, gy - h);
+          grass.lineStyle({ width: 1.1, color: gc, alpha: alpha * 0.8 });
+          grass.moveTo(gx, gy).lineTo(gx + BASE * 0.05, gy - h * 0.85);
+        }
+      }
+    }
+    grass.lineStyle();
+    this.world.addChild(grass);
+  }
+
   // Animated ripple overlay — a small tiling diagonal-wave pattern shifted each frame.
   _buildWaterAnim(board, TH) {
     const watercells = board.cells.filter(c => c.type === T.WATER || c.type === T.BRIDGE);
@@ -480,29 +644,64 @@ export class PixiRenderer {
   }
 
   // Soft drifting clouds — 3 semi-transparent puffs floating across the map.
+  // Fog-of-war: hide/show cells based on distance from sapper (c,r).
+  updateFoW(sc, sr) {
+    if (!this._fowRadius || !this._fowCells.size) return;
+    const R = this._fowRadius;
+    for (const [idx, g] of this._fowCells) {
+      const cell = this.board.cells[idx];
+      const dist = Math.max(Math.abs(cell.c - sc), Math.abs(cell.r - sr)); // Chebyshev
+      g.visible = dist > R;
+    }
+  }
+
+  // Starfield + moon for night levels (added to world, below fowC which covers it).
+  _buildNightSky(board, TH) {
+    const W = board.cols * BASE, H = board.rows * BASE;
+    const sky = new PIXI.Graphics();
+    sky.beginFill(0x000810, 0.55).drawRect(-BASE * 2, -BASE * 2, W + BASE * 4, H + BASE * 4).endFill();
+    // stars
+    const rng = mulberry32((board.seed * 4447 + 13) >>> 0);
+    sky.beginFill(0xffffff, 0.9);
+    for (let i = 0; i < 60; i++) {
+      const sx = rng() * W, sy = rng() * H, sr = 0.5 + rng() * 1.2;
+      sky.drawCircle(sx, sy, sr);
+    }
+    sky.endFill();
+    // moon
+    const mx = W * 0.82, my = H * 0.12, mr = BASE * 0.9;
+    sky.beginFill(0xfff8c8, 0.92).drawCircle(mx, my, mr).endFill();
+    sky.beginFill(0xe8e0a8, 0.25).drawCircle(mx - mr * 0.3, my - mr * 0.25, mr * 0.45).endFill();
+    sky.beginFill(0xd8d0a0, 0.18).drawCircle(mx + mr * 0.45, my + mr * 0.3, mr * 0.3).endFill();
+    this.fowC.addChildAt(sky, 0); // behind the dark overlay cells
+  }
+
   _buildClouds(board, TH) {
     const W = board.cols * BASE, H = board.rows * BASE;
     this._cloudW = W;
     const rng = mulberry32((board.seed * 3571 + 99) >>> 0);
     this._clouds = [];
-    const count = 3;
+    // Night levels skip daytime clouds
+    if (board.level.night) return;
+    const count = 3 + Math.floor(board.cols / 6); // more clouds on bigger maps
     for (let i = 0; i < count; i++) {
       const g = new PIXI.Container();
       const gfx = new PIXI.Graphics();
-      const r = (28 + rng() * 22) | 0;
-      gfx.beginFill(0xffffff, 0.45);
+      const r = (BASE * 0.7 + rng() * BASE * 0.55) | 0;
+      gfx.beginFill(0xffffff, 0.55);
       gfx.drawEllipse(0, 0, r * 1.8, r * 0.65);
       gfx.drawEllipse(r * 0.5, -r * 0.28, r * 1.1, r * 0.55);
       gfx.drawEllipse(-r * 0.45, -r * 0.22, r, r * 0.5);
       gfx.endFill();
-      // subtle dark underside
-      gfx.beginFill(0x000000, 0.12);
+      gfx.beginFill(0x000000, 0.10);
       gfx.drawEllipse(0, r * 0.35, r * 1.6, r * 0.25);
       gfx.endFill();
       g.addChild(gfx);
-      g.x = rng() * W * 1.4 - W * 0.2;
-      g.y = rng() * H * 0.38 + r;
-      g._spd = 0.28 + rng() * 0.38;
+      // Spread across full width + some offscreen on both sides
+      g.x = rng() * (W + r * 4) - r * 2;
+      // Keep clouds in the upper half of the map, never below 45%
+      g.y = H * 0.05 + rng() * H * 0.40;
+      g._spd = 0.35 + rng() * 0.45;
       g._r = r;
       this.world.addChild(g);
       this._clouds.push(g);
@@ -589,14 +788,57 @@ export class PixiRenderer {
 
   // ── sapper ────────────────────────────────────────────────────────────────
   _buildSapper(TH) {
+    if (this.sapperC) {
+      this.entityC.removeChild(this.sapperC);
+      this.sapperC.destroy({ children: true });
+      this.sapperC = null;
+    }
+    const skin = this.currentSkin || 'default';
+    const PAL = {
+      default:   { body: toInt(TH.sapperBody), face: toInt(TH.sapperSkin), helmet: toInt(TH.sapperHelmet) },
+      ghost:     { body: 0x5080c0, face: 0xd0e8ff, helmet: 0x3060a0, alpha: 0.72 },
+      ninja:     { body: 0x111111, face: 0x111111, helmet: 0x1a1a1a, eyeSlit: true },
+      racer:     { body: 0xd06010, face: 0xf0b870, helmet: 0xe09020, stripe: true },
+      soldier:   { body: 0x2a4520, face: 0xe0b090, helmet: 0x1a3010, camo: true },
+      phantom:   { body: 0x2a0850, face: 0xc030d0, helmet: 0x4a0870, moon: true },
+      iron:      { body: 0x606070, face: 0xb0b8c0, helmet: 0x404858, rivets: true },
+      commander: { body: 0x3a2000, face: 0xf0c060, helmet: 0xb08000, crown: true },
+    };
+    const p = PAL[skin] || PAL.default;
     const c = new PIXI.Container();
     const sh = new PIXI.Graphics().beginFill(0x000000, 0.28).drawEllipse(0, 15, 12, 5).endFill();
     const body = new PIXI.Graphics();
     const u = BASE / 34;
-    body.beginFill(toInt(TH.sapperBody)).drawRoundedRect(-8 * u, -4 * u, 16 * u, 16 * u, 4 * u).endFill();
-    body.beginFill(toInt(TH.sapperSkin)).drawCircle(0, -7 * u, 6.5 * u).endFill();
-    body.beginFill(toInt(TH.sapperHelmet)).arc(0, -8 * u, 7 * u, Math.PI, 0).endFill();
-    body.beginFill(toInt(TH.sapperHelmet)).drawRect(-7.5 * u, -9 * u, 15 * u, 2 * u).endFill();
+    // torso
+    body.beginFill(p.body).drawRoundedRect(-8 * u, -4 * u, 16 * u, 16 * u, 4 * u).endFill();
+    if (p.stripe) body.beginFill(0xffffff, 0.28).drawRect(-1.5 * u, -4 * u, 3 * u, 16 * u).endFill();
+    if (p.camo) {
+      body.beginFill(0x1a3010, 0.6).drawEllipse(-3 * u, 2 * u, 3.5 * u, 2.5 * u).endFill();
+      body.beginFill(0x1a3010, 0.6).drawEllipse(4 * u, 6 * u, 2.5 * u, 2 * u).endFill();
+    }
+    if (p.rivets) {
+      for (const [rx, ry] of [[-6 * u, -2 * u], [5 * u, -2 * u], [-6 * u, 8 * u], [5 * u, 8 * u]])
+        body.beginFill(0xd0d8e0).drawCircle(rx, ry, 1.2 * u).endFill();
+    }
+    // head / face
+    body.beginFill(p.face).drawCircle(0, -7 * u, 6.5 * u).endFill();
+    if (p.eyeSlit) {
+      body.beginFill(0x111111).drawCircle(0, -7 * u, 6.5 * u).endFill();
+      body.beginFill(0xff8c00).drawRect(-5 * u, -8.2 * u, 10 * u, 2 * u).endFill();
+    }
+    // helmet
+    body.beginFill(p.helmet).arc(0, -8 * u, 7 * u, Math.PI, 0).endFill();
+    body.beginFill(p.helmet).drawRect(-7.5 * u, -9 * u, 15 * u, 2 * u).endFill();
+    if (p.crown) {
+      body.beginFill(0xffd700);
+      body.drawPolygon([-6 * u, -15 * u, -4 * u, -12 * u, -2 * u, -15 * u, 0, -12 * u, 2 * u, -15 * u, 4 * u, -12 * u, 6 * u, -15 * u, 6 * u, -9 * u, -6 * u, -9 * u]);
+      body.endFill();
+    }
+    if (p.moon) {
+      body.beginFill(0xc0a0ff).drawCircle(2 * u, -12 * u, 2.5 * u).endFill();
+      body.beginFill(p.helmet).drawCircle(3.5 * u, -12.5 * u, 1.8 * u).endFill();
+    }
+    // detector rod
     body.lineStyle({ width: 2 * u, color: 0x2a2a2a }).moveTo(5 * u, 2 * u).lineTo(15 * u, 9 * u);
     body.lineStyle({ width: 2 * u, color: 0xcccccc }).drawEllipse(16 * u, 11 * u, 4.2 * u, 2 * u);
     // high-clearance platform (shown only while the UGV crosses a minefield)
@@ -608,11 +850,23 @@ export class PixiRenderer {
       plat.beginFill(0x555555).drawCircle(wx * u, 18 * u, 1.5 * u).endFill();
     }
     plat.visible = false;
+    if (p.alpha) c.alpha = p.alpha;
     c.addChild(sh, plat, body);
     c.visible = false;
     c.scale.set(0.66);
     this.entityC.addChild(c);
     this.sapperC = c; this.sapperBody = body; this.platform = plat;
+  }
+
+  rebuildSapperSkin() {
+    if (!this.entityC) return;
+    const wasVisible = this.sapperC && this.sapperC.visible;
+    const pos = this.sapperC ? { x: this.sapperC.position.x, y: this.sapperC.position.y } : null;
+    this._buildSapper(this.theme);
+    if (wasVisible && pos) {
+      this.sapperC.visible = true;
+      this.sapperC.position.set(pos.x, pos.y);
+    }
   }
 
   setSapper(px, pr, moving, anim) {

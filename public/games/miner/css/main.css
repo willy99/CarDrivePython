@@ -111,6 +111,12 @@ html, body {
 }
 .gear-btn:hover { background: #25513a; }
 
+@keyframes gear-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(196,168,98,0.0); border-color: #2c5840; }
+  50%       { box-shadow: 0 0 0 6px rgba(196,168,98,0.5); border-color: #c4a862; }
+}
+.gear-btn-pulse { animation: gear-pulse 1.6s ease-in-out infinite; border-color: #c4a862; }
+
 /* ── mode pill toggle ── */
 .mode-pill {
   position: relative;
@@ -196,6 +202,295 @@ html, body {
 }
 #btn-stash-close:hover { background: #25513a; }
 #stash-modal-body { overflow-y: auto; padding: 16px; }
+
+/* ── How to Play modal ── */
+#howto-modal {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.75);
+  z-index: 30;
+  backdrop-filter: blur(5px);
+  align-items: flex-start;
+  justify-content: center;
+  padding: 16px;
+  overflow-y: auto;
+}
+#howto-modal.open { display: flex; }
+#howto-box {
+  background: #12281d;
+  border: 1px solid #2c5840;
+  border-radius: 16px;
+  width: 100%;
+  max-width: 720px;
+  margin: auto;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  box-shadow: 0 8px 40px rgba(0,0,0,0.65);
+}
+#howto-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  border-bottom: 1px solid #1d3b2b;
+  flex-shrink: 0;
+}
+#howto-title { font-size: 17px; font-weight: 800; }
+#btn-howto-close {
+  background: #1d3b2b;
+  color: #e8eee9;
+  border: 1px solid #2c5840;
+  border-radius: 8px;
+  padding: 5px 10px;
+  font-size: 14px;
+  cursor: pointer;
+}
+#btn-howto-close:hover { background: #25513a; }
+#howto-body {
+  padding: 24px;
+  overflow-y: auto;
+  max-height: 80vh;
+  line-height: 1.6;
+}
+.ht-section { margin-bottom: 28px; }
+.ht-section h2 {
+  font-size: 15px;
+  font-weight: 800;
+  color: #8ecf9a;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  margin-bottom: 10px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.ht-section p { font-size: 14px; color: #c0d0c4; margin-bottom: 8px; }
+.ht-controls {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 6px 14px;
+  font-size: 14px;
+  margin-bottom: 8px;
+}
+.ht-key {
+  background: #1d3b2b;
+  border: 1px solid #3a6b50;
+  border-radius: 6px;
+  padding: 3px 10px;
+  font-weight: 700;
+  color: #e8eee9;
+  white-space: nowrap;
+  font-size: 13px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.ht-desc { color: #c0d0c4; display: flex; align-items: center; }
+.ht-artifacts {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 8px;
+  margin-top: 6px;
+}
+.ht-art {
+  background: #1a3327;
+  border: 1px solid #2c5840;
+  border-radius: 10px;
+  padding: 10px 12px;
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+}
+.ht-art-icon { font-size: 22px; flex-shrink: 0; }
+.ht-art-name { font-size: 13px; font-weight: 700; color: #e8eee9; }
+.ht-art-desc { font-size: 12px; color: #9ab8a4; margin-top: 2px; }
+.ht-screenshots {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-top: 8px;
+}
+.ht-shot {
+  border-radius: 10px;
+  overflow: hidden;
+  border: 1px solid #2c5840;
+  flex: 1;
+  min-width: 160px;
+  max-width: 220px;
+}
+.ht-shot svg { display: block; width: 100%; height: auto; }
+.ht-shot-label {
+  font-size: 11px;
+  color: #7a9e88;
+  text-align: center;
+  padding: 5px;
+  background: #1a3327;
+}
+.ht-howto-btn {
+  background: #1d3b2b;
+  color: #e8eee9;
+  border: 1px solid #2c5840;
+  border-radius: 10px;
+  padding: 8px 14px;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: background 0.15s;
+}
+.ht-howto-btn:hover { background: #25513a; }
+.ht-divider {
+  height: 1px;
+  background: #1d3b2b;
+  margin: 20px 0;
+}
+.ht-rank-row {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 6px;
+}
+.ht-rank-chip {
+  background: #1a3327;
+  border: 1px solid #3a6b50;
+  border-radius: 20px;
+  padding: 4px 12px;
+  font-size: 12px;
+  color: #c0d0c4;
+}
+
+/* ── Achievements button ─────────────────────────────────────────────────── */
+.ach-btn {
+  background: #1a2a40;
+  color: #c8d8f0;
+  border: 1px solid #2a4060;
+  border-radius: 8px;
+  padding: 8px 16px;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background .15s;
+  white-space: nowrap;
+}
+.ach-btn:hover { background: #253550; }
+
+/* ── Achievements & Skins modal ──────────────────────────────────────────── */
+#ach-modal {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,.72);
+  z-index: 300;
+  justify-content: center;
+  align-items: flex-start;
+  padding: 20px 0;
+  overflow-y: auto;
+}
+#ach-modal.open { display: flex; }
+#ach-box {
+  background: #0d1f17;
+  border: 1px solid #2a4a30;
+  border-radius: 12px;
+  width: min(560px, 94vw);
+  max-height: 88vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+#ach-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 18px;
+  border-bottom: 1px solid #1d3b2b;
+  flex-shrink: 0;
+}
+#ach-title { font-size: 17px; font-weight: 800; color: #e8eee9; }
+#btn-ach-close {
+  background: #1a3a28;
+  border: none;
+  color: #c0d0c4;
+  font-size: 18px;
+  width: 32px; height: 32px;
+  border-radius: 6px;
+  cursor: pointer;
+  line-height: 1;
+}
+#btn-ach-close:hover { background: #25513a; }
+#ach-body {
+  overflow-y: auto;
+  padding: 16px 18px 24px;
+}
+.ach-section { margin-bottom: 20px; }
+.ach-section-title {
+  font-size: 14px;
+  font-weight: 800;
+  color: #7ec89a;
+  margin: 0 0 12px;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+}
+.ach-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.ach-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  border: 1px solid transparent;
+  transition: border-color .15s;
+}
+.ach-unlocked {
+  background: #0e2a1c;
+  border-color: #2a6040;
+}
+.ach-locked {
+  background: #121a14;
+  border-color: #1a2a1e;
+  opacity: 0.6;
+}
+.ach-card-icon { font-size: 26px; flex-shrink: 0; width: 34px; text-align: center; }
+.ach-card-name { font-size: 14px; font-weight: 700; color: #e0ece2; }
+.ach-card-desc { font-size: 12px; color: #7a9a84; margin-top: 2px; }
+
+/* ── Skin cards ──────────────────────────────────────────────────────────── */
+.skin-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+}
+@media (max-width: 440px) { .skin-grid { grid-template-columns: repeat(3, 1fr); } }
+.skin-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 8px 8px;
+  border-radius: 10px;
+  border: 2px solid #1d3b2b;
+  background: #0e2a1c;
+  cursor: pointer;
+  transition: border-color .15s, background .15s;
+}
+.skin-card:not(.skin-locked):not(.skin-equipped):hover {
+  border-color: #4a9a6a;
+  background: #122a1e;
+}
+.skin-card.skin-locked { opacity: 0.45; cursor: default; }
+.skin-card.skin-equipped { border-color: #4ade80; background: #0d2818; cursor: default; }
+.skin-preview { width: 50px; height: 60px; display: flex; align-items: center; justify-content: center; }
+.skin-preview svg { width: 40px; height: 50px; }
+.skin-name { font-size: 11px; font-weight: 700; color: #c0d0c4; text-align: center; }
+.skin-status { font-size: 10px; color: #6a9a7a; text-align: center; }
+.skin-equipped .skin-status { color: #4ade80; }
 
 #level-grid {
   display: grid;
@@ -563,7 +858,10 @@ html, body {
 
 @media (max-width: 600px) {
   #topbar .title { display: none; }
+  /* Hide theme toggle to make room for lang button on narrow screens */
+  #theme-toggle { display: none; }
   #hud .stat { font-size: 13px; }
+  #hud .stat:nth-child(2) { display: none; } /* hide flag count on very narrow */
   .btn { padding: 6px 9px; font-size: 12px; }
 
   /* Stash panel — compact on mobile */
