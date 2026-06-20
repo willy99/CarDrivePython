@@ -149,6 +149,15 @@ export function loadEquip() {
 }
 export function saveEquip(e) { localStorage.setItem(EQUIP_KEY, JSON.stringify(e.slice(0, 2))); }
 
+// Remove one copy of id from loadout unconditionally (for the X button on bp-slot).
+export function removeEquip(id) {
+  const e = loadEquip();
+  const i = e.indexOf(id);
+  if (i >= 0) e.splice(i, 1);
+  saveEquip(e);
+  return e;
+}
+
 // Toggle an id in the loadout for the level picker: add a copy if there's room
 // and we own enough, else remove one copy. Returns the new loadout.
 export function toggleEquip(id) {

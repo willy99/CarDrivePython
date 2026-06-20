@@ -6,7 +6,7 @@ import { PixiRenderer } from './pixiRenderer.js?v=3';
 import { THEMES, loadTheme, saveTheme, nextTheme } from './themes.js?v=3';
 import { Sound, isMuted, toggleMute } from './audio.js?v=3';
 import { loadClears, addClear, rankFor, rankName, rankStars } from './ranks.js?v=3';
-import { ARTIFACTS, ARTIFACT_IDS, artifactName, artifactDesc, loadStash, addArtifact, consumeArtifact, loadEquip, toggleEquip } from './artifacts.js?v=3';
+import { ARTIFACTS, ARTIFACT_IDS, artifactName, artifactDesc, loadStash, addArtifact, consumeArtifact, loadEquip, toggleEquip, removeEquip } from './artifacts.js?v=3';
 
 const $ = id => document.getElementById(id);
 
@@ -860,7 +860,7 @@ class Game {
 
     // Wire up slot clicks (remove from loadout)
     panel.querySelectorAll('.bp-slot-filled').forEach(el => {
-      el.onclick = () => { toggleEquip(el.dataset.equipId); Sound.click(); this.renderStashPanel(); };
+      el.onclick = () => { removeEquip(el.dataset.equipId); Sound.click(); this.renderStashPanel(); };
     });
 
     // Build shelf artifact cards
