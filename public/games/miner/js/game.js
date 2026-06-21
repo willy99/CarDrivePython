@@ -806,7 +806,8 @@ class Game {
     if (this.state !== 'PLAYING' || !this.board.minesPlaced || this.sapper.moving || this._busy) return;
     const b = this.board;
     const cell = b.get(c, r);
-    if (!cell || cell.type !== T.LAND || cell.revealed) return;
+    // Allow flagging any solid unrevealed cell — player can't distinguish types before revealing
+    if (!cell || cell.type === T.VOID || cell.type === T.WATER || cell.revealed) return;
     if (this._getMode() === 'classic') {
       cell.flagged = !cell.flagged;
       this.renderer.setFlag(cell);

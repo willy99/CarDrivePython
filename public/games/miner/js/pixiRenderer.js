@@ -699,8 +699,7 @@ export class PixiRenderer {
       g.addChild(gfx);
       // Spread across full width + some offscreen on both sides
       g.x = rng() * (W + r * 4) - r * 2;
-      // Keep clouds in the upper half of the map, never below 45%
-      g.y = H * 0.05 + rng() * H * 0.40;
+      g.y = H * 0.05 + rng() * H * 0.90;
       g._spd = 0.35 + rng() * 0.45;
       g._r = r;
       this.world.addChild(g);
