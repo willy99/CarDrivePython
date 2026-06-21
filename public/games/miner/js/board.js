@@ -1,5 +1,5 @@
-import { T } from './constants.js?v=4';
-import { ARTIFACT_IDS } from './artifacts.js?v=4';
+import { T } from './constants.js?v=10';
+import { ARTIFACT_IDS } from './artifacts.js?v=10';
 
 // Small seeded PRNG so each level's *shape* looks consistent run to run.
 // (Mine placement still uses Math.random, so every replay differs.)
@@ -245,18 +245,23 @@ export class Board {
     count = Math.max(1, Math.min(count, candidates.length));
 
     // Re-roll until every non-mine cell is physically reachable from the safe start.
-    // If 40 attempts fail at current density, reduce mine count by 1 and retry —
-    // guarantees a valid layout is always found (worst case: 0 mines).
+    // noGuess levels additionally require the layout to be logically solvable by
+    // single-cell constraint propagation (no guessing). Attempt budget is higher
+    // to avoid unnecessary mine-count reduction on those levels.
+    // Worst case: count reaches 0 → first reveal opens everything → always found.
+    const noGuess = !!this.level.noGuess;
+    const maxAttempts = noGuess ? 200 : 40;
     let found = false;
     while (!found && count >= 0) {
-      for (let attempt = 0; attempt < 40; attempt++) {
+      for (let attempt = 0; attempt < maxAttempts; attempt++) {
         for (const c of candidates) c.mine = false;
         for (let i = candidates.length - 1; i > 0; i--) {
           const j = Math.floor(Math.random() * (i + 1));
           [candidates[i], candidates[j]] = [candidates[j], candidates[i]];
         }
         for (let i = 0; i < count; i++) candidates[i].mine = true;
-        if (this._allSafeReachable(safeC, safeR)) { found = true; break; }
+        if (this._allSafeReachable(safeC, safeR) &&
+            (!noGuess || this._isSolvable(safeC, safeR))) { found = true; break; }
       }
       if (!found) count--;
     }
@@ -281,6 +286,69 @@ export class Board {
       }
     }
     return this.cells.every(c => c.type !== T.LAND || c.mine || seen.has(this.idx(c.c, c.r)));
+  }
+
+  // Simulate single-cell constraint propagation from the first-click cascade.
+  // Returns true iff a perfect player can deduce every cell without guessing.
+  // Called only when level.noGuess is set, before _computeAdj() runs, so adj is
+  // computed locally here rather than read from cell.adj.
+  _isSolvable(safeC, safeR) {
+    const adjOf = cell => {
+      let n = 0;
+      for (const [dc, dr] of DIRS8) {
+        const nb = this.get(cell.c + dc, cell.r + dr);
+        if (nb && nb.type === T.LAND && nb.mine) n++;
+      }
+      return n;
+    };
+
+    // 0 = unknown, 1 = revealed-safe, 2 = flagged-mine
+    const st = new Uint8Array(this.cols * this.rows);
+
+    const floodReveal = (sc, sr) => {
+      const stack = [this.get(sc, sr)];
+      while (stack.length) {
+        const cell = stack.pop();
+        if (!cell || cell.type !== T.LAND || cell.mine || st[this.idx(cell.c, cell.r)] !== 0) continue;
+        st[this.idx(cell.c, cell.r)] = 1;
+        if (adjOf(cell) === 0) {
+          for (const [dc, dr] of DIRS8) {
+            const nb = this.get(cell.c + dc, cell.r + dr);
+            if (nb) stack.push(nb);
+          }
+        }
+      }
+    };
+
+    floodReveal(safeC, safeR);
+
+    let progress = true;
+    while (progress) {
+      progress = false;
+      for (const cell of this.cells) {
+        if (cell.type !== T.LAND || cell.mine || st[this.idx(cell.c, cell.r)] !== 1) continue;
+        const adj = adjOf(cell);
+        const unknown = [];
+        let mines = 0;
+        for (const [dc, dr] of DIRS8) {
+          const nb = this.get(cell.c + dc, cell.r + dr);
+          if (!nb || nb.type !== T.LAND) continue;
+          const s = st[this.idx(nb.c, nb.r)];
+          if (s === 2) mines++;
+          else if (s === 0) unknown.push(nb);
+        }
+        const rem = adj - mines;
+        if (rem === unknown.length && unknown.length > 0) {
+          for (const nb of unknown) st[this.idx(nb.c, nb.r)] = 2;
+          progress = true;
+        } else if (rem === 0 && unknown.length > 0) {
+          for (const nb of unknown) floodReveal(nb.c, nb.r);
+          progress = true;
+        }
+      }
+    }
+
+    return this.cells.every(c => c.type !== T.LAND || c.mine || st[this.idx(c.c, c.r)] === 1);
   }
 
   // Returns one representative cell per isolated region (connected component of safe

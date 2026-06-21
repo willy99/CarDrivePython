@@ -151,40 +151,42 @@ export function consumeArtifact(id) {
 }
 export function stashTotal() { const s = loadStash(); return ARTIFACT_IDS.reduce((a, id) => a + s[id], 0); }
 
-// Equip (loadout) is an array of ≤2 artifact ids — duplicates allowed if owned.
-export function loadEquip() {
+// Equip (loadout) — rank-gated: pass maxSlots from bagCapacity(rankIndex).
+export function loadEquip(maxSlots = 2) {
   let e = [];
   try { e = JSON.parse(localStorage.getItem(EQUIP_KEY)) || []; } catch { e = []; }
   const s = loadStash(), used = {}, out = [];
   for (const id of e) {
-    if (!ARTIFACTS[id] || out.length >= 2) continue;
+    if (!ARTIFACTS[id] || out.length >= maxSlots) continue;
     used[id] = (used[id] | 0) + 1;
     if (used[id] <= s[id]) out.push(id);
   }
   return out;
 }
-export function saveEquip(e) { localStorage.setItem(EQUIP_KEY, JSON.stringify(e.slice(0, 2))); }
+export function saveEquip(e, maxSlots = 2) {
+  localStorage.setItem(EQUIP_KEY, JSON.stringify(e.slice(0, maxSlots)));
+}
 
-// Remove one copy of id from loadout unconditionally (for the X button on bp-slot).
+// Remove one copy of id unconditionally (X button on loadout slot).
 export function removeEquip(id) {
-  const e = loadEquip();
+  let e = [];
+  try { e = JSON.parse(localStorage.getItem(EQUIP_KEY)) || []; } catch { e = []; }
   const i = e.indexOf(id);
   if (i >= 0) e.splice(i, 1);
-  saveEquip(e);
+  localStorage.setItem(EQUIP_KEY, JSON.stringify(e));
   return e;
 }
 
-// Toggle an id in the loadout for the level picker: add a copy if there's room
-// and we own enough, else remove one copy. Returns the new loadout.
-export function toggleEquip(id) {
-  const e = loadEquip();
+// Toggle id in loadout. Pass maxSlots so the capacity matches the player's rank.
+export function toggleEquip(id, maxSlots = 2) {
+  const e = loadEquip(maxSlots);
   const have = loadStash()[id] | 0;
   const inLoadout = e.filter(x => x === id).length;
-  if (inLoadout > 0 && (e.length >= 2 || inLoadout >= have)) {
-    e.splice(e.indexOf(id), 1);            // remove one copy
-  } else if (e.length < 2 && inLoadout < have) {
-    e.push(id);                            // add one copy
+  if (inLoadout > 0 && (e.length >= maxSlots || inLoadout >= have)) {
+    e.splice(e.indexOf(id), 1);
+  } else if (e.length < maxSlots && inLoadout < have) {
+    e.push(id);
   }
-  saveEquip(e);
+  saveEquip(e, maxSlots);
   return e;
 }

@@ -36,3 +36,20 @@ export function rankFor(clears) {
 
 export function rankName(rank, lang) { return rank[lang] || rank.en; }
 export function rankStars(rank) { return '★'.repeat(rank.stars) || '•'; }
+
+// How many loadout slots a sapper has, spread across all 14 ranks (0-13):
+// ranks 0-1 → кульок ATB(1), 2-3 → котомочка(2), 4-5 → сумка(3),
+// 6-7 → рюкзак(4), 8-9 → великий рюкзак(5), 10-13 → баул(6).
+export function bagCapacity(rankIndex) {
+  if (rankIndex <= 1) return 1;
+  if (rankIndex <= 3) return 2;
+  if (rankIndex <= 5) return 3;
+  if (rankIndex <= 7) return 4;
+  if (rankIndex <= 9) return 5;
+  return 6;
+}
+
+export const BAG_NAMES = {
+  uk: ['кульок ATB', 'котомочка', 'сумка', 'рюкзак', 'великий рюкзак', 'баул'],
+  en: ['ATB bag', 'pouch', 'bag', 'backpack', 'large backpack', 'duffel bag'],
+};

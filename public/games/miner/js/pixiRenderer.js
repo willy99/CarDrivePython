@@ -30,6 +30,8 @@ export class PixiRenderer {
     this.particles = [];
     this.anims = [];           // timed tween animations (arm extend, drone flight)
     this.sapperC = null;
+    this.sapperLegs = null;
+    this._sapperEquip = {};
     this.currentSkin = 'default';
     this.tickCbs = [];
 
@@ -175,7 +177,7 @@ export class PixiRenderer {
     this.world.removeChildren().forEach(c => c.destroy({ children: true }));
     this.board = null;
     this.fog.clear(); this.markers.clear(); this.flags.clear();
-    this.particles = []; this.anims = []; this.sapperC = null; this.platform = null;
+    this.particles = []; this.anims = []; this.sapperC = null; this.sapperLegs = null; this.platform = null;
     this._waterRipple = null; this._clouds = null; this._cloudW = 0;
     this.fowC = null; this._fowRadius = 0; this._fowCells = new Map();
     this.fowC = null; this._fowRadius = 0; this._fowCells = new Map();
@@ -788,12 +790,18 @@ export class PixiRenderer {
     }
   }
 
+  // Update equipment state and rebuild the sapper sprite immediately.
+  setSapperEquipment({ hasVest = false, isWounded = false, bagSize = 1 } = {}) {
+    this._sapperEquip = { hasVest, isWounded, bagSize };
+    if (this.entityC) this.rebuildSapperSkin();
+  }
+
   // ── sapper ────────────────────────────────────────────────────────────────
   _buildSapper(TH) {
     if (this.sapperC) {
       this.entityC.removeChild(this.sapperC);
       this.sapperC.destroy({ children: true });
-      this.sapperC = null;
+      this.sapperC = null; this.sapperLegs = null;
     }
     const skin = this.currentSkin || 'default';
     const PAL = {
@@ -807,11 +815,100 @@ export class PixiRenderer {
       commander: { body: 0x3a2000, face: 0xf0c060, helmet: 0xb08000, crown: true },
     };
     const p = PAL[skin] || PAL.default;
-    const c = new PIXI.Container();
-    const sh = new PIXI.Graphics().beginFill(0x000000, 0.28).drawEllipse(0, 15, 12, 5).endFill();
-    const body = new PIXI.Graphics();
+    const { hasVest = false, isWounded = false, bagSize = 1 } = this._sapperEquip || {};
     const u = BASE / 34;
-    // torso
+
+    const c = new PIXI.Container();
+    // shadow
+    const sh = new PIXI.Graphics().beginFill(0x000000, 0.28).drawEllipse(0, 18 * u, 12 * u, 5 * u).endFill();
+
+    // ── LEGS (added before body so body renders on top) ──────────────────
+    const _makeLeg = () => {
+      const lc = new PIXI.Container();
+      const lg = new PIXI.Graphics();
+      // shin
+      lg.beginFill(p.body).drawRoundedRect(-2.2 * u, 0, 4.4 * u, 8 * u, 1.5 * u).endFill();
+      // boot
+      lg.beginFill(0x1a1a1a).drawRoundedRect(-2.6 * u, 7 * u, 5.4 * u, 2.5 * u, 1 * u).endFill();
+      lc.addChild(lg);
+      return lc;
+    };
+    const legL = _makeLeg(); legL.position.set(-3.2 * u, 12 * u);
+    const legR = _makeLeg(); legR.position.set( 3.2 * u, 12 * u);
+
+    // ── BAG (peeks left from behind the body) ────────────────────────────
+    // bagSize: 1=кульок ATB, 2=котомочка, 3=сумка, 4=рюкзак, 5=великий рюкзак, 6=баул
+    const bag = new PIXI.Graphics();
+    const bagColors = [0, 0xddeeff, 0xc8a060, 0xa07840, 0x7a6030, 0x5a5020, 0x4a4018];
+    const bc = bagColors[Math.max(1, Math.min(6, bagSize))];
+    if (bagSize === 1) {
+      // кульок ATB — plastic grocery bag hanging from arm
+      bag.beginFill(0xd0e8f8, 0.85).drawPolygon([
+        -8*u, -1*u,  -15*u, -1*u,  -17*u, 10*u,  -6*u, 10*u,
+      ]).endFill();
+      // bag mouth/handles
+      bag.lineStyle({ width: 1.2*u, color: 0x2070b0 });
+      bag.moveTo(-9*u, -1*u).lineTo(-9.5*u, -4*u);
+      bag.moveTo(-14*u, -1*u).lineTo(-13.5*u, -4*u);
+      bag.lineStyle();
+      // ATB red label
+      bag.beginFill(0xcc1111).drawRoundedRect(-16*u, 3*u, 9*u, 4*u, 1*u).endFill();
+    } else if (bagSize === 2) {
+      // котомочка — tiny oval cloth bundle
+      bag.beginFill(bc).drawEllipse(-12 * u, 6 * u, 3.5 * u, 4.5 * u).endFill();
+      bag.lineStyle({ width: 1 * u, color: 0x000000, alpha: 0.35 });
+      bag.drawEllipse(-12 * u, 6 * u, 3.5 * u, 4.5 * u);
+      bag.lineStyle();
+      bag.lineStyle({ width: 1 * u, color: 0x4a3010 });
+      bag.moveTo(-12 * u, 1.5 * u).lineTo(-12 * u, 3 * u);
+      bag.moveTo(-14 * u, 3 * u).lineTo(-10 * u, 3 * u);
+      bag.lineStyle();
+    } else if (bagSize === 3) {
+      // сумка — small shoulder bag with flap
+      bag.beginFill(bc).drawRoundedRect(-15 * u, 0, 7 * u, 10 * u, 2 * u).endFill();
+      bag.beginFill(bc - 0x101010).drawRoundedRect(-15 * u, 0, 7 * u, 4 * u, 2 * u).endFill();
+      bag.beginFill(0xd0b060).drawRoundedRect(-12.5 * u, 3.5 * u, 2 * u, 1.5 * u, 0.5 * u).endFill();
+      bag.lineStyle({ width: 1.2 * u, color: bc });
+      bag.moveTo(-11.5 * u, 0).lineTo(-8.5 * u, -3 * u);
+      bag.lineStyle();
+    } else if (bagSize === 4) {
+      // рюкзак — standard backpack
+      bag.beginFill(bc).drawRoundedRect(-16 * u, -3 * u, 8 * u, 14 * u, 3 * u).endFill();
+      bag.beginFill(bc - 0x0a0a08).drawRoundedRect(-16 * u, -3 * u, 8 * u, 5 * u, 2 * u).endFill();
+      bag.lineStyle({ width: 1 * u, color: 0x8a7040 });
+      bag.moveTo(-8 * u, 2 * u).lineTo(-4 * u, 2 * u);
+      bag.moveTo(-8 * u, 7 * u).lineTo(-4 * u, 7 * u);
+      bag.lineStyle();
+      bag.beginFill(0x6a5020).drawRoundedRect(-13.5 * u, -5 * u, 3 * u, 2.5 * u, 1 * u).endFill();
+    } else if (bagSize === 5) {
+      // великий рюкзак — large with side pocket
+      bag.beginFill(bc).drawRoundedRect(-17 * u, -4 * u, 9 * u, 16 * u, 3 * u).endFill();
+      bag.beginFill(bc - 0x0c0c08).drawRoundedRect(-19 * u, 1 * u, 4 * u, 8 * u, 2 * u).endFill();
+      bag.beginFill(0xc0a040).drawRoundedRect(-17.5 * u, 4 * u, 2 * u, 1.5 * u, 0.5 * u).endFill();
+      bag.lineStyle({ width: 1.2 * u, color: 0x7a6030 });
+      bag.moveTo(-17 * u, 3 * u).lineTo(-8 * u, 3 * u);
+      bag.moveTo(-17 * u, 9 * u).lineTo(-8 * u, 9 * u);
+      bag.lineStyle();
+      bag.beginFill(0x5a4820).drawRoundedRect(-14 * u, -6 * u, 4 * u, 2.5 * u, 1 * u).endFill();
+    } else {
+      // баул — massive duffel (bagSize 6)
+      bag.beginFill(bc).drawRoundedRect(-19 * u, -5 * u, 11 * u, 18 * u, 3 * u).endFill();
+      for (const ry of [0, 4, 8]) {
+        bag.lineStyle({ width: 1.2 * u, color: bc - 0x181808 });
+        bag.moveTo(-19 * u, ry * u).lineTo(-8 * u, ry * u);
+      }
+      bag.lineStyle();
+      bag.lineStyle({ width: 1.5 * u, color: 0x888880 });
+      bag.moveTo(-18 * u, -5 * u).lineTo(-18 * u, 13 * u);
+      bag.moveTo(-9 * u, -5 * u).lineTo(-9 * u, 13 * u);
+      bag.lineStyle();
+      bag.beginFill(0x4a4018).drawRoundedRect(-15 * u, -7 * u, 5 * u, 2.5 * u, 1 * u).endFill();
+      bag.beginFill(0x4a4018).drawRoundedRect(-21 * u, 3 * u, 2.5 * u, 6 * u, 1 * u).endFill();
+    }
+
+    // ── BODY ─────────────────────────────────────────────────────────────
+    const body = new PIXI.Graphics();
+    // torso base
     body.beginFill(p.body).drawRoundedRect(-8 * u, -4 * u, 16 * u, 16 * u, 4 * u).endFill();
     if (p.stripe) body.beginFill(0xffffff, 0.28).drawRect(-1.5 * u, -4 * u, 3 * u, 16 * u).endFill();
     if (p.camo) {
@@ -822,7 +919,7 @@ export class PixiRenderer {
       for (const [rx, ry] of [[-6 * u, -2 * u], [5 * u, -2 * u], [-6 * u, 8 * u], [5 * u, 8 * u]])
         body.beginFill(0xd0d8e0).drawCircle(rx, ry, 1.2 * u).endFill();
     }
-    // head / face
+    // face
     body.beginFill(p.face).drawCircle(0, -7 * u, 6.5 * u).endFill();
     if (p.eyeSlit) {
       body.beginFill(0x111111).drawCircle(0, -7 * u, 6.5 * u).endFill();
@@ -833,17 +930,56 @@ export class PixiRenderer {
     body.beginFill(p.helmet).drawRect(-7.5 * u, -9 * u, 15 * u, 2 * u).endFill();
     if (p.crown) {
       body.beginFill(0xffd700);
-      body.drawPolygon([-6 * u, -15 * u, -4 * u, -12 * u, -2 * u, -15 * u, 0, -12 * u, 2 * u, -15 * u, 4 * u, -12 * u, 6 * u, -15 * u, 6 * u, -9 * u, -6 * u, -9 * u]);
+      body.drawPolygon([-6*u,-15*u,-4*u,-12*u,-2*u,-15*u,0,-12*u,2*u,-15*u,4*u,-12*u,6*u,-15*u,6*u,-9*u,-6*u,-9*u]);
       body.endFill();
     }
     if (p.moon) {
       body.beginFill(0xc0a0ff).drawCircle(2 * u, -12 * u, 2.5 * u).endFill();
       body.beginFill(p.helmet).drawCircle(3.5 * u, -12.5 * u, 1.8 * u).endFill();
     }
-    // detector rod
-    body.lineStyle({ width: 2 * u, color: 0x2a2a2a }).moveTo(5 * u, 2 * u).lineTo(15 * u, 9 * u);
-    body.lineStyle({ width: 2 * u, color: 0xcccccc }).drawEllipse(16 * u, 11 * u, 4.2 * u, 2 * u);
-    // high-clearance platform (shown only while the UGV crosses a minefield)
+
+    // ── VEST OVERLAY ─────────────────────────────────────────────────────
+    if (hasVest) {
+      // ceramic plate over torso
+      body.beginFill(0x3a3a3a, 0.88).drawRoundedRect(-7 * u, -1 * u, 14 * u, 13 * u, 3 * u).endFill();
+      // plate highlights
+      body.lineStyle({ width: 1 * u, color: 0x888880, alpha: 0.7 });
+      body.drawRoundedRect(-7 * u, -1 * u, 14 * u, 13 * u, 3 * u);
+      body.lineStyle();
+      // MOLLE strap grid (rows of stitching)
+      body.lineStyle({ width: 0.8 * u, color: 0x555550, alpha: 0.6 });
+      for (const ry of [2, 5, 8]) {
+        body.moveTo(-6 * u, ry * u).lineTo(6 * u, ry * u);
+      }
+      body.lineStyle();
+      // centre buckle
+      body.beginFill(0x888880).drawRoundedRect(-1.5 * u, 3 * u, 3 * u, 5 * u, 1 * u).endFill();
+      // shoulder guards
+      body.beginFill(0x2a2a2a, 0.85).drawRoundedRect(-12 * u, -4 * u, 5 * u, 7 * u, 2 * u).endFill();
+      body.beginFill(0x2a2a2a, 0.85).drawRoundedRect(7 * u, -4 * u, 5 * u, 7 * u, 2 * u).endFill();
+    }
+
+    // ── CRUTCH or DETECTOR ───────────────────────────────────────────────
+    if (isWounded) {
+      // metal forearm crutch on left side
+      const crutchCol = 0x909090;
+      body.lineStyle({ width: 2.5 * u, color: crutchCol });
+      body.moveTo(-7 * u, 6 * u).lineTo(-14 * u, 21 * u);   // main shaft
+      body.lineStyle({ width: 2 * u, color: crutchCol });
+      body.moveTo(-10 * u, 5 * u).lineTo(-6 * u, 7 * u);    // forearm cuff bar
+      body.lineStyle({ width: 2 * u, color: 0xc0c0b0 });
+      body.moveTo(-12 * u, 4 * u).lineTo(-7 * u, 4 * u);    // handle bar (T-top)
+      body.lineStyle();
+      // rubber tip
+      body.beginFill(0x222220).drawCircle(-14 * u, 21 * u, 1.8 * u).endFill();
+    } else {
+      // mine detector rod (right hand)
+      body.lineStyle({ width: 2 * u, color: 0x2a2a2a }).moveTo(5 * u, 2 * u).lineTo(15 * u, 9 * u);
+      body.lineStyle({ width: 2 * u, color: 0xcccccc }).drawEllipse(16 * u, 11 * u, 4.2 * u, 2 * u);
+      body.lineStyle();
+    }
+
+    // ── PLATFORM (UGV ride) ───────────────────────────────────────────────
     const plat = new PIXI.Graphics();
     plat.beginFill(0x2a2a2a).drawRoundedRect(-13 * u, 11 * u, 26 * u, 5 * u, 2 * u).endFill();
     plat.beginFill(0xffcf3a).drawRect(-13 * u, 11 * u, 26 * u, 1.6 * u).endFill();
@@ -852,12 +988,15 @@ export class PixiRenderer {
       plat.beginFill(0x555555).drawCircle(wx * u, 18 * u, 1.5 * u).endFill();
     }
     plat.visible = false;
+
     if (p.alpha) c.alpha = p.alpha;
-    c.addChild(sh, plat, body);
+    // legs behind body; bag behind body (peeks left); platform in front of legs
+    c.addChild(sh, legL, legR, bag, plat, body);
     c.visible = false;
     c.scale.set(0.66);
     this.entityC.addChild(c);
     this.sapperC = c; this.sapperBody = body; this.platform = plat;
+    this.sapperLegs = [legL, legR];
   }
 
   rebuildSapperSkin() {
@@ -876,7 +1015,60 @@ export class PixiRenderer {
     this.sapperC.visible = true;
     // sit in the lower part of the cell so the (raised) number stays readable
     this.sapperC.position.set((px + 0.5) * BASE, (pr + 0.74) * BASE);
-    this.sapperBody.y = moving ? Math.sin(anim * 12) * 1.5 : 0;
+    const bob = moving ? Math.sin(anim * 12) * 1.5 : 0;
+    this.sapperBody.y = bob;
+    if (this.sapperLegs) {
+      const isWounded = this._sapperEquip && this._sapperEquip.isWounded;
+      const t = anim * 12;
+      if (isWounded) {
+        // left leg hidden — crutch on that side; only right leg swings
+        this.sapperLegs[0].visible = false;
+        this.sapperLegs[1].visible = true;
+        this.sapperLegs[1].rotation = moving ? Math.sin(t) * 0.30 : 0;
+      } else {
+        this.sapperLegs[0].visible = true;
+        this.sapperLegs[1].visible = true;
+        const swing = moving ? 0.32 : 0;
+        this.sapperLegs[0].rotation =  Math.sin(t) * swing;
+        this.sapperLegs[1].rotation = -Math.sin(t) * swing;
+      }
+    }
+  }
+
+  // ── crater (permanent burnt scar left after a vest-save detonation) ──────
+  spawnCrater(c, r) {
+    const x = (c + 0.5) * BASE, y = (r + 0.5) * BASE;
+    const g = new PIXI.Graphics();
+    // outer scorched ring
+    g.beginFill(0x1a0f06, 0.80).drawEllipse(x, y + BASE * 0.04, BASE * 0.40, BASE * 0.30).endFill();
+    // dark centre pit
+    g.beginFill(0x0a0604, 0.92).drawEllipse(x, y + BASE * 0.04, BASE * 0.24, BASE * 0.17).endFill();
+    // earthen rim highlight
+    g.lineStyle({ width: 2, color: 0x6b4a28, alpha: 0.65 });
+    g.drawEllipse(x, y + BASE * 0.04, BASE * 0.40, BASE * 0.30);
+    g.lineStyle();
+    this.markersC.addChild(g);
+  }
+
+  // Lift fog from a single cell (same fade used by onReveal).
+  revealFog(c, r) {
+    const key = r * this.board.cols + c;
+    const f = this.fog.get(key);
+    if (f) f._fade = true;
+  }
+
+  // Tint the sapper red and fade back to normal over ~1.2 s (damage hit effect).
+  sapperHit() {
+    if (!this.sapperC) return;
+    this.anims.push({
+      t: 0, dur: 1.2,
+      update: (p) => {
+        if (!this.sapperC) return;
+        const gb = Math.round(255 * Math.min(1, p * 2.5));
+        this.sapperC.tint = (0xff << 16) | (gb << 8) | gb;
+      },
+      done: () => { if (this.sapperC) this.sapperC.tint = 0xffffff; },
+    });
   }
 
   // ── explosion ─────────────────────────────────────────────────────────────

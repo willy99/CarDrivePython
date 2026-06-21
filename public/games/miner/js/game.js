@@ -1,12 +1,12 @@
 import { SAPPER_SPEED, T } from './constants.js?v=9';
 import { t, levelName, toggleLang, lang } from './i18n.js?v=9';
-import { LEVELS, LEVEL_COUNT, loadProgress, markCompleted, isUnlocked } from './levels.js?v=9';
-import { Board } from './board.js?v=9';
-import { PixiRenderer } from './pixiRenderer.js?v=10';
+import { LEVELS, LEVEL_COUNT, loadProgress, markCompleted, isUnlocked } from './levels.js?v=10';
+import { Board } from './board.js?v=10';
+import { PixiRenderer } from './pixiRenderer.js?v=14';
 import { THEMES, loadTheme, saveTheme, nextTheme } from './themes.js?v=9';
 import { Sound, isMuted, toggleMute } from './audio.js?v=9';
-import { loadClears, addClear, rankFor, rankName, rankStars } from './ranks.js?v=9';
-import { ARTIFACTS, ARTIFACT_IDS, artifactName, artifactDesc, loadStash, addArtifact, consumeArtifact, loadEquip, toggleEquip, removeEquip } from './artifacts.js?v=9';
+import { loadClears, addClear, rankFor, rankName, rankStars, bagCapacity, BAG_NAMES } from './ranks.js?v=12';
+import { ARTIFACTS, ARTIFACT_IDS, artifactName, artifactDesc, loadStash, addArtifact, consumeArtifact, loadEquip, toggleEquip, removeEquip } from './artifacts.js?v=10';
 import { ACHIEVEMENTS, loadAchievements, unlockAchievement, getCleanStreak, setCleanStreak, addCorrectFlags, SKINS, loadSkin, saveSkin, isSkinUnlocked } from './achievements.js?v=9';
 
 const $ = id => document.getElementById(id);
@@ -581,7 +581,7 @@ class Game {
     const mode = this._getMode();
     const toolbar = $('select-toolbar');
     const stash = loadStash();
-    const equip = loadEquip();
+    const equip = loadEquip(this._bagSize());
     const hasUnequipped = ARTIFACT_IDS.some(id => stash[id] > 0) && equip.length === 0;
     toolbar.innerHTML = `
       <button class="gear-btn${hasUnequipped ? ' gear-btn-pulse' : ''}" id="btn-stash-open">${t('gear')}</button>
@@ -615,7 +615,7 @@ class Game {
     this.elapsed = 0;
     this.loseTimer = 0;
     // carry the chosen backpack into the op; each slot is one use
-    this.loadout = loadEquip();
+    this.loadout = loadEquip(this._bagSize());
     this.toolUses = this.loadout.map(() => true);
     this._loadoutBase = this.loadout.length; // bonus probes added after this index
     this.targetMode = null;
@@ -623,10 +623,12 @@ class Game {
     this._busy = false;
     this.detectorReady = this.loadout.includes('detector');
     this.vestReady = this.loadout.includes('vest');
+    this._sapperWounded = false;
     this._mineHitThisLevel = false;
     this._usedArtifactThisLevel = false;
     this.renderer.currentSkin = loadSkin();
     this.renderer.buildLevel(this.board, THEMES[this.themeId]);
+    this._syncSapperEquip();
     $('select').style.display = 'none';
     $('overlay').style.display = 'none';
     $('hud').style.visibility = 'visible';
@@ -650,6 +652,18 @@ class Game {
     for (const c of this.board.cells) if (c.flagged) this.renderer.setFlag(c);
     if (this.board.lost) this.renderer.setLost();
     if (this.sapper.cell) this.renderer.setSapper(this.sapper.px, this.sapper.pr, false, 0);
+  }
+
+  // Current rank-based loadout slot count (1 at Recruit, +1 per rank, max 5).
+  _bagSize() { return bagCapacity(rankFor(loadClears()).index); }
+
+  // Push current equipment state into the renderer and rebuild sapper sprite.
+  _syncSapperEquip() {
+    this.renderer.setSapperEquipment({
+      hasVest: !!this.vestReady,
+      isWounded: !!this._sapperWounded,
+      bagSize: this._bagSize(),
+    });
   }
 
   nextLevel() {
@@ -893,16 +907,23 @@ class Game {
       }
       if (this.vestReady) {                    // ballistic vest — one extra life
         this.vestReady = false;
+        this._sapperWounded = true;
         this._mineHitThisLevel = true;
         this._spendTool('vest');
-        if (!cell.flagged) { cell.flagged = true; this.renderer.setFlag(cell); }
+        // Mine detonates: mark as flagged-detonated, lift fog, show crater
+        if (!cell.flagged) { cell.flagged = true; }
+        Sound.boom();
+        this.renderer.spawnExplosion(c, r);
+        this.renderer.spawnCrater(c, r);
+        this.renderer.revealFog(c, r);
+        this.renderer.sapperHit();
+        this._syncSapperEquip();
         if (this._getMode() !== 'classic') {
           const sp = this.sapper, back = sp.prevCell || sp.cell;
           sp.cell = back; sp.px = back.c; sp.pr = back.r;
           this.renderer.setSapper(back.c, back.r, false, 0);
         }
-        Sound.save();
-        this.showToast('🛡️ ' + (lang === 'uk' ? 'Бронежилет врятував!' : 'Ballistic vest saved you!'));
+        this.showToast('🛡️ 💥 ' + (lang === 'uk' ? 'Бронежилет врятував — сапер поранений!' : 'Vest saved you — sapper wounded!'));
         this.updateHUD();
         return;
       }
@@ -1088,7 +1109,7 @@ class Game {
       const tgt = sp.path[sp.pathI];
       const dx = tgt[0] - sp.px, dy = tgt[1] - sp.pr;
       const dist = Math.hypot(dx, dy);
-      const step = SAPPER_SPEED * dt;
+      const step = SAPPER_SPEED * dt * (this._sapperWounded ? (2 / 3) : 1);
       if (dist <= step) {
         sp.px = tgt[0]; sp.pr = tgt[1]; sp.pathI++;
         if (sp.pathI >= sp.path.length) this._arrive();
@@ -1431,34 +1452,125 @@ class Game {
 
   renderStashPanel() {
     const panel = $('stash-panel');
-    const stash = loadStash(), equip = loadEquip();
+    const slots = this._bagSize();
+    const stash = loadStash(), equip = loadEquip(slots);
     const owned = ARTIFACT_IDS.filter(id => stash[id] > 0);
 
-    // Military backpack SVG
-    const BP = `<svg viewBox="0 0 140 170" xmlns="http://www.w3.org/2000/svg">
-      <ellipse cx="70" cy="165" rx="50" ry="5" fill="#000" opacity="0.22"/>
-      <path d="M18,38 Q18,20 36,20 L104,20 Q122,20 122,38 L122,148 Q122,162 108,162 L32,162 Q18,162 18,148Z" fill="#304a28"/>
-      <path d="M18,38 Q18,20 36,20 L104,20 Q122,20 122,38 L122,82 Q70,70 18,82Z" fill="#3e6032" opacity="0.45"/>
-      <path d="M21,38 Q21,23 36,23 L104,23 Q119,23 119,38 L119,148 Q119,159 108,159 L32,159 Q21,159 21,148Z" fill="none" stroke="#3e6032" stroke-width="1.5" stroke-dasharray="5,4"/>
-      <path d="M54,12 Q54,3 70,3 Q86,3 86,12" stroke="#1e3018" stroke-width="9" fill="none" stroke-linecap="round"/>
-      <path d="M54,12 Q54,5 70,5 Q86,5 86,12" stroke="#2e4826" stroke-width="5" fill="none" stroke-linecap="round"/>
-      <rect x="14" y="70" width="6" height="38" rx="3" fill="#1a2e14" opacity="0.8"/>
-      <rect x="120" y="70" width="6" height="38" rx="3" fill="#1a2e14" opacity="0.8"/>
-      <rect x="12" y="84" width="10" height="10" rx="3" fill="#c4a862" opacity="0.7"/>
-      <rect x="118" y="84" width="10" height="10" rx="3" fill="#c4a862" opacity="0.7"/>
-      <rect x="34" y="26" width="72" height="20" rx="5" fill="#1e3018"/>
-      <rect x="36" y="28" width="68" height="16" rx="4" fill="#142410"/>
-      <text x="70" y="40" font-size="11" fill="#c4a862" text-anchor="middle" font-family="Georgia,serif">★ ★ ★</text>
-      <rect x="22" y="54" width="96" height="70" rx="10" fill="#1e3018"/>
-      <rect x="24" y="56" width="92" height="66" rx="9" fill="#243820"/>
-      <rect x="34" y="55" width="72" height="3" rx="1.5" fill="#c4a862" opacity="0.6"/>
-      <rect x="66" y="49" width="8" height="9" rx="2.5" fill="#c4a862"/>
-      <circle cx="70" cy="55" r="2" fill="#1e3018"/>
-      <rect x="22" y="133" width="96" height="28" rx="8" fill="#1e3018"/>
-      <rect x="24" y="135" width="92" height="24" rx="7" fill="#243820"/>
-      <rect x="47" y="143" width="46" height="8" rx="4" fill="#c4a862"/>
-      <rect x="53" y="145" width="34" height="4" rx="2" fill="#1e3018"/>
-    </svg>`;
+    // Bag SVG changes with rank: кульок ATB(1)→котомочка(2)→сумка(3)→рюкзак(4)→великий рюкзак(5)→баул(6)
+    const BAG_SVG = [null,
+      // 1 — кульок ATB
+      `<svg viewBox="0 0 140 170" xmlns="http://www.w3.org/2000/svg">
+        <ellipse cx="70" cy="163" rx="42" ry="5" fill="#000" opacity="0.18"/>
+        <path d="M35,68 L22,152 Q22,161 33,161 L107,161 Q118,161 118,152 L105,68Z" fill="#dceef8" stroke="#a0c8e0" stroke-width="1.5"/>
+        <path d="M55,68 C52,42 58,28 70,28 C82,28 88,42 85,68" fill="none" stroke="#2070b0" stroke-width="3.5" stroke-linecap="round"/>
+        <line x1="48" y1="72" x2="43" y2="154" stroke="#b0d0e8" stroke-width="0.9" opacity="0.5"/>
+        <line x1="70" y1="70" x2="70" y2="156" stroke="#b0d0e8" stroke-width="0.9" opacity="0.5"/>
+        <line x1="92" y1="72" x2="97" y2="154" stroke="#b0d0e8" stroke-width="0.9" opacity="0.5"/>
+        <rect x="32" y="95" width="76" height="40" rx="6" fill="#cc1111"/>
+        <text x="70" y="122" font-size="26" fill="white" text-anchor="middle" font-family="Arial Black,sans-serif" font-weight="900">ATB</text>
+      </svg>`,
+      // 2 — котомочка (cloth bundle on stick)
+      `<svg viewBox="0 0 140 170" xmlns="http://www.w3.org/2000/svg">
+        <ellipse cx="70" cy="163" rx="40" ry="5" fill="#000" opacity="0.2"/>
+        <line x1="70" y1="8" x2="70" y2="80" stroke="#5a3a18" stroke-width="5" stroke-linecap="round"/>
+        <path d="M55,76 Q62,68 70,72 Q78,68 85,76 Q78,84 70,79 Q62,84 55,76Z" fill="#3a2010"/>
+        <ellipse cx="70" cy="118" rx="46" ry="44" fill="#c8a060"/>
+        <path d="M70,78 L38,100" stroke="#a07840" stroke-width="1.5" fill="none" opacity="0.55"/>
+        <path d="M70,78 L26,120" stroke="#a07840" stroke-width="1.5" fill="none" opacity="0.55"/>
+        <path d="M70,78 L30,144" stroke="#a07840" stroke-width="1.5" fill="none" opacity="0.55"/>
+        <path d="M70,78 L56,158" stroke="#a07840" stroke-width="1.5" fill="none" opacity="0.55"/>
+        <path d="M70,78 L84,158" stroke="#a07840" stroke-width="1.5" fill="none" opacity="0.55"/>
+        <path d="M70,78 L110,144" stroke="#a07840" stroke-width="1.5" fill="none" opacity="0.55"/>
+        <path d="M70,78 L114,120" stroke="#a07840" stroke-width="1.5" fill="none" opacity="0.55"/>
+        <path d="M70,78 L102,100" stroke="#a07840" stroke-width="1.5" fill="none" opacity="0.55"/>
+        <ellipse cx="53" cy="106" rx="14" ry="10" fill="#e0b870" opacity="0.32"/>
+      </svg>`,
+      // 3 — сумка (shoulder bag)
+      `<svg viewBox="0 0 140 170" xmlns="http://www.w3.org/2000/svg">
+        <ellipse cx="70" cy="164" rx="48" ry="5" fill="#000" opacity="0.2"/>
+        <path d="M90,40 Q115,62 102,102" stroke="#7a5830" stroke-width="4.5" fill="none" stroke-linecap="round"/>
+        <rect x="22" y="48" width="88" height="110" rx="10" fill="#9a7438"/>
+        <rect x="24" y="50" width="84" height="106" rx="9" fill="#b88848"/>
+        <path d="M22,48 L22,90 Q22,100 32,100 L108,100 Q118,100 118,90 L118,48 Q118,36 108,36 L32,36 Q22,36 22,48Z" fill="#8a6428"/>
+        <rect x="22" y="36" width="96" height="20" rx="9" fill="#9a7030" opacity="0.5"/>
+        <rect x="57" y="92" width="26" height="12" rx="4" fill="#c8a040"/>
+        <rect x="63" y="95" width="14" height="6" rx="2" fill="#8a6820"/>
+        <line x1="30" y1="150" x2="110" y2="150" stroke="#8a6424" stroke-width="1.5" stroke-dasharray="5,3" opacity="0.6"/>
+      </svg>`,
+      // 4 — рюкзак (standard military backpack)
+      `<svg viewBox="0 0 140 170" xmlns="http://www.w3.org/2000/svg">
+        <ellipse cx="70" cy="165" rx="50" ry="5" fill="#000" opacity="0.22"/>
+        <path d="M18,38 Q18,20 36,20 L104,20 Q122,20 122,38 L122,148 Q122,162 108,162 L32,162 Q18,162 18,148Z" fill="#304a28"/>
+        <path d="M18,38 Q18,20 36,20 L104,20 Q122,20 122,38 L122,82 Q70,70 18,82Z" fill="#3e6032" opacity="0.45"/>
+        <path d="M21,38 Q21,23 36,23 L104,23 Q119,23 119,38 L119,148 Q119,159 108,159 L32,159 Q21,159 21,148Z" fill="none" stroke="#3e6032" stroke-width="1.5" stroke-dasharray="5,4"/>
+        <path d="M54,12 Q54,3 70,3 Q86,3 86,12" stroke="#1e3018" stroke-width="9" fill="none" stroke-linecap="round"/>
+        <path d="M54,12 Q54,5 70,5 Q86,5 86,12" stroke="#2e4826" stroke-width="5" fill="none" stroke-linecap="round"/>
+        <rect x="14" y="70" width="6" height="38" rx="3" fill="#1a2e14" opacity="0.8"/>
+        <rect x="120" y="70" width="6" height="38" rx="3" fill="#1a2e14" opacity="0.8"/>
+        <rect x="12" y="84" width="10" height="10" rx="3" fill="#c4a862" opacity="0.7"/>
+        <rect x="118" y="84" width="10" height="10" rx="3" fill="#c4a862" opacity="0.7"/>
+        <rect x="34" y="26" width="72" height="20" rx="5" fill="#1e3018"/>
+        <rect x="36" y="28" width="68" height="16" rx="4" fill="#142410"/>
+        <text x="70" y="40" font-size="11" fill="#c4a862" text-anchor="middle" font-family="Georgia,serif">★ ★ ★</text>
+        <rect x="22" y="54" width="96" height="70" rx="10" fill="#1e3018"/>
+        <rect x="24" y="56" width="92" height="66" rx="9" fill="#243820"/>
+        <rect x="34" y="55" width="72" height="3" rx="1.5" fill="#c4a862" opacity="0.6"/>
+        <rect x="66" y="49" width="8" height="9" rx="2.5" fill="#c4a862"/>
+        <circle cx="70" cy="55" r="2" fill="#1e3018"/>
+        <rect x="22" y="133" width="96" height="28" rx="8" fill="#1e3018"/>
+        <rect x="24" y="135" width="92" height="24" rx="7" fill="#243820"/>
+        <rect x="47" y="143" width="46" height="8" rx="4" fill="#c4a862"/>
+        <rect x="53" y="145" width="34" height="4" rx="2" fill="#1e3018"/>
+      </svg>`,
+      // 5 — великий рюкзак (large frame backpack)
+      `<svg viewBox="0 0 140 170" xmlns="http://www.w3.org/2000/svg">
+        <ellipse cx="70" cy="165" rx="52" ry="5" fill="#000" opacity="0.22"/>
+        <rect x="16" y="14" width="108" height="148" rx="10" fill="#263e1e"/>
+        <rect x="18" y="16" width="104" height="144" rx="9" fill="#304828"/>
+        <rect x="8" y="52" width="10" height="72" rx="5" fill="#1a2e10" opacity="0.9"/>
+        <rect x="122" y="52" width="10" height="72" rx="5" fill="#1a2e10" opacity="0.9"/>
+        <rect x="6" y="82" width="14" height="12" rx="3" fill="#c4a862" opacity="0.8"/>
+        <rect x="120" y="82" width="14" height="12" rx="3" fill="#c4a862" opacity="0.8"/>
+        <rect x="22" y="18" width="96" height="34" rx="7" fill="#1e3018"/>
+        <rect x="24" y="20" width="92" height="30" rx="6" fill="#243820"/>
+        <line x1="30" y1="36" x2="110" y2="36" stroke="#c4a862" stroke-width="2" opacity="0.65"/>
+        <rect x="63" y="31" width="14" height="10" rx="3" fill="#c4a862"/>
+        <rect x="20" y="58" width="100" height="88" rx="8" fill="#1e3018"/>
+        <rect x="22" y="60" width="96" height="84" rx="7" fill="#243820"/>
+        <line x1="38" y1="60" x2="38" y2="144" stroke="#304828" stroke-width="3.5" opacity="0.65"/>
+        <line x1="102" y1="60" x2="102" y2="144" stroke="#304828" stroke-width="3.5" opacity="0.65"/>
+        <line x1="38" y1="102" x2="102" y2="102" stroke="#304828" stroke-width="3.5" opacity="0.65"/>
+        <rect x="20" y="152" width="100" height="10" rx="5" fill="#1a2e10"/>
+        <rect x="56" y="153" width="28" height="8" rx="3" fill="#c4a862"/>
+        <text x="70" y="96" font-size="10" fill="#c4a862" text-anchor="middle" font-family="Georgia,serif">★ ★ ★ ★</text>
+      </svg>`,
+      // 6 — баул (massive duffel bag)
+      `<svg viewBox="0 0 140 170" xmlns="http://www.w3.org/2000/svg">
+        <ellipse cx="70" cy="165" rx="56" ry="5" fill="#000" opacity="0.22"/>
+        <rect x="10" y="28" width="120" height="130" rx="22" fill="#302e14"/>
+        <rect x="12" y="30" width="116" height="126" rx="21" fill="#40401a"/>
+        <rect x="10" y="78" width="120" height="16" rx="0" fill="#222010"/>
+        <line x1="10" y1="86" x2="130" y2="86" stroke="#c4a040" stroke-width="2.5" opacity="0.75"/>
+        <circle cx="22" cy="86" r="6" fill="#c4a040"/>
+        <rect x="18" y="81" width="8" height="10" rx="2.5" fill="#8a7820"/>
+        <rect x="10" y="28" width="120" height="14" rx="12" fill="#202010"/>
+        <rect x="10" y="144" width="120" height="14" rx="12" fill="#202010"/>
+        <circle cx="28" cy="35" r="5" fill="#c4a040" opacity="0.9"/>
+        <circle cx="112" cy="35" r="5" fill="#c4a040" opacity="0.9"/>
+        <circle cx="28" cy="151" r="5" fill="#c4a040" opacity="0.9"/>
+        <circle cx="112" cy="151" r="5" fill="#c4a040" opacity="0.9"/>
+        <path d="M44,30 C44,12 96,12 96,30" stroke="#202010" stroke-width="8" fill="none" stroke-linecap="round"/>
+        <path d="M44,30 C44,16 96,16 96,30" stroke="#50501e" stroke-width="5" fill="none" stroke-linecap="round"/>
+        <rect x="6" y="72" width="10" height="32" rx="5" fill="#202010"/>
+        <rect x="7" y="74" width="8" height="28" rx="4" fill="#40401a"/>
+        <line x1="12" y1="104" x2="126" y2="104" stroke="#2e2c10" stroke-width="2.5" opacity="0.5"/>
+        <line x1="12" y1="120" x2="126" y2="120" stroke="#2e2c10" stroke-width="2.5" opacity="0.5"/>
+        <line x1="12" y1="62" x2="126" y2="62" stroke="#2e2c10" stroke-width="2.5" opacity="0.5"/>
+        <rect x="35" y="40" width="70" height="34" rx="6" fill="#202010" opacity="0.75"/>
+        <text x="70" y="62" font-size="10" fill="#c4a040" text-anchor="middle" font-family="Georgia,serif">★ ★ ★ ★ ★</text>
+      </svg>`,
+    ];
+    const BP = BAG_SVG[Math.max(1, Math.min(6, slots))];
 
     const slotHTML = (idx) => {
       const id = equip[idx];
@@ -1480,12 +1592,17 @@ class Game {
       </div>`;
     };
 
+    const bagName = (BAG_NAMES[lang] || BAG_NAMES.en)[Math.max(0, Math.min(5, slots - 1))];
+    const bagCapStr = lang === 'uk'
+      ? `до ${slots} ${slots === 1 ? 'предмета' : 'предметів'}`
+      : `up to ${slots} item${slots === 1 ? '' : 's'}`;
+    const slotsHTML = Array.from({ length: slots }, (_, i) => slotHTML(i)).join('');
     panel.innerHTML = `
       <div class="bp-section">
-        <div class="bp-section-title">${t('backpack')}</div>
+        <div class="bp-section-title"><em>${bagName}</em> — ${bagCapStr}</div>
         <div class="bp-row">
           <div class="bp-bag-wrap">${BP}</div>
-          <div class="bp-slots">${slotHTML(0)}${slotHTML(1)}</div>
+          <div class="bp-slots">${slotsHTML}</div>
         </div>
       </div>
       <div class="shelf-section">
@@ -1516,7 +1633,7 @@ class Game {
         (eqCount ? `<span class="art-card-eqtag">🎒</span>` : '') +
         ico +
         `<span class="art-card-name">${artifactName(id, lang)}</span>`;
-      card.onclick = () => { toggleEquip(id); Sound.click(); this.renderStashPanel(); };
+      card.onclick = () => { toggleEquip(id, slots); Sound.click(); this.renderStashPanel(); };
       shelf.appendChild(card);
     }
   }
