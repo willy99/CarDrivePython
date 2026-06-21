@@ -189,6 +189,30 @@ export const ACHIEVEMENTS = [
     skin: null,
   },
   {
+    id: 'defuser',
+    icon: '✂️',
+    en: 'Defuser', uk: 'Знешкоджувач',
+    descEn: 'Successfully defuse your first IED by cutting the right wire.',
+    descUk: 'Успішно знешкодити перший пристрій, перерізавши правильний дріт.',
+    skin: null,
+  },
+  {
+    id: 'bomb_squad',
+    icon: '💣',
+    en: 'Bomb Squad', uk: 'Вибухотехнік',
+    descEn: 'Defuse 5 IEDs in total across all operations.',
+    descUk: 'Знешкодити 5 пристроїв сумарно за всі операції.',
+    skin: null,
+  },
+  {
+    id: 'cool_hand',
+    icon: '🥶',
+    en: 'Cool Hand', uk: 'Холодна рука',
+    descEn: 'Defuse a timer bomb with 20 seconds or less remaining.',
+    descUk: 'Знешкодити тайм-бомбу, коли залишилося ≤20 секунд.',
+    skin: null,
+  },
+  {
     id: 'megamap',
     icon: '🌍',
     en: 'Big Game', uk: 'Велика гра',
@@ -288,6 +312,17 @@ export function getArmUses() {
 export function addArmUse() {
   const n = getArmUses() + 1;
   localStorage.setItem(ARM_KEY, String(n));
+  return n;
+}
+
+const DEFUSE_KEY = 'miner_defuse_count';
+
+export function getDefuseCount() {
+  return parseInt(localStorage.getItem(DEFUSE_KEY) || '0', 10);
+}
+export function addDefuse() {
+  const n = getDefuseCount() + 1;
+  localStorage.setItem(DEFUSE_KEY, String(n));
   return n;
 }
 

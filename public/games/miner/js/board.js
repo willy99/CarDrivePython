@@ -78,6 +78,35 @@ export class Board {
     if (ter.trees) this._scatter(T.TREE, ter.trees);
     if (ter.paths) this._carvePaths(ter.paths);
     this._scatterArtifacts();
+    this._scatterDevices();
+  }
+
+  // Place 0-2 special device cells on the field (wire-cutting mini-game triggers).
+  // Device types + variant counts must mirror DEVICES in defusal.js.
+  _scatterDevices() {
+    const id = this.level.id || 99;
+    if (id < 3) return;
+
+    const DTYPES = [
+      { id: 'svp_simple', vc: 3, minLv: 3  },
+      { id: 'timer_bomb', vc: 3, minLv: 10 },
+      { id: 'radio_ied',  vc: 2, minLv: 19 },
+    ];
+    const types = DTYPES.filter(d => id >= d.minLv);
+    if (!types.length) return;
+
+    let count = 1;
+    if (id < 10 && this.rng() < 0.5) count = 0;  // 50% chance on early levels
+    if (id >= 28 && this.rng() < 0.4) count = 2;  // occasional 2nd on mega maps
+    if (!count) return;
+
+    const cands = this._landCells().filter(c => !c.artifact);
+    for (let i = 0; i < Math.min(count, cands.length); i++) {
+      const ci = Math.floor(this.rng() * cands.length);
+      const cell = cands.splice(ci, 1)[0];
+      const dt = types[Math.floor(this.rng() * types.length)];
+      cell.device = { type: dt.id, variantIdx: Math.floor(this.rng() * dt.vc) };
+    }
   }
 
   // Dirt tracks that meander across the map — walkable like LAND, faster feel.
@@ -240,7 +269,7 @@ export class Board {
         }
       }
     }
-    const candidates = this._landCells().filter(c => c.type === T.LAND && !safe.has(this.idx(c.c, c.r)) && !c.artifact);
+    const candidates = this._landCells().filter(c => c.type === T.LAND && !safe.has(this.idx(c.c, c.r)) && !c.artifact && !c.device);
     let count = Math.round((this.level.density || 0.15) * this.landTotal);
     count = Math.max(1, Math.min(count, candidates.length));
 
@@ -268,6 +297,28 @@ export class Board {
     this.mineCount = Math.max(0, count);
     this.minesPlaced = true;
     this._computeAdj();
+    this._relocateDevices();
+  }
+
+  // After mines are placed, move any device cells that have no adjacent mines
+  // to positions that ARE adjacent to at least one mine, so the player is
+  // guaranteed to encounter the device on the way through the field.
+  _relocateDevices() {
+    const devCells = this.cells.filter(c => c.device);
+    if (!devCells.length) return;
+    // Candidate target cells: land, unrevealed, not mined, not artifact, adj > 0
+    const mineEdge = this.cells.filter(c =>
+      c.type === T.LAND && !c.mine && !c.revealed && !c.artifact && !c.device && c.adj > 0
+    );
+    if (!mineEdge.length) return;
+    for (const devCell of devCells) {
+      if (devCell.adj > 0) continue; // already touches a mine, keep in place
+      const i = Math.floor(Math.random() * mineEdge.length);
+      const tgt = mineEdge[i];
+      tgt.device = devCell.device;
+      devCell.device = null;
+      mineEdge.splice(i, 1); // don't assign two devices to the same cell
+    }
   }
 
   // BFS over non-mine land + bridges (4-connected) from the safe start: true iff
@@ -417,7 +468,8 @@ export class Board {
       if (cell.mine || cell.adj !== 0) continue;
       for (const [dc, dr] of DIRS8) {
         const nb = this.get(cell.c + dc, cell.r + dr);
-        if (nb && nb.type === T.LAND && !nb.revealed && !nb.flagged) stack.push(nb);
+        // Do not cascade into device cells — sapper must step on them deliberately
+        if (nb && nb.type === T.LAND && !nb.revealed && !nb.flagged && !nb.device) stack.push(nb);
       }
     }
     return out;

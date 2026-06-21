@@ -27,6 +27,7 @@ export class PixiRenderer {
     this.fog = new Map();      // cellIndex → Graphics
     this.markers = new Map();  // cellIndex → DisplayObject
     this.flags = new Map();    // cellIndex → Graphics
+    this.devices = new Map();  // cellIndex → PIXI.Text (device indicator)
     this.particles = [];
     this.anims = [];           // timed tween animations (arm extend, drone flight)
     this.sapperC = null;
@@ -176,7 +177,7 @@ export class PixiRenderer {
   clear() {
     this.world.removeChildren().forEach(c => c.destroy({ children: true }));
     this.board = null;
-    this.fog.clear(); this.markers.clear(); this.flags.clear();
+    this.fog.clear(); this.markers.clear(); this.flags.clear(); this.devices.clear();
     this.particles = []; this.anims = []; this.sapperC = null; this.sapperLegs = null; this.platform = null;
     this._waterRipple = null; this._clouds = null; this._cloudW = 0;
     this.fowC = null; this._fowRadius = 0; this._fowCells = new Map();
@@ -772,6 +773,25 @@ export class PixiRenderer {
     g.lineStyle({ width: 3, color: 0x2a1a0a }).moveTo(x + BASE * 0.4, y + BASE * 0.28).lineTo(x + BASE * 0.4, y + BASE * 0.76).lineStyle();
     g.beginFill(toInt(this.theme.flag)).drawPolygon([x + BASE * 0.4, y + BASE * 0.28, x + BASE * 0.72, y + BASE * 0.4, x + BASE * 0.4, y + BASE * 0.52]).endFill();
     this.entityC.addChild(g); this.flags.set(key, g);
+  }
+
+  setDevice(cell) {
+    const key = cell.r * this.board.cols + cell.c;
+    if (this.devices.has(key)) return;
+    const t = new PIXI.Text('⚠', {
+      fontSize: BASE * 0.46, fill: 0xffaa00,
+      dropShadow: true, dropShadowDistance: 1, dropShadowColor: 0x000000, dropShadowAlpha: 0.9,
+    });
+    t.anchor.set(0.5);
+    t.position.set(cell.c * BASE + BASE / 2, cell.r * BASE + BASE * 0.44);
+    this.entityC.addChild(t);
+    this.devices.set(key, t);
+  }
+
+  clearDevice(cell) {
+    const key = cell.r * this.board.cols + cell.c;
+    const icon = this.devices.get(key);
+    if (icon) { icon.destroy(); this.devices.delete(key); }
   }
 
   setLost() {

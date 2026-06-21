@@ -1,13 +1,14 @@
 import { SAPPER_SPEED, T } from './constants.js?v=9';
-import { t, levelName, toggleLang, lang } from './i18n.js?v=10';
+import { t, levelName, toggleLang, lang } from './i18n.js?v=11';
+import { showDefusal } from './defusal.js?v=2';
 import { LEVELS, LEVEL_COUNT, TIMED_LEVEL_IDS, loadProgress, markCompleted, isUnlocked } from './levels.js?v=11';
-import { Board } from './board.js?v=10';
+import { Board } from './board.js?v=11';
 import { PixiRenderer } from './pixiRenderer.js?v=14';
 import { THEMES, loadTheme, saveTheme, nextTheme } from './themes.js?v=9';
 import { Sound, isMuted, toggleMute } from './audio.js?v=9';
 import { loadClears, addClear, rankFor, rankName, rankStars, bagCapacity, BAG_NAMES } from './ranks.js?v=12';
 import { ARTIFACTS, ARTIFACT_IDS, artifactName, artifactDesc, loadStash, addArtifact, consumeArtifact, loadEquip, toggleEquip, removeEquip } from './artifacts.js?v=10';
-import { ACHIEVEMENTS, loadAchievements, unlockAchievement, getCleanStreak, setCleanStreak, addCorrectFlags, getVestHits, addVestHit, getArmUses, addArmUse, SKINS, loadSkin, saveSkin, isSkinUnlocked } from './achievements.js?v=10';
+import { ACHIEVEMENTS, loadAchievements, unlockAchievement, getCleanStreak, setCleanStreak, addCorrectFlags, getVestHits, addVestHit, getArmUses, addArmUse, getDefuseCount, addDefuse, SKINS, loadSkin, saveSkin, isSkinUnlocked } from './achievements.js?v=11';
 
 const $ = id => document.getElementById(id);
 
@@ -758,6 +759,7 @@ class Game {
     this._flagsPlaced = 0;
     this.renderer.currentSkin = loadSkin();
     this.renderer.buildLevel(this.board, THEMES[this.themeId]);
+    for (const cell of this.board.cells) if (cell.device) this.renderer.setDevice(cell);
     this._syncSapperEquip();
     $('select').style.display = 'none';
     $('overlay').style.display = 'none';
@@ -782,6 +784,7 @@ class Game {
     for (const c of this.board.cells) if (c.flagged) this.renderer.setFlag(c);
     if (this.board.lost) this.renderer.setLost();
     if (this.sapper.cell) this.renderer.setSapper(this.sapper.px, this.sapper.pr, false, 0);
+    for (const c of this.board.cells) if (c.device && !c.revealed) this.renderer.setDevice(c);
   }
 
   // Current rank-based loadout slot count (1 at Recruit, +1 per rank, max 5).
@@ -813,6 +816,9 @@ class Game {
     if (!b.minesPlaced) {
       if (cell.type !== T.LAND) return;
       b.placeMines(c, r);
+      // Refresh ⚠ device indicators — relocation may have moved cells to mine-adjacent positions
+      for (const cell2 of b.cells) this.renderer.clearDevice(cell2);
+      for (const cell2 of b.cells) if (cell2.device) this.renderer.setDevice(cell2);
       // Issue one emergency probe per isolated region (connected component of unreachable safe cells)
       const regions = b.isolatedRegions(c, r);
       if (regions.length > 0) {
@@ -831,6 +837,7 @@ class Game {
         this.renderTools();
       }
       this.startTime = this.elapsed;
+      if (cell.device) { cell.device = null; this.renderer.clearDevice(cell); }
       this.sapper.px = c; this.sapper.pr = r; this.sapper.cell = cell;
       this.renderer.setSapper(c, r, false, 0);
       this.renderer.updateFoW(c, r);
@@ -1069,12 +1076,66 @@ class Game {
       }
       this._boom(c, r); return;
     }
+    if (cell.device) { this._startDefusal(cell); return; }
     const out = b.reveal(c, r);
     this.renderer.onReveal(out);
     Sound.reveal();
     this._collect(out);
     this.updateHUD();
     if (b.isWon()) this._win();
+  }
+
+  _startDefusal(cell) {
+    this._busy = true;
+    showDefusal(cell,
+      (info) => {
+        // success — info = { hasTimer, secsLeft }
+        cell.device = null;
+        this.renderer.clearDevice(cell);
+        this._busy = false;
+        const out = this.board.reveal(cell.c, cell.r);
+        this.renderer.onReveal(out);
+        Sound.reveal();
+        this._collect(out);
+        this.updateHUD();
+        if (this.board.isWon()) this._win();
+        this.showToast('💣✅ ' + (lang === 'uk' ? 'Пристрій знешкоджено!' : 'Device neutralized!'));
+        // Achievement checks
+        const total = addDefuse();
+        const achList = [];
+        if (total === 1 && unlockAchievement('defuser')) achList.push('defuser');
+        if (total >= 5  && unlockAchievement('bomb_squad')) achList.push('bomb_squad');
+        if (info?.hasTimer && (info?.secsLeft ?? 999) <= 20 && unlockAchievement('cool_hand')) achList.push('cool_hand');
+        for (let i = 0; i < achList.length; i++) {
+          const a = ACHIEVEMENTS.find(x => x.id === achList[i]);
+          if (a) setTimeout(() => this.showToast(`${a.icon} ${t('achUnlocked')} ${lang === 'uk' ? a.uk : a.en}!`), 1200 * (i + 1));
+        }
+      },
+      () => {
+        // fail — vest saves if available, otherwise boom
+        cell.device = null;
+        this.renderer.clearDevice(cell);
+        if (this.vestReady) {
+          this.vestReady = false;
+          this._sapperWounded = true;
+          this._mineHitThisLevel = true;
+          this._spendTool('vest');
+          Sound.boom();
+          this.renderer.spawnExplosion(cell.c, cell.r);
+          this.renderer.spawnCrater(cell.c, cell.r);
+          this.renderer.sapperHit();
+          this._syncSapperEquip();
+          const sp = this.sapper, back = sp.prevCell || sp.cell;
+          if (back) { sp.cell = back; sp.px = back.c; sp.pr = back.r; this.renderer.setSapper(back.c, back.r, false, 0); }
+          this._busy = false;
+          this.showToast('🛡️ 💥 ' + (lang === 'uk' ? 'Бронежилет врятував — сапер поранений!' : 'Vest saved you — sapper wounded!'));
+          this.updateHUD();
+        } else {
+          this._busy = false;
+          this._boom(cell.c, cell.r);
+        }
+      }
+    );
   }
 
   // collect any artifacts on freshly-revealed cells into the stash
