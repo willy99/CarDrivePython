@@ -1,13 +1,13 @@
-import { SAPPER_SPEED, T } from './constants.js?v=4';
-import { t, levelName, toggleLang, lang } from './i18n.js?v=4';
-import { LEVELS, LEVEL_COUNT, loadProgress, markCompleted, isUnlocked } from './levels.js?v=4';
-import { Board } from './board.js?v=4';
-import { PixiRenderer } from './pixiRenderer.js?v=4';
-import { THEMES, loadTheme, saveTheme, nextTheme } from './themes.js?v=4';
-import { Sound, isMuted, toggleMute } from './audio.js?v=4';
-import { loadClears, addClear, rankFor, rankName, rankStars } from './ranks.js?v=4';
-import { ARTIFACTS, ARTIFACT_IDS, artifactName, artifactDesc, loadStash, addArtifact, consumeArtifact, loadEquip, toggleEquip, removeEquip } from './artifacts.js?v=4';
-import { ACHIEVEMENTS, loadAchievements, unlockAchievement, getCleanStreak, setCleanStreak, addCorrectFlags, SKINS, loadSkin, saveSkin, isSkinUnlocked } from './achievements.js?v=5';
+import { SAPPER_SPEED, T } from './constants.js?v=8';
+import { t, levelName, toggleLang, lang } from './i18n.js?v=8';
+import { LEVELS, LEVEL_COUNT, loadProgress, markCompleted, isUnlocked } from './levels.js?v=8';
+import { Board } from './board.js?v=8';
+import { PixiRenderer } from './pixiRenderer.js?v=8';
+import { THEMES, loadTheme, saveTheme, nextTheme } from './themes.js?v=8';
+import { Sound, isMuted, toggleMute } from './audio.js?v=8';
+import { loadClears, addClear, rankFor, rankName, rankStars } from './ranks.js?v=8';
+import { ARTIFACTS, ARTIFACT_IDS, artifactName, artifactDesc, loadStash, addArtifact, consumeArtifact, loadEquip, toggleEquip, removeEquip } from './artifacts.js?v=8';
+import { ACHIEVEMENTS, loadAchievements, unlockAchievement, getCleanStreak, setCleanStreak, addCorrectFlags, SKINS, loadSkin, saveSkin, isSkinUnlocked } from './achievements.js?v=8';
 
 const $ = id => document.getElementById(id);
 
@@ -43,7 +43,11 @@ class Game {
     this._wire();
     this.renderer.resize();
     window.addEventListener('resize', () => { this.renderer.resize(); this.updateThemeBtn(); });
+    window.addEventListener('popstate', () => {
+      if (this.state === 'PLAYING' || this.state === 'OVER') this.showSelect();
+    });
     this.applyLang();
+    history.replaceState({ miner: 'select' }, '');
     this.showSelect();
   }
 
@@ -581,7 +585,6 @@ class Game {
     const hasUnequipped = ARTIFACT_IDS.some(id => stash[id] > 0) && equip.length === 0;
     toolbar.innerHTML = `
       <button class="gear-btn${hasUnequipped ? ' gear-btn-pulse' : ''}" id="btn-stash-open">${t('gear')}</button>
-      <button class="ach-btn" id="btn-ach-open">🏅 ${t('achievements')}</button>
       <button class="ach-btn ed-btn" id="btn-editor-open">${t('editor')}</button>
       <div class="mode-pill" id="mode-pill" data-mode="${mode}">
         <div class="mode-pill-slider"></div>
@@ -589,7 +592,6 @@ class Game {
         <button class="mode-pill-opt${mode === 'arcade' ? ' active' : ''}" data-mode="arcade">${t('arcadeMode')}</button>
       </div>`;
     $('btn-stash-open').onclick = () => { Sound.click(); this.showStashModal(); };
-    $('btn-ach-open').onclick = () => { Sound.click(); this.showAchievementsModal(); };
     $('btn-editor-open').onclick = () => { Sound.click(); this.showEditorModal(); };
     toolbar.querySelectorAll('.mode-pill-opt').forEach(btn => {
       btn.onclick = () => {
@@ -628,6 +630,7 @@ class Game {
     $('select').style.display = 'none';
     $('overlay').style.display = 'none';
     $('hud').style.visibility = 'visible';
+    history.pushState({ miner: 'play' }, '');
     $('btn-restart').style.display = '';
     $('btn-flag-mode').style.display = '';
     this._flagMode = false;
@@ -803,10 +806,10 @@ class Game {
   }
 
   flagAction(c, r) {
-    if (this.state !== 'PLAYING' || !this.board.minesPlaced || this.sapper.moving || this._busy) return;
+    const sp0 = this.sapper;
+    if (this.state !== 'PLAYING' || !this.board.minesPlaced || sp0.moving || this._busy) return;
     const b = this.board;
     const cell = b.get(c, r);
-    // Allow flagging any solid unrevealed cell — player can't distinguish types before revealing
     if (!cell || cell.type === T.VOID || cell.type === T.WATER || cell.revealed) return;
     if (this._getMode() === 'classic') {
       cell.flagged = !cell.flagged;
@@ -834,7 +837,6 @@ class Game {
     sp.target = b.get(best[best.length - 1][0], best[best.length - 1][1]);
     sp.moving = best.length > 1;
     if (!sp.moving) this._arrive(); // sapper already adjacent — flag immediately
-    if (!sp.moving) this._arrive();
   }
 
   _arrive() {
@@ -1420,7 +1422,9 @@ class Game {
       prog = `<div class="rank-prog">${clears} ${t('clearedFields')} · ${t('maxRank')}</div>`;
     }
     el.innerHTML = `<div class="rank-stars">${rankStars(info.rank)}</div>` +
-      `<div class="rank-main"><div class="rank-name">${t('rankLabel')}: ${rankName(info.rank, lang)}</div>${prog}</div>`;
+      `<div class="rank-main"><div class="rank-name">${t('rankLabel')}: ${rankName(info.rank, lang)}</div>${prog}</div>` +
+      `<button class="rank-ach-btn" id="btn-ach-open-rank">🏅</button>`;
+    $('btn-ach-open-rank').onclick = () => { Sound.click(); this.showAchievementsModal(); };
   }
 
   renderStashPanel() {

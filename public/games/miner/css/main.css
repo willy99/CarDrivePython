@@ -98,7 +98,8 @@ html, body {
   width: 100%;
   max-width: 720px;
   margin-bottom: 20px;
-  gap: 12px;
+  gap: 10px;
+  flex-wrap: wrap;
 }
 .gear-btn {
   display: flex;
@@ -635,11 +636,24 @@ html, body {
   width: 100%;
 }
 .rank-stars { font-size: 20px; color: #ffd24a; letter-spacing: 2px; }
-.rank-main { display: flex; flex-direction: column; gap: 2px; }
+.rank-main { display: flex; flex-direction: column; gap: 2px; flex: 1; min-width: 0; }
 .rank-name { font-size: 18px; font-weight: 800; }
 .rank-prog { font-size: 12px; opacity: 0.75; }
 .rank-bar { flex: 1; height: 8px; background: #0d1f17; border-radius: 999px; overflow: hidden; min-width: 80px; }
 .rank-bar > span { display: block; height: 100%; background: linear-gradient(90deg, #3aa15f, #7ee0a0); }
+.rank-ach-btn {
+  background: #1d3560;
+  border: 1px solid #2a4a80;
+  border-radius: 10px;
+  color: #e8eee9;
+  font-size: 22px;
+  width: 46px; height: 46px;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: background .15s;
+}
+.rank-ach-btn:hover { background: #253d70; }
 
 /* ── stash panel: backpack + wooden shelf ── */
 #stash-panel {

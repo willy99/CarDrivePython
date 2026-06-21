@@ -1,6 +1,6 @@
-import { T } from './constants.js?v=4';
-import { toInt } from './themes.js?v=4';
-import { buildHeightField, contourAt, clusters, mulberry32 } from './mapgen.js?v=4';
+import { T } from './constants.js?v=6';
+import { toInt } from './themes.js?v=6';
+import { buildHeightField, contourAt, clusters, mulberry32 } from './mapgen.js?v=6';
 
 const BASE = 48; // world units per cell; camera scales to fit
 
