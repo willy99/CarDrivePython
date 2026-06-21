@@ -76,10 +76,10 @@ const STRINGS = {
     htShotFog: 'Fog of war',
     htShotPath: 'Dirt roads',
     htGearTitle: 'Backpack & Artifacts',
-    htGearP: 'After each operation you may find artifacts on the field. Collect them into your Stash, then pick up to 2 before the next op. Artifacts give you powerful one-time abilities.',
+    htGearP: 'After each operation you may find artifacts on the field. Collect them into your Stash. Your bag slots (how many you can carry) depend on your rank — see the rank table below.',
     htArtifactsTitle: 'All artifacts',
-    htRanksTitle: 'Ranks',
-    htRanksP: 'Clear operations to earn rank points. The more fields you clear, the higher your rank — from Recruit all the way to General.',
+    htRanksTitle: 'Ranks & Bag progression',
+    htRanksP: 'Clear operations to earn rank. Every two ranks your bag upgrades — giving you more artifact slots per mission. From a humble ATB bag all the way to a massive дuffel баул.',
     htTimedTitle: 'Timed operations',
     htTimedP: 'Some operations have a countdown timer. Clear the field before time runs out or you lose. The timer turns orange under 60 s and red under 30 s.',
     htFogTitle: 'Fog of war & Night ops',
@@ -191,10 +191,10 @@ const STRINGS = {
     htShotFog: 'Туман війни',
     htShotPath: 'Грунтові дорожки',
     htGearTitle: 'Рюкзак та Артефакти',
-    htGearP: 'Після кожної операції можна знайти артефакти прямо на полі. Вони збираються на складі, потім можна брати до 2 штук в рюкзак перед наступною операцією. Артефакти дають потужні одноразові здатності.',
+    htGearP: 'Після кожної операції можна знайти артефакти прямо на полі. Вони збираються на складі. Кількість слотів у рюкзаку (скільки можна взяти) залежить від твого звання — дивись таблицю нижче.',
     htArtifactsTitle: 'Всі артефакти',
-    htRanksTitle: 'Звання',
-    htRanksP: 'Проходь операції — заробляй звання. Чим більше полігонів розмінуєш, тим вище звання: від Рекрута до Генерала.',
+    htRanksTitle: 'Звання та прогрес рюкзака',
+    htRanksP: 'З кожними двома званнями рюкзак росте — більше слотів, більше артефактів за місію. Від кулька ATB до повноцінного баула.',
     htTimedTitle: 'Операції на час',
     htTimedP: 'Деякі операції мають таймер зворотного відліку. Розмінуй поле до кінця часу, інакше можеш йти на пенсію...',
     htFogTitle: 'Туман війни та Нічні операції',
@@ -250,21 +250,24 @@ export function t(key) {
 }
 
 // Level display names — index 0 unused, levels are 1-based.
+// Icons: ⏱ timed  🌫 fog  🌙 night
 const LEVEL_NAMES = {
   en: ['',
-    'Training ground', 'Old quarry', 'Field road', 'Checkpoint', 'River bank',
-    'Forest edge', 'Hill pass', 'Lakeside', 'Border line', 'The harbor',
-    'Broken bridge', 'Island delta', 'Mountain fort', 'Flooded valley', 'The peninsula',
-    'No man\'s land',
-    'Crossroads', 'Desert highway', 'Wetland trail', 'Coral atoll',
-    '🌫 Fog zone', '🌙 Night patrol', '🌙 River crossing', '🌙 Dark atoll'],
+    'Training ground', 'Old quarry',    'Field road',     'Checkpoint',   'River bank',   // 1-5
+    'Forest edge',    '⏱ Speed drill', '⏱ Lake rush',   '⏱ Time bomb',  'The harbor',   // 6-10
+    'Broken bridge',  'Island delta',   'Mountain fort',  'Flooded valley','The peninsula',// 11-15
+    'No man\'s land', 'Crossroads',     'Desert highway', 'Wetland trail', 'Coral atoll',  // 16-20
+    'River delta',    '⏱ War games',   'Lakeside',       'Dark atoll',                    // 21-24
+    '🌫 Fog zone',   '🌙 Night patrol','🌙⏱ Dark crossing',                              // 25-27
+    'Big land',       'Giant island',   '🌫 Mega field'],                                 // 28-30
   uk: ['',
-    'Полігон', 'Старий кар\'єр', 'Польова дорога', 'Блокпост', 'Берег річки',
-    'Узлісся', 'Гірський перевал', 'Біля озера', 'Лінія кордону', 'Гавань',
-    'Зламаний міст', 'Острівна дельта', 'Гірський форт', 'Затоплена долина', 'Півострів',
-    'Нейтральна смуга',
-    'Перехрестя', 'Пустельне шосе', 'Болотна стежка', 'Кораловий атол',
-    '🌫 Зона туману', '🌙 Нічний патруль', '🌙 Переправа', '🌙 Темний атол'],
+    'Полігон',        'Старий кар\'єр', 'Польова дорога', 'Блокпост',     'Берег річки',  // 1-5
+    'Узлісся',        '⏱ Гонка',       '⏱ Лісовий раш', '⏱ Година пік', 'Гавань',       // 6-10
+    'Зламаний міст',  'Острівна дельта','Гірський форт',  'Затоплена долина','Півострів',  // 11-15
+    'Нейтральна смуга','Перехрестя',   'Пустельне шосе', 'Болотна стежка','Кораловий атол',// 16-20
+    'Річна дельта',   '⏱ Воєнні ігри', 'Біля озера',     'Темний атол',                  // 21-24
+    '🌫 Зона туману', '🌙 Нічний патруль','🌙⏱ Темна переправа',                         // 25-27
+    'Велика земля',   'Острів-велетень','🌫 Мегаполе'],                                   // 28-30
 };
 
 export function levelName(id) {

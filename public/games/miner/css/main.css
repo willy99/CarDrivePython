@@ -355,20 +355,33 @@ html, body {
   background: #1d3b2b;
   margin: 20px 0;
 }
-.ht-rank-row {
-  display: flex;
+.ht-rank-row { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 6px; }
+.ht-rank-chip { background: #1a3327; border: 1px solid #3a6b50; border-radius: 20px; padding: 4px 12px; font-size: 12px; color: #c0d0c4; }
+
+/* ── Rank progression grid (how-to) ─────────────────────────────────────── */
+.ht-rank-prog {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
   gap: 8px;
-  flex-wrap: wrap;
-  margin-top: 6px;
+  margin-top: 12px;
 }
-.ht-rank-chip {
+.ht-tier {
   background: #1a3327;
   border: 1px solid #3a6b50;
-  border-radius: 20px;
-  padding: 4px 12px;
-  font-size: 12px;
-  color: #c0d0c4;
+  border-radius: 12px;
+  padding: 8px 6px 10px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
 }
+.ht-tier-svg { height: 62px; display: flex; align-items: center; justify-content: center; }
+.ht-tier-svg svg { height: 60px; width: auto; display: block; }
+.ht-tier-slots { font-size: 15px; font-weight: 900; color: #4ade80; line-height: 1; margin-top: 2px; }
+.ht-tier-name { font-size: 11px; font-weight: 700; color: #e8eee9; }
+.ht-tier-ranks { font-size: 10px; color: #8ab89a; line-height: 1.3; }
+.ht-tier-clears { font-size: 10px; color: #6aa882; }
 
 /* ── Achievements button ─────────────────────────────────────────────────── */
 .ach-btn {

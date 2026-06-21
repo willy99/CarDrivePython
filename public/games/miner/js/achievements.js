@@ -1,6 +1,7 @@
 // ── Achievement definitions ───────────────────────────────────────────────────
 
 export const ACHIEVEMENTS = [
+  // ── Existing ──────────────────────────────────────────────────────────────
   {
     id: 'pacifist',
     icon: '🕊️',
@@ -37,8 +38,8 @@ export const ACHIEVEMENTS = [
     id: 'explorer',
     icon: '🗺️',
     en: 'Explorer', uk: 'Дослідник',
-    descEn: 'Clear all 24 operations.',
-    descUk: 'Пройти всі 24 операції.',
+    descEn: 'Clear all 30 operations.',
+    descUk: 'Пройти всі 30 операцій.',
     skin: 'commander',
   },
   {
@@ -52,7 +53,7 @@ export const ACHIEVEMENTS = [
   {
     id: 'fogwalker',
     icon: '🌫️',
-    en: 'Fog Walker', uk: 'Привид',
+    en: 'Fog Walker', uk: 'Привид туману',
     descEn: 'Clear a fog-of-war level.',
     descUk: 'Пройти рівень у тумані.',
     skin: null,
@@ -81,6 +82,152 @@ export const ACHIEVEMENTS = [
     descUk: 'Поставити 10 правильних прапорців сумарно за всі операції.',
     skin: null,
   },
+
+  // ── New ───────────────────────────────────────────────────────────────────
+  {
+    id: 'survivor',
+    icon: '💥',
+    en: 'Safety Master', uk: 'Майстер безпеки',
+    descEn: 'Survive a mine explosion thanks to a ballistic vest.',
+    descUk: 'Вижити після підриву на міні завдяки бронежилету.',
+    skin: null,
+  },
+  {
+    id: 'wounded_finisher',
+    icon: '🩼',
+    en: 'Combat Veteran', uk: 'Учасник бойових',
+    descEn: 'After surviving a mine explosion, still finish the level successfully.',
+    descUk: 'Підірватися на міні (в броніку) і все одно успішно завершити рівень.',
+    skin: null,
+  },
+  {
+    id: 'speedrun',
+    icon: '🏃',
+    en: 'Speed King', uk: 'Король швидкості',
+    descEn: 'Clear a timed level with over 60 seconds remaining.',
+    descUk: 'Пройти рівень з лімітом часу, залишивши понад 60 секунд.',
+    skin: null,
+  },
+  {
+    id: 'no_flags',
+    icon: '🚫',
+    en: 'Flag-Free', uk: 'Безстрашний',
+    descEn: 'Clear a level without placing a single flag.',
+    descUk: 'Пройти рівень, не поставивши жодного прапорця.',
+    skin: null,
+  },
+  {
+    id: 'pyromaniac',
+    icon: '🔥',
+    en: 'Pyromaniac', uk: 'Піротехнік',
+    descEn: 'Survive 3 mine explosions total (cumulative) wearing a vest.',
+    descUk: 'Вижити 3 рази після підриву на міні у бронежилеті (сумарно).',
+    skin: null,
+  },
+  {
+    id: 'tourist',
+    icon: '🏝️',
+    en: 'Islander', uk: 'Островитянин',
+    descEn: 'Clear an island-type operation.',
+    descUk: 'Пройти операцію на острові.',
+    skin: null,
+  },
+  {
+    id: 'night_ace',
+    icon: '🦉',
+    en: 'Night Ace', uk: 'Нічний снайпер',
+    descEn: 'Clear a night operation without using any artifact.',
+    descUk: 'Пройти нічну операцію, не використовуючи артефактів.',
+    skin: null,
+  },
+  {
+    id: 'streak5',
+    icon: '✋',
+    en: 'High Five', uk: "П'ятірня",
+    descEn: 'Clear 5 levels in a row without hitting a mine.',
+    descUk: 'Пройти 5 рівнів поспіль без підриву.',
+    skin: null,
+  },
+  {
+    id: 'streak10',
+    icon: '💎',
+    en: 'Iron Will', uk: 'Залізні нерви',
+    descEn: 'Clear 10 levels in a row without hitting a mine.',
+    descUk: 'Пройти 10 рівнів поспіль без підриву.',
+    skin: null,
+  },
+  {
+    id: 'pilot',
+    icon: '🛸',
+    en: 'Drone Pilot', uk: 'Пілот дрона',
+    descEn: 'Use the defuser drone to neutralise a mine.',
+    descUk: 'Використати дрон-знешкоджувач для нейтралізації міни.',
+    skin: null,
+  },
+  {
+    id: 'driver',
+    icon: '🛻',
+    en: 'Armoured Driver', uk: 'Водій броні',
+    descEn: 'Ride the UGV across a minefield.',
+    descUk: 'Проїхати на UGV через мінне поле.',
+    skin: null,
+  },
+  {
+    id: 'radar',
+    icon: '📡',
+    en: 'Radar Operator', uk: 'Радарник',
+    descEn: 'Use echo sonar to scan for mines.',
+    descUk: 'Використати ехо-сканування для пошуку мін.',
+    skin: null,
+  },
+  {
+    id: 'arm_master',
+    icon: '🦾',
+    en: 'Long Arm', uk: 'Довгі руки',
+    descEn: 'Neutralise 5 mines using the manipulator arm (cumulative).',
+    descUk: 'Знешкодити 5 мін маніпулятором-рукою (сумарно).',
+    skin: null,
+  },
+  {
+    id: 'megamap',
+    icon: '🌍',
+    en: 'Big Game', uk: 'Велика гра',
+    descEn: 'Clear the 40×38 mega-map (level 30).',
+    descUk: 'Пройти мегакарту 40×38 (рівень 30).',
+    skin: null,
+  },
+  {
+    id: 'full_stash',
+    icon: '📦',
+    en: 'Collector', uk: 'Колекціонер',
+    descEn: 'Have at least one of every artifact type in your stash.',
+    descUk: 'Зібрати хоча б по одному артефакту кожного типу.',
+    skin: null,
+  },
+  {
+    id: 'rich',
+    icon: '💰',
+    en: 'Well-Stocked', uk: 'Затарений',
+    descEn: 'Have 20 or more artifacts in your stash at once.',
+    descUk: 'Мати 20+ артефактів у схованці одночасно.',
+    skin: null,
+  },
+  {
+    id: 'timed_ace',
+    icon: '⏰',
+    en: 'Timekeeper', uk: 'Хронометрист',
+    descEn: 'Complete all timed operations (levels 7, 8, 9, 22, 27).',
+    descUk: 'Пройти всі операції з лімітом часу (рівні 7, 8, 9, 22, 27).',
+    skin: null,
+  },
+  {
+    id: 'marathon',
+    icon: '🏅',
+    en: 'Marathon Runner', uk: 'Марафонець',
+    descEn: 'Clear 30 operations.',
+    descUk: 'Пройти 30 операцій.',
+    skin: null,
+  },
 ];
 
 // ── Storage ───────────────────────────────────────────────────────────────────
@@ -88,6 +235,8 @@ export const ACHIEVEMENTS = [
 const STORAGE_KEY = 'miner_achievements';
 const STREAK_KEY  = 'miner_clean_streak';
 const FLAGS_KEY   = 'miner_correct_flags';
+const VEST_KEY    = 'miner_vest_hits';
+const ARM_KEY     = 'miner_arm_uses';
 
 export function loadAchievements() {
   try { return JSON.parse(localStorage.getItem(STORAGE_KEY)) || {}; } catch { return {}; }
@@ -122,6 +271,24 @@ export function addCorrectFlags(n) {
   const total = getCorrectFlagsTotal() + n;
   localStorage.setItem(FLAGS_KEY, String(total));
   return total;
+}
+
+export function getVestHits() {
+  return parseInt(localStorage.getItem(VEST_KEY) || '0', 10);
+}
+export function addVestHit() {
+  const n = getVestHits() + 1;
+  localStorage.setItem(VEST_KEY, String(n));
+  return n;
+}
+
+export function getArmUses() {
+  return parseInt(localStorage.getItem(ARM_KEY) || '0', 10);
+}
+export function addArmUse() {
+  const n = getArmUses() + 1;
+  localStorage.setItem(ARM_KEY, String(n));
+  return n;
 }
 
 // ── Skin system ───────────────────────────────────────────────────────────────

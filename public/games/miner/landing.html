@@ -83,9 +83,17 @@
     .tag-target{background:rgba(250,204,21,.12);color:#facc15;}
     .tag-passive{background:rgba(148,163,184,.1);color:#94a3b8;}
 
-    /* ── ranks ── */
-    .ranks-row{display:flex;flex-wrap:wrap;gap:10px;margin-top:8px;}
-    .rank-chip{background:var(--bg2);border:1px solid var(--border2);border-radius:20px;padding:6px 16px;font-size:.82rem;color:var(--text2);}
+    /* ── rank progression grid ── */
+    .rank-prog{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;max-width:720px;}
+    .rp-card{background:var(--bg2);border:1px solid var(--border);border-radius:16px;padding:16px 10px 14px;text-align:center;display:flex;flex-direction:column;align-items:center;gap:5px;transition:.2s;}
+    .rp-card:hover{border-color:rgba(74,222,128,.22);transform:translateY(-2px);}
+    .rp-bag{display:flex;align-items:center;justify-content:center;height:84px;}
+    .rp-bag svg{height:80px;width:auto;}
+    .rp-slots{font-size:1.15rem;font-weight:900;color:var(--acc);line-height:1;}
+    .rp-bag-name{font-size:.82rem;font-weight:700;color:var(--text1);}
+    .rp-ranks{font-size:.76rem;color:var(--text2);line-height:1.35;}
+    .rp-clears{font-size:.72rem;color:var(--text3);}
+    @media(max-width:600px){.rank-prog{grid-template-columns:repeat(2,1fr);}}
 
     /* ── cta ── */
     .cta-wrap{margin:0 24px 80px;}
@@ -122,9 +130,9 @@
   <p class="hero-desc" id="hero-desc">A fresh take on the classic: your sapper walks the minefield on a real topographic map — rivers, bridges, forests, mountains, dirt roads. 24 hand-crafted operations, 15 field artifacts, rank progression and fog-of-war night missions.</p>
   <a href="index.html" class="btn-primary" id="hero-btn">▶ Start Demining!</a>
   <div class="stats-row">
-    <div class="stat-item"><div class="stat-num">24</div><div class="stat-label" id="st1">Operations</div></div>
+    <div class="stat-item"><div class="stat-num">30</div><div class="stat-label" id="st1">Operations</div></div>
     <div class="stat-item"><div class="stat-num">15</div><div class="stat-label" id="st2">Artifacts</div></div>
-    <div class="stat-item"><div class="stat-num">8</div><div class="stat-label" id="st3">Ranks</div></div>
+    <div class="stat-item"><div class="stat-num">14</div><div class="stat-label" id="st3">Ranks</div></div>
     <div class="stat-item"><div class="stat-num">100%</div><div class="stat-label" id="st4">Free</div></div>
   </div>
 </div>
@@ -381,19 +389,60 @@
 <!-- ══ RANKS ══ -->
 <div class="section-wrap">
   <div class="section-head">
-    <div class="section-kicker" id="r-kicker">Rank system</div>
-    <h2 class="section-title" id="r-title">Work your way up from Recruit to General</h2>
-    <p class="section-sub" id="r-sub">Every operation you clear earns rank points. The more you clear, the higher you climb.</p>
+    <div class="section-kicker" id="r-kicker">Rank &amp; Bag system</div>
+    <h2 class="section-title" id="r-title">Your bag grows with your rank</h2>
+    <p class="section-sub" id="r-sub">Every two ranks your bag upgrades — more artifact slots per mission. From a humble ATB bag to a massive duffel баул.</p>
   </div>
-  <div class="ranks-row">
-    <div class="rank-chip">🪖 <span id="rk1">Recruit</span></div>
-    <div class="rank-chip">⭐ <span id="rk2">Sapper</span></div>
-    <div class="rank-chip">⭐⭐ <span id="rk3">Sergeant</span></div>
-    <div class="rank-chip">⭐⭐⭐ <span id="rk4">Lieutenant</span></div>
-    <div class="rank-chip">🎖️ <span id="rk5">Captain</span></div>
-    <div class="rank-chip">🏅 <span id="rk6">Major</span></div>
-    <div class="rank-chip">🎗️ <span id="rk7">Colonel</span></div>
-    <div class="rank-chip">👑 <span id="rk8">General</span></div>
+  <div class="rank-prog" id="rank-prog">
+
+    <div class="rp-card">
+      <div class="rp-bag"><svg viewBox="0 0 140 170" xmlns="http://www.w3.org/2000/svg"><ellipse cx="70" cy="163" rx="42" ry="5" fill="#000" opacity="0.18"/><path d="M35,68 L22,152 Q22,161 33,161 L107,161 Q118,161 118,152 L105,68Z" fill="#dceef8" stroke="#a0c8e0" stroke-width="1.5"/><path d="M55,68 C52,42 58,28 70,28 C82,28 88,42 85,68" fill="none" stroke="#2070b0" stroke-width="3.5" stroke-linecap="round"/><line x1="70" y1="70" x2="70" y2="156" stroke="#b0d0e8" stroke-width="0.9" opacity="0.5"/><rect x="32" y="95" width="76" height="40" rx="6" fill="#cc1111"/><text x="70" y="122" font-size="26" fill="white" text-anchor="middle" font-family="Arial Black,sans-serif" font-weight="900">ATB</text></svg></div>
+      <div class="rp-slots" id="rp1s">1 slot</div>
+      <div class="rp-bag-name" id="rp1n">ATB bag</div>
+      <div class="rp-ranks" id="rp1r">Recruit / Sapper</div>
+      <div class="rp-clears">0–2 ops</div>
+    </div>
+
+    <div class="rp-card">
+      <div class="rp-bag"><svg viewBox="0 0 140 170" xmlns="http://www.w3.org/2000/svg"><ellipse cx="70" cy="163" rx="40" ry="5" fill="#000" opacity="0.2"/><line x1="70" y1="8" x2="70" y2="80" stroke="#5a3a18" stroke-width="5" stroke-linecap="round"/><path d="M55,76 Q62,68 70,72 Q78,68 85,76 Q78,84 70,79 Q62,84 55,76Z" fill="#3a2010"/><ellipse cx="70" cy="118" rx="46" ry="44" fill="#c8a060"/><path d="M70,78 L38,100" stroke="#a07840" stroke-width="1.5" fill="none" opacity="0.55"/><path d="M70,78 L26,120" stroke="#a07840" stroke-width="1.5" fill="none" opacity="0.55"/><path d="M70,78 L102,100" stroke="#a07840" stroke-width="1.5" fill="none" opacity="0.55"/><path d="M70,78 L114,120" stroke="#a07840" stroke-width="1.5" fill="none" opacity="0.55"/><ellipse cx="53" cy="106" rx="14" ry="10" fill="#e0b870" opacity="0.32"/></svg></div>
+      <div class="rp-slots" id="rp2s">2 slots</div>
+      <div class="rp-bag-name" id="rp2n">Pouch</div>
+      <div class="rp-ranks" id="rp2r">Sr. Sapper / Jr. Sgt.</div>
+      <div class="rp-clears">3–9 ops</div>
+    </div>
+
+    <div class="rp-card">
+      <div class="rp-bag"><svg viewBox="0 0 140 170" xmlns="http://www.w3.org/2000/svg"><ellipse cx="70" cy="164" rx="48" ry="5" fill="#000" opacity="0.2"/><path d="M90,40 Q115,62 102,102" stroke="#7a5830" stroke-width="4.5" fill="none" stroke-linecap="round"/><rect x="22" y="48" width="88" height="110" rx="10" fill="#9a7438"/><rect x="24" y="50" width="84" height="106" rx="9" fill="#b88848"/><path d="M22,48 L22,90 Q22,100 32,100 L108,100 Q118,100 118,90 L118,48 Q118,36 108,36 L32,36 Q22,36 22,48Z" fill="#8a6428"/><rect x="57" y="92" width="26" height="12" rx="4" fill="#c8a040"/><rect x="63" y="95" width="14" height="6" rx="2" fill="#8a6820"/></svg></div>
+      <div class="rp-slots" id="rp3s">3 slots</div>
+      <div class="rp-bag-name" id="rp3n">Bag</div>
+      <div class="rp-ranks" id="rp3r">Sergeant / Sr. Sgt.</div>
+      <div class="rp-clears">10–21 ops</div>
+    </div>
+
+    <div class="rp-card">
+      <div class="rp-bag"><svg viewBox="0 0 140 170" xmlns="http://www.w3.org/2000/svg"><ellipse cx="70" cy="165" rx="50" ry="5" fill="#000" opacity="0.22"/><path d="M18,38 Q18,20 36,20 L104,20 Q122,20 122,38 L122,148 Q122,162 108,162 L32,162 Q18,162 18,148Z" fill="#304a28"/><path d="M54,12 Q54,3 70,3 Q86,3 86,12" stroke="#1e3018" stroke-width="9" fill="none" stroke-linecap="round"/><path d="M54,12 Q54,5 70,5 Q86,5 86,12" stroke="#2e4826" stroke-width="5" fill="none" stroke-linecap="round"/><rect x="34" y="26" width="72" height="20" rx="5" fill="#1e3018"/><text x="70" y="40" font-size="11" fill="#c4a862" text-anchor="middle" font-family="Georgia,serif">★ ★ ★</text><rect x="22" y="54" width="96" height="70" rx="10" fill="#1e3018"/><rect x="24" y="56" width="92" height="66" rx="9" fill="#243820"/><rect x="22" y="133" width="96" height="28" rx="8" fill="#1e3018"/></svg></div>
+      <div class="rp-slots" id="rp4s">4 slots</div>
+      <div class="rp-bag-name" id="rp4n">Backpack</div>
+      <div class="rp-ranks" id="rp4r">Master Sgt. / Warrant</div>
+      <div class="rp-clears">22–39 ops</div>
+    </div>
+
+    <div class="rp-card">
+      <div class="rp-bag"><svg viewBox="0 0 140 170" xmlns="http://www.w3.org/2000/svg"><ellipse cx="70" cy="165" rx="52" ry="5" fill="#000" opacity="0.22"/><rect x="16" y="14" width="108" height="148" rx="10" fill="#263e1e"/><rect x="18" y="16" width="104" height="144" rx="9" fill="#304828"/><rect x="8" y="52" width="10" height="72" rx="5" fill="#1a2e10" opacity="0.9"/><rect x="122" y="52" width="10" height="72" rx="5" fill="#1a2e10" opacity="0.9"/><rect x="22" y="18" width="96" height="34" rx="7" fill="#1e3018"/><rect x="24" y="20" width="92" height="30" rx="6" fill="#243820"/><line x1="30" y1="36" x2="110" y2="36" stroke="#c4a862" stroke-width="2" opacity="0.65"/><rect x="20" y="58" width="100" height="88" rx="8" fill="#1e3018"/><rect x="22" y="60" width="96" height="84" rx="7" fill="#243820"/><text x="70" y="96" font-size="10" fill="#c4a862" text-anchor="middle" font-family="Georgia,serif">★ ★ ★ ★</text></svg></div>
+      <div class="rp-slots" id="rp5s">5 slots</div>
+      <div class="rp-bag-name" id="rp5n">Large backpack</div>
+      <div class="rp-ranks" id="rp5r">Lieutenant / Captain</div>
+      <div class="rp-clears">40–65 ops</div>
+    </div>
+
+    <div class="rp-card">
+      <div class="rp-bag"><svg viewBox="0 0 140 170" xmlns="http://www.w3.org/2000/svg"><ellipse cx="70" cy="165" rx="56" ry="5" fill="#000" opacity="0.22"/><rect x="10" y="28" width="120" height="130" rx="22" fill="#302e14"/><rect x="12" y="30" width="116" height="126" rx="21" fill="#40401a"/><rect x="10" y="78" width="120" height="16" fill="#222010"/><line x1="10" y1="86" x2="130" y2="86" stroke="#c4a040" stroke-width="2.5" opacity="0.75"/><circle cx="22" cy="86" r="6" fill="#c4a040"/><rect x="10" y="28" width="120" height="14" rx="12" fill="#202010"/><rect x="10" y="144" width="120" height="14" rx="12" fill="#202010"/><circle cx="28" cy="35" r="5" fill="#c4a040" opacity="0.9"/><circle cx="112" cy="35" r="5" fill="#c4a040" opacity="0.9"/><path d="M44,30 C44,12 96,12 96,30" stroke="#202010" stroke-width="8" fill="none" stroke-linecap="round"/><path d="M44,30 C44,16 96,16 96,30" stroke="#50501e" stroke-width="5" fill="none" stroke-linecap="round"/><rect x="35" y="40" width="70" height="34" rx="6" fill="#202010" opacity="0.75"/><text x="70" y="62" font-size="10" fill="#c4a040" text-anchor="middle" font-family="Georgia,serif">★ ★ ★ ★ ★</text></svg></div>
+      <div class="rp-slots" id="rp6s">6 slots</div>
+      <div class="rp-bag-name" id="rp6n">Duffel bag (баул)</div>
+      <div class="rp-ranks" id="rp6r">Major → General</div>
+      <div class="rp-clears">66+ ops</div>
+    </div>
+
   </div>
 </div>
 
@@ -416,7 +465,7 @@ const C = {
     navLogo:'💥 БАБАХ', homeLink:'← All games', langBtn:'🇺🇦 UA', navPlay:'▶ Play',
     heroBadge:'Topographic Minesweeper',
     heroSub:'Classic minesweeper · Organic landscapes · Fog of war · Night ops',
-    heroDesc:'A fresh take on the classic: your sapper walks the minefield on a real topographic map — rivers, bridges, forests, mountains, dirt roads. 24 hand-crafted operations, 15 field artifacts, rank progression and fog-of-war night missions.',
+    heroDesc:'A fresh take on the classic: your sapper walks the minefield on a real topographic map — rivers, bridges, forests, mountains, dirt roads. 30 hand-crafted operations, 15 field artifacts, 14 ranks with bag progression and fog-of-war night missions.',
     heroBtn:'▶ Start Demining!',
     st1:'Operations', st2:'Artifacts', st3:'Ranks', st4:'Free',
     lab1:'River & Bridge', lab2:'Night Operation', lab3:'Fog of War', lab4:'Dirt Roads',
@@ -434,8 +483,8 @@ const C = {
     f5t:'Night operations', f5d:'Dark sky, moon, starfield. Only a tiny halo of light around your sapper. Use Flashlight or Spotlight to see further.',
     f6t:'Timed missions', f6d:'Some operations have a countdown. Clear the field before the clock hits zero — the timer turns red under 30 seconds.',
     f7t:'Terrain elements', f7d:'Rivers with bridges, lakes, seas, mountain ranges, tree clusters, and winding dirt roads — each changes how you navigate.',
-    f8t:'Rank progression', f8d:'Clear more fields, climb the ranks: Recruit → Sapper → Sergeant → Lieutenant → Captain → Major → Colonel → General.',
-    aKicker:'Backpack gear', aTitle:'15 artifacts — one operation at a time', aSub:'Find artifacts in the field, pick two for your next op. Each gives a unique one-time ability.',
+    f8t:'Rank & Bag progression', f8d:'14 ranks from Recruit to General — and your bag upgrades every two ranks. More rank = more artifact slots per mission.',
+    aKicker:'Backpack gear', aTitle:'15 artifacts — one operation at a time', aSub:'Find artifacts in the field, pick up to 6 for your next op (depends on rank). Each gives a unique one-time ability.',
     a1n:'Echo sounder',a1d:'Shows all mines within 2 cells for a moment.',a1t:'self',
     a2n:'Recon drone',a2d:'Tap a spot — scans 3×3 and flags every mine.',a2t:'tap',
     a3n:'Safe probe',a3d:'Tap one cell to open it safely — mine gets flagged.',a3t:'tap',
@@ -451,8 +500,10 @@ const C = {
     a13n:'Sniper scan',a13d:"Reveals safe cells in the sapper's row and column.",a13t:'self',
     a14n:'Flashlight',a14d:'Tap a cell — lights up a 3×3 area (mines get flagged).',a14t:'tap',
     a15n:'Spotlight',a15d:'One burst — reveals a 5×5 area around your sapper.',a15t:'self',
-    rKicker:'Rank system', rTitle:'Work your way up from Recruit to General', rSub:'Every operation you clear earns rank points. The more you clear, the higher you climb.',
-    rk1:'Recruit',rk2:'Sapper',rk3:'Sergeant',rk4:'Lieutenant',rk5:'Captain',rk6:'Major',rk7:'Colonel',rk8:'General',
+    rKicker:'Rank & Bag system', rTitle:'Your bag grows with your rank', rSub:'Every two ranks your bag upgrades — more artifact slots per mission. From a humble ATB bag to a massive duffel баул.',
+    rp1s:'1 slot',rp2s:'2 slots',rp3s:'3 slots',rp4s:'4 slots',rp5s:'5 slots',rp6s:'6 slots',
+    rp1n:'ATB bag',rp2n:'Pouch',rp3n:'Bag',rp4n:'Backpack',rp5n:'Large backpack',rp6n:'Duffel bag (баул)',
+    rp1r:'Recruit / Sapper',rp2r:'Sr. Sapper / Jr. Sgt.',rp3r:'Sergeant / Sr. Sgt.',rp4r:'Master Sgt. / Warrant',rp5r:'Lieutenant / Captain',rp6r:'Major → General',
     ctaKicker:'Ready, sapper?', ctaTitle:'The field won\'t clear itself', ctaTagline:'No install. No account. 100% free. Play right now.',
     ctaBtn:'💥 Start demining!',
     footerTxt:'© 2025 Бабах · A Pashka Game · Built with PixiJS',
@@ -462,7 +513,7 @@ const C = {
     navLogo:'💥 БАБАХ', homeLink:'← Усі ігри', langBtn:'🇬🇧 EN', navPlay:'▶ Грати',
     heroBadge:'Топографічний сапер',
     heroSub:'Класичний мінний сапер · Органічні ландшафти · Туман війни · Нічні операції',
-    heroDesc:'Свіжий погляд на класику: твій сапер ходить по мінному полю на справжній топографічній карті — річки, мости, ліси, гори, грунтові дороги. 24 операції, 15 артефактів, система звань та нічні місії у тумані.',
+    heroDesc:'Свіжий погляд на класику: твій сапер ходить по мінному полю на справжній топографічній карті — річки, мости, ліси, гори, грунтові дороги. 30 операцій, 15 артефактів, 14 звань з прогресом рюкзака та нічні місії у тумані.',
     heroBtn:'▶ Починаємо розмінування!',
     st1:'Операцій', st2:'Артефактів', st3:'Звань', st4:'Безкоштовно',
     lab1:'Річка і міст', lab2:'Нічна операція', lab3:'Туман війни', lab4:'Грунтові дороги',
@@ -480,8 +531,8 @@ const C = {
     f5t:'Нічні операції', f5d:'Темне небо, місяць, зірки. Навколо сапера тільки крихітний ореол світла. Ліхтарик або Прожектор допоможуть.',
     f6t:'Операції на час', f6d:'Деякі операції мають таймер. Розмінуй поле до нуля — при <30 с таймер стає червоним.',
     f7t:'Елементи ландшафту', f7d:'Річки з мостами, озера, моря, гірські масиви, дерева та грунтові дорожки — кожен змінює тактику.',
-    f8t:'Система звань', f8d:'Чим більше полів розмінуєш, тим вище звання: Рекрут → Сапер → Сержант → Лейтенант → Капітан → Майор → Полковник → Генерал.',
-    aKicker:'Спорядження', aTitle:'15 артефактів — одна операція за раз', aSub:'Знаходь артефакти на полі, бери два на наступну операцію. Кожен дає унікальну одноразову здатність.',
+    f8t:'Звання та рюкзак', f8d:'14 звань від Рекрута до Генерала — і кожні два звання рюкзак стає більшим. Більше звання = більше слотів для артефактів.',
+    aKicker:'Спорядження', aTitle:'15 артефактів — одна операція за раз', aSub:'Знаходь артефакти на полі, бери до 6 штук на наступну операцію (залежить від звання). Кожен дає унікальну здатність.',
     a1n:'Ехолокатор',a1d:'На мить показує всі міни в радіусі 2 клітинок.',a1t:'одразу',
     a2n:'Розвідувальний дрон',a2d:'Тицьни місце — сканує 3×3 і позначає всі міни.',a2t:'тицни',
     a3n:'Щуп',a3d:'Тицьни клітинку — безпечно відкриє, а міну позначить.',a3t:'тицни',
@@ -497,8 +548,10 @@ const C = {
     a13n:'Снайпер',a13d:'Відкриває безпечні клітинки в рядку і стовпці сапера.',a13t:'одразу',
     a14n:'Ліхтарик',a14d:'Тицьни клітинку — підсвічує 3×3 навколо (міни позначить прапорцем).',a14t:'тицни',
     a15n:'Прожектор',a15d:'Одноразово — розкриває область 5×5 навколо сапера.',a15t:'одразу',
-    rKicker:'Система звань', rTitle:'Від Рекрута до Генерала', rSub:'Кожна пройдена операція дає очки звання. Чим більше розмінуєш — тим вище звання.',
-    rk1:'Рекрут',rk2:'Сапер',rk3:'Сержант',rk4:'Лейтенант',rk5:'Капітан',rk6:'Майор',rk7:'Полковник',rk8:'Генерал',
+    rKicker:'Звання та рюкзак', rTitle:'Рюкзак росте разом із тобою', rSub:'Кожні два звання рюкзак апгрейдиться — більше слотів, більше артефактів за місію. Від кулька ATB до баула.',
+    rp1s:'1 слот',rp2s:'2 слоти',rp3s:'3 слоти',rp4s:'4 слоти',rp5s:'5 слотів',rp6s:'6 слотів',
+    rp1n:'Кульок ATB',rp2n:'Котомочка',rp3n:'Сумка',rp4n:'Рюкзак',rp5n:'Великий рюкзак',rp6n:'Баул',
+    rp1r:'Новобранець / Сапер',rp2r:'Ст. Сапер / Мол. Серж.',rp3r:'Сержант / Ст. Сержант',rp4r:'Старшина / Прапорщик',rp5r:'Лейтенант / Капітан',rp6r:'Майор → Генерал',
     ctaKicker:'Готовий, сапере?', ctaTitle:'Поле саме себе не розмінує', ctaTagline:'Без реєстрації. Без завантаження. 100% безкоштовно.',
     ctaBtn:'💥 Починаємо розмінування!',
     footerTxt:'© 2025 Бабах · Гра від Пашка · Створено на PixiJS',
@@ -520,7 +573,7 @@ function applyLang(){
   s('a-kicker',c.aKicker);s('a-title',c.aTitle);s('a-sub',c.aSub);
   for(let i=1;i<=15;i++){s('a'+i+'n',c['a'+i+'n']);s('a'+i+'d',c['a'+i+'d']);s('a'+i+'t',c['a'+i+'t']);}
   s('r-kicker',c.rKicker);s('r-title',c.rTitle);s('r-sub',c.rSub);
-  for(let i=1;i<=8;i++) s('rk'+i,c['rk'+i]);
+  for(let i=1;i<=6;i++){s('rp'+i+'s',c['rp'+i+'s']);s('rp'+i+'n',c['rp'+i+'n']);s('rp'+i+'r',c['rp'+i+'r']);}
   s('cta-kicker',c.ctaKicker);s('cta-title',c.ctaTitle);s('cta-tagline',c.ctaTagline);s('cta-btn',c.ctaBtn);
   s('footer-txt',c.footerTxt);
   document.title=c.docTitle;document.documentElement.lang=lang;
