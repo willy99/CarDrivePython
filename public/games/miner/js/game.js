@@ -1,13 +1,13 @@
-import { SAPPER_SPEED, T } from './constants.js?v=8';
-import { t, levelName, toggleLang, lang } from './i18n.js?v=8';
-import { LEVELS, LEVEL_COUNT, loadProgress, markCompleted, isUnlocked } from './levels.js?v=8';
-import { Board } from './board.js?v=8';
-import { PixiRenderer } from './pixiRenderer.js?v=8';
-import { THEMES, loadTheme, saveTheme, nextTheme } from './themes.js?v=8';
-import { Sound, isMuted, toggleMute } from './audio.js?v=8';
-import { loadClears, addClear, rankFor, rankName, rankStars } from './ranks.js?v=8';
-import { ARTIFACTS, ARTIFACT_IDS, artifactName, artifactDesc, loadStash, addArtifact, consumeArtifact, loadEquip, toggleEquip, removeEquip } from './artifacts.js?v=8';
-import { ACHIEVEMENTS, loadAchievements, unlockAchievement, getCleanStreak, setCleanStreak, addCorrectFlags, SKINS, loadSkin, saveSkin, isSkinUnlocked } from './achievements.js?v=8';
+import { SAPPER_SPEED, T } from './constants.js?v=9';
+import { t, levelName, toggleLang, lang } from './i18n.js?v=9';
+import { LEVELS, LEVEL_COUNT, loadProgress, markCompleted, isUnlocked } from './levels.js?v=9';
+import { Board } from './board.js?v=9';
+import { PixiRenderer } from './pixiRenderer.js?v=9';
+import { THEMES, loadTheme, saveTheme, nextTheme } from './themes.js?v=9';
+import { Sound, isMuted, toggleMute } from './audio.js?v=9';
+import { loadClears, addClear, rankFor, rankName, rankStars } from './ranks.js?v=9';
+import { ARTIFACTS, ARTIFACT_IDS, artifactName, artifactDesc, loadStash, addArtifact, consumeArtifact, loadEquip, toggleEquip, removeEquip } from './artifacts.js?v=9';
+import { ACHIEVEMENTS, loadAchievements, unlockAchievement, getCleanStreak, setCleanStreak, addCorrectFlags, SKINS, loadSkin, saveSkin, isSkinUnlocked } from './achievements.js?v=9';
 
 const $ = id => document.getElementById(id);
 
@@ -807,11 +807,13 @@ class Game {
 
   flagAction(c, r) {
     const sp0 = this.sapper;
-    if (this.state !== 'PLAYING' || !this.board.minesPlaced || sp0.moving || this._busy) return;
+    const classic = this._getMode() === 'classic';
+    if (this.state !== 'PLAYING') return;
+    if (!classic && (!this.board.minesPlaced || sp0.moving || this._busy)) return;
     const b = this.board;
     const cell = b.get(c, r);
     if (!cell || cell.type === T.VOID || cell.type === T.WATER || cell.revealed) return;
-    if (this._getMode() === 'classic') {
+    if (classic) {
       cell.flagged = !cell.flagged;
       this.renderer.setFlag(cell);
       cell.flagged ? Sound.flag() : Sound.unflag();
