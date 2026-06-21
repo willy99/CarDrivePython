@@ -65,7 +65,7 @@ export class PixiRenderer {
   // ── input: emits taps/flags; handles pan + zoom internally ─────────────────
   _wireInput() {
     const v = this.app.view;
-    let down = null, lp = null, handled = false, panning = false;
+    let down = null, lp = null, handled = false, panning = false, lpFired = false;
     // pinch zoom state
     const _ptrs = new Map(); // pointerId → {x,y}
     let _pinchDist = 0;
@@ -80,6 +80,7 @@ export class PixiRenderer {
     };
 
     v.addEventListener('pointerdown', e => {
+      lpFired = false;
       _ptrs.set(e.pointerId, { x: e.clientX, y: e.clientY });
       if (_ptrs.size === 2) {
         clearTimeout(lp); lp = null; down = null; panning = false; handled = true;
@@ -90,6 +91,7 @@ export class PixiRenderer {
       this._lastPan = down;
       if (this.board) lp = setTimeout(() => {
         handled = true;
+        lpFired = true;
         const c = this.cellAt(e.clientX, e.clientY);
         this.onCellFlag && this.onCellFlag(c.c, c.r);
       }, 380);
@@ -139,6 +141,7 @@ export class PixiRenderer {
     v.addEventListener('contextmenu', e => {
       e.preventDefault();
       if (!this.board) return;
+      if (lpFired) { lpFired = false; return; }
       const c = this.cellAt(e.clientX, e.clientY);
       this.onCellFlag && this.onCellFlag(c.c, c.r);
     });
