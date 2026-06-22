@@ -1,12 +1,12 @@
 import { SAPPER_SPEED, T } from './constants.js?v=9';
-import { t, levelName, toggleLang, lang } from './i18n.js?v=13';
+import { t, levelName, toggleLang, lang } from './i18n.js?v=15';
 import { showDefusal } from './defusal.js?v=2';
 import { showMultimeter } from './multimeter.js?v=6';
 import { showBalance } from './balance.js?v=1';
 import { showJammer } from './jammer.js?v=1';
 import { LEVELS, LEVEL_COUNT, TIMED_LEVEL_IDS, loadProgress, markCompleted, isUnlocked } from './levels.js?v=12';
-import { Board } from './board.js?v=13';
-import { PixiRenderer } from './pixiRenderer.js?v=15';
+import { Board } from './board.js?v=16';
+import { PixiRenderer } from './pixiRenderer.js?v=17';
 import { THEMES, loadTheme, saveTheme, nextTheme } from './themes.js?v=9';
 import { Sound, isMuted, toggleMute } from './audio.js?v=9';
 import { loadClears, addClear, rankFor, rankName, rankStars, bagCapacity, BAG_NAMES, rankPerks } from './ranks.js?v=13';
@@ -722,17 +722,22 @@ class Game {
     const done = loadProgress();
     const grid = $('level-grid');
     grid.innerHTML = '';
+    const classic = this._getMode() === 'classic';
     for (let id = 1; id <= LEVEL_COUNT; id++) {
+      const lv = LEVELS[id];
       const unlocked = isUnlocked(id, done);
       const cleared = done.has(id);
+      const arcadeOnly = !!(lv && (lv.night || lv.fog || lv.hasVIP || lv.goalType === 'evacuate'));
+      const blocked = classic && arcadeOnly;
+      const blockedIcon = lv && lv.night ? '🌙' : lv && lv.fog ? '🌫️' : lv && lv.hasVIP ? '👤' : lv && lv.goalType === 'evacuate' ? '🚪' : '🕹';
       const card = document.createElement('button');
-      card.className = 'lvl' + (unlocked ? '' : ' locked') + (cleared ? ' done' : '');
-      card.disabled = !unlocked;
+      card.className = 'lvl' + (unlocked && !blocked ? '' : ' locked') + (cleared ? ' done' : '');
+      card.disabled = !unlocked || blocked;
       card.innerHTML =
-        `<span class="lvl-num">${unlocked ? id : '🔒'}</span>` +
-        `<span class="lvl-name">${unlocked ? levelName(id) : t('locked')}</span>` +
-        (cleared ? `<span class="lvl-check">✓ ${t('completed')}</span>` : '');
-      if (unlocked) card.onclick = () => this.startLevel(LEVELS[id]);
+        `<span class="lvl-num">${blocked ? blockedIcon : unlocked ? id : '🔒'}</span>` +
+        `<span class="lvl-name">${blocked ? levelName(id) : unlocked ? levelName(id) : t('locked')}</span>` +
+        (blocked ? `<span class="lvl-check">${t('arcadeOnly')}</span>` : cleared ? `<span class="lvl-check">✓ ${t('completed')}</span>` : '');
+      if (unlocked && !blocked) card.onclick = () => this.startLevel(LEVELS[id]);
       grid.appendChild(card);
     }
   }
@@ -761,6 +766,26 @@ class Game {
         this._setMode(m);
         $('mode-pill').dataset.mode = m;
         toolbar.querySelectorAll('.mode-pill-opt').forEach(b => b.classList.toggle('active', b.dataset.mode === m));
+        // Instantly rebuild grid so arcade-only cards go disabled/enabled
+        const done2 = loadProgress(); const grid2 = $('level-grid'); grid2.innerHTML = '';
+        const classic2 = m === 'classic';
+        for (let id2 = 1; id2 <= LEVEL_COUNT; id2++) {
+          const lv2 = LEVELS[id2];
+          const unlocked2 = isUnlocked(id2, done2);
+          const cleared2 = done2.has(id2);
+          const arcadeOnly2 = !!(lv2 && (lv2.night || lv2.fog || lv2.hasVIP || lv2.goalType === 'evacuate'));
+          const blocked2 = classic2 && arcadeOnly2;
+          const blockedIcon2 = lv2 && lv2.night ? '🌙' : lv2 && lv2.fog ? '🌫️' : lv2 && lv2.hasVIP ? '👤' : lv2 && lv2.goalType === 'evacuate' ? '🚪' : '🕹';
+          const card2 = document.createElement('button');
+          card2.className = 'lvl' + (unlocked2 && !blocked2 ? '' : ' locked') + (cleared2 ? ' done' : '');
+          card2.disabled = !unlocked2 || blocked2;
+          card2.innerHTML =
+            `<span class="lvl-num">${blocked2 ? blockedIcon2 : unlocked2 ? id2 : '🔒'}</span>` +
+            `<span class="lvl-name">${blocked2 ? levelName(id2) : unlocked2 ? levelName(id2) : t('locked')}</span>` +
+            (blocked2 ? `<span class="lvl-check">${t('arcadeOnly')}</span>` : cleared2 ? `<span class="lvl-check">✓ ${t('completed')}</span>` : '');
+          if (unlocked2 && !blocked2) card2.onclick = () => this.startLevel(LEVELS[id2]);
+          grid2.appendChild(card2);
+        }
       };
     });
   }
@@ -794,6 +819,8 @@ class Game {
     this._usedArtifactThisLevel = false;
     this._flagsPlaced = 0;
     this._lastVIPWarn = 0;
+    this._vipFollowing = false;
+    this._vipCell = null;
     this.renderer.currentSkin = loadSkin();
     this.renderer.buildLevel(this.board, THEMES[this.themeId]);
     for (const cell of this.board.cells) if (cell.device) this.renderer.setDevice(cell);
@@ -818,7 +845,7 @@ class Game {
       const b = this.board;
       const spawnC = b.spawnC != null ? b.spawnC : Math.floor(b.cols / 2);
       const spawnR = b.spawnR != null ? b.spawnR : Math.floor(b.rows / 2);
-      b.placeMines(spawnC, spawnR);
+      b.placeMines(spawnC, spawnR, 2);
       for (const cell2 of b.cells) this.renderer.clearDevice(cell2);
       for (const cell2 of b.cells) if (cell2.device) this.renderer.setDevice(cell2);
       // Re-draw VIP/EXIT markers (placeMines may have relocated VIP)
@@ -832,7 +859,9 @@ class Game {
       this.sapper.px = spawnC; this.sapper.pr = spawnR; this.sapper.cell = spawnCell;
       this.renderer.setSapper(spawnC, spawnR, false, 0);
       this.renderer.updateFoW(spawnC, spawnR);
-      this._revealAt(spawnC, spawnR);
+      // Reveal only the spawn cell — no cascade, to avoid instantly opening a path to exit
+      spawnCell.revealed = true;
+      this.renderer.onReveal([spawnCell]);
       $('hint').textContent = t('evacuateHint');
       this.updateHUD();
     } else if (lv.hasVIP) {
@@ -970,12 +999,15 @@ class Game {
   _arriveWalk() {
     const sp = this.sapper;
     const tgt = sp.target;
-    sp.prevCell = sp.cell;
+    const prev = sp.cell;
+    sp.prevCell = prev;
     sp.cell = tgt; sp.px = tgt.c; sp.pr = tgt.r;
     sp.moving = false; sp.path = null; sp.action = null;
     this.renderer.setSapper(tgt.c, tgt.r, false, 0);
     this.renderer.updateFoW(tgt.c, tgt.r);
-    if (tgt.exit && this._checkWin()) this._win();
+    this._tryActivateVIP(tgt);
+    this._followVIP(prev);
+    if ((tgt.exit || tgt.vip) && this._checkWin()) this._win();
   }
 
   _arrowMove(dx, dy) {
@@ -1085,12 +1117,15 @@ class Game {
   _arrive() {
     const sp = this.sapper;
     const tgt = sp.target;
-    sp.prevCell = sp.cell;          // where he stood before this move (detector retreat)
+    const prev = sp.cell;
+    sp.prevCell = prev;          // where he stood before this move (detector retreat)
     sp.cell = tgt;
     sp.px = tgt.c; sp.pr = tgt.r;
     sp.moving = false; sp.path = null;
     this.renderer.setSapper(tgt.c, tgt.r, false, 0);
     this.renderer.updateFoW(tgt.c, tgt.r);
+    this._tryActivateVIP(tgt);
+    this._followVIP(prev);
     if (sp.action === 'flag') {
       const fc = sp.flagTarget; sp.flagTarget = null; sp.action = null;
       if (fc && !fc.revealed) { fc.flagged = true; this.renderer.setFlag(fc); Sound.flag(); this._flagsPlaced++; this.updateHUD(); if (this._checkWin()) this._win(); }
@@ -1098,8 +1133,7 @@ class Game {
     }
     if (sp.action === 'walk') {
       sp.action = null;
-      // Evacuation: check if sapper reached the EXIT cell
-      if (tgt.exit && this._checkWin()) this._win();
+      if ((tgt.exit || tgt.vip) && this._checkWin()) this._win();
       return;
     }
     if (sp.action === 'cross') {            // UGV ride finished
@@ -1146,6 +1180,7 @@ class Game {
         if (!cell.flagged) { cell.flagged = true; }
         Sound.boom();
         this.renderer.spawnExplosion(c, r);
+        if (this._vipBlastCheck(c, r)) return;
         this.renderer.spawnCrater(c, r);
         this.renderer.revealFog(c, r);
         this.renderer.sapperHit();
@@ -1178,6 +1213,7 @@ class Game {
     this.renderer.onReveal(out);
     Sound.reveal();
     this._collect(out);
+    this._tryActivateVIP(b.get(c, r));
     this.updateHUD();
     if (this._checkWin()) this._win();
   }
@@ -1277,7 +1313,31 @@ class Game {
     }
   }
 
+  // Returns true if explosion at (c,r) is within 2 Chebyshev cells of the VIP.
+  // Checks VIP's current escort position (if following) or board cell.
+  _vipBlastCheck(c, r) {
+    if (!this.board.level.hasVIP) return false;
+    const vipPos = this._vipCell || this.board.cells.find(cell => cell.vip);
+    if (!vipPos) return false;
+    if (Math.max(Math.abs(vipPos.c - c), Math.abs(vipPos.r - r)) > 2) return false;
+    // VIP concussed — override to immediate loss
+    this.state = 'OVER';
+    this.board.lost = true;
+    this._mineHitThisLevel = true;
+    setCleanStreak(0);
+    Sound.boom();
+    this.renderer.spawnExplosion(c, r);
+    this.renderer.setLost();
+    this.loseTimer = 1.2;
+    const msg = lang === 'uk'
+      ? '💥 VIP контужений! Місія провалена!'
+      : '💥 VIP concussed! Mission failed!';
+    this.showToast(msg);
+    return true;
+  }
+
   _boom(c, r) {
+    if (this._vipBlastCheck(c, r)) return;
     this.state = 'OVER';
     this.board.lost = true;
     this._mineHitThisLevel = true;
@@ -1293,6 +1353,7 @@ class Game {
       if (nb && nb.type === T.LAND && nb.mine && !nb.flagged && !nb.revealed) {
         const nc = nb.c, nr = nb.r;
         setTimeout(() => {
+          if (this.state === 'OVER') return; // already lost
           nb.revealed = true;
           this.renderer.spawnExplosion(nc, nr);
         }, delay);
@@ -1312,6 +1373,7 @@ class Game {
     if (cell && !cell.flagged) cell.flagged = true;
     Sound.boom();
     this.renderer.spawnExplosion(c, r);
+    if (this._vipBlastCheck(c, r)) return;
     this.renderer.spawnCrater(c, r);
     this.renderer.revealFog(c, r);
     this.renderer.sapperHit();
@@ -1360,6 +1422,26 @@ class Game {
     if (this._checkWin()) this._win();
   }
 
+  // Activate VIP escort when sapper steps onto the VIP cell.
+  _tryActivateVIP(cell) {
+    if (!cell || !cell.vip || this._vipFollowing) return;
+    this._vipFollowing = true;
+    this._vipCell = cell;
+    this.showToast(lang === 'uk'
+      ? '👤 VIP знайдено! Ведіть до ВИХОДУ 🚪'
+      : '👤 VIP found! Lead to EXIT 🚪');
+    $('hint').textContent = lang === 'uk'
+      ? '👤 VIP поруч — ведіть до зеленого порталу 🚪'
+      : '👤 VIP with you — lead to the green EXIT portal 🚪';
+  }
+
+  // Move VIP to sapper's previous cell after each sapper step.
+  _followVIP(prevCell) {
+    if (!this._vipFollowing || !prevCell) return;
+    this._vipCell = prevCell;
+    this.renderer.moveVIP(prevCell.c, prevCell.r);
+  }
+
   _isVIPSecured() {
     const b = this.board;
     const vip = b.cells.find(c => c.vip);
@@ -1377,18 +1459,11 @@ class Game {
     if (lv.goalType === 'evacuate') {
       return !!(this.sapper.cell && this.sapper.cell.exit);
     }
-    if (!b.isWon()) return false;
     if (lv.hasVIP) {
-      if (!this._isVIPSecured()) {
-        const now = Date.now();
-        if (!this._lastVIPWarn || now - this._lastVIPWarn > 4000) {
-          this.showToast(t('vipUnsecured'));
-          this._lastVIPWarn = now;
-        }
-        return false;
-      }
+      // VIP escort: sapper must first reach VIP (activates escort), then lead to EXIT
+      return !!(this._vipFollowing && this.sapper.cell && this.sapper.cell.exit);
     }
-    return true;
+    return b.isWon();
   }
 
   _win() {

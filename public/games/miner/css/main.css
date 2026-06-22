@@ -431,8 +431,11 @@ html, body {
   padding: 0 10px;
   background: #12281d;
   border-bottom: 1px solid #1d3b2b;
-  position: relative;
-  z-index: 5;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 20;
 }
 #topbar .title { font-weight: 800; font-size: 18px; white-space: nowrap; }
 #topbar .sep { width: 1px; height: 28px; background: #2a4d39; margin: 0 4px; }

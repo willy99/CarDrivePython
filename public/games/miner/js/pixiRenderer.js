@@ -806,21 +806,81 @@ export class PixiRenderer {
   setVIP(cell) {
     if (this.vipMarker) { this.vipMarker.destroy(); this.vipMarker = null; }
     const x = cell.c * BASE + BASE / 2, y = cell.r * BASE + BASE / 2;
-    const c = new PIXI.Container();
-    // glow ring
+    const ctr = new PIXI.Container();
+
+    // gold glow ring
+    const ring = new PIXI.Graphics();
+    ring.beginFill(0xffd700, 0.15).drawCircle(0, 0, BASE * 0.42).endFill();
+    ring.lineStyle({ width: 2, color: 0xffd700, alpha: 0.75 }).drawCircle(0, 0, BASE * 0.42);
+    ctr.addChild(ring);
+
     const g = new PIXI.Graphics();
-    g.beginFill(0xffd700, 0.18).drawCircle(0, 0, BASE * 0.42).endFill();
-    g.lineStyle({ width: 2, color: 0xffd700, alpha: 0.7 }).drawCircle(0, 0, BASE * 0.42);
-    c.addChild(g);
-    const t = new PIXI.Text('👤', {
-      fontSize: BASE * 0.45, fill: 0xffd700,
-      dropShadow: true, dropShadowDistance: 1, dropShadowColor: 0x000000, dropShadowAlpha: 0.9,
-    });
-    t.anchor.set(0.5);
-    c.addChild(t);
-    c.position.set(x, y);
-    this.entityC.addChild(c);
-    this.vipMarker = c;
+    const S = BASE * 0.38; // scale unit
+
+    // head (skin)
+    g.beginFill(0xf5c5a3).drawCircle(0, -S * 0.52, S * 0.22).endFill();
+    // hair
+    g.beginFill(0x3a2a1a).drawEllipse(0, -S * 0.67, S * 0.22, S * 0.1).endFill();
+
+    // jacket body — dark navy trapezoid
+    g.beginFill(0x1a2a4a);
+    g.drawPolygon([
+      -S * 0.28, -S * 0.28,   // top-left shoulder
+       S * 0.28, -S * 0.28,   // top-right shoulder
+       S * 0.32,  S * 0.44,   // bottom-right
+      -S * 0.32,  S * 0.44,   // bottom-left
+    ]);
+    g.endFill();
+
+    // white shirt / collar V
+    g.beginFill(0xffffff);
+    g.drawPolygon([
+      -S * 0.09, -S * 0.28,
+       S * 0.09, -S * 0.28,
+       0,         S * 0.06,
+    ]);
+    g.endFill();
+
+    // left lapel
+    g.beginFill(0x1a2a4a);
+    g.drawPolygon([
+      -S * 0.28, -S * 0.28,
+      -S * 0.04, -S * 0.28,
+       0,         S * 0.06,
+      -S * 0.22,  S * 0.0,
+    ]);
+    g.endFill();
+
+    // right lapel
+    g.beginFill(0x1a2a4a);
+    g.drawPolygon([
+       S * 0.28, -S * 0.28,
+       S * 0.04, -S * 0.28,
+       0,         S * 0.06,
+       S * 0.22,  S * 0.0,
+    ]);
+    g.endFill();
+
+    // tie (red, narrow)
+    g.beginFill(0xcc2222);
+    g.drawPolygon([
+      -S * 0.045,  S * 0.06,
+       S * 0.045,  S * 0.06,
+       S * 0.06,   S * 0.28,
+       0,          S * 0.38,
+      -S * 0.06,   S * 0.28,
+    ]);
+    g.endFill();
+
+    ctr.addChild(g);
+    ctr.position.set(x, y);
+    this.entityC.addChild(ctr);
+    this.vipMarker = ctr;
+  }
+
+  moveVIP(c, r) {
+    if (!this.vipMarker) return;
+    this.vipMarker.position.set(c * BASE + BASE / 2, r * BASE + BASE / 2);
   }
 
   clearVIP() {

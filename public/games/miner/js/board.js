@@ -79,7 +79,7 @@ export class Board {
     if (ter.paths) this._carvePaths(ter.paths);
     this._scatterArtifacts();
     this._scatterDevices();
-    if (this.level.hasVIP) this._scatterVIP();
+    if (this.level.hasVIP) { this._scatterVIP(); this._placeExit(); }
     if (this.level.goalType === 'evacuate') this._placeExitAndSpawn();
   }
 
@@ -263,12 +263,13 @@ export class Board {
   }
 
   // ── mines ─────────────────────────────────────────────────────────────────
-  placeMines(safeC, safeR) {
+  placeMines(safeC, safeR, safeRadius = 1) {
     const safe = new Set();
-    // Safe zone: start cell + 8 neighbours
-    safe.add(this.idx(safeC, safeR));
-    for (const [dc, dr] of DIRS8) {
-      if (this.inB(safeC + dc, safeR + dr)) safe.add(this.idx(safeC + dc, safeR + dr));
+    // Safe zone: Chebyshev radius safeRadius around start cell
+    for (let dc = -safeRadius; dc <= safeRadius; dc++) {
+      for (let dr = -safeRadius; dr <= safeRadius; dr++) {
+        if (this.inB(safeC + dc, safeR + dr)) safe.add(this.idx(safeC + dc, safeR + dr));
+      }
     }
     // Protect land cells directly touching bridges — mines there make bridges uncrossable
     for (const cell of this.cells) {
@@ -283,27 +284,62 @@ export class Board {
     for (const cell of this.cells) {
       if (cell.vip || cell.exit) safe.add(this.idx(cell.c, cell.r));
     }
-    const candidates = this._landCells().filter(c => c.type === T.LAND && !safe.has(this.idx(c.c, c.r)) && !c.artifact && !c.device);
+    const allCandidates = this._landCells().filter(c => c.type === T.LAND && !safe.has(this.idx(c.c, c.r)) && !c.artifact && !c.device);
+
+    // For evacuation: build weighted candidate list — corridor cells appear twice
+    // (higher density between spawn and exit, no large open gaps on that route)
+    let candidates;
+    if (this.level.goalType === 'evacuate' && this.exitC != null) {
+      const sc = safeC, sr = safeR, ec = this.exitC, er = this.exitR;
+      const len2 = (ec - sc) ** 2 + (er - sr) ** 2;
+      const corridorW = Math.max(2, Math.round(Math.min(this.cols, this.rows) * 0.22));
+      // Cells within radius 2 of exit are never weighted — keeps the approach clear
+      const exitSafeR = 2;
+      candidates = [];
+      for (const c of allCandidates) {
+        const nearExit = this.exitC != null &&
+          Math.max(Math.abs(c.c - this.exitC), Math.abs(c.r - this.exitR)) <= exitSafeR;
+        candidates.push(c);
+        if (!nearExit && len2 > 0) {
+          const t = Math.max(0, Math.min(1, ((c.c - sc) * (ec - sc) + (c.r - sr) * (er - sr)) / len2));
+          const px = sc + t * (ec - sc), py = sr + t * (er - sr);
+          if (Math.hypot(c.c - px, c.r - py) <= corridorW && t > 0.05 && t < 0.95) candidates.push(c);
+        }
+      }
+    } else {
+      candidates = allCandidates;
+    }
+
     let count = Math.round((this.level.density || 0.15) * this.landTotal);
-    count = Math.max(1, Math.min(count, candidates.length));
+    count = Math.max(1, Math.min(count, allCandidates.length));
 
     // Re-roll until every non-mine cell is physically reachable from the safe start.
+    // For evacuation levels also verify a direct spawn→exit path exists.
     // noGuess levels additionally require the layout to be logically solvable by
     // single-cell constraint propagation (no guessing). Attempt budget is higher
     // to avoid unnecessary mine-count reduction on those levels.
     // Worst case: count reaches 0 → first reveal opens everything → always found.
     const noGuess = !!this.level.noGuess;
+    const hasExit = this.exitC != null;
     const maxAttempts = noGuess ? 200 : 40;
     let found = false;
     while (!found && count >= 0) {
       for (let attempt = 0; attempt < maxAttempts; attempt++) {
-        for (const c of candidates) c.mine = false;
+        for (const c of allCandidates) c.mine = false;
+        // Weighted shuffle: shuffle candidates (may have duplicates), place mines
+        // skipping already-marked cells so duplicates don't count twice
         for (let i = candidates.length - 1; i > 0; i--) {
           const j = Math.floor(Math.random() * (i + 1));
           [candidates[i], candidates[j]] = [candidates[j], candidates[i]];
         }
-        for (let i = 0; i < count; i++) candidates[i].mine = true;
+        let placed = 0;
+        for (const c of candidates) {
+          if (c.mine) continue;
+          c.mine = true;
+          if (++placed >= count) break;
+        }
         if (this._allSafeReachable(safeC, safeR) &&
+            (!hasExit || this._exitReachable(safeC, safeR)) &&
             (!noGuess || this._isSolvable(safeC, safeR))) { found = true; break; }
       }
       if (!found) count--;
@@ -359,32 +395,65 @@ export class Board {
     tgt.vip = true;
   }
 
+  // ── EXIT for VIP escort levels (no auto-spawn) ───────────────────────────
+  _placeExit() {
+    const land = this._landCells();
+    if (land.length < 4) return;
+    const minC = Math.min(...land.map(c => c.c)), maxC = Math.max(...land.map(c => c.c));
+    const minR = Math.min(...land.map(c => c.r)), maxR = Math.max(...land.map(c => c.r));
+    const edges = [
+      land.filter(c => c.r === minR),
+      land.filter(c => c.r === maxR),
+      land.filter(c => c.c === minC),
+      land.filter(c => c.c === maxC),
+    ].filter(e => e.length > 0);
+    if (!edges.length) return;
+    const edgeList = edges[Math.floor(this.rng() * edges.length)];
+    const candidates = edgeList.filter(c => !c.vip);
+    if (!candidates.length) return;
+    const exit = this._pick(candidates);
+    exit.exit = true;
+    this.exitC = exit.c; this.exitR = exit.r;
+  }
+
   // ── EXIT + spawn placement (evacuation levels) ────────────────────────────
   _placeExitAndSpawn() {
     const land = this._landCells();
     if (land.length < 4) return;
-    // Pick spawn near centre
-    const midC = Math.floor(this.cols / 2), midR = Math.floor(this.rows / 2);
-    const sorted = land.slice().sort((a, b) =>
-      (Math.abs(a.c - midC) + Math.abs(a.r - midR)) - (Math.abs(b.c - midC) + Math.abs(b.r - midR))
-    );
-    const spawn = sorted[0];
-    this.spawnC = spawn.c; this.spawnR = spawn.r;
 
-    // Pick exit on a random edge (top/bottom/left/right of bounding box)
+    // Helper: count 4-connected walkable neighbours
+    const walkableNbCount = (cell) =>
+      DIRS4.filter(([dc, dr]) => {
+        const n = this.get(cell.c + dc, cell.r + dr);
+        return n && (n.type === T.LAND || n.type === T.BRIDGE || n.type === T.PATH);
+      }).length;
+
+    // 1. Place EXIT on a random edge, requiring ≥2 walkable neighbours (not a dead-end)
     const minC = Math.min(...land.map(c => c.c)), maxC = Math.max(...land.map(c => c.c));
     const minR = Math.min(...land.map(c => c.r)), maxR = Math.max(...land.map(c => c.r));
     const edges = [
-      land.filter(c => c.r === minR),  // top
-      land.filter(c => c.r === maxR),  // bottom
-      land.filter(c => c.c === minC),  // left
-      land.filter(c => c.c === maxC),  // right
+      land.filter(c => c.r === minR),
+      land.filter(c => c.r === maxR),
+      land.filter(c => c.c === minC),
+      land.filter(c => c.c === maxC),
     ].filter(e => e.length > 0);
     if (!edges.length) return;
     const edgeList = edges[Math.floor(this.rng() * edges.length)];
-    const exit = this._pick(edgeList);
+    // Prefer cells with ≥2 walkable neighbours; fall back to ≥1 if none qualify
+    const goodExits = edgeList.filter(c => walkableNbCount(c) >= 2);
+    const exitPool  = goodExits.length > 0 ? goodExits : edgeList.filter(c => walkableNbCount(c) >= 1);
+    if (!exitPool.length) return;
+    const exit = this._pick(exitPool);
     exit.exit = true;
     this.exitC = exit.c; this.exitR = exit.r;
+
+    // 2. Place spawn far from exit: at least 70% of the maximum possible distance
+    const withDist = land.map(c => ({ c, d: Math.hypot(c.c - exit.c, c.r - exit.r) }));
+    const maxDist = Math.max(...withDist.map(x => x.d));
+    const minDist = maxDist * 0.70;
+    const farCells = withDist.filter(x => !x.c.exit && x.d >= minDist).map(x => x.c);
+    const spawn = this._pick(farCells.length > 0 ? farCells : land.filter(c => !c.exit));
+    this.spawnC = spawn.c; this.spawnR = spawn.r;
   }
 
   // BFS over non-mine land + bridges (4-connected) from the safe start: true iff
@@ -403,6 +472,25 @@ export class Board {
       }
     }
     return this.cells.every(c => c.type !== T.LAND || c.mine || seen.has(this.idx(c.c, c.r)));
+  }
+
+  // BFS from spawn to exit: true iff exit cell is reachable through non-mine cells.
+  _exitReachable(sc, sr) {
+    if (this.exitC == null) return true;
+    const seen = new Set([this.idx(sc, sr)]);
+    const q = [this.get(sc, sr)];
+    while (q.length) {
+      const cur = q.shift();
+      if (cur.exit) return true;
+      for (const [dc, dr] of DIRS4) {
+        const n = this.get(cur.c + dc, cur.r + dr);
+        if (!n || seen.has(this.idx(n.c, n.r))) continue;
+        if (n.type === T.BRIDGE || n.type === T.PATH || (n.type === T.LAND && !n.mine)) {
+          seen.add(this.idx(n.c, n.r)); q.push(n);
+        }
+      }
+    }
+    return false;
   }
 
   // Simulate single-cell constraint propagation from the first-click cascade.
