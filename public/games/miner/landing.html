@@ -134,6 +134,7 @@
     <div class="stat-item"><div class="stat-num">15</div><div class="stat-label" id="st2">Artifacts</div></div>
     <div class="stat-item"><div class="stat-num">14</div><div class="stat-label" id="st3">Ranks</div></div>
     <div class="stat-item"><div class="stat-num">100%</div><div class="stat-label" id="st4">Free</div></div>
+    <div class="stat-item"><div class="stat-num" id="st5-num">…</div><div class="stat-label" id="st5">Visits</div></div>
   </div>
 </div>
 
@@ -353,6 +354,8 @@
     <div class="feat"><div class="feat-icon">⏱</div><div><div class="feat-title" id="f6t">Timed missions</div><div class="feat-desc" id="f6d">Some operations have a countdown. Clear the field before the clock hits zero — the timer turns red under 30 seconds.</div></div></div>
     <div class="feat"><div class="feat-icon">🌉</div><div><div class="feat-title" id="f7t">Terrain elements</div><div class="feat-desc" id="f7d">Rivers with bridges, lakes, seas, mountain ranges, tree clusters, and winding dirt roads — each changes how you navigate.</div></div></div>
     <div class="feat"><div class="feat-icon">⭐</div><div><div class="feat-title" id="f8t">Rank progression</div><div class="feat-desc" id="f8d">Clear more fields, climb the ranks: Recruit → Sapper → Sergeant → Lieutenant → Captain → Major → Colonel → General.</div></div></div>
+    <div class="feat"><div class="feat-icon">✂️</div><div><div class="feat-title" id="f9t">IED defusal</div><div class="feat-desc" id="f9d">Step on a hidden IED and a wire-cutting mini-game opens. Study the circuit, cut the right wire under a ticking timer. Wrong wire — boom.</div></div></div>
+    <div class="feat"><div class="feat-icon">🔬</div><div><div class="feat-title" id="f10t">Multimeter analysis</div><div class="feat-desc" id="f10d">4 difficulty tiers: probe nodes with a FLUKE-87, switch V / Ω / CONT modes, read voltages and continuity — then make the cut. Expert tier adds a 90-second countdown.</div></div></div>
   </div>
 </div>
 
@@ -467,7 +470,7 @@ const C = {
     heroSub:'Classic minesweeper · Organic landscapes · Fog of war · Night ops',
     heroDesc:'A fresh take on the classic: your sapper walks the minefield on a real topographic map — rivers, bridges, forests, mountains, dirt roads. 30 hand-crafted operations, 15 field artifacts, 14 ranks with bag progression and fog-of-war night missions.',
     heroBtn:'▶ Start Demining!',
-    st1:'Operations', st2:'Artifacts', st3:'Ranks', st4:'Free',
+    st1:'Operations', st2:'Artifacts', st3:'Ranks', st4:'Free', st5:'Visits',
     lab1:'River & Bridge', lab2:'Night Operation', lab3:'Fog of War', lab4:'Dirt Roads',
     hKicker:'How to play', hTitle:'Deployed and ready in 30 seconds', hSub:'Everything you need before your first operation.',
     s1:'<b>Tap any cell</b> to drop your sapper on the field — the landing zone is always safe.',
@@ -484,6 +487,8 @@ const C = {
     f6t:'Timed missions', f6d:'Some operations have a countdown. Clear the field before the clock hits zero — the timer turns red under 30 seconds.',
     f7t:'Terrain elements', f7d:'Rivers with bridges, lakes, seas, mountain ranges, tree clusters, and winding dirt roads — each changes how you navigate.',
     f8t:'Rank & Bag progression', f8d:'14 ranks from Recruit to General — and your bag upgrades every two ranks. More rank = more artifact slots per mission.',
+    f9t:'IED defusal', f9d:'Step on a hidden IED and a wire-cutting mini-game opens. Study the circuit, cut the right wire under a ticking timer. Wrong wire — boom.',
+    f10t:'Multimeter analysis', f10d:'4 difficulty tiers: probe nodes with a FLUKE-87, switch V / Ω / CONT modes, read voltages and continuity — then make the cut. Expert tier adds a 90-second countdown.',
     aKicker:'Backpack gear', aTitle:'15 artifacts — one operation at a time', aSub:'Find artifacts in the field, pick up to 6 for your next op (depends on rank). Each gives a unique one-time ability.',
     a1n:'Echo sounder',a1d:'Shows all mines within 2 cells for a moment.',a1t:'self',
     a2n:'Recon drone',a2d:'Tap a spot — scans 3×3 and flags every mine.',a2t:'tap',
@@ -515,7 +520,7 @@ const C = {
     heroSub:'Класичний мінний сапер · Органічні ландшафти · Туман війни · Нічні операції',
     heroDesc:'Свіжий погляд на класику: твій сапер ходить по мінному полю на справжній топографічній карті — річки, мости, ліси, гори, грунтові дороги. 30 операцій, 15 артефактів, 14 звань з прогресом рюкзака та нічні місії у тумані.',
     heroBtn:'▶ Починаємо розмінування!',
-    st1:'Операцій', st2:'Артефактів', st3:'Звань', st4:'Безкоштовно',
+    st1:'Операцій', st2:'Артефактів', st3:'Звань', st4:'Безкоштовно', st5:'Відвідувань',
     lab1:'Річка і міст', lab2:'Нічна операція', lab3:'Туман війни', lab4:'Грунтові дороги',
     hKicker:'Як грати', hTitle:'Готовий до бою за 30 секунд', hSub:'Все, що треба знати перед першою операцією.',
     s1:'<b>Тицни будь-яку клітинку</b>, щоб десантувати сапера — перший тик завжди безпечний.',
@@ -532,6 +537,8 @@ const C = {
     f6t:'Операції на час', f6d:'Деякі операції мають таймер. Розмінуй поле до нуля — при <30 с таймер стає червоним.',
     f7t:'Елементи ландшафту', f7d:'Річки з мостами, озера, моря, гірські масиви, дерева та грунтові дорожки — кожен змінює тактику.',
     f8t:'Звання та рюкзак', f8d:'14 звань від Рекрута до Генерала — і кожні два звання рюкзак стає більшим. Більше звання = більше слотів для артефактів.',
+    f9t:'Знешкодження ВП', f9d:'Наступиш на прихований ВП — відкривається міні-гра розрізання дроту. Вивчи схему, переріж правильний дріт під тик таймера. Неправильний — бабах.',
+    f10t:'Аналіз мультиметром', f10d:'4 рівні складності: торкайся вузлів щупами FLUKE-87, перемикай режими V / Ω / CONT, читай напруги та провідність — і тільки тоді ріж. Режим Експерт: таймер 90 с.',
     aKicker:'Спорядження', aTitle:'15 артефактів — одна операція за раз', aSub:'Знаходь артефакти на полі, бери до 6 штук на наступну операцію (залежить від звання). Кожен дає унікальну здатність.',
     a1n:'Ехолокатор',a1d:'На мить показує всі міни в радіусі 2 клітинок.',a1t:'одразу',
     a2n:'Розвідувальний дрон',a2d:'Тицьни місце — сканує 3×3 і позначає всі міни.',a2t:'тицни',
@@ -563,13 +570,14 @@ function applyLang(){
   const c=C[lang];
   s('nav-logo',c.navLogo);s('home-link',c.homeLink);s('lang-btn',c.langBtn);s('nav-play',c.navPlay);
   s('hero-badge',c.heroBadge);s('hero-sub',c.heroSub);s('hero-desc',c.heroDesc);s('hero-btn',c.heroBtn);
-  s('st1',c.st1);s('st2',c.st2);s('st3',c.st3);s('st4',c.st4);
+  s('st1',c.st1);s('st2',c.st2);s('st3',c.st3);s('st4',c.st4);s('st5',c.st5);
   s('lab1',c.lab1);s('lab2',c.lab2);s('lab3',c.lab3);s('lab4',c.lab4);
   s('h-kicker',c.hKicker);s('h-title',c.hTitle);s('h-sub',c.hSub);
   s('s1',c.s1);s('s2',c.s2);s('s3',c.s3);s('s4',c.s4);s('s5',c.s5);
   s('f-kicker',c.fKicker);s('f-title',c.fTitle);s('f-sub',c.fSub);
   s('f1t',c.f1t);s('f1d',c.f1d);s('f2t',c.f2t);s('f2d',c.f2d);s('f3t',c.f3t);s('f3d',c.f3d);s('f4t',c.f4t);s('f4d',c.f4d);
   s('f5t',c.f5t);s('f5d',c.f5d);s('f6t',c.f6t);s('f6d',c.f6d);s('f7t',c.f7t);s('f7d',c.f7d);s('f8t',c.f8t);s('f8d',c.f8d);
+  s('f9t',c.f9t);s('f9d',c.f9d);s('f10t',c.f10t);s('f10d',c.f10d);
   s('a-kicker',c.aKicker);s('a-title',c.aTitle);s('a-sub',c.aSub);
   for(let i=1;i<=15;i++){s('a'+i+'n',c['a'+i+'n']);s('a'+i+'d',c['a'+i+'d']);s('a'+i+'t',c['a'+i+'t']);}
   s('r-kicker',c.rKicker);s('r-title',c.rTitle);s('r-sub',c.rSub);
@@ -580,6 +588,19 @@ function applyLang(){
 }
 function toggleLang(){lang=lang==='en'?'uk':'en';localStorage.setItem('pashka-lang',lang);applyLang();}
 applyLang();
+
+// ── Visitor counter ───────────────────────────────────────────────────────────
+(async function(){
+  const el = document.getElementById('st5-num');
+  try {
+    const alreadyCounted = sessionStorage.getItem('bb_v');
+    const url = '/api/counter' + (alreadyCounted ? '' : '?up=1');
+    const r = await fetch(url);
+    const d = await r.json();
+    if (!alreadyCounted) sessionStorage.setItem('bb_v', '1');
+    if (el) el.textContent = (d.count ?? '—').toLocaleString();
+  } catch { if (el) el.textContent = '—'; }
+})();
 </script>
 </body>
 </html>

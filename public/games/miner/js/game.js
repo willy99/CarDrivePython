@@ -1,14 +1,15 @@
 import { SAPPER_SPEED, T } from './constants.js?v=9';
-import { t, levelName, toggleLang, lang } from './i18n.js?v=11';
+import { t, levelName, toggleLang, lang } from './i18n.js?v=12';
 import { showDefusal } from './defusal.js?v=2';
+import { showMultimeter } from './multimeter.js?v=4';
 import { LEVELS, LEVEL_COUNT, TIMED_LEVEL_IDS, loadProgress, markCompleted, isUnlocked } from './levels.js?v=11';
-import { Board } from './board.js?v=11';
+import { Board } from './board.js?v=12';
 import { PixiRenderer } from './pixiRenderer.js?v=14';
 import { THEMES, loadTheme, saveTheme, nextTheme } from './themes.js?v=9';
 import { Sound, isMuted, toggleMute } from './audio.js?v=9';
 import { loadClears, addClear, rankFor, rankName, rankStars, bagCapacity, BAG_NAMES } from './ranks.js?v=12';
 import { ARTIFACTS, ARTIFACT_IDS, artifactName, artifactDesc, loadStash, addArtifact, consumeArtifact, loadEquip, toggleEquip, removeEquip } from './artifacts.js?v=10';
-import { ACHIEVEMENTS, loadAchievements, unlockAchievement, getCleanStreak, setCleanStreak, addCorrectFlags, getVestHits, addVestHit, getArmUses, addArmUse, getDefuseCount, addDefuse, SKINS, loadSkin, saveSkin, isSkinUnlocked } from './achievements.js?v=11';
+import { ACHIEVEMENTS, loadAchievements, unlockAchievement, getCleanStreak, setCleanStreak, addCorrectFlags, getVestHits, addVestHit, getArmUses, addArmUse, getDefuseCount, addDefuse, addMMDefuse, getMMMaxTier, SKINS, loadSkin, saveSkin, isSkinUnlocked } from './achievements.js?v=12';
 
 const $ = id => document.getElementById(id);
 
@@ -518,6 +519,33 @@ class Game {
 <div class="ht-section">
   <h2>🌫 ${t('htFogTitle')}</h2>
   <p>${t('htFogP')}</p>
+</div>
+<div class="ht-divider"></div>
+<div class="ht-section">
+  <h2>💣 ${t('htDevicesTitle')}</h2>
+  <p>${t('htDevicesP')}</p>
+  <div class="ht-device-grid">
+    <div class="ht-device-card">
+      <div class="ht-device-icon">✂️</div>
+      <div>
+        <div class="ht-device-name">${t('htIEDTitle')}</div>
+        <div class="ht-device-desc">${t('htIEDP')}</div>
+      </div>
+    </div>
+    <div class="ht-device-card">
+      <div class="ht-device-icon">🔬</div>
+      <div>
+        <div class="ht-device-name">${t('htMMTitle')}</div>
+        <div class="ht-device-desc">${t('htMMP')}</div>
+        <div class="ht-mm-tiers">
+          <div class="ht-mm-tier"><span class="mm-tier-1 ht-tier-pill">EASY</span>${t('htMMTier1')}</div>
+          <div class="ht-mm-tier"><span class="mm-tier-2 ht-tier-pill">MEDIUM</span>${t('htMMTier2')}</div>
+          <div class="ht-mm-tier"><span class="mm-tier-3 ht-tier-pill">HARD</span>${t('htMMTier3')}</div>
+          <div class="ht-mm-tier"><span class="mm-tier-4 ht-tier-pill">EXPERT</span>${t('htMMTier4')}</div>
+        </div>
+      </div>
+    </div>
+  </div>
 </div>`;
   }
 
@@ -1087,55 +1115,72 @@ class Game {
 
   _startDefusal(cell) {
     this._busy = true;
-    showDefusal(cell,
-      (info) => {
-        // success — info = { hasTimer, secsLeft }
-        cell.device = null;
-        this.renderer.clearDevice(cell);
-        this._busy = false;
-        const out = this.board.reveal(cell.c, cell.r);
-        this.renderer.onReveal(out);
-        Sound.reveal();
-        this._collect(out);
-        this.updateHUD();
-        if (this.board.isWon()) this._win();
-        this.showToast('💣✅ ' + (lang === 'uk' ? 'Пристрій знешкоджено!' : 'Device neutralized!'));
-        // Achievement checks
+    const isMMDevice = cell.device.type.startsWith('mm_');
+
+    const onSuccess = (info) => {
+      cell.device = null;
+      this.renderer.clearDevice(cell);
+      this._busy = false;
+      const out = this.board.reveal(cell.c, cell.r);
+      this.renderer.onReveal(out);
+      Sound.reveal();
+      this._collect(out);
+      this.updateHUD();
+      if (this.board.isWon()) this._win();
+      this.showToast('💣✅ ' + (lang === 'uk' ? 'Пристрій знешкоджено!' : 'Device neutralized!'));
+
+      const achList = [];
+      if (isMMDevice) {
+        // Multimeter-specific achievements
+        const mmTier = info?.tier || 1;
+        const mmTotal = addMMDefuse(mmTier);
+        if (mmTotal === 1 && unlockAchievement('analyst')) achList.push('analyst');
+        if (mmTier >= 3 && unlockAchievement('circuit_pro')) achList.push('circuit_pro');
+        if (mmTier >= 4 && info?.hasTimer && unlockAchievement('under_pressure')) achList.push('under_pressure');
+      } else {
+        // Wire-cutting achievements
         const total = addDefuse();
-        const achList = [];
         if (total === 1 && unlockAchievement('defuser')) achList.push('defuser');
         if (total >= 5  && unlockAchievement('bomb_squad')) achList.push('bomb_squad');
         if (info?.hasTimer && (info?.secsLeft ?? 999) <= 20 && unlockAchievement('cool_hand')) achList.push('cool_hand');
-        for (let i = 0; i < achList.length; i++) {
-          const a = ACHIEVEMENTS.find(x => x.id === achList[i]);
-          if (a) setTimeout(() => this.showToast(`${a.icon} ${t('achUnlocked')} ${lang === 'uk' ? a.uk : a.en}!`), 1200 * (i + 1));
-        }
-      },
-      () => {
-        // fail — vest saves if available, otherwise boom
-        cell.device = null;
-        this.renderer.clearDevice(cell);
-        if (this.vestReady) {
-          this.vestReady = false;
-          this._sapperWounded = true;
-          this._mineHitThisLevel = true;
-          this._spendTool('vest');
-          Sound.boom();
-          this.renderer.spawnExplosion(cell.c, cell.r);
-          this.renderer.spawnCrater(cell.c, cell.r);
-          this.renderer.sapperHit();
-          this._syncSapperEquip();
-          const sp = this.sapper, back = sp.prevCell || sp.cell;
-          if (back) { sp.cell = back; sp.px = back.c; sp.pr = back.r; this.renderer.setSapper(back.c, back.r, false, 0); }
-          this._busy = false;
-          this.showToast('🛡️ 💥 ' + (lang === 'uk' ? 'Бронежилет врятував — сапер поранений!' : 'Vest saved you — sapper wounded!'));
-          this.updateHUD();
-        } else {
-          this._busy = false;
-          this._boom(cell.c, cell.r);
-        }
       }
-    );
+      for (let i = 0; i < achList.length; i++) {
+        const a = ACHIEVEMENTS.find(x => x.id === achList[i]);
+        if (a) setTimeout(() => this.showToast(`${a.icon} ${t('achUnlocked')} ${lang === 'uk' ? a.uk : a.en}!`), 1200 * (i + 1));
+      }
+    };
+
+    const onFail = () => {
+      cell.device = null;
+      this.renderer.clearDevice(cell);
+      if (this.vestReady) {
+        this.vestReady = false;
+        this._sapperWounded = true;
+        this._mineHitThisLevel = true;
+        this._spendTool('vest');
+        Sound.boom();
+        this.renderer.spawnExplosion(cell.c, cell.r);
+        this.renderer.spawnCrater(cell.c, cell.r);
+        this.renderer.sapperHit();
+        this._syncSapperEquip();
+        const sp = this.sapper, back = sp.prevCell || sp.cell;
+        if (back) { sp.cell = back; sp.px = back.c; sp.pr = back.r; this.renderer.setSapper(back.c, back.r, false, 0); }
+        this._busy = false;
+        this.showToast('🛡️ 💥 ' + (lang === 'uk' ? 'Бронежилет врятував — сапер поранений!' : 'Vest saved you — sapper wounded!'));
+        this.updateHUD();
+      } else {
+        this._busy = false;
+        this._boom(cell.c, cell.r);
+      }
+    };
+
+    if (isMMDevice) {
+      // Extract tier from device type before clearing it in onSuccess
+      const mmTier = parseInt(cell.device.type.replace('mm_t', ''), 10) || 1;
+      showMultimeter(cell, (info) => onSuccess({ ...info, tier: mmTier }), onFail);
+    } else {
+      showDefusal(cell, onSuccess, onFail);
+    }
   }
 
   // collect any artifacts on freshly-revealed cells into the stash

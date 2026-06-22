@@ -244,11 +244,23 @@ function soundLose() {
   playTone(196, 'sawtooth', 0.12, 0.35, 0.38);
 }
 
+function soundPlayerJoined() {
+  playTone(880,  'sine', 0.14, 0.10);
+  playTone(1320, 'sine', 0.10, 0.14, 0.11);
+}
+
+function soundInviteReceived() {
+  playTone(660,  'triangle', 0.18, 0.10);
+  playTone(880,  'triangle', 0.16, 0.10, 0.12);
+  playTone(1100, 'triangle', 0.13, 0.18, 0.24);
+}
+
 // ═══════════════════════════════════════════════════
 // WEBSOCKET CLIENT
 // ═══════════════════════════════════════════════════
 let ws = null;
 let pendingInvite = null;
+let _knownPlayers = new Set();
 let selectedGrid = '4x4';
 let selectedCollection = 'classic';
 let pendingFlip = false;
@@ -320,7 +332,7 @@ function lobbyConnect() {
   ws.onopen = () => {
     ws.send(JSON.stringify({type:'register', username}));
   };
-  ws.onclose = () => { setWsStatus('offline'); ws = null; };
+  ws.onclose = () => { setWsStatus('offline'); ws = null; _knownPlayers = new Set(); };
   ws.onerror = () => { setWsStatus('offline'); };
   ws.onmessage = (ev) => {
     try { handleWsMsg(JSON.parse(ev.data)); } catch(e) { console.warn('ws parse err', e); }
@@ -338,6 +350,9 @@ function handleWsMsg(msg) {
       alert('Error: ' + msg.msg);
       break;
     case 'players':
+      if (msg.list.some(p => p.name !== pairsState.myName && !_knownPlayers.has(p.name)))
+        soundPlayerJoined();
+      _knownPlayers = new Set(msg.list.map(p => p.name));
       renderPlayerList(msg.list);
       break;
     case 'invite':
@@ -345,6 +360,7 @@ function handleWsMsg(msg) {
       document.getElementById('invite-from-text').textContent = t('pairs_challenges', msg.from);
       document.getElementById('invite-grid-text').textContent = t('pairs_grid_coll', msg.gridSize, collById(msg.collection||'classic').name);
       document.getElementById('invite-popup').classList.add('show');
+      soundInviteReceived();
       break;
     case 'invite_declined':
       alert(t('pairs_declined', msg.from));
@@ -424,7 +440,10 @@ function startPairsGame(msg) {
   pairsState.aiMode = false;
   renderPowerupBar(false);
   document.getElementById('lobby-back-btn').textContent = t('pairs_lobby_btn');
-  document.getElementById('lobby-back-btn').onclick = showLobby;
+  document.getElementById('lobby-back-btn').onclick = () => {
+    document.getElementById('gameover-overlay').classList.remove('show');
+    showLobby();
+  };
   const eloEl = document.getElementById('go-elo-change');
   if (eloEl) eloEl.style.display = 'none';
   showScreen('screen-pairs');

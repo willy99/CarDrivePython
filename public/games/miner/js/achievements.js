@@ -213,6 +213,30 @@ export const ACHIEVEMENTS = [
     skin: null,
   },
   {
+    id: 'analyst',
+    icon: '📊',
+    en: 'Field Analyst', uk: 'Польовий аналітик',
+    descEn: 'Successfully defuse your first multimeter device.',
+    descUk: 'Успішно знешкодити перший пристрій за допомогою мультиметра.',
+    skin: null,
+  },
+  {
+    id: 'circuit_pro',
+    icon: '🔌',
+    en: 'Circuit Pro', uk: 'Схемотехнік',
+    descEn: 'Defuse a Tier 3+ multimeter device (Circuit Analysis or Advanced).',
+    descUk: 'Знешкодити пристрій мультиметром 3+ рівня (Аналіз ланцюга або Поглиблений).',
+    skin: null,
+  },
+  {
+    id: 'under_pressure',
+    icon: '⏱️',
+    en: 'Under Pressure', uk: 'Під тиском',
+    descEn: 'Defuse a Tier 4 Expert multimeter device before the 90s timer expires.',
+    descUk: 'Знешкодити пристрій Tier 4 Експерт до спливання таймера 90 секунд.',
+    skin: null,
+  },
+  {
     id: 'megamap',
     icon: '🌍',
     en: 'Big Game', uk: 'Велика гра',
@@ -324,6 +348,22 @@ export function addDefuse() {
   const n = getDefuseCount() + 1;
   localStorage.setItem(DEFUSE_KEY, String(n));
   return n;
+}
+
+const MM_DEFUSE_KEY = 'miner_mm_defuse';
+
+export function getMMDefuseCount() {
+  return parseInt(localStorage.getItem(MM_DEFUSE_KEY) || '0', 10);
+}
+export function addMMDefuse(tier) {
+  const n = getMMDefuseCount() + 1;
+  localStorage.setItem(MM_DEFUSE_KEY, String(n));
+  const prevMax = parseInt(localStorage.getItem(MM_DEFUSE_KEY + '_maxTier') || '0', 10);
+  if (tier > prevMax) localStorage.setItem(MM_DEFUSE_KEY + '_maxTier', String(tier));
+  return n;
+}
+export function getMMMaxTier() {
+  return parseInt(localStorage.getItem(MM_DEFUSE_KEY + '_maxTier') || '0', 10);
 }
 
 // ── Skin system ───────────────────────────────────────────────────────────────

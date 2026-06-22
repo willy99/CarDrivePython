@@ -91,6 +91,10 @@ export class Board {
       { id: 'svp_simple', vc: 3, minLv: 3  },
       { id: 'timer_bomb', vc: 3, minLv: 10 },
       { id: 'radio_ied',  vc: 2, minLv: 19 },
+      { id: 'mm_t1',      vc: 2, minLv: 5  },
+      { id: 'mm_t2',      vc: 2, minLv: 15 },
+      { id: 'mm_t3',      vc: 2, minLv: 22 },
+      { id: 'mm_t4',      vc: 2, minLv: 27 },
     ];
     const types = DTYPES.filter(d => id >= d.minLv);
     if (!types.length) return;
