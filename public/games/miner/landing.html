@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Бабах — Topographic Minesweeper</title>
-  <meta name="description" content="Бабах is a topographic minesweeper with a walking sapper, organic landscapes, fog of war, night ops, 15 artifacts and rank progression. Free, no install, play in your browser.">
+  <title>БаБУМ — Topographic Minesweeper</title>
+  <meta name="description" content="Бабум is a topographic minesweeper with a walking sapper, organic landscapes, fog of war, night ops, 15 artifacts and rank progression. Free, no install, play in your browser.">
   <style>
     :root{
       --bg:#080f0a;--bg2:#0e1c12;--bg3:#152418;
@@ -83,6 +83,24 @@
     .tag-target{background:rgba(250,204,21,.12);color:#facc15;}
     .tag-passive{background:rgba(148,163,184,.1);color:#94a3b8;}
 
+    /* ── device mechanic section ── */
+    .dev-split{display:grid;grid-template-columns:1fr 1fr;gap:18px;}
+    @media(max-width:700px){.dev-split{grid-template-columns:1fr;}}
+    .dev-card{background:var(--bg2);border:1px solid var(--border2);border-radius:20px;padding:26px 24px 22px;}
+    .dev-card-head{display:flex;align-items:center;gap:12px;margin-bottom:14px;}
+    .dev-card-ico{font-size:2rem;line-height:1;flex-shrink:0;}
+    .dev-card-name{font-size:1.05rem;font-weight:900;color:var(--text1);}
+    .dev-card-tag{font-size:.65rem;font-weight:800;letter-spacing:.1em;text-transform:uppercase;border-radius:10px;padding:2px 9px;background:rgba(226,59,59,.15);color:#f87171;}
+    .dev-card-tag.mm{background:rgba(74,222,128,.1);color:var(--acc);}
+    .dev-card-desc{font-size:.85rem;color:var(--text2);line-height:1.65;margin-bottom:16px;}
+    .dev-steps-mini{display:flex;flex-direction:column;gap:8px;}
+    .dev-step-mini{display:flex;align-items:flex-start;gap:10px;font-size:.8rem;color:var(--text2);line-height:1.5;}
+    .dev-step-mini-n{flex-shrink:0;width:22px;height:22px;border-radius:50%;background:rgba(74,222,128,.18);color:var(--acc);font-weight:900;font-size:.72rem;display:flex;align-items:center;justify-content:center;}
+    .mm-tiers-mini{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:14px;}
+    .mm-tier-mini{background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:9px 11px;}
+    .mm-tier-mini-label{font-size:.65rem;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--acc);margin-bottom:4px;}
+    .mm-tier-mini-desc{font-size:.75rem;color:var(--text3);line-height:1.45;}
+
     /* ── rank progression grid ── */
     .rank-prog{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;max-width:720px;}
     .rp-card{background:var(--bg2);border:1px solid var(--border);border-radius:16px;padding:16px 10px 14px;text-align:center;display:flex;flex-direction:column;align-items:center;gap:5px;transition:.2s;}
@@ -114,7 +132,7 @@
 <body>
 
 <nav>
-  <div class="nav-logo" id="nav-logo">💥 БАБАХ</div>
+  <div class="nav-logo" id="nav-logo">💥 БАБУМ</div>
   <div class="nav-right">
     <a href="/" class="home-link" id="home-link">← All games</a>
     <button class="lang-btn" onclick="toggleLang()" id="lang-btn">🇺🇦 UA</button>
@@ -125,7 +143,7 @@
 <!-- ══ HERO ══ -->
 <div class="hero">
   <div class="hero-badge" id="hero-badge">Topographic Minesweeper</div>
-  <h1 class="hero-title">💥 БАБАХ</h1>
+  <h1 class="hero-title">💥 БАБУМ</h1>
   <p class="hero-sub" id="hero-sub">Сlassic minesweeper · Organic landscapes · Fog of war · Night ops</p>
   <p class="hero-desc" id="hero-desc">A fresh take on the classic: your sapper walks the minefield on a real topographic map — rivers, bridges, forests, mountains, dirt roads. 24 hand-crafted operations, 15 field artifacts, rank progression and fog-of-war night missions.</p>
   <a href="index.html" class="btn-primary" id="hero-btn">▶ Start Demining!</a>
@@ -343,7 +361,7 @@
   <div class="section-head">
     <div class="section-kicker" id="f-kicker">Features</div>
     <h2 class="section-title" id="f-title">More than just a grid</h2>
-    <p class="section-sub" id="f-sub">Everything that makes Бабах different from classic minesweeper.</p>
+    <p class="section-sub" id="f-sub">Everything that makes Baboom different from classic minesweeper.</p>
   </div>
   <div class="features-grid">
     <div class="feat"><div class="feat-icon">🗺️</div><div><div class="feat-title" id="f1t">Topographic maps</div><div class="feat-desc" id="f1d">Each level is a unique organic landscape — rivers, forests, mountains, islands, even coastlines. No two maps look alike.</div></div></div>
@@ -356,6 +374,60 @@
     <div class="feat"><div class="feat-icon">⭐</div><div><div class="feat-title" id="f8t">Rank progression</div><div class="feat-desc" id="f8d">Clear more fields, climb the ranks: Recruit → Sapper → Sergeant → Lieutenant → Captain → Major → Colonel → General.</div></div></div>
     <div class="feat"><div class="feat-icon">✂️</div><div><div class="feat-title" id="f9t">IED defusal</div><div class="feat-desc" id="f9d">Step on a hidden IED and a wire-cutting mini-game opens. Study the circuit, cut the right wire under a ticking timer. Wrong wire — boom.</div></div></div>
     <div class="feat"><div class="feat-icon">🔬</div><div><div class="feat-title" id="f10t">Multimeter analysis</div><div class="feat-desc" id="f10d">4 difficulty tiers: probe nodes with a FLUKE-87, switch V / Ω / CONT modes, read voltages and continuity — then make the cut. Expert tier adds a 90-second countdown.</div></div></div>
+  </div>
+</div>
+
+<div class="divider"></div>
+
+<!-- ══ DEVICES ══ -->
+<div class="section-wrap">
+  <div class="section-head">
+    <div class="section-kicker" id="d-kicker">Special devices</div>
+    <h2 class="section-title" id="d-title">When a mine isn't just a mine</h2>
+    <p class="section-sub" id="d-sub">Some cells hide improvised explosive devices that trigger a defusal mini-game. You must solve it before the field continues.</p>
+  </div>
+  <div class="dev-split">
+
+    <!-- IED -->
+    <div class="dev-card">
+      <div class="dev-card-head">
+        <div class="dev-card-ico">✂️</div>
+        <div>
+          <div class="dev-card-name" id="d1-name">IED wire-cutting</div>
+          <span class="dev-card-tag" id="d1-tag">Appears from level 5</span>
+        </div>
+      </div>
+      <p class="dev-card-desc" id="d1-desc">You step on a concealed IED — a circuit diagram opens with coloured wires. One wire is the safe cut. The rest detonate the device. A timer counts down: don't freeze.</p>
+      <div class="dev-steps-mini" id="d1-steps">
+        <div class="dev-step-mini"><div class="dev-step-mini-n">1</div><span>Read the clue shown on screen — it identifies the safe wire by rule (e.g. "cut the lowest-voltage wire").</span></div>
+        <div class="dev-step-mini"><div class="dev-step-mini-n">2</div><span>Tap the correct wire button before time runs out.</span></div>
+        <div class="dev-step-mini"><div class="dev-step-mini-n">3</div><span>Wrong choice or timeout — the device explodes. Mission over.</span></div>
+      </div>
+    </div>
+
+    <!-- Multimeter -->
+    <div class="dev-card">
+      <div class="dev-card-head">
+        <div class="dev-card-ico">🔬</div>
+        <div>
+          <div class="dev-card-name" id="d2-name">Multimeter analysis</div>
+          <span class="dev-card-tag mm" id="d2-tag">4 difficulty tiers</span>
+        </div>
+      </div>
+      <p class="dev-card-desc" id="d2-desc">A schematic opens with a FLUKE-87 multimeter. Probe two nodes, switch measurement modes (V / Ω / CONT), read the values — then cut the correct wire.</p>
+      <div class="dev-steps-mini" id="d2-steps">
+        <div class="dev-step-mini"><div class="dev-step-mini-n">1</div><span>Tap the <b>red probe</b> button, then tap a node on the schematic to place it. Repeat for the black probe.</span></div>
+        <div class="dev-step-mini"><div class="dev-step-mini-n">2</div><span>Switch modes (V / Ω / CONT) and probe different node pairs to gather readings.</span></div>
+        <div class="dev-step-mini"><div class="dev-step-mini-n">3</div><span>Apply the displayed rule to identify the safe wire, then cut it.</span></div>
+      </div>
+      <div class="mm-tiers-mini" id="d2-tiers">
+        <div class="mm-tier-mini"><div class="mm-tier-mini-label" id="d2t1l">Easy</div><div class="mm-tier-mini-desc" id="d2t1d">Voltage only — find the 0 V wire.</div></div>
+        <div class="mm-tier-mini"><div class="mm-tier-mini-label" id="d2t2l">Medium</div><div class="mm-tier-mini-desc" id="d2t2d">Two modes, multiple readings needed.</div></div>
+        <div class="mm-tier-mini"><div class="mm-tier-mini-label" id="d2t3l">Hard</div><div class="mm-tier-mini-desc" id="d2t3d">V + Ω + CONT, more nodes, tighter logic.</div></div>
+        <div class="mm-tier-mini"><div class="mm-tier-mini-label" id="d2t4l">Expert</div><div class="mm-tier-mini-desc" id="d2t4d">All modes + 90 s countdown.</div></div>
+      </div>
+    </div>
+
   </div>
 </div>
 
@@ -459,13 +531,13 @@
   </div>
 </div>
 
-<footer><p id="footer-txt">© 2025 Бабах · A Pashka Game · Built with PixiJS</p></footer>
+<footer><p id="footer-txt">© 2025 Бабум · A Pashka Game · Built with PixiJS</p></footer>
 
 <script>
 let lang = localStorage.getItem('pashka-lang') || 'en';
 const C = {
   en: {
-    navLogo:'💥 БАБАХ', homeLink:'← All games', langBtn:'🇺🇦 UA', navPlay:'▶ Play',
+    navLogo:'💥 БАБУМ', homeLink:'← All games', langBtn:'🇺🇦 UA', navPlay:'▶ Play',
     heroBadge:'Topographic Minesweeper',
     heroSub:'Classic minesweeper · Organic landscapes · Fog of war · Night ops',
     heroDesc:'A fresh take on the classic: your sapper walks the minefield on a real topographic map — rivers, bridges, forests, mountains, dirt roads. 30 hand-crafted operations, 15 field artifacts, 14 ranks with bag progression and fog-of-war night missions.',
@@ -478,7 +550,7 @@ const C = {
     s3:'<b>Long-press / right-click</b> a suspicious cell to plant a flag. Arrow keys or tap cleared ground to <b>move your sapper</b> without revealing.',
     s4:'Clear every safe cell to <b>complete the operation</b>. Use the artifacts from your backpack to get out of tight spots.',
     s5:'<b>Pinch or scroll</b> to zoom in/out. On PC you can also pan by dragging.',
-    fKicker:'Features', fTitle:'More than just a grid', fSub:'Everything that makes Бабах different from classic minesweeper.',
+    fKicker:'Features', fTitle:'More than just a grid', fSub:'Everything that makes Baboom different from classic minesweeper.',
     f1t:'Topographic maps', f1d:'Each level is a unique organic landscape — rivers, forests, mountains, islands, even coastlines. No two maps look alike.',
     f2t:'Walking sapper', f2d:'In Arcade mode your sapper physically walks the field. Tap revealed ground or use arrow keys to navigate without revealing.',
     f3t:'Backpack system', f3d:'Collect gear on the field, store it in your Stash and pick up to 2 artifacts before each new operation.',
@@ -489,6 +561,21 @@ const C = {
     f8t:'Rank & Bag progression', f8d:'14 ranks from Recruit to General — and your bag upgrades every two ranks. More rank = more artifact slots per mission.',
     f9t:'IED defusal', f9d:'Step on a hidden IED and a wire-cutting mini-game opens. Study the circuit, cut the right wire under a ticking timer. Wrong wire — boom.',
     f10t:'Multimeter analysis', f10d:'4 difficulty tiers: probe nodes with a FLUKE-87, switch V / Ω / CONT modes, read voltages and continuity — then make the cut. Expert tier adds a 90-second countdown.',
+    dKicker:'Special devices', dTitle:"When a mine isn't just a mine", dSub:'Some cells hide improvised explosive devices that trigger a defusal mini-game. You must solve it before the field continues.',
+    d1Name:'IED wire-cutting', d1Tag:'Appears from level 5',
+    d1Desc:'You step on a concealed IED — a circuit diagram opens with coloured wires. One wire is the safe cut. The rest detonate the device. A timer counts down: don\'t freeze.',
+    d1S1:'Read the clue shown on screen — it identifies the safe wire by rule (e.g. "cut the lowest-voltage wire").',
+    d1S2:'Tap the correct wire button before time runs out.',
+    d1S3:'Wrong choice or timeout — the device explodes. Mission over.',
+    d2Name:'Multimeter analysis', d2Tag:'4 difficulty tiers',
+    d2Desc:'A schematic opens with a FLUKE-87 multimeter. Probe two nodes, switch measurement modes (V / Ω / CONT), read the values — then cut the correct wire.',
+    d2S1:'Tap the <b>red probe</b> button, then tap a node on the schematic to place it. Repeat for the black probe.',
+    d2S2:'Switch modes (V / Ω / CONT) and probe different node pairs to gather readings.',
+    d2S3:'Apply the displayed rule to identify the safe wire, then cut it.',
+    d2T1l:'Easy', d2T1d:'Voltage only — find the 0 V wire.',
+    d2T2l:'Medium', d2T2d:'Two modes, multiple readings needed.',
+    d2T3l:'Hard', d2T3d:'V + Ω + CONT, more nodes, tighter logic.',
+    d2T4l:'Expert', d2T4d:'All modes + 90 s countdown.',
     aKicker:'Backpack gear', aTitle:'15 artifacts — one operation at a time', aSub:'Find artifacts in the field, pick up to 6 for your next op (depends on rank). Each gives a unique one-time ability.',
     a1n:'Echo sounder',a1d:'Shows all mines within 2 cells for a moment.',a1t:'self',
     a2n:'Recon drone',a2d:'Tap a spot — scans 3×3 and flags every mine.',a2t:'tap',
@@ -511,11 +598,11 @@ const C = {
     rp1r:'Recruit / Sapper',rp2r:'Sr. Sapper / Jr. Sgt.',rp3r:'Sergeant / Sr. Sgt.',rp4r:'Master Sgt. / Warrant',rp5r:'Lieutenant / Captain',rp6r:'Major → General',
     ctaKicker:'Ready, sapper?', ctaTitle:'The field won\'t clear itself', ctaTagline:'No install. No account. 100% free. Play right now.',
     ctaBtn:'💥 Start demining!',
-    footerTxt:'© 2025 Бабах · A Pashka Game · Built with PixiJS',
-    docTitle:'Бабах — Topographic Minesweeper',
+    footerTxt:'© 2026 БаБУМ · A Pashka Game · Built with PixiJS',
+    docTitle:'БаБУМ — Topographic Minesweeper',
   },
   uk: {
-    navLogo:'💥 БАБАХ', homeLink:'← Усі ігри', langBtn:'🇬🇧 EN', navPlay:'▶ Грати',
+    navLogo:'💥 БАБУМ', homeLink:'← Усі ігри', langBtn:'🇬🇧 EN', navPlay:'▶ Грати',
     heroBadge:'Топографічний сапер',
     heroSub:'Класичний мінний сапер · Органічні ландшафти · Туман війни · Нічні операції',
     heroDesc:'Свіжий погляд на класику: твій сапер ходить по мінному полю на справжній топографічній карті — річки, мости, ліси, гори, грунтові дороги. 30 операцій, 15 артефактів, 14 звань з прогресом рюкзака та нічні місії у тумані.',
@@ -528,7 +615,7 @@ const C = {
     s3:'<b>Утримання / права кнопка</b> — поставити прапорець. Стрілками або тицанням по відкритому ґрунту <b>рухай сапера</b> без відкриття клітинок.',
     s4:'Відкрий усі безпечні клітинки — <b>операцію виконано</b>. Використовуй артефакти з рюкзака в складних ситуаціях.',
     s5:'<b>Зведення пальців або коліщатко</b> — масштаб. На ПК можна також перетягати карту.',
-    fKicker:'Можливості', fTitle:'Більше, ніж просто сітка', fSub:'Чим Бабах відрізняється від класичного сапера.',
+    fKicker:'Можливості', fTitle:'Більше, ніж просто сітка', fSub:'Чим БаБУМ відрізняється від класичного сапера.',
     f1t:'Топографічні карти', f1d:'Кожен рівень — унікальний органічний ландшафт: річки, ліси, гори, острови, узбережжя. Два поля не схожих одне на одне.',
     f2t:'Ходячий сапер', f2d:'В аркадному режимі сапер фізично ходить по полі. Тицяй відкритий ґрунт або стрілки — рух без відкриття.',
     f3t:'Система рюкзака', f3d:'Знаходь спорядження на полі, зберігай у Шафі, бери до 2 артефактів перед кожною операцією.',
@@ -537,8 +624,23 @@ const C = {
     f6t:'Операції на час', f6d:'Деякі операції мають таймер. Розмінуй поле до нуля — при <30 с таймер стає червоним.',
     f7t:'Елементи ландшафту', f7d:'Річки з мостами, озера, моря, гірські масиви, дерева та грунтові дорожки — кожен змінює тактику.',
     f8t:'Звання та рюкзак', f8d:'14 звань від Рекрута до Генерала — і кожні два звання рюкзак стає більшим. Більше звання = більше слотів для артефактів.',
-    f9t:'Знешкодження ВП', f9d:'Наступиш на прихований ВП — відкривається міні-гра розрізання дроту. Вивчи схему, переріж правильний дріт під тик таймера. Неправильний — бабах.',
+    f9t:'Знешкодження ВП', f9d:'Наступиш на прихований ВП — відкривається міні-гра розрізання дроту. Вивчи схему, переріж правильний дріт під тик таймера. Неправильний — бабум.',
     f10t:'Аналіз мультиметром', f10d:'4 рівні складності: торкайся вузлів щупами FLUKE-87, перемикай режими V / Ω / CONT, читай напруги та провідність — і тільки тоді ріж. Режим Експерт: таймер 90 с.',
+    dKicker:'Спеціальні пристрої', dTitle:'Коли міна — це не просто міна', dSub:'Деякі клітинки ховають саморобні вибухові пристрої — при наступанні відкривається міні-гра знешкодження, яку треба пройти.',
+    d1Name:'Відрізання дроту ВП', d1Tag:'Зустрічається з рівня 5',
+    d1Desc:'Ти наступаєш на прихований ВП — відкривається схема з кольоровими дротами. Один дріт безпечний. Решта — підрив. Таймер тикає: не гальмуй.',
+    d1S1:'Прочитай підказку на екрані — вона вказує на безпечний дріт за правилом (наприклад, "переріж дріт з найнижчою напругою").',
+    d1S2:'Натисни кнопку правильного дроту до кінця часу.',
+    d1S3:'Неправильний вибір або час вийшов — пристрій вибухає. Місія провалена.',
+    d2Name:'Аналіз мультиметром', d2Tag:'4 рівні складності',
+    d2Desc:'Відкривається схема з мультиметром FLUKE-87. Торкнись вузлів щупами, перемикай режими виміру (V / Ω / CONT), читай значення — і тільки тоді ріж.',
+    d2S1:'Натисни кнопку <b>червоного щупа</b>, потім торкнись вузла на схемі. Повтори для чорного щупа.',
+    d2S2:'Перемикай режими (V / Ω / CONT) і торкайся різних пар вузлів для збору даних.',
+    d2S3:'Застосуй правило з підказки, знайди безпечний дріт і виріж його.',
+    d2T1l:'Легко', d2T1d:'Тільки напруга — знайди дріт 0 В.',
+    d2T2l:'Середньо', d2T2d:'Два режими, кілька вимірів.',
+    d2T3l:'Важко', d2T3d:'V + Ω + CONT, більше вузлів, складніша логіка.',
+    d2T4l:'Експерт', d2T4d:'Всі режими + таймер 90 с.',
     aKicker:'Спорядження', aTitle:'15 артефактів — одна операція за раз', aSub:'Знаходь артефакти на полі, бери до 6 штук на наступну операцію (залежить від звання). Кожен дає унікальну здатність.',
     a1n:'Ехолокатор',a1d:'На мить показує всі міни в радіусі 2 клітинок.',a1t:'одразу',
     a2n:'Розвідувальний дрон',a2d:'Тицьни місце — сканує 3×3 і позначає всі міни.',a2t:'тицни',
@@ -561,8 +663,8 @@ const C = {
     rp1r:'Новобранець / Сапер',rp2r:'Ст. Сапер / Мол. Серж.',rp3r:'Сержант / Ст. Сержант',rp4r:'Старшина / Прапорщик',rp5r:'Лейтенант / Капітан',rp6r:'Майор → Генерал',
     ctaKicker:'Готовий, сапере?', ctaTitle:'Поле саме себе не розмінує', ctaTagline:'Без реєстрації. Без завантаження. 100% безкоштовно.',
     ctaBtn:'💥 Починаємо розмінування!',
-    footerTxt:'© 2025 Бабах · Гра від Пашка · Створено на PixiJS',
-    docTitle:'Бабах — Топографічний сапер',
+    footerTxt:'© 2026 БаБУМ · Гра від Пашка · Створено на PixiJS',
+    docTitle:'БаБУМ — Топографічний сапер',
   }
 };
 function s(id,val){const el=document.getElementById(id);if(el)el.innerHTML=val;}
@@ -578,6 +680,13 @@ function applyLang(){
   s('f1t',c.f1t);s('f1d',c.f1d);s('f2t',c.f2t);s('f2d',c.f2d);s('f3t',c.f3t);s('f3d',c.f3d);s('f4t',c.f4t);s('f4d',c.f4d);
   s('f5t',c.f5t);s('f5d',c.f5d);s('f6t',c.f6t);s('f6d',c.f6d);s('f7t',c.f7t);s('f7d',c.f7d);s('f8t',c.f8t);s('f8d',c.f8d);
   s('f9t',c.f9t);s('f9d',c.f9d);s('f10t',c.f10t);s('f10d',c.f10d);
+  s('d-kicker',c.dKicker);s('d-title',c.dTitle);s('d-sub',c.dSub);
+  s('d1-name',c.d1Name);s('d1-tag',c.d1Tag);s('d1-desc',c.d1Desc);
+  s('d2-name',c.d2Name);s('d2-tag',c.d2Tag);s('d2-desc',c.d2Desc);
+  s('d1-steps',`<div class="dev-step-mini"><div class="dev-step-mini-n">1</div><span>${c.d1S1}</span></div><div class="dev-step-mini"><div class="dev-step-mini-n">2</div><span>${c.d1S2}</span></div><div class="dev-step-mini"><div class="dev-step-mini-n">3</div><span>${c.d1S3}</span></div>`);
+  s('d2-steps',`<div class="dev-step-mini"><div class="dev-step-mini-n">1</div><span>${c.d2S1}</span></div><div class="dev-step-mini"><div class="dev-step-mini-n">2</div><span>${c.d2S2}</span></div><div class="dev-step-mini"><div class="dev-step-mini-n">3</div><span>${c.d2S3}</span></div>`);
+  s('d2t1l',c.d2T1l);s('d2t1d',c.d2T1d);s('d2t2l',c.d2T2l);s('d2t2d',c.d2T2d);
+  s('d2t3l',c.d2T3l);s('d2t3d',c.d2T3d);s('d2t4l',c.d2T4l);s('d2t4d',c.d2T4d);
   s('a-kicker',c.aKicker);s('a-title',c.aTitle);s('a-sub',c.aSub);
   for(let i=1;i<=15;i++){s('a'+i+'n',c['a'+i+'n']);s('a'+i+'d',c['a'+i+'d']);s('a'+i+'t',c['a'+i+'t']);}
   s('r-kicker',c.rKicker);s('r-title',c.rTitle);s('r-sub',c.rSub);

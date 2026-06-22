@@ -51,6 +51,11 @@ const STRINGS = {
     timeUp: 'Time\'s up!',
     fogHint: 'Visibility limited — stay close to see further.',
     nightHint: 'Night op — only 3 cells visible. Use flashlight.',
+    vipHint: 'VIP protection — clear mines, then flag all mines adjacent to the VIP before winning.',
+    evacuateHint: 'Evacuation — reach the EXIT portal (🚪) to complete the mission.',
+    vipUnsecured: 'VIP not secured! Flag all mines around the 👤 first.',
+    vipStatus: '👤 VIP',
+    vipSecured: '👤 VIP secured',
     hintMoveKeys: 'Arrow keys or tap revealed ground to move. Long-press to flag.',
     howToPlay: '📖 How to Play',
     htWhatTitle: 'What is Minesweeper?',
@@ -128,7 +133,7 @@ const STRINGS = {
     editor: '🗺 Editor',
   },
   uk: {
-    title: '💥 Бабах',
+    title: '💥 БаБУМ',
     pickLevel: 'Вибери операцію',
     locked: 'Пройди перші варіанти, щоб відкрити',
     level: 'Опер.',
@@ -139,7 +144,7 @@ const STRINGS = {
     restart: '↻ Заново',
     win: 'Ділянку розміновано!',
     winSub: 'Мін не лишилось. Молодець, сапере!',
-    lose: 'БАБАХ!',
+    lose: 'БАБУМ!',
     loseSub: 'Сапер залишився без ніжки, але в нього є ще одна. Спробуємо ще раз?',
     next: 'Далі →',
     again: '↻ Ще раз',
@@ -177,6 +182,11 @@ const STRINGS = {
     timeUp: 'Час вийшов!',
     fogHint: 'Обмежена видимість — тримайся поруч із сапером.',
     nightHint: 'Нічна операція — видно лише 3 клітинки. Використай ліхтарик.',
+    vipHint: 'Охорона VIP — очисти поле і познач всі міни навколо 👤 перш ніж перемогти.',
+    evacuateHint: 'Евакуація — дійди до порталу ВИХІД (🚪), щоб завершити місію.',
+    vipUnsecured: 'VIP не захищено! Спочатку познач всі міни навколо 👤.',
+    vipStatus: '👤 VIP',
+    vipSecured: '👤 VIP захищено',
     hintMoveKeys: 'Рухайся стрілками або тицяй на розмінований ґрунт. Утримання — прапорець.',
     howToPlay: '📖 Як грати',
     htWhatTitle: 'Що таке Сапер?',
@@ -213,7 +223,7 @@ const STRINGS = {
     htDevicesTitle: 'Спеціальні пристрої на полі',
     htDevicesP: 'На старших операціях можна наступити на прихований ВП — вибуховий пристрій саморобного виготовлення. Гра ставиться на паузу і відкривається міні-гра знешкодження. Виконай завдання правильно — продовжуєш; помилишся — детонація.',
     htIEDTitle: 'Перерізання дроту (ВП)',
-    htIEDP: 'Відкривається панель із кольоровими дротами і таймером. Вивчи схему — і перережи єдиний безпечний дріт. Неправильний дріт — бабах.',
+    htIEDP: 'Відкривається панель із кольоровими дротами і таймером. Вивчи схему — і перережи єдиний безпечний дріт. Неправильний дріт — бабум.',
     htMMTitle: 'Вимірювання мультиметром',
     htMMP: 'З\'являється мультиметр FLUKE-87. Торкайся щупами вузлів на схемі, перемикай режими вимірювань, читай показники — і тільки тоді ріж потрібний дріт. Неправильний розріз = миттєва детонація.',
     htMMTiersLabel: 'Рівні складності:',
@@ -281,7 +291,9 @@ const LEVEL_NAMES = {
     'No man\'s land', 'Crossroads',     'Desert highway', 'Wetland trail', 'Coral atoll',  // 16-20
     'River delta',    '⏱ War games',   'Lakeside',       'Dark atoll',                    // 21-24
     '🌫 Fog zone',   '🌙 Night patrol','🌙⏱ Dark crossing',                              // 25-27
-    'Big land',       'Giant island',   '🌫 Mega field'],                                 // 28-30
+    'Big land',       'Giant island',   '🌫 Mega field',                                 // 28-30
+    '👤 VIP: Outpost','👤 VIP: Delta',  '👤⏱ VIP: Citadel',                              // 31-33
+    '🚪 Evac: Fields','🚪 Evac: River', '🌫🚪 Evac: Fog'],                               // 34-36
   uk: ['',
     'Полігон',        'Старий кар\'єр', 'Польова дорога', 'Блокпост',     'Берег річки',  // 1-5
     'Узлісся',        '⏱ Гонка',       '⏱ Лісовий раш', '⏱ Година пік', 'Гавань',       // 6-10
@@ -289,7 +301,9 @@ const LEVEL_NAMES = {
     'Нейтральна смуга','Перехрестя',   'Пустельне шосе', 'Болотна стежка','Кораловий атол',// 16-20
     'Річна дельта',   '⏱ Воєнні ігри', 'Біля озера',     'Темний атол',                  // 21-24
     '🌫 Зона туману', '🌙 Нічний патруль','🌙⏱ Темна переправа',                         // 25-27
-    'Велика земля',   'Острів-велетень','🌫 Мегаполе'],                                   // 28-30
+    'Велика земля',   'Острів-велетень','🌫 Мегаполе',                                    // 28-30
+    '👤 VIP: Застава', '👤 VIP: Дельта', '👤⏱ VIP: Цитадель',                            // 31-33
+    '🚪 Евак: Поле',  '🚪 Евак: Річка', '🌫🚪 Евак: Туман'],                             // 34-36
 };
 
 export function levelName(id) {

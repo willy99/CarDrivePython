@@ -79,6 +79,8 @@ export class Board {
     if (ter.paths) this._carvePaths(ter.paths);
     this._scatterArtifacts();
     this._scatterDevices();
+    if (this.level.hasVIP) this._scatterVIP();
+    if (this.level.goalType === 'evacuate') this._placeExitAndSpawn();
   }
 
   // Place 0-2 special device cells on the field (wire-cutting mini-game triggers).
@@ -95,6 +97,10 @@ export class Board {
       { id: 'mm_t2',      vc: 2, minLv: 15 },
       { id: 'mm_t3',      vc: 2, minLv: 22 },
       { id: 'mm_t4',      vc: 2, minLv: 27 },
+      { id: 'balance_t1', vc: 3, minLv: 12 },
+      { id: 'balance_t2', vc: 3, minLv: 20 },
+      { id: 'jammer_t1',  vc: 3, minLv: 18 },
+      { id: 'jammer_t2',  vc: 3, minLv: 25 },
     ];
     const types = DTYPES.filter(d => id >= d.minLv);
     if (!types.length) return;
@@ -273,6 +279,10 @@ export class Board {
         }
       }
     }
+    // Protect VIP cell and exit cell from mines
+    for (const cell of this.cells) {
+      if (cell.vip || cell.exit) safe.add(this.idx(cell.c, cell.r));
+    }
     const candidates = this._landCells().filter(c => c.type === T.LAND && !safe.has(this.idx(c.c, c.r)) && !c.artifact && !c.device);
     let count = Math.round((this.level.density || 0.15) * this.landTotal);
     count = Math.max(1, Math.min(count, candidates.length));
@@ -302,6 +312,7 @@ export class Board {
     this.minesPlaced = true;
     this._computeAdj();
     this._relocateDevices();
+    if (this.level.hasVIP) this._relocateVIP();
   }
 
   // After mines are placed, move any device cells that have no adjacent mines
@@ -323,6 +334,57 @@ export class Board {
       devCell.device = null;
       mineEdge.splice(i, 1); // don't assign two devices to the same cell
     }
+  }
+
+  // ── VIP placement ──────────────────────────────────────────────────────────
+  _scatterVIP() {
+    const land = this._landCells().filter(c => !c.artifact && !c.device);
+    if (!land.length) return;
+    const cell = this._pick(land);
+    cell.vip = true;
+  }
+
+  // After mines placed: move VIP to a cell that has at least 1 adjacent mine
+  // (so the mechanic is always meaningful).
+  _relocateVIP() {
+    const vipCell = this.cells.find(c => c.vip);
+    if (!vipCell) return;
+    if (vipCell.adj > 0) return; // already next to a mine
+    const mineEdge = this.cells.filter(c =>
+      c.type === T.LAND && !c.mine && !c.device && !c.artifact && !c.exit && c.adj > 0
+    );
+    if (!mineEdge.length) return;
+    const tgt = this._pick(mineEdge);
+    vipCell.vip = false;
+    tgt.vip = true;
+  }
+
+  // ── EXIT + spawn placement (evacuation levels) ────────────────────────────
+  _placeExitAndSpawn() {
+    const land = this._landCells();
+    if (land.length < 4) return;
+    // Pick spawn near centre
+    const midC = Math.floor(this.cols / 2), midR = Math.floor(this.rows / 2);
+    const sorted = land.slice().sort((a, b) =>
+      (Math.abs(a.c - midC) + Math.abs(a.r - midR)) - (Math.abs(b.c - midC) + Math.abs(b.r - midR))
+    );
+    const spawn = sorted[0];
+    this.spawnC = spawn.c; this.spawnR = spawn.r;
+
+    // Pick exit on a random edge (top/bottom/left/right of bounding box)
+    const minC = Math.min(...land.map(c => c.c)), maxC = Math.max(...land.map(c => c.c));
+    const minR = Math.min(...land.map(c => c.r)), maxR = Math.max(...land.map(c => c.r));
+    const edges = [
+      land.filter(c => c.r === minR),  // top
+      land.filter(c => c.r === maxR),  // bottom
+      land.filter(c => c.c === minC),  // left
+      land.filter(c => c.c === maxC),  // right
+    ].filter(e => e.length > 0);
+    if (!edges.length) return;
+    const edgeList = edges[Math.floor(this.rng() * edges.length)];
+    const exit = this._pick(edgeList);
+    exit.exit = true;
+    this.exitC = exit.c; this.exitR = exit.r;
   }
 
   // BFS over non-mine land + bridges (4-connected) from the safe start: true iff

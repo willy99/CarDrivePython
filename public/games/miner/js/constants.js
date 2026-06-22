@@ -1,4 +1,4 @@
-// ─── Miner / Бабах — Phase 1 constants ──────────────────────────────────────
+// ─── Miner / Бабум — Phase 1 constants ──────────────────────────────────────
 
 export const TOP_BAR = 54;
 

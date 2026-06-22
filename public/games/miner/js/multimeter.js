@@ -519,8 +519,10 @@ function buildSchemSVG(puzzle, variant, nodePositions, redNode, blackNode, cut) 
       : '';
 
     return `${probeRing}${pulseRing}
-<circle class="mm-node" data-node="${nd.id}" cx="${p.x}" cy="${p.y}" r="11"
+<circle class="mm-node" data-node="${nd.id}" cx="${p.x}" cy="${p.y}" r="13"
   fill="${fill}" stroke="${stroke}" stroke-width="2" style="cursor:pointer"/>
+<circle class="mm-node-hit" data-node="${nd.id}" cx="${p.x}" cy="${p.y}" r="20"
+  fill="transparent" style="cursor:pointer"/>
 <text class="mm-node-lbl" x="${p.x}" y="${p.y + 4}" text-anchor="middle"
   font-size="9" font-weight="700" font-family="monospace" fill="${textColor}">${nd.label}</text>`;
   }).join('');
@@ -593,8 +595,8 @@ function buildMeterHTML(reading, mode, modes, timerSec, timeLeft) {
   ${timerHTML}
   <div id="mm-mode-row">${modeBtns}</div>
   <div id="mm-probe-row">
-    <div id="mm-probe-red" class="mm-probe mm-probe-r">🔴 <span id="mm-red-label">—</span></div>
-    <div id="mm-probe-black" class="mm-probe mm-probe-b">⚫ <span id="mm-black-label">—</span></div>
+    <button id="mm-probe-red" class="mm-probe mm-probe-r" data-probe="red">🔴 <span id="mm-red-label">—</span></button>
+    <button id="mm-probe-black" class="mm-probe mm-probe-b" data-probe="black">⚫ <span id="mm-black-label">—</span></button>
   </div>
 </div>`;
 }
@@ -775,10 +777,24 @@ export function showMultimeter(cell, onSuccess, onFail) {
       };
     });
 
-    // Wire up node clicks
-    modal.querySelectorAll('.mm-node').forEach(circle => {
-      circle.onclick = () => onNodeClick(circle.dataset.node);
+    // Wire up node clicks (visible circle + invisible hit-area overlay)
+    modal.querySelectorAll('.mm-node, .mm-node-hit').forEach(el => {
+      el.onclick = () => onNodeClick(el.dataset.node);
     });
+
+    // Wire up probe buttons — click to deselect
+    const probeRed = document.getElementById('mm-probe-red');
+    const probeBlack = document.getElementById('mm-probe-black');
+    if (probeRed) probeRed.onclick = () => {
+      if (resolved || !redNode) return;
+      redNode = null; blackNode = null; lastReading = null;
+      updateProbeLabels(); refreshNodeHighlights(); updateStepGuide();
+    };
+    if (probeBlack) probeBlack.onclick = () => {
+      if (resolved || !blackNode) return;
+      blackNode = null; lastReading = null;
+      updateProbeLabels(); refreshNodeHighlights(); updateStepGuide();
+    };
 
     // Wire up cut buttons
     modal.querySelectorAll('.mm-cut-btn:not([disabled])').forEach(btn => {

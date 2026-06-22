@@ -51,6 +51,14 @@ export const LEVELS = [
   { id: 28, cols: 28, rows: 26, shape: 'blob',   density: 0.19, terrain: { trees: 16, river: true, mountains: 3, lake: 2, paths: 3 } },
   { id: 29, cols: 34, rows: 30, shape: 'island', density: 0.19, terrain: { trees: 20, sea: 'all', mountains: 4, lake: 2, paths: 4 } },
   { id: 30, cols: 40, rows: 38, shape: 'blob',   density: 0.20, terrain: { trees: 26, river: true, mountains: 5, lake: 3, paths: 4 }, fog: true },
+  // ── 31-33 : VIP protection missions ──
+  { id: 31, cols: 14, rows: 13, shape: 'rect',   density: 0.13, terrain: { trees: 5 }, hasVIP: true, noGuess: true },
+  { id: 32, cols: 17, rows: 15, shape: 'blob',   density: 0.15, terrain: { trees: 8, river: true }, hasVIP: true },
+  { id: 33, cols: 20, rows: 18, shape: 'blob',   density: 0.17, terrain: { trees: 10, mountains: 2, lake: 1 }, hasVIP: true, timeLimit: 240 },
+  // ── 34-36 : evacuation missions ──
+  { id: 34, cols: 14, rows: 13, shape: 'rect',   density: 0.12, terrain: { trees: 4 }, goalType: 'evacuate', noGuess: true },
+  { id: 35, cols: 18, rows: 16, shape: 'blob',   density: 0.15, terrain: { trees: 9, river: true, mountains: 1 }, goalType: 'evacuate' },
+  { id: 36, cols: 22, rows: 19, shape: 'blob',   density: 0.17, terrain: { trees: 12, lake: 1, mountains: 2, paths: 2 }, goalType: 'evacuate', fog: true },
 ];
 
 export const LEVEL_COUNT = LEVELS.length - 1;

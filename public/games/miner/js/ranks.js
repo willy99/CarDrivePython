@@ -49,6 +49,22 @@ export function bagCapacity(rankIndex) {
   return 6;
 }
 
+// Rank perks: earned permanently when the rank is first reached.
+// Each perk key maps to the minimum rank index that grants it.
+export const RANK_PERKS = {
+  helmet:    4,  // Sergeant     — survives one mine hit per op (field shakes, 3 cells open)
+  fieldMap:  8,  // Lieutenant   — perimeter row+col revealed at level start
+  radio:     9,  // Captain      — one free safe-cell reveal per op
+  jeep:      13, // General      — survives one mine hit per op (no shake penalty)
+};
+
+// Returns an object { helmet, fieldMap, radio, jeep } → true if the rank index grants it.
+export function rankPerks(rankIndex) {
+  const r = {};
+  for (const [k, min] of Object.entries(RANK_PERKS)) r[k] = rankIndex >= min;
+  return r;
+}
+
 export const BAG_NAMES = {
   uk: ['кульок ATB', 'котомочка', 'сумка', 'рюкзак', 'великий рюкзак', 'баул'],
   en: ['ATB bag', 'pouch', 'bag', 'backpack', 'large backpack', 'duffel bag'],

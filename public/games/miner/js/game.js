@@ -1,13 +1,15 @@
 import { SAPPER_SPEED, T } from './constants.js?v=9';
-import { t, levelName, toggleLang, lang } from './i18n.js?v=12';
+import { t, levelName, toggleLang, lang } from './i18n.js?v=13';
 import { showDefusal } from './defusal.js?v=2';
-import { showMultimeter } from './multimeter.js?v=4';
-import { LEVELS, LEVEL_COUNT, TIMED_LEVEL_IDS, loadProgress, markCompleted, isUnlocked } from './levels.js?v=11';
-import { Board } from './board.js?v=12';
-import { PixiRenderer } from './pixiRenderer.js?v=14';
+import { showMultimeter } from './multimeter.js?v=6';
+import { showBalance } from './balance.js?v=1';
+import { showJammer } from './jammer.js?v=1';
+import { LEVELS, LEVEL_COUNT, TIMED_LEVEL_IDS, loadProgress, markCompleted, isUnlocked } from './levels.js?v=12';
+import { Board } from './board.js?v=13';
+import { PixiRenderer } from './pixiRenderer.js?v=15';
 import { THEMES, loadTheme, saveTheme, nextTheme } from './themes.js?v=9';
 import { Sound, isMuted, toggleMute } from './audio.js?v=9';
-import { loadClears, addClear, rankFor, rankName, rankStars, bagCapacity, BAG_NAMES } from './ranks.js?v=12';
+import { loadClears, addClear, rankFor, rankName, rankStars, bagCapacity, BAG_NAMES, rankPerks } from './ranks.js?v=13';
 import { ARTIFACTS, ARTIFACT_IDS, artifactName, artifactDesc, loadStash, addArtifact, consumeArtifact, loadEquip, toggleEquip, removeEquip } from './artifacts.js?v=10';
 import { ACHIEVEMENTS, loadAchievements, unlockAchievement, getCleanStreak, setCleanStreak, addCorrectFlags, getVestHits, addVestHit, getArmUses, addArmUse, getDefuseCount, addDefuse, addMMDefuse, getMMMaxTier, SKINS, loadSkin, saveSkin, isSkinUnlocked } from './achievements.js?v=12';
 
@@ -781,10 +783,17 @@ class Game {
     this._busy = false;
     this.detectorReady = this.loadout.includes('detector');
     this.vestReady = this.loadout.includes('vest');
+    // Rank perks (passive, always active for earned rank)
+    const _rp = rankPerks(rankFor(loadClears()).index);
+    this.helmetReady  = _rp.helmet;
+    this.radioReady   = _rp.radio;
+    this.jeepReady    = _rp.jeep;
+    this._fieldMapPerk = _rp.fieldMap;
     this._sapperWounded = false;
     this._mineHitThisLevel = false;
     this._usedArtifactThisLevel = false;
     this._flagsPlaced = 0;
+    this._lastVIPWarn = 0;
     this.renderer.currentSkin = loadSkin();
     this.renderer.buildLevel(this.board, THEMES[this.themeId]);
     for (const cell of this.board.cells) if (cell.device) this.renderer.setDevice(cell);
@@ -801,6 +810,47 @@ class Game {
     $('hint').style.display = 'block';
     this.renderTools();
     this.updateHUD();
+    // Field map perk: reveal perimeter row+col (no mines flagged, just numbers)
+    if (this._fieldMapPerk) this._applyFieldMap();
+    // Evacuation levels: auto-spawn sapper at mid-field and place mines immediately
+    const lv = this.level;
+    if (lv.goalType === 'evacuate' && !this.board.minesPlaced) {
+      const b = this.board;
+      const spawnC = b.spawnC != null ? b.spawnC : Math.floor(b.cols / 2);
+      const spawnR = b.spawnR != null ? b.spawnR : Math.floor(b.rows / 2);
+      b.placeMines(spawnC, spawnR);
+      for (const cell2 of b.cells) this.renderer.clearDevice(cell2);
+      for (const cell2 of b.cells) if (cell2.device) this.renderer.setDevice(cell2);
+      // Re-draw VIP/EXIT markers (placeMines may have relocated VIP)
+      this.renderer.clearVIP(); this.renderer.clearExit();
+      for (const cell2 of b.cells) {
+        if (cell2.vip)  this.renderer.setVIP(cell2);
+        if (cell2.exit) this.renderer.setExit(cell2);
+      }
+      this.startTime = this.elapsed;
+      const spawnCell = b.get(spawnC, spawnR);
+      this.sapper.px = spawnC; this.sapper.pr = spawnR; this.sapper.cell = spawnCell;
+      this.renderer.setSapper(spawnC, spawnR, false, 0);
+      this.renderer.updateFoW(spawnC, spawnR);
+      this._revealAt(spawnC, spawnR);
+      $('hint').textContent = t('evacuateHint');
+      this.updateHUD();
+    } else if (lv.hasVIP) {
+      $('hint').textContent = t('vipHint');
+    }
+  }
+
+  _applyFieldMap() {
+    const b = this.board;
+    const land = b.cells.filter(c => c.type === T.LAND);
+    if (!land.length) return;
+    const minR = Math.min(...land.map(c => c.r));
+    const minC = Math.min(...land.map(c => c.c));
+    const perim = land.filter(c => (c.r === minR || c.c === minC) && !c.mine && !c.revealed);
+    if (!perim.length) return;
+    for (const cell of perim) { cell.revealed = true; }
+    this.renderer.onReveal(perim);
+    this.showToast('🗺 ' + (lang === 'uk' ? 'Польова карта: периметр розкрито' : 'Field map: perimeter revealed'));
   }
 
   // rebuild map visuals (theme change) and replay board state
@@ -847,6 +897,11 @@ class Game {
       // Refresh ⚠ device indicators — relocation may have moved cells to mine-adjacent positions
       for (const cell2 of b.cells) this.renderer.clearDevice(cell2);
       for (const cell2 of b.cells) if (cell2.device) this.renderer.setDevice(cell2);
+      // Refresh VIP marker (VIP may have been relocated to a mine-adjacent cell)
+      if (b.level.hasVIP) {
+        this.renderer.clearVIP();
+        for (const cell2 of b.cells) if (cell2.vip) this.renderer.setVIP(cell2);
+      }
       // Issue one emergency probe per isolated region (connected component of unreachable safe cells)
       const regions = b.isolatedRegions(c, r);
       if (regions.length > 0) {
@@ -920,6 +975,7 @@ class Game {
     sp.moving = false; sp.path = null; sp.action = null;
     this.renderer.setSapper(tgt.c, tgt.r, false, 0);
     this.renderer.updateFoW(tgt.c, tgt.r);
+    if (tgt.exit && this._checkWin()) this._win();
   }
 
   _arrowMove(dx, dy) {
@@ -949,6 +1005,7 @@ class Game {
   }
 
   _primaryClassic(c, r) {
+    if (this._busy) return;
     const b = this.board;
     const cell = b.get(c, r);
     if (!cell) return;
@@ -966,6 +1023,10 @@ class Game {
       }
       this.startTime = this.elapsed;
       this.sapper.cell = cell;
+      if (b.level.hasVIP) {
+        this.renderer.clearVIP();
+        for (const cell2 of b.cells) if (cell2.vip) this.renderer.setVIP(cell2);
+      }
       this.renderer.updateFoW(c, r);
       this._revealAt(c, r);
       $('hint').textContent = t('hintMoveClassic');
@@ -997,6 +1058,7 @@ class Game {
       this.renderer.setFlag(cell);
       if (cell.flagged) { this._flagsPlaced++; Sound.flag(); } else Sound.unflag();
       this.updateHUD();
+      if (this._checkWin()) this._win();
       return;
     }
     // un-flagging is instant; flagging walks the sapper up to a bordering cell
@@ -1031,10 +1093,15 @@ class Game {
     this.renderer.updateFoW(tgt.c, tgt.r);
     if (sp.action === 'flag') {
       const fc = sp.flagTarget; sp.flagTarget = null; sp.action = null;
-      if (fc && !fc.revealed) { fc.flagged = true; this.renderer.setFlag(fc); Sound.flag(); this._flagsPlaced++; this.updateHUD(); }
+      if (fc && !fc.revealed) { fc.flagged = true; this.renderer.setFlag(fc); Sound.flag(); this._flagsPlaced++; this.updateHUD(); if (this._checkWin()) this._win(); }
       return;
     }
-    if (sp.action === 'walk') { sp.action = null; return; }
+    if (sp.action === 'walk') {
+      sp.action = null;
+      // Evacuation: check if sapper reached the EXIT cell
+      if (tgt.exit && this._checkWin()) this._win();
+      return;
+    }
     if (sp.action === 'cross') {            // UGV ride finished
       sp.action = null;
       this.renderer.setPlatform(false);
@@ -1102,6 +1169,8 @@ class Game {
         this.updateHUD();
         return;
       }
+      if (this.helmetReady) { this.helmetReady = false; this._perkSurvive(c, r, 'helmet'); return; }
+      if (this.jeepReady)   { this.jeepReady   = false; this._perkSurvive(c, r, 'jeep');   return; }
       this._boom(c, r); return;
     }
     if (cell.device) { this._startDefusal(cell); return; }
@@ -1110,12 +1179,14 @@ class Game {
     Sound.reveal();
     this._collect(out);
     this.updateHUD();
-    if (b.isWon()) this._win();
+    if (this._checkWin()) this._win();
   }
 
   _startDefusal(cell) {
     this._busy = true;
-    const isMMDevice = cell.device.type.startsWith('mm_');
+    const isMMDevice  = cell.device.type.startsWith('mm_');
+    const isBalDevice = cell.device.type.startsWith('balance_');
+    const isJamDevice = cell.device.type.startsWith('jammer_');
 
     const onSuccess = (info) => {
       cell.device = null;
@@ -1126,7 +1197,7 @@ class Game {
       Sound.reveal();
       this._collect(out);
       this.updateHUD();
-      if (this.board.isWon()) this._win();
+      if (this._checkWin()) this._win();
       this.showToast('💣✅ ' + (lang === 'uk' ? 'Пристрій знешкоджено!' : 'Device neutralized!'));
 
       const achList = [];
@@ -1168,6 +1239,14 @@ class Game {
         this._busy = false;
         this.showToast('🛡️ 💥 ' + (lang === 'uk' ? 'Бронежилет врятував — сапер поранений!' : 'Vest saved you — sapper wounded!'));
         this.updateHUD();
+      } else if (this.helmetReady) {
+        this.helmetReady = false;
+        this._busy = false;
+        this._perkSurvive(cell.c, cell.r, 'helmet');
+      } else if (this.jeepReady) {
+        this.jeepReady = false;
+        this._busy = false;
+        this._perkSurvive(cell.c, cell.r, 'jeep');
       } else {
         this._busy = false;
         this._boom(cell.c, cell.r);
@@ -1175,9 +1254,12 @@ class Game {
     };
 
     if (isMMDevice) {
-      // Extract tier from device type before clearing it in onSuccess
       const mmTier = parseInt(cell.device.type.replace('mm_t', ''), 10) || 1;
       showMultimeter(cell, (info) => onSuccess({ ...info, tier: mmTier }), onFail);
+    } else if (isBalDevice) {
+      showBalance(cell, onSuccess, onFail);
+    } else if (isJamDevice) {
+      showJammer(cell, onSuccess, onFail);
     } else {
       showDefusal(cell, onSuccess, onFail);
     }
@@ -1202,8 +1284,111 @@ class Game {
     setCleanStreak(0);
     Sound.boom();
     this.renderer.spawnExplosion(c, r);
+    // Chain: detonate all adjacent mines with staggered delay
+    const b = this.board;
+    const DIRS8 = [[1,0],[-1,0],[0,1],[0,-1],[1,1],[1,-1],[-1,1],[-1,-1]];
+    let delay = 180;
+    for (const [dc, dr] of DIRS8) {
+      const nb = b.get(c + dc, r + dr);
+      if (nb && nb.type === T.LAND && nb.mine && !nb.flagged && !nb.revealed) {
+        const nc = nb.c, nr = nb.r;
+        setTimeout(() => {
+          nb.revealed = true;
+          this.renderer.spawnExplosion(nc, nr);
+        }, delay);
+        delay += 120;
+      }
+    }
     this.renderer.setLost();
-    this.loseTimer = 0.85;
+    this.loseTimer = 0.85 + delay / 1000;
+  }
+
+  // ── Rank perk: survive one mine hit ──────────────────────────────────────
+  _perkSurvive(c, r, perk) {
+    const isJeep = perk === 'jeep';
+    this._sapperWounded = true;
+    this._mineHitThisLevel = true;
+    const cell = this.board.get(c, r);
+    if (cell && !cell.flagged) cell.flagged = true;
+    Sound.boom();
+    this.renderer.spawnExplosion(c, r);
+    this.renderer.spawnCrater(c, r);
+    this.renderer.revealFog(c, r);
+    this.renderer.sapperHit();
+    if (!isJeep) {
+      // Helmet: field shakes + 3 random nearby safe cells open
+      this.renderer.shakeCamera?.();
+      const b = this.board;
+      const DIRS8 = [[1,0],[-1,0],[0,1],[0,-1],[1,1],[1,-1],[-1,1],[-1,-1]];
+      const candidates = DIRS8
+        .map(([dc, dr]) => b.get(c + dc, r + dr))
+        .filter(nb => nb && nb.type === T.LAND && !nb.mine && !nb.revealed && !nb.flagged && !nb.device);
+      const picks = candidates.sort(() => Math.random() - 0.5).slice(0, 3);
+      for (const p of picks) {
+        const out = b.reveal(p.c, p.r);
+        this.renderer.onReveal(out);
+      }
+    }
+    if (this._getMode() !== 'classic') {
+      const sp = this.sapper, back = sp.prevCell || sp.cell;
+      if (back) { sp.cell = back; sp.px = back.c; sp.pr = back.r; this.renderer.setSapper(back.c, back.r, false, 0); }
+    }
+    const msg = isJeep
+      ? (lang === 'uk' ? '🚗 Джип врятував — сапер живий!' : '🚗 Jeep saved you — sapper alive!')
+      : (lang === 'uk' ? '🪖 Каска врятувала — тремтить поле!' : '🪖 Helmet saved you — field shook!');
+    this.showToast(msg);
+    this._syncSapperEquip();
+    this.renderTools();
+    this.updateHUD();
+  }
+
+  // ── Rank perk: radio — reveal one safe cell ───────────────────────────────
+  _useRadio() {
+    if (!this.radioReady || this.state !== 'PLAYING') return;
+    const b = this.board;
+    const safe = b.cells.filter(c => c.type === T.LAND && !c.mine && !c.revealed && !c.flagged && !c.device);
+    if (!safe.length) return;
+    const pick = safe[Math.floor(Math.random() * safe.length)];
+    this.radioReady = false;
+    const out = b.reveal(pick.c, pick.r);
+    this.renderer.onReveal(out);
+    Sound.reveal();
+    this._collect(out);
+    this.showToast('📻 ' + (lang === 'uk' ? 'Рація: безпечна клітинка знайдена!' : 'Radio: safe cell found!'));
+    this.renderTools();
+    this.updateHUD();
+    if (this._checkWin()) this._win();
+  }
+
+  _isVIPSecured() {
+    const b = this.board;
+    const vip = b.cells.find(c => c.vip);
+    if (!vip) return true;
+    const DIRS8 = [[1,0],[-1,0],[0,1],[0,-1],[1,1],[1,-1],[-1,1],[-1,-1]];
+    return DIRS8.every(([dc, dr]) => {
+      const n = b.get(vip.c + dc, vip.r + dr);
+      return !n || n.type !== T.LAND || !n.mine || n.flagged;
+    });
+  }
+
+  _checkWin() {
+    const b = this.board;
+    const lv = b.level;
+    if (lv.goalType === 'evacuate') {
+      return !!(this.sapper.cell && this.sapper.cell.exit);
+    }
+    if (!b.isWon()) return false;
+    if (lv.hasVIP) {
+      if (!this._isVIPSecured()) {
+        const now = Date.now();
+        if (!this._lastVIPWarn || now - this._lastVIPWarn > 4000) {
+          this.showToast(t('vipUnsecured'));
+          this._lastVIPWarn = now;
+        }
+        return false;
+      }
+    }
+    return true;
   }
 
   _win() {
@@ -1310,7 +1495,11 @@ class Game {
   _showOverlay(won) {
     $('overlay').style.display = 'flex';
     $('tools').style.display = 'none';
-    $('ov-icon').textContent = won ? '🎖️' : '💥';
+    const lv = this.level;
+    const winIcon = won
+      ? (lv && lv.goalType === 'evacuate' ? '🚪' : lv && lv.hasVIP ? '👤' : '🎖️')
+      : '💥';
+    $('ov-icon').textContent = winIcon;
     $('ov-title').textContent = won ? t('win') : t('lose');
     let txt = won ? t('winSub') : t('loseSub');
     if (won && this._promoted) {
@@ -1338,6 +1527,18 @@ class Game {
     const mines = b && b.minesPlaced ? Math.max(0, b.mineCount - b.flagCount()) : (b ? '?' : 0);
     $('stat-mines').textContent = `💣 ${mines}`;
     $('stat-flags').textContent = `🚩 ${b ? b.flagCount() : 0}`;
+    // VIP status indicator
+    const vipEl = $('stat-vip');
+    if (vipEl) {
+      if (b && b.level && b.level.hasVIP && b.minesPlaced) {
+        const secured = this._isVIPSecured();
+        vipEl.textContent = secured ? t('vipSecured') : t('vipStatus');
+        vipEl.style.color = secured ? '#4ade80' : '#fbbf24';
+        vipEl.style.display = '';
+      } else {
+        vipEl.style.display = 'none';
+      }
+    }
     const gameTime = this.startTime < 0 ? 0 : this.elapsed - this.startTime;
     const tl = b && b.level && b.level.timeLimit;
     if (tl) {
@@ -1450,6 +1651,11 @@ class Game {
   _probeCell(c, r) {
     const cell = this.board.get(c, r);
     if (!cell || cell.type !== T.LAND || cell.revealed) { this.renderTools(); return; }
+    // Can't probe a device cell — sapper must step on it manually
+    if (cell.device) {
+      this.showToast(lang === 'uk' ? '⚠ Щуп не може знешкодити пристрій — підійди сапером' : '⚠ Probe can\'t defuse a device — step on it manually');
+      return;
+    }
     this._spendTool('probe');
     Sound.probe();
     if (cell.mine) {
@@ -1459,7 +1665,7 @@ class Game {
       const out = this.board.reveal(c, r);
       this.renderer.onReveal(out);
       this._collect(out);
-      if (this.board.isWon()) this._win();
+      if (this._checkWin()) this._win();
     }
     this.updateHUD();
   }
@@ -1493,7 +1699,7 @@ class Game {
       const out = this.board.reveal(c, r);
       this.renderer.onReveal(out);
       Sound.reveal(); this._collect(out);
-      if (this.board.isWon()) this._win();
+      if (this._checkWin()) this._win();
     }
     this.updateHUD();
   }
@@ -1571,7 +1777,8 @@ class Game {
 
   _useAutoSap() {
     const b = this.board;
-    const safe = b.cells.filter(c => c.type === T.LAND && !c.mine && !c.revealed && !c.flagged);
+    // Exclude device cells — they must be defused by the sapper manually
+    const safe = b.cells.filter(c => c.type === T.LAND && !c.mine && !c.revealed && !c.flagged && !c.device);
     for (let i = safe.length - 1; i > 0; i--) {
       const j = Math.floor(Math.random() * (i + 1));
       [safe[i], safe[j]] = [safe[j], safe[i]];
@@ -1587,7 +1794,7 @@ class Game {
     Sound.reveal();
     this.showToast('🤖 ' + picks.length + ' ' + (lang === 'uk' ? 'клітинок відкрито' : 'cells revealed'));
     this.updateHUD();
-    if (b.isWon()) this._win();
+    if (this._checkWin()) this._win();
   }
 
   _useRelay() {
@@ -1608,7 +1815,7 @@ class Game {
       if (cell.r !== sp.r && cell.c !== sp.c) continue;
       if (cell.mine) {
         cell.flagged = true; this.renderer.setFlag(cell);
-      } else {
+      } else if (!cell.device) {
         const out = b.reveal(cell.c, cell.r);
         this.renderer.onReveal(out);
         revealed.push(...out);
@@ -1617,12 +1824,16 @@ class Game {
     this._collect(revealed);
     Sound.reveal();
     this.updateHUD();
-    if (b.isWon()) this._win();
+    if (this._checkWin()) this._win();
   }
 
   _useDetonator(c, r) {
     const b = this.board, cell = b.get(c, r);
     if (!cell || cell.type !== T.LAND || cell.revealed) { this._reAim('detonator', 'aimDetonator'); return; }
+    if (cell.device) {
+      this.showToast(lang === 'uk' ? '⚠ Підривник не знешкодить пристрій — підійди сапером' : '⚠ Detonator can\'t defuse a device — step on it manually');
+      return;
+    }
     this._spendTool('detonator');
     if (cell.mine) {
       cell.mine = false;
@@ -1640,7 +1851,7 @@ class Game {
       Sound.reveal();
     }
     this.updateHUD();
-    if (b.isWon()) this._win();
+    if (this._checkWin()) this._win();
   }
 
   _useFlashlight(c, r) {
@@ -1651,13 +1862,13 @@ class Game {
       const cell = b.get(c + dc, r + dr);
       if (!cell || cell.type !== T.LAND || cell.revealed || cell.flagged) continue;
       if (cell.mine) { cell.flagged = true; this.renderer.setFlag(cell); }
-      else { const revealed = b.reveal(cell.c, cell.r); out.push(...revealed); }
+      else if (!cell.device) { const revealed = b.reveal(cell.c, cell.r); out.push(...revealed); }
     }
     if (out.length) { this.renderer.onReveal(out); this._collect(out); }
     this.renderer.echoPing([{c, r, mine: false}], 2.5);
     Sound.reveal();
     this.updateHUD();
-    if (b.isWon()) this._win();
+    if (this._checkWin()) this._win();
   }
 
   _useSpotlight() {
@@ -1667,7 +1878,7 @@ class Game {
       const cell = b.get(sp.cell.c + dc, sp.cell.r + dr);
       if (!cell || cell.type !== T.LAND || cell.revealed || cell.flagged) continue;
       if (cell.mine) { cell.flagged = true; this.renderer.setFlag(cell); }
-      else { const revealed = b.reveal(cell.c, cell.r); out.push(...revealed); }
+      else if (!cell.device) { const revealed = b.reveal(cell.c, cell.r); out.push(...revealed); }
     }
     if (out.length) { this.renderer.onReveal(out); this._collect(out); }
     const marks = b.cells.filter(c => c.type === T.LAND && !c.revealed)
@@ -1676,7 +1887,7 @@ class Game {
     this.renderer.echoPing(marks, 3.0);
     Sound.echo();
     this.updateHUD();
-    if (b.isWon()) this._win();
+    if (this._checkWin()) this._win();
   }
 
   _spendTool(id) {
@@ -1694,7 +1905,8 @@ class Game {
   renderTools() {
     const el = $('tools');
     el.innerHTML = '';
-    if (this.state !== 'PLAYING' || !this.loadout.length) { el.style.display = 'none'; return; }
+    const hasPerks = this.helmetReady || this.jeepReady || this.radioReady;
+    if (this.state !== 'PLAYING' || (!this.loadout.length && !hasPerks)) { el.style.display = 'none'; return; }
     el.style.display = 'flex';
     this.loadout.forEach((id, idx) => {
       const art = ARTIFACTS[id], spent = !this.toolUses[idx], passive = art.active === false;
@@ -1715,6 +1927,23 @@ class Game {
       if (!passive && !spent) div.onclick = () => this.useTool(idx);
       el.appendChild(div);
     });
+    // Rank perk buttons
+    if (this.helmetReady || this.jeepReady) {
+      const perk = this.jeepReady ? 'jeep' : 'helmet';
+      const div = document.createElement('div');
+      div.className = 'tool rank-perk passive';
+      div.title = lang === 'uk' ? (perk === 'jeep' ? 'Джип — пережити підрив' : 'Каска — пережити підрив') : (perk === 'jeep' ? 'Jeep — survive blast' : 'Helmet — survive blast');
+      div.innerHTML = `<span class="tool-ico" style="font-size:24px;line-height:1">${perk === 'jeep' ? '🚗' : '🪖'}</span><span class="tool-name">${lang === 'uk' ? (perk === 'jeep' ? 'Джип' : 'Каска') : (perk === 'jeep' ? 'Jeep' : 'Helmet')}</span>`;
+      el.appendChild(div);
+    }
+    if (this.radioReady) {
+      const div = document.createElement('div');
+      div.className = 'tool rank-perk';
+      div.title = lang === 'uk' ? 'Рація — відкрити безпечну клітинку' : 'Radio — reveal safe cell';
+      div.innerHTML = `<span class="tool-ico" style="font-size:24px;line-height:1">📻</span><span class="tool-name">${lang === 'uk' ? 'Рація' : 'Radio'}</span>`;
+      div.onclick = () => this._useRadio();
+      el.appendChild(div);
+    }
   }
 
   // ── rank + stash on the level picker ──────────────────────────────────────

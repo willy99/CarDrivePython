@@ -28,6 +28,8 @@ export class PixiRenderer {
     this.markers = new Map();  // cellIndex → DisplayObject
     this.flags = new Map();    // cellIndex → Graphics
     this.devices = new Map();  // cellIndex → PIXI.Text (device indicator)
+    this.vipMarker = null;     // PIXI.Container — VIP icon
+    this.exitMarker = null;    // PIXI.Container — EXIT portal
     this.particles = [];
     this.anims = [];           // timed tween animations (arm extend, drone flight)
     this.sapperC = null;
@@ -178,6 +180,7 @@ export class PixiRenderer {
     this.world.removeChildren().forEach(c => c.destroy({ children: true }));
     this.board = null;
     this.fog.clear(); this.markers.clear(); this.flags.clear(); this.devices.clear();
+    this.vipMarker = null; this.exitMarker = null;
     this.particles = []; this.anims = []; this.sapperC = null; this.sapperLegs = null; this.platform = null;
     this._waterRipple = null; this._clouds = null; this._cloudW = 0;
     this.fowC = null; this._fowRadius = 0; this._fowCells = new Map();
@@ -332,6 +335,12 @@ export class PixiRenderer {
     if (board.level.night) this._buildNightSky(board, TH);
 
     this._buildSapper(TH);
+
+    // VIP and EXIT markers (after entityC exists)
+    for (const cell of board.cells) {
+      if (cell.vip)  this.setVIP(cell);
+      if (cell.exit) this.setExit(cell);
+    }
 
     // 11. clouds — above terrain, below fog-of-war on night levels
     this._buildClouds(board, TH);
@@ -794,6 +803,56 @@ export class PixiRenderer {
     if (icon) { icon.destroy(); this.devices.delete(key); }
   }
 
+  setVIP(cell) {
+    if (this.vipMarker) { this.vipMarker.destroy(); this.vipMarker = null; }
+    const x = cell.c * BASE + BASE / 2, y = cell.r * BASE + BASE / 2;
+    const c = new PIXI.Container();
+    // glow ring
+    const g = new PIXI.Graphics();
+    g.beginFill(0xffd700, 0.18).drawCircle(0, 0, BASE * 0.42).endFill();
+    g.lineStyle({ width: 2, color: 0xffd700, alpha: 0.7 }).drawCircle(0, 0, BASE * 0.42);
+    c.addChild(g);
+    const t = new PIXI.Text('👤', {
+      fontSize: BASE * 0.45, fill: 0xffd700,
+      dropShadow: true, dropShadowDistance: 1, dropShadowColor: 0x000000, dropShadowAlpha: 0.9,
+    });
+    t.anchor.set(0.5);
+    c.addChild(t);
+    c.position.set(x, y);
+    this.entityC.addChild(c);
+    this.vipMarker = c;
+  }
+
+  clearVIP() {
+    if (this.vipMarker) { this.vipMarker.destroy(); this.vipMarker = null; }
+  }
+
+  setExit(cell) {
+    if (this.exitMarker) { this.exitMarker.destroy(); this.exitMarker = null; }
+    const x = cell.c * BASE + BASE / 2, y = cell.r * BASE + BASE / 2;
+    const c = new PIXI.Container();
+    // pulsing green glow
+    const g = new PIXI.Graphics();
+    g.beginFill(0x00ff88, 0.22).drawCircle(0, 0, BASE * 0.46).endFill();
+    g.lineStyle({ width: 2.5, color: 0x00ff88, alpha: 0.9 }).drawCircle(0, 0, BASE * 0.46);
+    c.addChild(g);
+    const t = new PIXI.Text('🚪', {
+      fontSize: BASE * 0.50, fill: 0x00ff88,
+      dropShadow: true, dropShadowDistance: 1, dropShadowColor: 0x000000, dropShadowAlpha: 0.9,
+    });
+    t.anchor.set(0.5);
+    c.addChild(t);
+    c.position.set(x, y);
+    // store glow for pulse animation
+    c._glow = g;
+    this.entityC.addChild(c);
+    this.exitMarker = c;
+  }
+
+  clearExit() {
+    if (this.exitMarker) { this.exitMarker.destroy(); this.exitMarker = null; }
+  }
+
   setLost() {
     const TH = this.theme;
     for (const cell of this.board.cells) {
@@ -1232,6 +1291,12 @@ export class PixiRenderer {
         c.x += c._spd;
         if (c.x > this._cloudW + c._r * 2) c.x = -c._r * 2;
       }
+    }
+
+    // exit portal pulse
+    if (this.exitMarker && this.exitMarker._glow) {
+      const pulse = 0.18 + Math.abs(Math.sin(Date.now() / 600)) * 0.15;
+      this.exitMarker._glow.alpha = pulse;
     }
 
     // fog fade-out
