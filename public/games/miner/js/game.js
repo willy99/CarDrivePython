@@ -1,4 +1,4 @@
-import { SAPPER_SPEED, T } from './constants.js?v=9';
+import { SAPPER_SPEED, T } from './constants.js?v=10';
 import { t, levelName, toggleLang, lang } from './i18n.js?v=17';
 import { AmbushSquad } from './ambush.js?v=5';
 import { showDefusal } from './defusal.js?v=2';
@@ -6,7 +6,8 @@ import { showMultimeter } from './multimeter.js?v=6';
 import { showBalance } from './balance.js?v=1';
 import { showJammer } from './jammer.js?v=2';
 import { LEVELS, LEVEL_COUNT, TIMED_LEVEL_IDS, loadProgress, markCompleted, isUnlocked } from './levels.js?v=13';
-import { Board } from './board.js?v=20';
+import { Board } from './board.js?v=21';
+import { LevelEditor, loadCustomLevels } from './editor.js?v=1';
 import { PixiRenderer } from './pixiRenderer.js?v=18';
 import { THEMES, loadTheme, saveTheme, nextTheme } from './themes.js?v=9';
 import { Sound, isMuted, toggleMute } from './audio.js?v=9';
@@ -152,6 +153,7 @@ class Game {
     this.probeArmed = false;
     this.detectorReady = false;
     this._stepAcc = 0;
+    this.editor = new LevelEditor(def => this.startLevel(def));
 
     this.renderer.onCellTap = (c, r) => this.primaryAction(c, r);
     this.renderer.onCellFlag = (c, r) => this.flagAction(c, r);
@@ -197,8 +199,7 @@ class Game {
     $('howto-modal').onclick  = e => { if (e.target === $('howto-modal'))  this.hideHowTo(); };
     $('btn-ach-close').onclick = () => this.hideAchievementsModal();
     $('ach-modal').onclick    = e => { if (e.target === $('ach-modal'))    this.hideAchievementsModal(); };
-    $('btn-editor-close').onclick = () => this.hideEditorModal();
-    $('editor-modal').onclick = e => { if (e.target === $('editor-modal')) this.hideEditorModal(); };
+    $('editor-modal').onclick = e => { if (e.target === $('editor-modal')) this.editor.close(); };
     this._cheatBuf = '';
     window.addEventListener('keydown', e => {
       this._cheatBuf = (this._cheatBuf + e.key).toLowerCase().slice(-5);
@@ -252,126 +253,8 @@ class Game {
   }
 
   // ── Level Editor ──────────────────────────────────────────────────────────
-  showEditorModal() {
-    $('editor-title').textContent = t('editorTitle');
-    $('editor-body').innerHTML = this._buildEditorHTML();
-    this._wireEditorForm();
-    $('editor-modal').classList.add('open');
-  }
-
-  hideEditorModal() { $('editor-modal').classList.remove('open'); }
-
-  _buildEditorHTML() {
-    const sl = (id, min, max, val, unit='') =>
-      `<input type="range" id="${id}" min="${min}" max="${max}" value="${val}">
-       <span class="ed-val" id="${id}-val">${val}${unit}</span>`;
-    return `
-      <div class="ed-section">
-        <div class="ed-label">${t('editorSize')}</div>
-        <div class="ed-row"><label>${t('editorCols')}</label>${sl('ed-cols',8,25,14)}</div>
-        <div class="ed-row"><label>${t('editorRows')}</label>${sl('ed-rows',6,20,12)}</div>
-      </div>
-      <div class="ed-section">
-        <div class="ed-label">${t('editorShape')}</div>
-        <div class="ed-shape-row">
-          <button class="ed-shape-btn active" data-shape="rect">${t('editorShapeRect')}</button>
-          <button class="ed-shape-btn" data-shape="blob">${t('editorShapeBlob')}</button>
-          <button class="ed-shape-btn" data-shape="island">${t('editorShapeIsland')}</button>
-        </div>
-      </div>
-      <div class="ed-section">
-        <div class="ed-label">${t('editorDensity')}</div>
-        <div class="ed-row"><label>${t('editorDensity')}</label>${sl('ed-density',10,25,15,'%')}</div>
-      </div>
-      <div class="ed-section">
-        <div class="ed-label">${t('editorTerrain')}</div>
-        <div class="ed-row"><label>🌲 ${t('editorTrees')}</label>${sl('ed-trees',0,20,7)}</div>
-        <div class="ed-row"><label>⛰ ${t('editorMountains')}</label>${sl('ed-mountains',0,6,0)}</div>
-        <div class="ed-row"><label>🌊 ${t('editorLake')}</label>${sl('ed-lakes',0,4,0)}</div>
-        <div class="ed-row"><label>🛤 ${t('editorPaths')}</label>${sl('ed-paths',0,4,0)}</div>
-        <div class="ed-check-row">
-          <label class="ed-check"><input type="checkbox" id="ed-river"> 〜 ${t('editorRiver')}</label>
-          <div class="ed-row" style="gap:8px">
-            <label style="font-size:13px;color:#c8dace">🌊 ${t('editorSea')}</label>
-            <select class="ed-select" id="ed-sea">
-              <option value="none">${t('editorSeaNone')}</option>
-              <option value="N">N ↑</option><option value="S">S ↓</option>
-              <option value="E">E →</option><option value="W">W ←</option>
-            </select>
-          </div>
-        </div>
-      </div>
-      <div class="ed-section">
-        <div class="ed-label">${t('editorExtras')}</div>
-        <div class="ed-check-row">
-          <label class="ed-check"><input type="checkbox" id="ed-fog"> 🌫 ${t('editorFog')}</label>
-          <label class="ed-check"><input type="checkbox" id="ed-night"> 🌙 ${t('editorNight')}</label>
-        </div>
-        <div class="ed-row">
-          <label>⏱ ${t('editorTime')}</label>
-          <select class="ed-select" id="ed-time">
-            <option value="0">${t('editorTimeNone')}</option>
-            <option value="120">2 min</option>
-            <option value="180">3 min</option>
-            <option value="240">4 min</option>
-            <option value="300">5 min</option>
-          </select>
-        </div>
-      </div>
-      <button id="ed-play">${t('editorPlay')}</button>`;
-  }
-
-  _wireEditorForm() {
-    [['ed-cols',''], ['ed-rows',''], ['ed-trees',''], ['ed-mountains',''], ['ed-lakes',''], ['ed-paths','']].forEach(([id]) => {
-      const el = $(id); if (!el) return;
-      el.oninput = () => { $(`${id}-val`).textContent = el.value; };
-    });
-    const densEl = $('ed-density');
-    if (densEl) densEl.oninput = () => { $('ed-density-val').textContent = densEl.value + '%'; };
-
-    document.querySelectorAll('.ed-shape-btn').forEach(btn => {
-      btn.onclick = () => {
-        document.querySelectorAll('.ed-shape-btn').forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
-      };
-    });
-
-    $('ed-play').onclick = () => {
-      Sound.click();
-      this._playCustomLevel();
-      this.hideEditorModal();
-    };
-  }
-
-  _playCustomLevel() {
-    const gi = id => parseInt($(id).value, 10);
-    const shape = (document.querySelector('.ed-shape-btn.active') || {}).dataset?.shape || 'rect';
-    const sea = $('ed-sea').value;
-    const timeLimit = gi('ed-time') || undefined;
-
-    const terrain = {};
-    const trees = gi('ed-trees'); if (trees > 0) terrain.trees = trees;
-    const mountains = gi('ed-mountains'); if (mountains > 0) terrain.mountains = mountains;
-    const lakes = gi('ed-lakes'); if (lakes > 0) terrain.lake = lakes;
-    const paths = gi('ed-paths'); if (paths > 0) terrain.paths = paths;
-    if ($('ed-river').checked) terrain.river = true;
-    if (sea !== 'none') terrain.sea = sea;
-
-    const customLevel = {
-      id: 0,
-      custom: true,
-      cols: gi('ed-cols'),
-      rows: gi('ed-rows'),
-      shape,
-      density: gi('ed-density') / 100,
-      terrain,
-      fog: $('ed-fog').checked || undefined,
-      night: $('ed-night').checked || undefined,
-      timeLimit,
-      name: { en: 'Custom Op', uk: 'Кастомна операція' },
-    };
-    this.startLevel(customLevel);
-  }
+  showEditorModal() { this.editor.open(); }
+  hideEditorModal() { this.editor.close(); }
 
   _toggleFlagMode() {
     this._flagMode = !this._flagMode;
@@ -744,6 +627,27 @@ class Game {
       if (unlocked && !blocked) card.onclick = () => this.startLevel(LEVELS[id]);
       grid.appendChild(card);
     }
+    this._renderCustomLevels(grid);
+  }
+
+  _renderCustomLevels(grid) {
+    const custom = loadCustomLevels();
+    if (!custom.length) return;
+    const sep = document.createElement('div');
+    sep.style.cssText = 'grid-column:1/-1;font-weight:800;font-size:.82rem;color:#6a8a70;' +
+                        'padding:14px 0 4px;letter-spacing:.04em;';
+    sep.textContent = '🗺 ' + (lang === 'uk' ? 'Мої мапи' : 'My Maps');
+    grid.appendChild(sep);
+    for (const lv of custom) {
+      const card = document.createElement('button');
+      card.className = 'lvl';
+      card.innerHTML = `<span class="lvl-num">🗺</span>` +
+                       `<span class="lvl-name">${lv.name || 'Custom'}</span>` +
+                       `<span class="lvl-check">${lv.cols}×${lv.rows}</span>`;
+      card.title = `${lv.enemyCount} enemies · AI tier ${lv.aiTier}`;
+      card.onclick = () => this.startLevel(lv);
+      grid.appendChild(card);
+    }
   }
 
   _renderSelectToolbar() {
@@ -790,6 +694,7 @@ class Game {
           if (unlocked2 && !blocked2) card2.onclick = () => this.startLevel(LEVELS[id2]);
           grid2.appendChild(card2);
         }
+        this._renderCustomLevels(grid2);
       };
     });
   }
@@ -798,9 +703,12 @@ class Game {
   startLevel(level) {
     this.level = level;
     let board = new Board(level);
-    // For ambush levels, regenerate if terrain leaves too few spawn/exit cells
-    for (let attempt = 0; attempt < 8 && !board.isAmbushValid(); attempt++) {
-      board = new Board(level);
+    // For ambush levels, regenerate if terrain leaves too few spawn/exit cells.
+    // Custom maps are deterministic — retrying won't change the outcome.
+    if (!level.customMap) {
+      for (let attempt = 0; attempt < 8 && !board.isAmbushValid(); attempt++) {
+        board = new Board(level);
+      }
     }
     this.board = board;
     this.sapper = { px: 0, pr: 0, cell: null, prevCell: null, path: null, pathI: 0, moving: false, anim: 0 };

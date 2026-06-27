@@ -29,9 +29,14 @@ export class Board {
     this.mineCount = 0;
     this.minesPlaced = false;
 
-    this._initShape();
-    this._carveTerrain();
-    this._pruneToMainComponent();
+    if (level.customMap) {
+      this._loadCustomMap(level.customMap);
+      if (level.goalType === 'ambush') this._placeAmbushZones();
+    } else {
+      this._initShape();
+      this._carveTerrain();
+      this._pruneToMainComponent();
+    }
     this.landTotal = this.cells.filter(c => c.type === T.LAND).length;
   }
 
@@ -66,6 +71,14 @@ export class Board {
   }
 
   _landCells() { return this.cells.filter(c => c.type === T.LAND); }
+
+  _loadCustomMap(map) {
+    for (let r = 0; r < this.rows; r++)
+      for (let c = 0; c < this.cols; c++) {
+        const type = map[r * this.cols + c] || T.LAND;
+        this.cells.push({ c, r, type, mine: false, adj: 0, revealed: false, flagged: false });
+      }
+  }
   _pick(arr) { return arr[Math.floor(this.rng() * arr.length)]; }
 
   // ── terrain features (progressive per level) ──────────────────────────────
