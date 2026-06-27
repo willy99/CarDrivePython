@@ -11,7 +11,7 @@ import { LevelEditor, loadCustomLevels } from './editor.js?v=1';
 import { PixiRenderer } from './pixiRenderer.js?v=18';
 import { THEMES, loadTheme, saveTheme, nextTheme } from './themes.js?v=9';
 import { Sound, isMuted, toggleMute } from './audio.js?v=9';
-import { loadClears, addClear, rankFor, rankName, rankStars, bagCapacity, BAG_NAMES, rankPerks } from './ranks.js?v=13';
+import { loadClears, addClear, rankFor, rankName, rankStars, rankInsignia, bagCapacity, BAG_NAMES, rankPerks } from './ranks.js?v=14';
 import { ARTIFACTS, ARTIFACT_IDS, artifactName, artifactDesc, loadStash, addArtifact, consumeArtifact, loadEquip, toggleEquip, removeEquip } from './artifacts.js?v=10';
 import { ACHIEVEMENTS, loadAchievements, unlockAchievement, getCleanStreak, setCleanStreak, addCorrectFlags, getVestHits, addVestHit, getArmUses, addArmUse, getDefuseCount, addDefuse, addMMDefuse, getMMMaxTier, SKINS, loadSkin, saveSkin, isSkinUnlocked } from './achievements.js?v=12';
 
@@ -2089,7 +2089,7 @@ class Game {
     } else {
       prog = `<div class="rank-prog">${clears} ${t('clearedFields')} · ${t('maxRank')}</div>`;
     }
-    el.innerHTML = `<div class="rank-stars">${rankStars(info.rank)}</div>` +
+    el.innerHTML = `<div class="rank-insignia">${rankInsignia(info.index)}</div>` +
       `<div class="rank-main"><div class="rank-name">${t('rankLabel')}: ${rankName(info.rank, lang)}</div>${prog}</div>` +
       `<button class="rank-ach-btn" id="btn-ach-open-rank">🏅</button>`;
     $('btn-ach-open-rank').onclick = () => { Sound.click(); this.showAchievementsModal(); };
