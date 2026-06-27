@@ -59,6 +59,13 @@ export const LEVELS = [
   { id: 34, cols: 14, rows: 13, shape: 'rect',   density: 0.12, terrain: { trees: 4 }, goalType: 'evacuate', noGuess: true },
   { id: 35, cols: 18, rows: 16, shape: 'blob',   density: 0.15, terrain: { trees: 9, river: true, mountains: 1 }, goalType: 'evacuate' },
   { id: 36, cols: 22, rows: 19, shape: 'blob',   density: 0.17, terrain: { trees: 12, lake: 1, mountains: 2, paths: 2 }, goalType: 'evacuate', fog: true },
+  // ── 37-42 : ambush — player places mines, enemy AI tries to cross ──
+  { id: 37, cols: 14, rows: 13, shape: 'rect',   density: 0, terrain: { trees: 3 },                          goalType: 'ambush', minesBudget: 8,  enemyCount: 3, enemySide: 'left', aiTier: 1 },
+  { id: 38, cols: 16, rows: 14, shape: 'rect',   density: 0, terrain: { trees: 5, river: true },             goalType: 'ambush', minesBudget: 9,  enemyCount: 4, enemySide: 'left', aiTier: 1 },
+  { id: 39, cols: 18, rows: 16, shape: 'blob',   density: 0, terrain: { trees: 7, mountains: 2 },            goalType: 'ambush', minesBudget: 10, enemyCount: 5, enemySide: 'left', aiTier: 2 },
+  { id: 40, cols: 20, rows: 17, shape: 'blob',   density: 0, terrain: { trees: 8, river: true, mountains: 2 }, goalType: 'ambush', minesBudget: 11, enemyCount: 6, enemySide: 'top',  aiTier: 2 },
+  { id: 41, cols: 22, rows: 19, shape: 'island', density: 0, terrain: { trees: 10, sea: 'all', mountains: 2 }, goalType: 'ambush', minesBudget: 12, enemyCount: 8, enemySide: 'left', aiTier: 3 },
+  { id: 42, cols: 24, rows: 21, shape: 'blob',   density: 0, terrain: { trees: 12, river: true, mountains: 3, paths: 2 }, goalType: 'ambush', minesBudget: 14, enemyCount: 10, enemySide: 'left', aiTier: 3 },
 ];
 
 export const LEVEL_COUNT = LEVELS.length - 1;

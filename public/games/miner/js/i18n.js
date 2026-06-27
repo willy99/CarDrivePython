@@ -132,6 +132,14 @@ const STRINGS = {
     editorCols: 'Width (cols)',
     editorRows: 'Height (rows)',
     editor: '🗺 Editor',
+    ambushHint: 'Place mines, then press LAUNCH to send in the enemy.',
+    ambushLaunch: '🚀 Launch!',
+    ambushRunning: 'Enemy advancing!',
+    ambushWin: 'Ambush successful! All enemies eliminated.',
+    ambushLose: 'Enemy broke through!',
+    ambushBudget: '💣',
+    ambushWinSub: 'All enemies neutralized. Well planned!',
+    ambushLoseSub: 'Enemy reached the objective. Rethink your mine placement!',
   },
   uk: {
     title: '💥 БаБУМ',
@@ -264,6 +272,14 @@ const STRINGS = {
     editorCols: 'Ширина (стовпців)',
     editorRows: 'Висота (рядків)',
     editor: '🗺 Редактор',
+    ambushHint: 'Постав міни, потім натисни ПУСК щоб запустити ворогів.',
+    ambushLaunch: '🚀 Пуск!',
+    ambushRunning: 'Ворог наступає!',
+    ambushWin: 'Засаду вдалося! Усіх знищено.',
+    ambushLose: 'Ворог прорвався!',
+    ambushBudget: '💣',
+    ambushWinSub: 'Усіх ворогів нейтралізовано. Відмінна тактика!',
+    ambushLoseSub: 'Ворог досяг цілі. Переглянь розстановку мін!',
   },
 };
 
@@ -295,7 +311,8 @@ const LEVEL_NAMES = {
     '🌫 Fog zone',   '🌙 Night patrol','🌙⏱ Dark crossing',                              // 25-27
     'Big land',       'Giant island',   '🌫 Mega field',                                 // 28-30
     '👤 VIP: Outpost','👤 VIP: Delta',  '👤⏱ VIP: Citadel',                              // 31-33
-    '🚪 Evac: Fields','🚪 Evac: River', '🌫🚪 Evac: Fog'],                               // 34-36
+    '🚪 Evac: Fields','🚪 Evac: River', '🌫🚪 Evac: Fog',                               // 34-36
+    '🎯 Flatlands',   '🎯 River Cross', '🎯 Hill Pass',    '🎯 Swamp Road',  '🎯 Island', '🎯 Convoy'],   // 37-42
   uk: ['',
     'Полігон',        'Старий кар\'єр', 'Польова дорога', 'Блокпост',     'Берег річки',  // 1-5
     'Узлісся',        '⏱ Гонка',       '⏱ Лісовий раш', '⏱ Година пік', 'Гавань',       // 6-10
@@ -305,7 +322,8 @@ const LEVEL_NAMES = {
     '🌫 Зона туману', '🌙 Нічний патруль','🌙⏱ Темна переправа',                         // 25-27
     'Велика земля',   'Острів-велетень','🌫 Мегаполе',                                    // 28-30
     '👤 VIP: Застава', '👤 VIP: Дельта', '👤⏱ VIP: Цитадель',                            // 31-33
-    '🚪 Евак: Поле',  '🚪 Евак: Річка', '🌫🚪 Евак: Туман'],                             // 34-36
+    '🚪 Евак: Поле',  '🚪 Евак: Річка', '🌫🚪 Евак: Туман',                             // 34-36
+    '🎯 Рівнина',     '🎯 Переправа',   '🎯 Перевал',      '🎯 Болото',      '🎯 Острів', '🎯 Конвой'],   // 37-42
 };
 
 export function levelName(id) {

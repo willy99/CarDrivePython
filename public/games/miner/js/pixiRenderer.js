@@ -30,6 +30,9 @@ export class PixiRenderer {
     this.devices = new Map();  // cellIndex → PIXI.Text (device indicator)
     this.vipMarker = null;     // PIXI.Container — VIP icon
     this.exitMarker = null;    // PIXI.Container — EXIT portal
+    this.enemySprites = new Map();   // id → PIXI.Container
+    this.ambushMineMarkers = new Map(); // cellIndex → PIXI.Graphics
+    this.ambushZoneMarkers = null;   // spawn/exit arrows container
     this.particles = [];
     this.anims = [];           // timed tween animations (arm extend, drone flight)
     this.sapperC = null;
@@ -181,6 +184,7 @@ export class PixiRenderer {
     this.board = null;
     this.fog.clear(); this.markers.clear(); this.flags.clear(); this.devices.clear();
     this.vipMarker = null; this.exitMarker = null;
+    this.enemySprites.clear(); this.ambushMineMarkers.clear(); this.ambushZoneMarkers = null;
     this.particles = []; this.anims = []; this.sapperC = null; this.sapperLegs = null; this.platform = null;
     this._waterRipple = null; this._clouds = null; this._cloudW = 0;
     this.fowC = null; this._fowRadius = 0; this._fowCells = new Map();
@@ -911,6 +915,139 @@ export class PixiRenderer {
 
   clearExit() {
     if (this.exitMarker) { this.exitMarker.destroy(); this.exitMarker = null; }
+  }
+
+  // ── Ambush mine placement markers (player-visible) ────────────────────────
+  setAmbushMine(cell) {
+    const k = this.board.idx(cell.c, cell.r);
+    if (this.ambushMineMarkers.has(k)) return;
+    const x = cell.c * BASE + BASE / 2, y = cell.r * BASE + BASE / 2;
+    const g = new PIXI.Graphics();
+    const r = BASE * 0.28;
+    g.beginFill(0x1a0a00, 0.85).drawCircle(x, y, r).endFill();
+    g.lineStyle({ width: 2, color: 0xf97316, alpha: 0.9 });
+    g.drawCircle(x, y, r);
+    // Cross spikes
+    for (let i = 0; i < 8; i++) {
+      const a = i * Math.PI / 4;
+      g.moveTo(x + Math.cos(a) * r, y + Math.sin(a) * r);
+      g.lineTo(x + Math.cos(a) * r * 1.55, y + Math.sin(a) * r * 1.55);
+    }
+    g.lineStyle().beginFill(0xffd700, 0.9).drawCircle(x - r * 0.3, y - r * 0.3, r * 0.22).endFill();
+    this.markersC.addChild(g);
+    this.ambushMineMarkers.set(k, g);
+  }
+
+  clearAmbushMine(cell) {
+    const k = this.board.idx(cell.c, cell.r);
+    const g = this.ambushMineMarkers.get(k);
+    if (g) { g.destroy(); this.ambushMineMarkers.delete(k); }
+  }
+
+  // Draw spawn arrows (red, from spawn side) and exit arrows (green, at exit side)
+  drawAmbushZones(board) {
+    if (this.ambushZoneMarkers) { this.ambushZoneMarkers.destroy({ children: true }); }
+    const ctr = new PIXI.Container();
+    this.entityC.addChild(ctr);
+    this.ambushZoneMarkers = ctr;
+
+    // Spawn markers: red triangles pointing inward at each spawn cell
+    for (const sp of (board.ambushSpawns || [])) {
+      const x = sp.c * BASE + BASE / 2, y = sp.r * BASE + BASE / 2;
+      const g = new PIXI.Graphics();
+      g.beginFill(0xff3333, 0.85);
+      // Arrow pointing right (into map) for 'left' spawn; generalise via side
+      const side = board.level.enemySide || 'left';
+      const hs = BASE * 0.28;
+      if (side === 'left')   g.drawPolygon([x - hs, y - hs, x + hs, y, x - hs, y + hs]);
+      else if (side === 'right') g.drawPolygon([x + hs, y - hs, x - hs, y, x + hs, y + hs]);
+      else if (side === 'top')   g.drawPolygon([x - hs, y - hs, x, y + hs, x + hs, y - hs]);
+      else                       g.drawPolygon([x - hs, y + hs, x, y - hs, x + hs, y + hs]);
+      g.endFill();
+      // Pulsing alpha stored for tick
+      g._pulse = true;
+      ctr.addChild(g);
+    }
+
+    // Exit side: green glow on each exit cell
+    for (const cell of board.cells) {
+      if (!cell.ambushExit) continue;
+      const x = cell.c * BASE + BASE / 2, y = cell.r * BASE + BASE / 2;
+      const g = new PIXI.Graphics();
+      g.beginFill(0x00ff88, 0.18).drawRect(cell.c * BASE + 2, cell.r * BASE + 2, BASE - 4, BASE - 4).endFill();
+      g.lineStyle({ width: 2, color: 0x00ff88, alpha: 0.7 });
+      g.drawRect(cell.c * BASE + 2, cell.r * BASE + 2, BASE - 4, BASE - 4);
+      g._exitPulse = true;
+      ctr.addChild(g);
+    }
+  }
+
+  // ── Enemy soldier sprite ──────────────────────────────────────────────────
+  _buildEnemySprite() {
+    const S = BASE * 0.44;
+    const g = new PIXI.Graphics();
+    // Helmet
+    g.beginFill(0x3a4a2a).drawEllipse(0, -S * 0.62, S * 0.26, S * 0.15).endFill();
+    // Head
+    g.beginFill(0xd4a574).drawCircle(0, -S * 0.46, S * 0.20).endFill();
+    // Body (uniform)
+    g.beginFill(0x4a5e3a);
+    g.drawPolygon([-S*0.22, -S*0.28, S*0.22, -S*0.28, S*0.26, S*0.24, -S*0.26, S*0.24]);
+    g.endFill();
+    // Belt
+    g.beginFill(0x2a3a1a).drawRect(-S*0.24, S*0.20, S*0.48, S*0.08).endFill();
+    // Rifle (diagonal)
+    g.lineStyle({ width: S * 0.07, color: 0x1a1a1a, alpha: 1 });
+    g.moveTo(S * 0.18, -S * 0.20);
+    g.lineTo(S * 0.38, S * 0.28);
+    g.lineStyle();
+    return g;
+  }
+
+  spawnEnemySprite(id, c, r) {
+    const existing = this.enemySprites.get(id);
+    if (existing) { existing.destroy({ children: true }); }
+    const ctr = new PIXI.Container();
+    const body = this._buildEnemySprite();
+    ctr.addChild(body);
+    // Legs (two rectangles, animated)
+    const legL = new PIXI.Graphics();
+    const legR = new PIXI.Graphics();
+    const ls = BASE * 0.10;
+    legL.beginFill(0x3a4a2a).drawRect(-ls, 0, ls * 0.9, BASE * 0.28).endFill();
+    legR.beginFill(0x3a4a2a).drawRect(ls * 0.1, 0, ls * 0.9, BASE * 0.28).endFill();
+    ctr.addChild(legL); ctr.addChild(legR);
+    ctr._legL = legL; ctr._legR = legR;
+    ctr._body = body;
+    ctr.position.set(c * BASE + BASE / 2, r * BASE + BASE / 2);
+    this.entityC.addChild(ctr);
+    this.enemySprites.set(id, ctr);
+    return ctr;
+  }
+
+  updateEnemySprite(id, px, pr, animT) {
+    const ctr = this.enemySprites.get(id);
+    if (!ctr) return;
+    ctr.position.set(px * BASE + BASE / 2, pr * BASE + BASE / 2);
+    // Leg walk animation: oscillate left/right
+    const phase = Math.sin(animT * Math.PI * 2) * BASE * 0.10;
+    if (ctr._legL) ctr._legL.y = BASE * 0.22 + phase;
+    if (ctr._legR) ctr._legR.y = BASE * 0.22 - phase;
+  }
+
+  killEnemySprite(id, c, r) {
+    const ctr = this.enemySprites.get(id);
+    if (ctr) { ctr.visible = false; }
+    this.spawnExplosion(c, r);
+  }
+
+  reachEnemySprite(id) {
+    const ctr = this.enemySprites.get(id);
+    if (ctr) {
+      // Brief flash then remove
+      let t = 0;
+      this.anims.push({ update: dt => { t += dt; ctr.alpha = Math.max(0, 1 - t * 3); return t > 0.4; } });
+    }
   }
 
   setLost() {

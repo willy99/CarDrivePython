@@ -69,8 +69,8 @@ export function showJammer(cell, onSuccess, onFail) {
     document.body.appendChild(modal);
   }
 
-  // Start slider at midpoint of hint range to make it obvious what to do
-  let freq = Math.round((variant.hintRange[0] + variant.hintRange[1]) / 2);
+  // Start at the lower bound of the hint range — player must tune to find the target
+  let freq = variant.hintRange[0];
   let resolved = false;
   let animFrame = null;
 

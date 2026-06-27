@@ -1,12 +1,13 @@
 import { SAPPER_SPEED, T } from './constants.js?v=9';
-import { t, levelName, toggleLang, lang } from './i18n.js?v=15';
+import { t, levelName, toggleLang, lang } from './i18n.js?v=17';
+import { AmbushSquad } from './ambush.js?v=5';
 import { showDefusal } from './defusal.js?v=2';
 import { showMultimeter } from './multimeter.js?v=6';
 import { showBalance } from './balance.js?v=1';
-import { showJammer } from './jammer.js?v=1';
-import { LEVELS, LEVEL_COUNT, TIMED_LEVEL_IDS, loadProgress, markCompleted, isUnlocked } from './levels.js?v=12';
-import { Board } from './board.js?v=16';
-import { PixiRenderer } from './pixiRenderer.js?v=17';
+import { showJammer } from './jammer.js?v=2';
+import { LEVELS, LEVEL_COUNT, TIMED_LEVEL_IDS, loadProgress, markCompleted, isUnlocked } from './levels.js?v=13';
+import { Board } from './board.js?v=20';
+import { PixiRenderer } from './pixiRenderer.js?v=18';
 import { THEMES, loadTheme, saveTheme, nextTheme } from './themes.js?v=9';
 import { Sound, isMuted, toggleMute } from './audio.js?v=9';
 import { loadClears, addClear, rankFor, rankName, rankStars, bagCapacity, BAG_NAMES, rankPerks } from './ranks.js?v=13';
@@ -141,6 +142,9 @@ class Game {
     this.elapsed = 0;
     this.startTime = -1;
     this.loseTimer = 0;
+    this.ambushSquad = null;   // AmbushSquad instance during ambush mode
+    this.ambushPhase = null;   // 'placing' | 'running'
+    this.ambushMines = new Set(); // cell indices of player-placed mines
 
     this.loadout = [];        // artifact ids carried into the current op (≤2)
     this.toolUses = [];        // per-slot remaining-use flags
@@ -727,9 +731,9 @@ class Game {
       const lv = LEVELS[id];
       const unlocked = isUnlocked(id, done);
       const cleared = done.has(id);
-      const arcadeOnly = !!(lv && (lv.night || lv.fog || lv.hasVIP || lv.goalType === 'evacuate'));
+      const arcadeOnly = !!(lv && (lv.night || lv.fog || lv.hasVIP || lv.goalType === 'evacuate' || lv.goalType === 'ambush'));
       const blocked = classic && arcadeOnly;
-      const blockedIcon = lv && lv.night ? '🌙' : lv && lv.fog ? '🌫️' : lv && lv.hasVIP ? '👤' : lv && lv.goalType === 'evacuate' ? '🚪' : '🕹';
+      const blockedIcon = lv && lv.night ? '🌙' : lv && lv.fog ? '🌫️' : lv && lv.hasVIP ? '👤' : lv && lv.goalType === 'evacuate' ? '🚪' : lv && lv.goalType === 'ambush' ? '🎯' : '🕹';
       const card = document.createElement('button');
       card.className = 'lvl' + (unlocked && !blocked ? '' : ' locked') + (cleared ? ' done' : '');
       card.disabled = !unlocked || blocked;
@@ -773,9 +777,9 @@ class Game {
           const lv2 = LEVELS[id2];
           const unlocked2 = isUnlocked(id2, done2);
           const cleared2 = done2.has(id2);
-          const arcadeOnly2 = !!(lv2 && (lv2.night || lv2.fog || lv2.hasVIP || lv2.goalType === 'evacuate'));
+          const arcadeOnly2 = !!(lv2 && (lv2.night || lv2.fog || lv2.hasVIP || lv2.goalType === 'evacuate' || lv2.goalType === 'ambush'));
           const blocked2 = classic2 && arcadeOnly2;
-          const blockedIcon2 = lv2 && lv2.night ? '🌙' : lv2 && lv2.fog ? '🌫️' : lv2 && lv2.hasVIP ? '👤' : lv2 && lv2.goalType === 'evacuate' ? '🚪' : '🕹';
+          const blockedIcon2 = lv2 && lv2.night ? '🌙' : lv2 && lv2.fog ? '🌫️' : lv2 && lv2.hasVIP ? '👤' : lv2 && lv2.goalType === 'evacuate' ? '🚪' : lv2 && lv2.goalType === 'ambush' ? '🎯' : '🕹';
           const card2 = document.createElement('button');
           card2.className = 'lvl' + (unlocked2 && !blocked2 ? '' : ' locked') + (cleared2 ? ' done' : '');
           card2.disabled = !unlocked2 || blocked2;
@@ -793,9 +797,17 @@ class Game {
   // ── play ──────────────────────────────────────────────────────────────────
   startLevel(level) {
     this.level = level;
-    this.board = new Board(level);
+    let board = new Board(level);
+    // For ambush levels, regenerate if terrain leaves too few spawn/exit cells
+    for (let attempt = 0; attempt < 8 && !board.isAmbushValid(); attempt++) {
+      board = new Board(level);
+    }
+    this.board = board;
     this.sapper = { px: 0, pr: 0, cell: null, prevCell: null, path: null, pathI: 0, moving: false, anim: 0 };
     this.state = 'PLAYING';
+    this.ambushSquad = null;
+    this.ambushPhase = null;
+    this.ambushMines = new Set();
     this.startTime = -1;
     this.elapsed = 0;
     this.loseTimer = 0;
@@ -833,7 +845,7 @@ class Game {
     $('btn-flag-mode').style.display = '';
     this._flagMode = false;
     $('btn-flag-mode').classList.remove('flag-mode-active');
-    $('hint').textContent = t(this._getMode() === 'classic' ? 'hintFirstClassic' : 'hintFirst');
+    $('hint').textContent = level.goalType === 'ambush' ? '' : t(this._getMode() === 'classic' ? 'hintFirstClassic' : 'hintFirst');
     $('hint').style.display = 'block';
     this.renderTools();
     this.updateHUD();
@@ -866,6 +878,8 @@ class Game {
       this.updateHUD();
     } else if (lv.hasVIP) {
       $('hint').textContent = t('vipHint');
+    } else if (lv.goalType === 'ambush') {
+      this._startAmbushPlacing();
     }
   }
 
@@ -913,7 +927,9 @@ class Game {
   }
 
   primaryAction(c, r) {
-    if (this.state !== 'PLAYING' || this.sapper.moving || this._busy) return;
+    if (this.state !== 'PLAYING' || this._busy) return;
+    if (this.level && this.level.goalType === 'ambush') { this._ambushClick(c, r); return; }
+    if (this.sapper.moving) return;
     if (this._flagMode && this.board.minesPlaced) { this.flagAction(c, r); return; }
     if (this._getMode() === 'classic') { this._primaryClassic(c, r); return; }
     const b = this.board;
@@ -1353,8 +1369,9 @@ class Game {
       if (nb && nb.type === T.LAND && nb.mine && !nb.flagged && !nb.revealed) {
         const nc = nb.c, nr = nb.r;
         setTimeout(() => {
-          if (this.state === 'OVER') return; // already lost
+          if (this.state !== 'OVER') return; // only fires after primary boom set state
           nb.revealed = true;
+          this._vipBlastCheck(nc, nr);
           this.renderer.spawnExplosion(nc, nr);
         }, delay);
         delay += 120;
@@ -1456,6 +1473,7 @@ class Game {
   _checkWin() {
     const b = this.board;
     const lv = b.level;
+    if (lv.goalType === 'ambush') return false; // handled by _ambushTick
     if (lv.goalType === 'evacuate') {
       return !!(this.sapper.cell && this.sapper.cell.exit);
     }
@@ -1571,12 +1589,15 @@ class Game {
     $('overlay').style.display = 'flex';
     $('tools').style.display = 'none';
     const lv = this.level;
+    const isAmbush = lv && lv.goalType === 'ambush';
     const winIcon = won
-      ? (lv && lv.goalType === 'evacuate' ? '🚪' : lv && lv.hasVIP ? '👤' : '🎖️')
+      ? (lv && lv.goalType === 'evacuate' ? '🚪' : lv && lv.hasVIP ? '👤' : isAmbush ? '🎯' : '🎖️')
       : '💥';
     $('ov-icon').textContent = winIcon;
-    $('ov-title').textContent = won ? t('win') : t('lose');
-    let txt = won ? t('winSub') : t('loseSub');
+    $('ov-title').textContent = won ? (isAmbush ? t('ambushWin') : t('win')) : (isAmbush ? t('ambushLose') : t('lose'));
+    let txt = isAmbush
+      ? (won ? t('ambushWinSub') : t('ambushLoseSub'))
+      : (won ? t('winSub') : t('loseSub'));
     if (won && this._promoted) {
       txt += '  ⭐ ' + t('promoted') + ' ' + rankName(this._promoted, lang) + '!';
       this._promoted = null;
@@ -1592,13 +1613,36 @@ class Game {
 
   _flashHint(msg) {
     const h = $('hint');
-    if (msg) { h.textContent = msg; h.style.display = 'block'; }
+    const hintSpan = document.getElementById('ambush-hint-text');
+    if (msg) {
+      if (hintSpan) {
+        hintSpan.textContent = msg;
+      } else {
+        h.textContent = msg;
+      }
+      h.style.display = 'block';
+    }
     h.style.color = '#ff6b6b';
-    setTimeout(() => { h.style.color = ''; }, 250);
+    setTimeout(() => {
+      h.style.color = '';
+      if (hintSpan) hintSpan.textContent = t('ambushHint');
+    }, 1200);
   }
 
   updateHUD() {
     const b = this.board;
+    const lv = b && b.level;
+    if (lv && lv.goalType === 'ambush') {
+      const budget = lv.minesBudget || 0;
+      const placed = this.ambushMines ? this.ambushMines.size : 0;
+      $('stat-mines').textContent = `${t('ambushBudget')} ${placed}/${budget}`;
+      $('stat-flags').style.display = 'none';
+      $('stat-time').style.display = 'none';
+      const vipEl = $('stat-vip'); if (vipEl) vipEl.style.display = 'none';
+      return;
+    }
+    $('stat-flags').style.display = '';
+    $('stat-time').style.display = '';
     const mines = b && b.minesPlaced ? Math.max(0, b.mineCount - b.flagCount()) : (b ? '?' : 0);
     $('stat-mines').textContent = `💣 ${mines}`;
     $('stat-flags').textContent = `🚩 ${b ? b.flagCount() : 0}`;
@@ -1666,6 +1710,98 @@ class Game {
     if (this.loseTimer > 0) {
       this.loseTimer -= dt;
       if (this.loseTimer <= 0) this._showOverlay(false);
+    }
+
+    if (this.ambushSquad && this.ambushPhase === 'running' && this.state === 'PLAYING') {
+      this._ambushTick(dt);
+    }
+  }
+
+  // ── Ambush mode ───────────────────────────────────────────────────────────
+  _startAmbushPlacing() {
+    this.ambushSquad = null;
+    this.ambushPhase = 'placing';
+    this.ambushMines = new Set();
+    // No sapper drawn in ambush mode
+    this.renderer.ambushZoneMarkers && this.renderer.ambushZoneMarkers.destroy({ children: true });
+    this.renderer.drawAmbushZones(this.board);
+    $('btn-flag-mode').style.display = 'none';
+    $('hint').innerHTML = `<span id="ambush-hint-text">${t('ambushHint')}</span> &nbsp;<button id="btn-ambush-launch" style="margin-left:8px;padding:4px 14px;border-radius:8px;border:2px solid #f97316;background:rgba(249,115,22,.15);color:#f97316;font-size:.9rem;font-weight:800;cursor:pointer;pointer-events:auto;">${t('ambushLaunch')}</button>`;
+    $('hint').style.pointerEvents = 'auto';
+    document.getElementById('btn-ambush-launch').onclick = () => this._ambushLaunch();
+    this.updateHUD();
+  }
+
+  _ambushClick(c, r) {
+    if (this.ambushPhase !== 'placing') return;
+    const b = this.board;
+    const cell = b.get(c, r);
+    if (!cell || (cell.type !== T.LAND && cell.type !== T.PATH && cell.type !== T.BRIDGE)) return;
+    const k = b.idx(c, r);
+    if (cell.ambushExit) return; // can't mine the exit zone
+    if (this.ambushMines.has(k)) {
+      // Toggle off
+      this.ambushMines.delete(k);
+      cell.mine = false;
+      this.renderer.clearAmbushMine(cell);
+    } else {
+      const budget = this.level.minesBudget || 0;
+      if (this.ambushMines.size >= budget) {
+        this._flashHint(lang === 'uk' ? `Ліміт мін: ${budget}` : `Mine budget: ${budget}`);
+        return;
+      }
+      this.ambushMines.add(k);
+      cell.mine = true;
+      this.renderer.setAmbushMine(cell);
+    }
+    this.updateHUD();
+  }
+
+  _ambushLaunch() {
+    if (this.ambushPhase !== 'placing' || this.state !== 'PLAYING') return;
+    this.ambushPhase = 'running';
+    $('hint').style.pointerEvents = '';
+    $('hint').textContent = t('ambushRunning');
+    this.ambushSquad = new AmbushSquad(this.board, this.level);
+    this.ambushSquad.spawnEnemies();
+    for (const e of this.ambushSquad.enemies) {
+      this.renderer.spawnEnemySprite(e.id, e.c, e.r);
+    }
+  }
+
+  _ambushTick(dt) {
+    const sq = this.ambushSquad;
+    const events = sq.tick(dt);
+    for (const { enemy: e, type } of events) {
+      if (type === 'mine') {
+        this.renderer.killEnemySprite(e.id, e.c, e.r);
+        // Remove mine marker and clear board cell so it doesn't block rendering
+        const cell = this.board.get(e.c, e.r);
+        if (cell) {
+          cell.mine = false;
+          this.renderer.clearAmbushMine(cell);
+          this.ambushMines.delete(this.board.idx(e.c, e.r));
+        }
+        Sound.boom && Sound.boom();
+      } else if (type === 'exit') {
+        this.renderer.reachEnemySprite(e.id);
+      }
+    }
+    // Update all alive sprites
+    for (const e of sq.enemies) {
+      if (e.alive && !e.reached) {
+        this.renderer.updateEnemySprite(e.id, e.px, e.pr, (e.animT + e.pathI * 0.37) % 1);
+      }
+    }
+    if (!sq.allDone) return;
+    // All done: check win/lose
+    if (sq.reachedCount > 0) {
+      // At least one got through → lose
+      this.state = 'OVER';
+      this.loseTimer = 0.8;
+    } else {
+      // None got through → win!
+      this._win();
     }
   }
 

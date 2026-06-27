@@ -77,10 +77,13 @@ export class Board {
     if (ter.mountains) for (let i = 0; i < ter.mountains; i++) this._carveBlobOf(T.MOUNTAIN, 1 + Math.floor(this.rng() * 2));
     if (ter.trees) this._scatter(T.TREE, ter.trees);
     if (ter.paths) this._carvePaths(ter.paths);
-    this._scatterArtifacts();
-    this._scatterDevices();
+    if (this.level.goalType !== 'ambush') {
+      this._scatterArtifacts();
+      this._scatterDevices();
+    }
     if (this.level.hasVIP) { this._scatterVIP(); this._placeExit(); }
     if (this.level.goalType === 'evacuate') this._placeExitAndSpawn();
+    if (this.level.goalType === 'ambush') this._placeAmbushZones();
   }
 
   // Place 0-2 special device cells on the field (wire-cutting mini-game triggers).
@@ -454,6 +457,67 @@ export class Board {
     const farCells = withDist.filter(x => !x.c.exit && x.d >= minDist).map(x => x.c);
     const spawn = this._pick(farCells.length > 0 ? farCells : land.filter(c => !c.exit));
     this.spawnC = spawn.c; this.spawnR = spawn.r;
+  }
+
+  // ── Ambush: spawn points (enemy entry) and exit zone (enemy goal) ───────────
+  _placeAmbushZones() {
+    const land = this._landCells();
+    if (land.length < 4) return;
+
+    const side = this.level.enemySide || 'left';
+    const opp  = { left: 'right', right: 'left', top: 'bottom', bottom: 'top' }[side];
+    const horiz = side === 'left' || side === 'right';
+
+    // Per-row (or per-col) border detection: for each row find leftmost/rightmost land cell.
+    // This gives the true terrain border on irregular blob/island shapes.
+    const borderCell = (cells, pickFn) => {
+      const map = new Map();
+      for (const c of cells) {
+        const key = horiz ? c.r : c.c;
+        if (!map.has(key) || pickFn(c, map.get(key))) map.set(key, c);
+      }
+      return [...map.values()];
+    };
+
+    const spawnEdge = borderCell(land,
+      side === 'left'   ? (a, b) => a.c < b.c :
+      side === 'right'  ? (a, b) => a.c > b.c :
+      side === 'top'    ? (a, b) => a.r < b.r :
+                          (a, b) => a.r > b.r);
+
+    const exitEdge  = borderCell(land,
+      opp  === 'left'   ? (a, b) => a.c < b.c :
+      opp  === 'right'  ? (a, b) => a.c > b.c :
+      opp  === 'top'    ? (a, b) => a.r < b.r :
+                          (a, b) => a.r > b.r);
+
+    for (const cell of exitEdge) cell.ambushExit = true;
+
+    spawnEdge.sort(horiz ? (a, b) => a.r - b.r : (a, b) => a.c - b.c);
+
+    const count = this.level.enemyCount || 3;
+    // Pick min(spawnEdge.length, count) evenly-distributed positions.
+    // Enemies cycle through these: enemy i → spawns[i % spawns.length].
+    // This means fewer spawn boxes than enemies is fine — extras share a box.
+    const slots = Math.min(spawnEdge.length, count);
+    this.ambushSpawns = [];
+    if (slots === 1) {
+      this.ambushSpawns = [spawnEdge[0]];
+    } else {
+      for (let i = 0; i < slots; i++) {
+        const idx = Math.round(i * (spawnEdge.length - 1) / (slots - 1));
+        this.ambushSpawns.push(spawnEdge[Math.min(idx, spawnEdge.length - 1)]);
+      }
+    }
+    this.ambushEnemyCount = count;
+  }
+
+  // Returns true if ambush zones are valid enough to play (enough spawn + exit cells)
+  isAmbushValid() {
+    if (this.level.goalType !== 'ambush') return true;
+    const exits  = this.cells.filter(c => c.ambushExit).length;
+    const spawns = (this.ambushSpawns || []).length;
+    return spawns >= 1 && exits >= 1;
   }
 
   // BFS over non-mine land + bridges (4-connected) from the safe start: true iff
