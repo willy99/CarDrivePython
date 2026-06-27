@@ -758,7 +758,7 @@ class Game {
     this.renderTools();
     this.updateHUD();
     // Field map perk: reveal perimeter row+col (no mines flagged, just numbers)
-    if (this._fieldMapPerk) this._applyFieldMap();
+    // field map perk fires after mines are placed (first click)
     // Evacuation levels: auto-spawn sapper at mid-field and place mines immediately
     const lv = this.level;
     if (lv.goalType === 'evacuate' && !this.board.minesPlaced) {
@@ -797,11 +797,21 @@ class Game {
     if (!land.length) return;
     const minR = Math.min(...land.map(c => c.r));
     const minC = Math.min(...land.map(c => c.c));
-    const perim = land.filter(c => (c.r === minR || c.c === minC) && !c.mine && !c.revealed);
-    if (!perim.length) return;
-    for (const cell of perim) { cell.revealed = true; }
-    this.renderer.onReveal(perim);
-    this.showToast('🗺 ' + (lang === 'uk' ? 'Польова карта: периметр розкрито' : 'Field map: perimeter revealed'));
+    const perim = land.filter(c => c.r === minR || c.c === minC);
+    const flagged = [];
+    for (const cell of perim) {
+      if (cell.mine && !cell.flagged && !cell.revealed) {
+        cell.flagged = true;
+        this.renderer.setFlag(cell);
+        flagged.push(cell);
+      }
+    }
+    if (flagged.length) {
+      this.updateHUD();
+      this.showToast('🗺 ' + (lang === 'uk'
+        ? `Польова карта: ${flagged.length} міни позначено`
+        : `Field map: ${flagged.length} mine${flagged.length > 1 ? 's' : ''} flagged`));
+    }
   }
 
   // rebuild map visuals (theme change) and replay board state
@@ -872,6 +882,7 @@ class Game {
         this.showToast(`⚠ ${n} ${word} — ${given}`);
         this.renderTools();
       }
+      if (this._fieldMapPerk) this._applyFieldMap();
       this.startTime = this.elapsed;
       if (cell.device) { cell.device = null; this.renderer.clearDevice(cell); }
       this.sapper.px = c; this.sapper.pr = r; this.sapper.cell = cell;
@@ -977,6 +988,7 @@ class Game {
         this.showToast(`⚠ ${n} ${word} — ${given}`);
         this.renderTools();
       }
+      if (this._fieldMapPerk) this._applyFieldMap();
       this.startTime = this.elapsed;
       this.sapper.cell = cell;
       if (b.level.hasVIP) {
